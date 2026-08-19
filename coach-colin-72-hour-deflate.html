@@ -1058,19 +1058,73 @@ h4{
 /* ---------- print (sell it as a PDF too) ---------- */
 
 @media print{
-  :root{ --rail: 0px; }
-  body{ background: #fff; color: #14110C; font-size: 10.5pt; }
-  #dust, .vignette, .grain, .rail, .scroll-cue, .btn-row, .badge__glow, .badge__spark, .badge__floor{ display: none !important; }
+  :root{
+    --rail: 0px;
+    --ink: #fff; --ink-2: #fff; --carbon: #fff;
+    --text: #14110C; --text-2: #2E2A22; --dim: #55503F;
+    --gold: #7A5A05; --gold-hot: #7A5A05; --gold-deep: #96721A;
+    --line: #C9C2AE; --line-soft: #DAD4C2;
+    --measure: 100%;
+  }
+  @page{ margin: 14mm; }
+
+  html, body{ background: #fff !important; color: #14110C; font-size: 10.5pt; }
+  #dust, .vignette, .grain, .rail, .scroll-cue, .btn-row,
+  .badge__glow, .badge__spark, .badge__floor{ display: none !important; }
   .shell{ margin-left: 0; }
   .wrap{ width: 100%; }
-  .hero, .chapter, .close, .legal{ page-break-after: always; padding: 0 0 18pt; border: 0; }
-  .legal{ background: #fff; page-break-after: auto; }
-  .hero h1, .close h2{ -webkit-text-fill-color: #7A5A05; color: #7A5A05; filter: none; }
+
+  /* every painted surface back to paper */
+  .hero, .chapter, .close, .legal, .card, .day, .day__head, .tally,
+  .directive, .gauge, .ban, .report, .report__head, .report__body,
+  .check, .rules > li, .field input, .report textarea{
+    background: #fff !important;
+  }
+  /* the 1px-gap hairline grids need a visible gap colour */
+  .cards, .rules{ background: #C9C2AE !important; }
+
+  .hero{ min-height: 0; padding: 0 0 14pt; }
+  .chapter, .close, .legal{ padding: 0 0 14pt; border-top: 0; }
+  .hero, .chapter, .close{ page-break-after: always; }
+  .legal{ page-break-after: auto; }
+  .card, .rules > li, .day, .directive, .ban, .note, .legal section,
+  .gauge, .report, .check{ break-inside: avoid; page-break-inside: avoid; }
+  h2, h3, h4{ break-after: avoid; page-break-after: avoid; }
+
+  .hero h1, .close h2{
+    -webkit-text-fill-color: #7A5A05; color: #7A5A05;
+    background: none !important; filter: none;
+  }
   .hero h1 em{ -webkit-text-fill-color: #3B372E; }
-  h2, h4, .body strong, .check b{ color: #14110C !important; }
-  h3, .card__tag, .rules__n{ color: #7A5A05 !important; }
-  .body, .card p, .rules p, .legal p, .legal li, .chapter__sub{ color: #2E2A22 !important; }
-  .card, .day, .tally, .directive, .gauge, .ban, .report{ background: #fff !important; border-color: #C9C2AE !important; }
+  h2, h4, .body strong, .check b, .ban li b, .legal strong{ color: #14110C !important; }
+  h3, .card__tag, .rules__n, .eyebrow, .hero__meta dd, .card__do,
+  .legal section h3 small, .chapter__num{ color: #7A5A05 !important; }
+  .chapter__num{ -webkit-text-stroke-color: #96721A; }
+  .body, .card p, .rules p, .legal p, .legal li, .chapter__sub,
+  .close p, .note, .ban li, .tally p, .day__head em, .gauge__note{ color: #2E2A22 !important; }
+  .ban h3{ color: #A32531 !important; }
+  .ban{ border-color: #D8B4B8 !important; }
+  .note{ border-left-color: #96721A !important; }
+  .note--stop{ border-left-color: #A32531 !important; }
+  .note--stop b{ color: #A32531 !important; }
+
+  .card, .day, .tally, .directive, .gauge, .report, .legal section,
+  .field input, .report textarea, .day__head, .hero__meta{
+    border-color: #C9C2AE !important;
+  }
+  .gauge__bar{ background: #EDE8D8 !important; }
+  .gauge__bar i{ background: #96721A !important; box-shadow: none !important; }
+  .report textarea{ color: #14110C !important; }
+  .check input{ border-color: #8B836F !important; }
+  .ring .track{ stroke: #DAD4C2 !important; }
+  .ring .fill{ stroke: #96721A !important; filter: none !important; }
+  .ring text{ fill: #7A5A05 !important; }
+  .legal .placeholder{ background: #F6EBD6 !important; color: #8A5B0A !important; }
+
+  .badge{ transform: none !important; }
+  .badge__shell path:first-child{ fill: #fff !important; stroke: #96721A !important; }
+  .badge__type text{ fill: #7A5A05 !important; }
+
   .rise{ opacity: 1 !important; transform: none !important; }
 }
 </style>
