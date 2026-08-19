@@ -1,0 +1,2084 @@
+<title>The 72-Hour Deflate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,300..900;1,62..125,400..700&family=IBM+Plex+Mono:wght@400;500;600&family=Spectral:ital,wght@0,300;0,400;0,600;1,400&display=swap">
+
+<style>
+/* ============================================================
+   COACH COLIN — THE 72-HOUR DEFLATE
+   Single-theme dark by design: the brand is a neon shield on
+   obsidian. Every colour is painted explicitly so the page holds
+   on any host ground.
+   ============================================================ */
+
+:root{
+  color-scheme: dark;
+
+  /* ground + surfaces */
+  --ink:        #07070A;
+  --ink-2:      #0C0B0F;
+  --carbon:     #121016;
+  --panel:      rgba(247, 201, 72, 0.035);
+  --panel-2:    rgba(255, 255, 255, 0.028);
+
+  /* the single bold spend */
+  --gold:       #F7C948;
+  --gold-hot:   #FFE07A;
+  --gold-deep:  #A87B12;
+  --gold-ghost: rgba(247, 201, 72, 0.14);
+
+  /* tricolore — structural hairlines only */
+  --it-green:   #1FA35C;
+  --it-white:   #F2F1EC;
+  --it-red:     #D8323F;
+
+  /* type */
+  --text:       #E9E4D8;
+  --text-2:     #B7AF9E;
+  --dim:        #8B836F;
+  --line:       rgba(247, 201, 72, 0.16);
+  --line-soft:  rgba(233, 228, 216, 0.09);
+
+  /* semantic */
+  --caution:    #E8A33D;
+  --stop:       #E2564F;
+
+  --serif: "Spectral", "Iowan Old Style", Georgia, serif;
+  --disp:  "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --measure: 63ch;
+  --rail: 84px;
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+
+body{
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: clamp(16px, 0.6vw + 14.4px, 18.5px);
+  line-height: 1.68;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- ambient layers ---------- */
+
+#dust{
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.vignette{
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(247,201,72,0.10), transparent 58%),
+    radial-gradient(100% 100% at 50% 50%, transparent 42%, rgba(3,3,5,0.82) 100%);
+}
+
+.grain{
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  background-size: 140px 140px;
+  animation: grain 7s steps(6) infinite;
+}
+@keyframes grain{
+  0%{background-position:0 0}      20%{background-position:-24px 16px}
+  40%{background-position:18px -22px} 60%{background-position:-14px -18px}
+  80%{background-position:22px 10px}  100%{background-position:0 0}
+}
+
+/* ---------- progress rail ---------- */
+
+.rail{
+  position: fixed;
+  left: 0; top: 0;
+  width: var(--rail);
+  height: 100vh;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  border-right: 1px solid var(--line-soft);
+  background: linear-gradient(180deg, rgba(7,7,10,0.7), rgba(7,7,10,0.3));
+  backdrop-filter: blur(6px);
+}
+.rail__mark{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 78, "wght" 800;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--dim);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  position: absolute;
+  top: 26px;
+  opacity: 0.75;
+}
+.rail__dot{
+  position: relative;
+  width: 34px; height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0; padding: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  transition: color .35s ease;
+}
+.rail__dot::before{
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--line-soft);
+  transform: rotate(45deg);
+  transition: border-color .35s ease, box-shadow .35s ease, transform .5s cubic-bezier(.2,.8,.2,1);
+}
+.rail__dot:hover{ color: var(--text-2); }
+.rail__dot:hover::before{ border-color: var(--line); }
+.rail__dot[aria-current="true"]{ color: var(--gold-hot); }
+.rail__dot[aria-current="true"]::before{
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(247,201,72,0.2), 0 0 18px rgba(247,201,72,0.45);
+  transform: rotate(45deg) scale(1.08);
+}
+.rail__line{
+  position: absolute;
+  left: 50%;
+  top: 96px; bottom: 96px;
+  width: 1px;
+  transform: translateX(-0.5px);
+  background: var(--line-soft);
+  z-index: -1;
+}
+.rail__fill{
+  position: absolute;
+  left: 50%;
+  top: 96px;
+  width: 1px;
+  height: 0;
+  transform: translateX(-0.5px);
+  background: linear-gradient(180deg, var(--gold-hot), var(--gold-deep));
+  box-shadow: 0 0 12px rgba(247,201,72,0.6);
+  z-index: -1;
+}
+
+/* ---------- shell ---------- */
+
+.shell{
+  position: relative;
+  z-index: 10;
+  margin-left: var(--rail);
+}
+
+.wrap{
+  width: min(1180px, calc(100% - 12vw));
+  margin-inline: auto;
+}
+
+/* ---------- hero ---------- */
+
+.hero{
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+  padding: 12vh 0 10vh;
+}
+
+.tricolore{
+  display: flex;
+  width: 92px;
+  height: 2px;
+  margin-bottom: 26px;
+}
+.tricolore span{ flex: 1; }
+.tricolore span:nth-child(1){ background: var(--it-green); }
+.tricolore span:nth-child(2){ background: var(--it-white); }
+.tricolore span:nth-child(3){ background: var(--it-red); }
+
+.eyebrow{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 18px;
+}
+.eyebrow--dim{ color: var(--dim); }
+
+.hero__grid{
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(30px, 5vw, 76px);
+  align-items: center;
+}
+
+.hero h1{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 112, "wght" 850;
+  font-size: clamp(46px, 8.2vw, 118px);
+  line-height: 0.86;
+  letter-spacing: -0.028em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  margin: 0 0 8px;
+  background: linear-gradient(178deg, #FFF4CE 4%, var(--gold-hot) 34%, var(--gold) 52%, #8E6608 78%, #FFE9A8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 34px rgba(247,201,72,0.22));
+}
+.hero h1 em{
+  display: block;
+  font-style: normal;
+  font-variation-settings: "wdth" 62, "wght" 500;
+  font-size: 0.38em;
+  letter-spacing: 0.03em;
+  -webkit-text-fill-color: var(--text-2);
+  filter: none;
+  margin-top: 14px;
+}
+
+.hero__lede{
+  max-width: 46ch;
+  color: var(--text-2);
+  font-size: 1.06em;
+  margin: 26px 0 34px;
+}
+.hero__lede strong{ color: var(--text); font-weight: 600; }
+
+.hero__meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.hero__meta div{
+  flex: 1 1 130px;
+  padding: 16px 20px 16px 0;
+  border-right: 1px solid var(--line-soft);
+}
+.hero__meta div:last-child{ border-right: 0; }
+.hero__meta dt{
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 6px;
+}
+.hero__meta dd{
+  margin: 0;
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 92, "wght" 700;
+  font-size: 19px;
+  color: var(--gold-hot);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 3D badge ---------- */
+
+.badge-stage{
+  perspective: 1300px;
+  perspective-origin: 50% 45%;
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+}
+.badge{
+  position: relative;
+  width: min(380px, 74vw);
+  aspect-ratio: 1 / 1.06;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--bx, 0deg)) rotateY(var(--by, 0deg));
+  will-change: transform;
+}
+.badge__layer{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.badge__layer svg{ width: 100%; height: 100%; overflow: visible; }
+.badge__glow{
+  transform: translateZ(-58px);
+  filter: blur(34px);
+  opacity: 0.55;
+}
+.badge__shell{ transform: translateZ(0); }
+.badge__inner{ transform: translateZ(26px); }
+.badge__type{ transform: translateZ(54px); }
+.badge__spark{
+  transform: translateZ(78px);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+.badge__floor{
+  position: absolute;
+  left: 50%; bottom: -34px;
+  width: 62%; height: 22px;
+  transform: translateX(-50%) rotateX(78deg);
+  background: radial-gradient(ellipse at center, rgba(247,201,72,0.4), transparent 68%);
+  filter: blur(11px);
+}
+
+.scroll-cue{
+  margin-top: 8vh;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.scroll-cue i{
+  display: block;
+  width: 56px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  animation: cue 2.4s ease-in-out infinite;
+  transform-origin: left;
+}
+@keyframes cue{ 0%,100%{transform:scaleX(0.4);opacity:.5} 50%{transform:scaleX(1);opacity:1} }
+
+/* ---------- chapters ---------- */
+
+.chapter{
+  position: relative;
+  padding: clamp(80px, 13vh, 150px) 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.chapter__head{
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 44px);
+  align-items: start;
+  margin-bottom: clamp(38px, 6vh, 70px);
+}
+.chapter__num{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 66, "wght" 900;
+  font-size: clamp(56px, 7vw, 92px);
+  line-height: 0.78;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--gold-deep);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.chapter__num small{
+  display: block;
+  -webkit-text-stroke: 0;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  margin-top: 12px;
+  font-variation-settings: normal;
+}
+.chapter h2{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 108, "wght" 800;
+  font-size: clamp(30px, 4.4vw, 58px);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  margin: 6px 0 0;
+  color: var(--text);
+}
+.chapter h2 b{
+  color: var(--gold-hot);
+  font-weight: inherit;
+}
+.chapter__sub{
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--text-2);
+  max-width: 54ch;
+  margin: 18px 0 0;
+  font-size: 1.04em;
+}
+
+.body{ max-width: var(--measure); }
+.body p{ margin: 0 0 1.15em; }
+.body p:last-child{ margin-bottom: 0; }
+.body strong{ color: var(--gold-hot); font-weight: 600; }
+.body em{ color: var(--text); }
+
+h3{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 88, "wght" 750;
+  font-size: 15px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 14px;
+}
+h4{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 96, "wght" 700;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  margin: 0 0 10px;
+}
+
+/* ---------- protocol cards ---------- */
+
+.cards{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+  gap: 1px;
+  background: var(--line-soft);
+  border: 1px solid var(--line-soft);
+  margin-top: 34px;
+}
+.card{
+  background: var(--ink-2);
+  padding: 30px 28px 32px;
+  position: relative;
+  transition: background .4s ease;
+}
+.card:hover{ background: var(--carbon); }
+.card__tag{
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+.card__tag::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-soft);
+}
+.card p{
+  margin: 0;
+  font-size: 0.94em;
+  color: var(--text-2);
+}
+.card p + p{ margin-top: 0.9em; }
+.card__do{
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(247,201,72,0.22);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: var(--gold-hot);
+}
+.card__do span{
+  color: var(--dim);
+  display: block;
+  letter-spacing: 0.2em;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ---------- rules list ---------- */
+
+.rules{
+  list-style: none;
+  margin: 34px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--line-soft);
+  border-block: 1px solid var(--line-soft);
+}
+.rules > li{
+  background: var(--ink);
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: clamp(14px, 2.4vw, 32px);
+  padding: 30px 4px 32px 0;
+  align-items: start;
+}
+.rules__n{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--gold-deep);
+  padding-top: 6px;
+}
+.rules h4 + p{ margin-top: 0; }
+.rules p{
+  margin: 0 0 0.85em;
+  color: var(--text-2);
+  max-width: var(--measure);
+  font-size: 0.97em;
+}
+.rules p:last-child{ margin-bottom: 0; }
+
+/* ---------- pull quote / directive ---------- */
+
+.directive{
+  margin: clamp(40px, 6vh, 70px) 0;
+  padding: clamp(28px, 4vw, 44px) clamp(26px, 4vw, 52px);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(247,201,72,0.06), transparent 62%),
+    var(--ink-2);
+  position: relative;
+}
+.directive::before{
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--it-green) 0 33%, var(--it-white) 33% 66%, var(--it-red) 66% 100%);
+}
+.directive p{
+  margin: 0;
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 92, "wght" 600;
+  font-size: clamp(19px, 2.3vw, 28px);
+  line-height: 1.28;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  text-wrap: balance;
+}
+.directive p b{ color: var(--gold-hot); font-weight: 800; }
+.directive cite{
+  display: block;
+  margin-top: 16px;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---------- deflate gauge ---------- */
+
+.gauge{
+  margin-top: 44px;
+  border: 1px solid var(--line-soft);
+  background: var(--ink-2);
+  padding: clamp(26px, 4vw, 40px);
+}
+.gauge__row{
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 74px;
+  align-items: center;
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px dashed var(--line-soft);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+}
+.gauge__row:last-child{ border-bottom: 0; }
+.gauge__row span:first-child{
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 10px;
+}
+.gauge__bar{
+  height: 6px;
+  background: rgba(233,228,216,0.07);
+  position: relative;
+  overflow: hidden;
+}
+.gauge__bar i{
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold-hot));
+  box-shadow: 0 0 14px rgba(247,201,72,0.5);
+  transition: width 1.4s cubic-bezier(.16,1,.3,1);
+}
+.gauge__val{
+  text-align: right;
+  color: var(--gold-hot);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.gauge__note{
+  margin: 20px 0 0;
+  font-size: 0.86em;
+  color: var(--dim);
+  font-family: var(--serif);
+  font-style: italic;
+}
+
+/* ---------- ban list ---------- */
+
+.ban{
+  margin-top: 34px;
+  border: 1px solid rgba(216,50,63,0.32);
+  background: linear-gradient(180deg, rgba(216,50,63,0.07), transparent 70%), var(--ink-2);
+  padding: clamp(26px, 4vw, 40px);
+}
+.ban h3{ color: var(--it-red); }
+.ban ol{
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ban;
+  display: grid;
+  gap: 14px;
+}
+.ban li{
+  counter-increment: ban;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 14px;
+  align-items: baseline;
+  color: var(--text-2);
+  font-size: 0.96em;
+}
+.ban li::before{
+  content: "✕";
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--it-red);
+  opacity: 0.85;
+}
+.ban li b{ color: var(--text); font-weight: 600; }
+
+/* ---------- scorecard ---------- */
+
+.score{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(26px, 4vw, 52px);
+  align-items: start;
+  margin-top: 38px;
+}
+.days{
+  display: grid;
+  gap: 26px;
+}
+.day{
+  border: 1px solid var(--line-soft);
+  background: var(--ink-2);
+}
+.day__head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(247,201,72,0.04);
+}
+.day__head h4{ margin: 0; font-size: 17px; }
+.day__head em{
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.day ul{
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+.day li{ border-bottom: 1px solid rgba(233,228,216,0.045); }
+.day li:last-child{ border-bottom: 0; }
+
+.check{
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-size: 0.93em;
+  color: var(--text-2);
+  transition: background .25s ease, color .25s ease;
+}
+.check:hover{ background: rgba(247,201,72,0.035); color: var(--text); }
+.check input{
+  appearance: none;
+  width: 17px; height: 17px;
+  margin: 4px 0 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color .25s ease, background .25s ease;
+}
+.check input::after{
+  content: "";
+  width: 9px; height: 5px;
+  border-left: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: rotate(-45deg) scale(0);
+  transition: transform .22s cubic-bezier(.2,1.4,.4,1);
+}
+.check input:checked{ background: var(--gold); border-color: var(--gold-hot); }
+.check input:checked::after{ transform: rotate(-45deg) scale(1); }
+.check input:focus-visible{ outline: 2px solid var(--gold-hot); outline-offset: 3px; }
+.check:has(input:checked){ color: var(--dim); }
+.check:has(input:checked) span{ text-decoration: line-through; text-decoration-color: var(--gold-deep); }
+.check b{ color: var(--gold-hot); font-weight: 600; }
+.check:has(input:checked) b{ color: inherit; }
+
+.tally{
+  position: sticky;
+  top: 32px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(247,201,72,0.07), transparent 60%), var(--ink-2);
+  padding: 30px 26px;
+  text-align: center;
+}
+.ring{ width: 154px; height: 154px; margin: 6px auto 18px; display: block; }
+.ring circle{ fill: none; stroke-width: 6; }
+.ring .track{ stroke: rgba(233,228,216,0.09); }
+.ring .fill{
+  stroke: var(--gold);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px rgba(247,201,72,0.55));
+  transition: stroke-dashoffset .7s cubic-bezier(.16,1,.3,1);
+}
+.ring text{
+  fill: var(--gold-hot);
+  font-family: var(--disp);
+  font-size: 30px;
+  font-variation-settings: "wdth" 88, "wght" 800;
+}
+.tally p{
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  line-height: 1.8;
+}
+.tally p b{
+  display: block;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  font-size: 13px;
+  text-transform: none;
+  font-family: var(--serif);
+  font-weight: 400;
+  margin-top: 12px;
+}
+
+/* ---------- report card ---------- */
+
+.report{
+  margin-top: 44px;
+  border: 1px solid var(--line);
+  background: var(--ink-2);
+}
+.report__head{
+  padding: 22px 26px;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.report__head h3{ margin: 0; }
+.report__body{ padding: 26px; display: grid; gap: 18px; }
+.field{ display: grid; gap: 7px; }
+.field label{
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.field input{
+  background: var(--ink);
+  border: 1px solid var(--line-soft);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 11px 13px;
+  border-radius: 0;
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+.field input::placeholder{ color: rgba(139,131,111,0.6); }
+.field input:focus{
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(247,201,72,0.25);
+}
+.field-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; }
+
+.report textarea{
+  width: 100%;
+  min-height: 190px;
+  background: var(--ink);
+  border: 1px solid var(--line-soft);
+  color: var(--gold-hot);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.72;
+  padding: 18px;
+  resize: vertical;
+  border-radius: 0;
+}
+.report textarea:focus{ outline: none; border-color: var(--gold); }
+
+.btn{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 88, "wght" 700;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 13px 24px;
+  border: 1px solid var(--gold);
+  background: transparent;
+  color: var(--gold-hot);
+  cursor: pointer;
+  transition: background .3s ease, color .3s ease, box-shadow .3s ease;
+}
+.btn:hover{
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 0 0 26px rgba(247,201,72,0.35);
+}
+.btn:focus-visible{ outline: 2px solid var(--gold-hot); outline-offset: 3px; }
+.btn--ghost{ border-color: var(--line); color: var(--text-2); }
+.btn--ghost:hover{ background: rgba(247,201,72,0.1); color: var(--gold-hot); box-shadow: none; }
+.btn-row{ display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.btn-row output{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--it-green);
+}
+
+/* ---------- callouts ---------- */
+
+.note{
+  margin-top: 30px;
+  border-left: 2px solid var(--caution);
+  padding: 4px 0 4px 20px;
+  color: var(--text-2);
+  font-size: 0.94em;
+}
+.note b{
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--caution);
+  margin-bottom: 7px;
+}
+.note--stop{ border-left-color: var(--stop); }
+.note--stop b{ color: var(--stop); }
+
+/* ---------- close ---------- */
+
+.close{
+  padding: clamp(90px, 15vh, 170px) 0;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.close h2{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 110, "wght" 850;
+  font-size: clamp(34px, 6.4vw, 84px);
+  line-height: 0.9;
+  letter-spacing: -0.026em;
+  text-transform: uppercase;
+  margin: 0 auto 22px;
+  max-width: 16ch;
+  text-wrap: balance;
+  background: linear-gradient(178deg, #FFF4CE, var(--gold) 55%, #8E6608);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.close p{
+  max-width: 52ch;
+  margin: 0 auto 30px;
+  color: var(--text-2);
+}
+
+/* ---------- legal ---------- */
+
+.legal{
+  border-top: 1px solid var(--line-soft);
+  background: #050508;
+  padding: clamp(60px, 10vh, 110px) 0 70px;
+}
+.legal .wrap{ max-width: 900px; }
+.legal h2{
+  font-family: var(--disp);
+  font-variation-settings: "wdth" 82, "wght" 750;
+  font-size: 22px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin: 0 0 8px;
+}
+.legal__intro{
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 40px;
+}
+.legal section{
+  border-top: 1px solid rgba(233,228,216,0.07);
+  padding: 26px 0;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: clamp(14px, 3vw, 36px);
+  align-items: start;
+}
+.legal section h3{
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+.legal section h3 small{
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--gold-deep);
+  margin-bottom: 6px;
+  font-variation-settings: normal;
+}
+.legal p, .legal li{
+  font-size: 14.5px;
+  line-height: 1.72;
+  color: var(--dim);
+  margin: 0 0 0.9em;
+}
+.legal p:last-child, .legal li:last-child{ margin-bottom: 0; }
+.legal strong{ color: var(--text-2); font-weight: 600; }
+.legal ul{ margin: 0; padding-left: 18px; }
+.legal ul li{ margin-bottom: 0.5em; }
+.legal .placeholder{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--caution);
+  background: rgba(232,163,61,0.09);
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.colophon{
+  margin-top: 50px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(233,228,216,0.07);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 34px;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---------- reveal ---------- */
+
+.rise{
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity .95s cubic-bezier(.16,1,.3,1), transform .95s cubic-bezier(.16,1,.3,1);
+  transition-delay: var(--d, 0ms);
+}
+.rise.in{ opacity: 1; transform: none; }
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1080px){
+  .score{ grid-template-columns: minmax(0, 1fr); }
+  .tally{ position: static; }
+}
+@media (max-width: 900px){
+  .hero__grid{ grid-template-columns: minmax(0, 1fr); }
+  .badge-stage{ order: -1; min-height: 320px; }
+  .legal section{ grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px){
+  :root{ --rail: 0px; }
+  .rail{ display: none; }
+  .wrap{ width: calc(100% - 44px); }
+  .chapter__head{ grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .chapter__num{ font-size: 46px; }
+  .chapter__num small{ display: inline; margin-left: 14px; }
+  .rules > li{ grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .gauge__row{ grid-template-columns: 78px minmax(0,1fr) 60px; gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .rise{ opacity: 1; transform: none; }
+  #dust{ display: none; }
+}
+
+/* ---------- print (sell it as a PDF too) ---------- */
+
+@media print{
+  :root{ --rail: 0px; }
+  body{ background: #fff; color: #14110C; font-size: 10.5pt; }
+  #dust, .vignette, .grain, .rail, .scroll-cue, .btn-row, .badge__glow, .badge__spark, .badge__floor{ display: none !important; }
+  .shell{ margin-left: 0; }
+  .wrap{ width: 100%; }
+  .hero, .chapter, .close, .legal{ page-break-after: always; padding: 0 0 18pt; border: 0; }
+  .legal{ background: #fff; page-break-after: auto; }
+  .hero h1, .close h2{ -webkit-text-fill-color: #7A5A05; color: #7A5A05; filter: none; }
+  .hero h1 em{ -webkit-text-fill-color: #3B372E; }
+  h2, h4, .body strong, .check b{ color: #14110C !important; }
+  h3, .card__tag, .rules__n{ color: #7A5A05 !important; }
+  .body, .card p, .rules p, .legal p, .legal li, .chapter__sub{ color: #2E2A22 !important; }
+  .card, .day, .tally, .directive, .gauge, .ban, .report{ background: #fff !important; border-color: #C9C2AE !important; }
+  .rise{ opacity: 1 !important; transform: none !important; }
+}
+</style>
+
+<canvas id="dust" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<nav class="rail" aria-label="Protocol sections">
+  <span class="rail__mark">72H · DEFLATE</span>
+  <span class="rail__line" aria-hidden="true"></span>
+  <span class="rail__fill" id="railFill" aria-hidden="true"></span>
+  <button class="rail__dot" data-go="p1" aria-current="true">01</button>
+  <button class="rail__dot" data-go="p2">02</button>
+  <button class="rail__dot" data-go="p3">03</button>
+  <button class="rail__dot" data-go="p4">04</button>
+  <button class="rail__dot" data-go="p5">05</button>
+  <button class="rail__dot" data-go="legal">§</button>
+</nav>
+
+<div class="shell">
+
+<!-- ============================ HERO ============================ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero__grid">
+      <div>
+        <div class="tricolore" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="eyebrow">Coach Colin · GLP-1 Certified Specialist</p>
+        <h1>The 72&#8209;Hour Deflate<em>Gut Health &amp; Cosmetic Enhancer Protocol</em></h1>
+        <p class="hero__lede">You are not as soft as the mirror says. Most of what you are looking at right now is <strong>water, gas, and unfinished digestion</strong> — three things that answer to instruction far faster than fat does. This is the exact seventy-two hour sequence I run with clients on GLP-1 medication when they need to look and feel tighter by the weekend.</p>
+        <dl class="hero__meta">
+          <div><dt>Duration</dt><dd>72 Hours</dd></div>
+          <div><dt>Phases</dt><dd>5</dd></div>
+          <div><dt>Equipment</dt><dd>None</dd></div>
+          <div><dt>Report back</dt><dd>Hour 72</dd></div>
+        </dl>
+        <div class="scroll-cue"><i aria-hidden="true"></i> Scroll to begin</div>
+      </div>
+
+      <div class="badge-stage">
+        <div class="badge" id="badge">
+          <div class="badge__layer badge__glow" aria-hidden="true">
+            <svg viewBox="0 0 300 320"><path d="M150 16 C 108 16 58 26 26 42 C 22 112 34 180 76 238 C 104 276 128 296 150 308 C 172 296 196 276 224 238 C 266 180 278 112 274 42 C 242 26 192 16 150 16 Z" fill="#F7C948"/></svg>
+          </div>
+          <div class="badge__layer badge__shell" aria-hidden="true">
+            <svg viewBox="0 0 300 320">
+              <path d="M150 16 C 108 16 58 26 26 42 C 22 112 34 180 76 238 C 104 276 128 296 150 308 C 172 296 196 276 224 238 C 266 180 278 112 274 42 C 242 26 192 16 150 16 Z" fill="#0A0A0D" stroke="#F7C948" stroke-width="2.4"/>
+              <path d="M150 30 C 112 30 66 39 38 53 C 34 114 46 176 85 229 C 110 263 130 281 150 292 C 170 281 190 263 215 229 C 254 176 266 114 262 53 C 234 39 188 30 150 30 Z" fill="none" stroke="#F7C948" stroke-width="1" opacity="0.45"/>
+            </svg>
+          </div>
+          <div class="badge__layer badge__inner" aria-hidden="true">
+            <svg viewBox="0 0 300 320">
+              <g fill="none" stroke-linecap="round">
+                <path d="M172.9 151.2 A40 40 0 1 0 172.9 216.8" stroke="#1FA35C" stroke-width="5"/>
+                <path d="M167.2 159.4 A30 30 0 1 0 167.2 208.6" stroke="#F2F1EC" stroke-width="5"/>
+                <path d="M161.5 167.6 A20 20 0 1 0 161.5 200.4" stroke="#D8323F" stroke-width="5"/>
+              </g>
+              <g stroke="#F7C948" fill="none" opacity="0.14">
+                <path d="M104 254 h 92 M118 268 h 64"/>
+              </g>
+            </svg>
+          </div>
+          <div class="badge__layer badge__type" aria-hidden="true">
+            <svg viewBox="0 0 300 320">
+              <text x="150" y="82" text-anchor="middle" fill="#FFE07A" font-family="Archivo, sans-serif" font-size="27" font-weight="800" letter-spacing="1.5" style="font-variation-settings:'wdth' 108">COACH COLIN</text>
+              <g>
+                <rect x="98" y="93" width="34" height="2" fill="#1FA35C"/>
+                <rect x="132" y="93" width="34" height="2" fill="#F2F1EC"/>
+                <rect x="166" y="93" width="34" height="2" fill="#D8323F"/>
+              </g>
+              <text x="150" y="117" text-anchor="middle" fill="#F7C948" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="2.4">GLP-1 SPECIALIST</text>
+              <text x="150" y="238" text-anchor="middle" fill="#A87B12" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing="3">72H DEFLATE</text>
+            </svg>
+          </div>
+          <div class="badge__layer badge__spark" aria-hidden="true">
+            <svg viewBox="0 0 300 320">
+              <defs>
+                <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="4%" stop-color="#FFF6D5" stop-opacity="0"/>
+                  <stop offset="44%" stop-color="#FFF6D5" stop-opacity="0.26"/>
+                  <stop offset="56%" stop-color="#FFF6D5" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M150 16 C 108 16 58 26 26 42 C 22 112 34 180 76 238 C 104 276 128 296 150 308 C 172 296 196 276 224 238 C 266 180 278 112 274 42 C 242 26 192 16 150 16 Z" fill="url(#sheen)"/>
+            </svg>
+          </div>
+          <div class="badge__floor" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================ 01 ============================ -->
+<section class="chapter" id="p1">
+  <div class="wrap">
+    <div class="chapter__head rise">
+      <div class="chapter__num">01<small>PAGE ONE</small></div>
+      <div>
+        <h2>What you're actually looking at <b>is not fat</b></h2>
+        <p class="chapter__sub">Before you change a single thing, you need to know which dial you are turning. Four systems are responsible for almost all of the softness people blame on body fat — and none of them take weeks to move.</p>
+      </div>
+    </div>
+
+    <div class="body rise" style="--d:90ms">
+      <p>Fat loss is slow arithmetic. A genuine pound of body fat is roughly 3,500 calories of deficit, and nobody loses four of them over a long weekend. Yet clients routinely look dramatically different in seventy-two hours, and the scale routinely moves three to six pounds in that window. That is not a contradiction and it is not a trick. It is <strong>water, intestinal gas, stool transit, and glycogen</strong> — four highly responsive systems that most people never address because they are too busy attacking calories.</p>
+      <p>On a GLP-1 medication this matters more, not less. The medication is doing the hard part for you: it slows gastric emptying, blunts appetite signalling, and pulls your intake down. What it does not do is manage the downstream consequences of eating less, drinking less, moving less food through the tube, and unintentionally stripping the minerals and fibre your gut needs to stay flat and regular. That gap is where the bloat lives. That gap is what this protocol closes.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card rise" style="--d:0ms">
+        <p class="card__tag">Dial 01 — Mineral ratio</p>
+        <h4>Sodium, potassium, and the rebound trap</h4>
+        <p>Your body defends fluid balance with aldosterone. Slash sodium to zero and aldosterone climbs to protect you, so the moment you eat normally again you retain harder than before. The lever is not <em>less salt</em> — it is <strong>more potassium alongside sensible salt</strong>, which shifts fluid out of the space under your skin and back into circulation where it can be cleared.</p>
+        <p class="card__do"><span>Immediate action</span>Keep salt reasonable. Add three potassium-dense foods per day.</p>
+      </article>
+
+      <article class="card rise" style="--d:80ms">
+        <p class="card__tag">Dial 02 — Motility</p>
+        <h4>Transit time is a cosmetic variable</h4>
+        <p>Slowed gastric emptying is the mechanism that makes GLP-1 medication work — and the same mechanism means food and gas sit longer. Add reduced fibre and reduced fluid, and transit slows further. The visible result is lower abdominal distension that has nothing to do with adipose tissue and everything to do with <strong>volume in the pipe</strong>.</p>
+        <p class="card__do"><span>Immediate action</span>Ten-minute walk after every meal. No exceptions, no negotiation.</p>
+      </article>
+
+      <article class="card rise" style="--d:160ms">
+        <p class="card__tag">Dial 03 — Cortisol &amp; sleep</p>
+        <h4>Stress is a fluid-retention hormone</h4>
+        <p>Short sleep, alcohol, travel, and grinding stress all raise the hormones that tell your kidneys to hold water — and they blunt the gut barrier at the same time. This is why you can eat perfectly all week, sleep five hours for two nights, and wake up looking puffier than when you were eating badly.</p>
+        <p class="card__do"><span>Immediate action</span>Fixed wake time for three days. Zero alcohol for seventy-two hours.</p>
+      </article>
+
+      <article class="card rise" style="--d:240ms">
+        <p class="card__tag">Dial 04 — Microbiome</p>
+        <h4>Gas is a fermentation output</h4>
+        <p>Bloat is frequently gas, and gas is what happens when gut bacteria ferment what reaches them. Sugar alcohols, carbonation, swallowed air, and a sudden fibre flood are the four fastest ways to manufacture it. Most people trying to "eat healthier" accidentally do all four at once and conclude their body is broken.</p>
+        <p class="card__do"><span>Immediate action</span>Cut carbonation and sugar alcohols entirely for the full seventy-two hours.</p>
+      </article>
+    </div>
+
+    <div class="directive rise">
+      <p>You are not going to lose four pounds of fat this weekend. You are going to <b>stop wearing three pounds of water and gas</b> that were never yours to carry. Those are two completely different projects, and only one of them finishes by Monday.</p>
+      <cite>The honest promise</cite>
+    </div>
+
+    <div class="gauge rise" id="gauge">
+      <h3>What typically moves — and what doesn't</h3>
+      <div class="gauge__row"><span>Water</span><span class="gauge__bar"><i data-fill="86"></i></span><span class="gauge__val">High</span></div>
+      <div class="gauge__row"><span>Gas</span><span class="gauge__bar"><i data-fill="78"></i></span><span class="gauge__val">High</span></div>
+      <div class="gauge__row"><span>Transit</span><span class="gauge__bar"><i data-fill="64"></i></span><span class="gauge__val">Moderate</span></div>
+      <div class="gauge__row"><span>Glycogen</span><span class="gauge__bar"><i data-fill="48"></i></span><span class="gauge__val">Moderate</span></div>
+      <div class="gauge__row"><span>Body fat</span><span class="gauge__bar"><i data-fill="6"></i></span><span class="gauge__val">Minimal</span></div>
+      <p class="gauge__note">Relative responsiveness over a seventy-two hour window. Individual results vary substantially — this is a model of which systems move fast, not a prediction about you.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 02 ============================ -->
+<section class="chapter" id="p2">
+  <div class="wrap">
+    <div class="chapter__head rise">
+      <div class="chapter__num">02<small>PAGE TWO</small></div>
+      <div>
+        <h2>Unorthodox nutrition — <b>the seven rules</b></h2>
+        <p class="chapter__sub">Every one of these will feel backwards compared to what you have been told. That is the point. Conventional advice is written for people who are not on a medication that halves their appetite and slows their stomach.</p>
+      </div>
+    </div>
+
+    <ol class="rules">
+      <li class="rise">
+        <div class="rules__n">RULE 01</div>
+        <div>
+          <h4>Stop cutting salt. Start chasing potassium.</h4>
+          <p>The instinct when you feel puffy is to strip sodium out. It backfires. Aggressive sodium restriction triggers a hormonal defence that makes you hold fluid harder the moment normal eating resumes, and on a GLP-1 medication — where total intake is already low — it can leave you genuinely under-replaced, dizzy, and headachy.</p>
+          <p>Instead, run the <em>ratio</em>. Keep salt at a normal, sane level and deliberately build potassium up around it: avocado, spinach, plain potato, white beans, salmon, cantaloupe, plain yoghurt. Three servings a day, every day, for three days. Potassium is the mineral that helps shift fluid out of the space just under your skin — the exact space that decides how you look.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 02</div>
+        <div>
+          <h4>Eat in order: protein, then colour, then starch.</h4>
+          <p>Not what you eat — <em>the sequence you eat it in</em>. Leading with protein and fibrous vegetables before the starch changes the shape of the glucose curve after that meal and stacks your body's own satiety signalling on top of what the medication is already doing. Same plate, same calories, different physiological result.</p>
+          <p>It also solves the most common failure I see: people on GLP-1 medication fill up after four bites, and if those four bites were bread, they just ate their entire meal's worth of nothing. Protein first means the four bites that actually land are the four that count.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 03</div>
+        <div>
+          <h4>The four-hour finish line.</h4>
+          <p>Last calorie of the day goes in four hours before your head hits the pillow. Not three. Four. This single rule does more for how flat you look at 7am than anything else on this page.</p>
+          <p>Two reasons. First, your gut runs a cleanout wave between meals — a sweeping contraction pattern that only operates when you are genuinely empty, and it needs uninterrupted hours to do its job. Second, with delayed gastric emptying, lying down on a partly-full stomach is a direct route to overnight reflux, disturbed sleep, and a morning that starts distended.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 04</div>
+        <div>
+          <h4>Climb the fibre ladder. Never flood it.</h4>
+          <p>Here is the mistake almost everyone makes: they realise they are constipated, they panic, and on day one they eat forty grams of fibre. Twelve hours later they are in visible pain and convinced they have an intolerance. They don't — they force-fed a bacterial population that wasn't staffed for it.</p>
+          <p>Add <strong>five grams per day, maximum</strong>, and lead with soluble fibre — psyllium, chia, oats, kiwifruit, cooked-and-cooled potato. Soluble fibre softens and moves; a wall of raw insoluble fibre on a slow stomach mostly just sits there and ferments. Every gram of added fibre needs added water or you have built a plug, not a solution.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 05</div>
+        <div>
+          <h4>Kill the phantom four.</h4>
+          <p>Four things put air and osmotic load into you while contributing almost nothing you actually wanted: <strong>carbonation, sugar alcohols, chewing gum, and drinking through a straw</strong>. Sparkling water is literally injected gas. Sorbitol, maltitol, xylitol and friends — in your protein bars, your "sugar-free" syrups, your mints — draw water into the bowel and are fermented enthusiastically. Gum and straws are pure swallowed air.</p>
+          <p>All four, gone, for seventy-two hours. For a meaningful number of people this one rule alone is the difference, and they never knew because they never removed all four simultaneously.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 06</div>
+        <div>
+          <h4>Drink more to hold less.</h4>
+          <p>This is the most counter-intuitive line in the document and the one clients resist hardest. When you are under-hydrated, your body increases the hormone that tells your kidneys to conserve water. You retain <em>because</em> you are dry. Reliable fluid intake, spread across the day, releases that grip.</p>
+          <p>Support it with foods and drinks that gently encourage fluid turnover rather than force it: dandelion leaf tea, hibiscus tea, cucumber, celery, asparagus, watermelon. And be clear about what is <em>not</em> on this list — over-the-counter diuretic pills, "water pills", and detox teas that work by causing diarrhoea. Those are how people end up dehydrated, mineral-depleted, and in a clinic. We are not doing that.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">RULE 07</div>
+        <div>
+          <h4>The cosmetic finisher.</h4>
+          <p>Three small levers that disproportionately change how you photograph on day three. <strong>Two kiwifruit in the evening</strong> — genuinely one of the better-evidenced whole-food interventions for sluggish bowels, and gentler than most supplements. <strong>Magnesium in a well-tolerated form</strong>, evening, which supports sleep and bowel comfort together. <strong>Zero alcohol</strong> — it is a triple hit of dehydration, disrupted sleep, and gut irritation, and it will single-handedly undo the other six rules.</p>
+          <p>Then, and only on day three: return to a normal, moderate carbohydrate intake at your final meal. After three lean days, that refill draws water back into the muscle, where fullness reads as tight rather than soft. This is the oldest trick in physique preparation and it is the reason day three is the day you take the photograph.</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="note">
+      <b>Before you touch the potassium rule</b>
+      Potassium is not universally safe to increase. If you have kidney disease, or take an ACE inhibitor, an ARB, a potassium-sparing diuretic, or a potassium supplement, do not raise your potassium intake without clearing it with your prescriber first. Same for magnesium if you have reduced kidney function. This is not a formality — it is the one part of this protocol that is genuinely contraindicated for a real group of people.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 03 ============================ -->
+<section class="chapter" id="p3">
+  <div class="wrap">
+    <div class="chapter__head rise">
+      <div class="chapter__num">03<small>PAGE THREE</small></div>
+      <div>
+        <h2>Training the gut like <b>a nervous system</b></h2>
+        <p class="chapter__sub">Your digestive tract has its own dense network of neurons and a permanent open line to your brain. That line is trainable. Most people are running it in the wrong mode all day and wondering why nothing moves.</p>
+      </div>
+    </div>
+
+    <div class="body rise" style="--d:90ms">
+      <p>Digestion is a parasympathetic activity — it happens in the state your body treats as <em>safe</em>. Eat standing at the counter, scrolling, in traffic, mid-argument, on four hours of sleep, and you have asked your gut to run its most demanding process while your physiology is set to alert. It complies badly. Then you blame the food.</p>
+      <p>The main cable between brain and gut is the vagus nerve, and vagal tone behaves like a trainable quality. You cannot lift it with willpower, but you can reach it directly through breath, through cold, through the muscles of the throat, and through the simple act of slowing down before you eat. Three days is enough to feel a difference. Here is exactly how.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card rise">
+        <p class="card__tag">Drill 01 — Breath</p>
+        <h4>Six breaths a minute, five minutes, before every meal</h4>
+        <p>Slow nasal inhale for roughly four counts, long unforced exhale for roughly six. The exhale is where the effect lives: a longer exhale than inhale shifts you toward the rest-and-digest state. Do it seated, eyes soft, immediately before you eat.</p>
+        <p class="card__do"><span>Cue</span>Plate down → five minutes of breath → first bite.</p>
+      </article>
+
+      <article class="card rise" style="--d:80ms">
+        <p class="card__tag">Drill 02 — Throat</p>
+        <h4>Hum, gargle, or sing for two minutes daily</h4>
+        <p>The vagus nerve innervates the muscles of the larynx and pharynx, which is why humming, gargling water loudly, and singing are used as practical vagal stimulation drills. It feels ridiculous. Do it in the shower where nobody can assess you.</p>
+        <p class="card__do"><span>Cue</span>Shower on → sixty seconds gargling → sixty seconds humming.</p>
+      </article>
+
+      <article class="card rise" style="--d:160ms">
+        <p class="card__tag">Drill 03 — Cold</p>
+        <h4>Thirty seconds of cold on the face</h4>
+        <p>Cold water across the face and the sides of the neck triggers a fast parasympathetic reflex. Thirty seconds at the sink is enough — no ice bath, no theatre. Use it in the evening or any time you feel wired and tight-bellied.</p>
+        <p class="card__do"><span>Cue</span>Cold splash across face and jaw, thirty seconds, nightly.</p>
+      </article>
+
+      <article class="card rise" style="--d:240ms">
+        <p class="card__tag">Drill 04 — Mechanics</p>
+        <h4>Twenty-five chews. Fork down between bites.</h4>
+        <p>Chewing is the only part of digestion under your conscious control, and on a slowed stomach it matters far more than usual — you are pre-processing food that will sit longer. Counting to twenty-five sounds absurd until you realise most people chew six times and swallow.</p>
+        <p class="card__do"><span>Cue</span>Bite → fork down → chew to twenty-five → swallow → pick fork up.</p>
+      </article>
+    </div>
+
+    <div class="directive rise">
+      <p>Ninety minutes with nothing in your mouth is not deprivation. It is <b>the only window in which your gut is allowed to clean itself.</b> Every unplanned snack, every coffee with cream, resets that clock to zero.</p>
+      <cite>On the cleanout wave</cite>
+    </div>
+
+    <div class="body rise">
+      <h3>The clean gaps</h3>
+      <p>Between meals — and only when you are genuinely empty — your small intestine runs a sweeping contraction pattern that clears residue and bacteria downstream. Any calorie interrupts it. Not "a big snack" — <em>any</em> calorie. The splash of oat milk. The three almonds. The taste while cooking.</p>
+      <p>So the instruction is simple and strict: <strong>ninety to one hundred and twenty minutes of completely clean gap between anything caloric</strong>. Water, black coffee, and plain tea are fine. Nothing else. Most people eat four to six times a day plus untracked grazing and have not given that system a clear run in years.</p>
+
+      <h3>Reading your own fullness again</h3>
+      <p>GLP-1 medication turns the fullness signal up loud. That is useful — and it is also why some people stop noticing the difference between <em>satisfied</em> and <em>uncomfortably full</em>, then assume the dose isn't working. Rebuild the scale deliberately: rate every meal 0 to 10 and stop at 6 or 7, where you are content and could still move well. Three days of honest rating restores a sense most people lost long before they started medication.</p>
+
+      <h3>Sleep is a gut intervention</h3>
+      <p>Short and irregular sleep degrades the intestinal barrier, disrupts the daily rhythm your gut microbes run on, and pushes hunger hormones in exactly the wrong direction. For these three days, the target is not "eight hours" — it is a <strong>fixed wake time</strong>, within a thirty-minute window, with real daylight in your eyes inside the first half hour. Motility is a rhythm. Rhythms need an anchor.</p>
+    </div>
+
+    <div class="note note--stop">
+      <b>Stop and get medical care</b>
+      Severe or persistent abdominal pain — especially pain that bores through to your back — relentless vomiting, an inability to keep fluids down, blood in your stool, black tarry stools, no bowel movement at all for several days with pain and distension, signs of significant dehydration, or symptoms of low blood sugar if you also take insulin or a sulfonylurea. These are not protocol problems. Stop, and contact your prescriber or emergency services.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 04 ============================ -->
+<section class="chapter" id="p4">
+  <div class="wrap">
+    <div class="chapter__head rise">
+      <div class="chapter__num">04<small>PAGE FOUR</small></div>
+      <div>
+        <h2>Behaviour design and <b>the reverse play</b></h2>
+        <p class="chapter__sub">The protocol above is the easy half. Getting a human to run it for three consecutive days is the actual work — and it is a design problem, not a discipline problem.</p>
+      </div>
+    </div>
+
+    <div class="body rise" style="--d:90ms">
+      <p>I am going to show you the psychology I am using on you, while I am using it. That is deliberate, and it is not a weakness in the method. Techniques like these keep working when disclosed — a commitment device still costs you something to break even after you have read the paper explaining commitment devices. What disclosure changes is the relationship: it is the line between coaching someone and running a play on them. I would rather you know.</p>
+    </div>
+
+    <ol class="rules">
+      <li class="rise">
+        <div class="rules__n">PLAY 01</div>
+        <div>
+          <h4>Change the noun, not the verb.</h4>
+          <p>"I'm trying to cut back on late-night eating" is a verb. Verbs are negotiable at 11pm. "I don't eat inside four hours of bed" is a noun — an identity statement — and identity is far more stable under pressure than intention. For seventy-two hours you are not <em>attempting</em> anything. You are a person who finishes eating at a certain hour. Say it out loud once. It is embarrassing and it works.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">PLAY 02</div>
+        <div>
+          <h4>Write the if-then before you need it.</h4>
+          <p>Decisions made in advance, in a calm state, get executed. Decisions left to the moment get renegotiated. So write three specific if-then plans now, on paper: <em>If someone offers me a drink, then I take sparkling water with lime and I don't explain myself. If I finish dinner and want something sweet, then I brush my teeth immediately. If I wake up puffy on day two, then I take the walk anyway.</em> Specificity is the whole active ingredient — vague intentions fail at the exact moment you needed them.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">PLAY 03</div>
+        <div>
+          <h4>Move the object, not your willpower.</h4>
+          <p>Every gram of willpower you spend resisting something in your own kitchen is a gram you didn't have for anything else. So change the kitchen. The sparkling water goes out of the house for three days. The gum leaves the bag. The kiwifruit sits at eye level in the fridge. The walking shoes go by the door before you go to bed. You are not weak — you have just been fighting an environment that was engineered against you.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">PLAY 04</div>
+        <div>
+          <h4>Make quitting cost something real.</h4>
+          <p>Tell one specific person — by name, today — that you are running a seventy-two hour protocol and that you will report your numbers to them on the third night. Not "I'm being good this week." The specific claim, to a specific human, with a specific deadline. Losing something you already have is a stronger motivator than gaining something you don't, and once you have said it out loud, your reputation with that person is something you already have.</p>
+        </div>
+      </li>
+
+      <li class="rise">
+        <div class="rules__n">PLAY 05</div>
+        <div>
+          <h4>Leave the loop open.</h4>
+          <p>Unfinished things occupy your mind in a way that finished things do not — a completed task falls out of memory almost immediately, while an open one keeps surfacing uninvited. This protocol is engineered to stay open. There is a measurement at hour zero and a measurement at hour seventy-two, and until that second number exists the whole thing is unresolved. You will find yourself thinking about it on day two whether you want to or not. That is not an accident and it is the reason it gets finished.</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="ban rise">
+      <h3>The ban list — read carefully</h3>
+      <p style="color:var(--text-2); margin:0 0 6px; font-size:0.96em;">Here is the reverse play, stated plainly. Everything below is <b style="color:var(--text)">forbidden</b> for seventy-two hours. Not discouraged — forbidden. You are going to feel a flicker of irritation at being told what you can't do, and that flicker is exactly the fuel I want, pointed at the five things that most reliably wreck people in the first three days.</p>
+      <ol>
+        <li><b>You may not weigh yourself on day two.</b> Hour zero and hour seventy-two only. Day two is the day water shifts make the number lie to you, and the day most people quit over a lie.</li>
+        <li><b>You may not add anything to this protocol.</b> No extra supplement, no fasting on top, no doubling the fibre, no "I'll also do cardio twice a day." Additions are how you turn a clean signal into noise you can't read.</li>
+        <li><b>You may not skip the walks because the food was perfect.</b> The walk is not a calorie tax. It is a motility drill. Perfect eating with zero movement is a slower gut, not a faster one.</li>
+        <li><b>You may not run a fourth day.</b> Seventy-two hours, then you stop and report. You do not get day four by wanting it. You get it by finishing this one and telling me what happened.</li>
+        <li><b>You may not tell me it "kind of worked."</b> Bring numbers. Waist at the navel, morning weight, bloat score out of ten, and how your rings and shoes fit. Vague reports get vague coaching, and you did not do three days of work for vague coaching.</li>
+      </ol>
+    </div>
+
+    <div class="directive rise">
+      <p>Notice what just happened. Five minutes ago the walk was a chore. Now it is <b>the thing you have been told you cannot skip</b> — and some part of you wants to do it precisely because of that. Autonomy is the strongest fuel you have. I just handed you the tank.</p>
+      <cite>Why the ban list works</cite>
+    </div>
+
+    <div class="note">
+      <b>Where this stops</b>
+      These techniques are for building a three-day habit, and nothing more. If food, weight, or your body is a source of genuine distress — if you are restricting beyond this protocol, purging, bingeing, or the number on a scale can ruin your week — put this document down and speak to a qualified professional. No aesthetic outcome is worth an eating disorder, and no coach worth paying will tell you otherwise. Support lines are listed in the legal section below.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 05 ============================ -->
+<section class="chapter" id="p5">
+  <div class="wrap">
+    <div class="chapter__head rise">
+      <div class="chapter__num">05<small>PAGE FIVE</small></div>
+      <div>
+        <h2>The scorecard — <b>and your report back</b></h2>
+        <p class="chapter__sub">Tick it as you go. At hour seventy-two the card at the bottom writes your report for you, and you send it to me. That last step is not optional — it is the part of the protocol that turns three good days into a direction.</p>
+      </div>
+    </div>
+
+    <div class="score">
+      <div class="days" id="days"><!-- built by script --></div>
+
+      <aside class="tally rise">
+        <h3>Compliance</h3>
+        <svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Protocol compliance ring">
+          <circle class="track" cx="60" cy="60" r="52"></circle>
+          <circle class="fill" id="ringFill" cx="60" cy="60" r="52"
+                  transform="rotate(-90 60 60)"
+                  stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+          <text x="60" y="70" text-anchor="middle" id="ringPct">0%</text>
+        </svg>
+        <p>
+          <span id="tallyCount">0 / 0 actions</span>
+          <b>Under eighty percent, the result you get is not the protocol's result. It is a different, weaker experiment.</b>
+        </p>
+      </aside>
+    </div>
+
+    <h3 class="rise" style="margin-top:56px">Measure exactly these — nothing else</h3>
+    <div class="cards">
+      <article class="card rise">
+        <p class="card__tag">Metric 01</p>
+        <h4>Waist at the navel</h4>
+        <p>Standing, relaxed, tape level, exhale normally and don't suck in. First thing in the morning, before anything to eat or drink. This is the number that tracks distension most honestly — far better than the scale.</p>
+      </article>
+      <article class="card rise" style="--d:80ms">
+        <p class="card__tag">Metric 02</p>
+        <h4>Morning weight — twice only</h4>
+        <p>Hour zero and hour seventy-two. Same scale, same floor, same time of day, after the bathroom, before food. Two data points. Weighing on day two is on the ban list for a reason.</p>
+      </article>
+      <article class="card rise" style="--d:160ms">
+        <p class="card__tag">Metric 03</p>
+        <h4>Bloat score, 0–10</h4>
+        <p>Every evening, one honest number for how distended and heavy your midsection felt that day. Subjective, and still one of the most useful things you will send me, because it captures what the tape misses.</p>
+      </article>
+      <article class="card rise" style="--d:240ms">
+        <p class="card__tag">Metric 04</p>
+        <h4>Fit and regularity</h4>
+        <p>How rings, watch strap, waistband, and shoes fit versus day one — that is peripheral fluid speaking. Plus how many bowel movements per day and whether they were easy. Unglamorous. Diagnostic.</p>
+      </article>
+    </div>
+
+    <div class="note rise">
+      <b>Photograph protocol</b>
+      Same room, same time of morning, same light source, same distance, same posture, same garment. Front and side. Fasted, before fluids. Change any one of those variables and you have produced a photograph that proves nothing — and you will either fool yourself or discourage yourself for no reason. Day one, hour zero. Day three, hour seventy-two. Two sets.
+    </div>
+
+    <!-- report card -->
+    <div class="report rise" id="report">
+      <div class="report__head">
+        <h3>Hour 72 — report card</h3>
+        <span style="font-family:var(--mono); font-size:10px; letter-spacing:.16em; color:var(--dim); text-transform:uppercase;">Fill in → generate → send to Coach Colin</span>
+      </div>
+      <div class="report__body">
+        <div class="field-row">
+          <div class="field"><label for="rName">Your name</label><input id="rName" type="text" placeholder="First name"></div>
+          <div class="field"><label for="rW0">Weight — hour 0</label><input id="rW0" type="text" inputmode="decimal" placeholder="e.g. 214.6"></div>
+          <div class="field"><label for="rW72">Weight — hour 72</label><input id="rW72" type="text" inputmode="decimal" placeholder="e.g. 210.8"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="rWa0">Waist — hour 0</label><input id="rWa0" type="text" inputmode="decimal" placeholder="e.g. 39.5"></div>
+          <div class="field"><label for="rWa72">Waist — hour 72</label><input id="rWa72" type="text" inputmode="decimal" placeholder="e.g. 38.1"></div>
+          <div class="field"><label for="rBloat">Bloat 0–10 (start → end)</label><input id="rBloat" type="text" placeholder="e.g. 7 → 3"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="rBm">Bowel movements per day</label><input id="rBm" type="text" placeholder="e.g. 0 → 2, easy"></div>
+          <div class="field"><label for="rFit">Rings / waistband / shoes</label><input id="rFit" type="text" placeholder="e.g. ring spins now"></div>
+          <div class="field"><label for="rHard">Hardest rule to keep</label><input id="rHard" type="text" placeholder="e.g. the 4-hour finish line"></div>
+        </div>
+
+        <div class="field">
+          <label for="rOut">Your report — send this to me</label>
+          <textarea id="rOut" readonly aria-live="polite">Fill in the fields above, then press Generate report.</textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" id="genBtn" type="button">Generate report</button>
+          <button class="btn btn--ghost" id="copyBtn" type="button">Copy to clipboard</button>
+          <output id="copyMsg" role="status"></output>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ CLOSE ============================ -->
+<section class="close">
+  <div class="wrap">
+    <div class="tricolore" style="margin-inline:auto" aria-hidden="true"><span></span><span></span><span></span></div>
+    <h2>Send me the numbers on the third night</h2>
+    <p>Not "it went well." The tape, the two weights, the bloat score, and the one rule you nearly broke. That is what tells me whether your next block is about motility, minerals, sleep, or dose timing — and it is the only way day four is anything more than a guess.</p>
+    <p class="eyebrow eyebrow--dim">Coach Colin · GLP-1 Certified Specialist</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================ LEGAL ============================ -->
+<footer class="legal" id="legal">
+  <div class="wrap">
+    <h2>Terms, disclaimers and important notices</h2>
+    <p class="legal__intro">Read in full before using this protocol · Effective <span class="placeholder">[DATE]</span> · Version 1.0</p>
+
+    <section>
+      <h3><small>§ 1</small>Not medical advice</h3>
+      <div>
+        <p>This document is provided for <strong>general educational and informational purposes only</strong>. It is not medical advice, diagnosis, or treatment, and it is not a substitute for the advice of a licensed physician, registered dietitian, pharmacist, or other qualified healthcare professional.</p>
+        <p>No coach-client, physician-patient, or other professional healthcare relationship is created by purchasing, downloading, reading, or following this document. Always seek the advice of your physician or other qualified provider with any questions about a medical condition, a medication, or any dietary or lifestyle change. <strong>Never disregard professional medical advice or delay seeking it because of something you have read here.</strong></p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 2</small>Speak to your prescriber first</h3>
+      <div>
+        <p>This protocol is written for adults aged 18 or over. If you are taking a GLP-1 receptor agonist or a dual GIP/GLP-1 receptor agonist, that medication is a prescription therapy managed by your prescriber. <strong>Nothing in this document should be used to start, stop, delay, adjust, split, or otherwise change any prescribed medication or dose.</strong></p>
+        <p>Consult your physician before beginning this or any nutrition, hydration, supplementation, or exercise programme — and in particular if you have or may have kidney disease, liver disease, heart failure or another cardiovascular condition, high or low blood pressure, diabetes (especially if you use insulin or a sulfonylurea), thyroid disease or a personal or family history of medullary thyroid carcinoma or MEN&nbsp;2, a history of pancreatitis or gallbladder disease, gastroparesis or another gastrointestinal motility disorder, inflammatory bowel disease, coeliac disease, an eating disorder or history of disordered eating, or any electrolyte abnormality.</p>
+        <p>Do not use this protocol if you are pregnant, may be pregnant, or are breastfeeding, except under the direct supervision of your healthcare provider.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 3</small>Medication and food interactions</h3>
+      <div>
+        <p>Dietary changes can interact with medication. Increasing dietary potassium may be unsafe for people with impaired kidney function or those taking ACE inhibitors, angiotensin receptor blockers, potassium-sparing diuretics, or potassium supplements. Magnesium may interact with certain antibiotics and other medicines and may be inappropriate in reduced kidney function. Changes in fibre and fluid intake can alter the absorption of some medications.</p>
+        <p><strong>Review any change described here with your prescriber or pharmacist before making it.</strong> This document does not recommend any specific supplement product, brand, dose, or regimen, and no statement in it has been evaluated by the U.S. Food and Drug Administration or any comparable regulator. Nothing here is intended to diagnose, treat, cure, or prevent any disease.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 4</small>Stop immediately and seek care</h3>
+      <div>
+        <p>Discontinue this protocol and seek prompt medical attention if you experience severe or persistent abdominal pain (particularly pain radiating to the back), persistent vomiting or inability to keep fluids down, signs of dehydration, blood in the stool or black tarry stools, no bowel movement for several days accompanied by pain or distension, fainting, chest pain, an irregular heartbeat, muscle weakness or cramping, confusion, or symptoms of low blood sugar. <strong>In an emergency, call your local emergency number.</strong></p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 5</small>No guarantee of results</h3>
+      <div>
+        <p>Individual results vary and depend on factors including but not limited to genetics, medical history, current medication, adherence, sleep, stress, hydration, activity, and baseline body composition. <strong>No specific result — including any change in weight, waist measurement, fluid retention, bloating, digestion, or appearance — is promised, guaranteed, or should be expected.</strong></p>
+        <p>Any changes described in this document over a seventy-two hour period relate primarily to body water, intestinal contents, and glycogen, and are <strong>not</strong> equivalent to a change in body fat. Such changes may be temporary and may reverse. Any testimonials, case examples, or before-and-after images used in connection with this product reflect the individual experiences of specific people, are not typical, and are not a promise or guarantee of the results you will obtain.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 6</small>Eating disorders and mental health</h3>
+      <div>
+        <p>This protocol is not appropriate for anyone with a current or past eating disorder, or for anyone experiencing significant distress about food, weight, or body image, except with the express approval and supervision of a qualified clinician. If you are struggling, please reach out for support:</p>
+        <ul>
+          <li><strong>United States</strong> — National Alliance for Eating Disorders Helpline: 1-866-662-1235. Crisis and suicide support: call or text 988.</li>
+          <li><strong>United Kingdom</strong> — Beat Eating Disorders Helpline: 0808 801 0677. Samaritans: 116 123.</li>
+          <li><strong>Elsewhere</strong> — contact your local emergency number or national mental health service.</li>
+        </ul>
+        <p>Contact details are provided in good faith and may change; verify current numbers with the relevant organisation.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 7</small>Assumption of risk and limitation of liability</h3>
+      <div>
+        <p>By using this document you acknowledge that any nutrition, hydration, breathing, cold-exposure, or physical activity carries inherent risk, and you voluntarily assume all such risk. You agree that you are solely responsible for your own health decisions and for obtaining medical clearance before beginning.</p>
+        <p>To the fullest extent permitted by law, <span class="placeholder">[LEGAL ENTITY NAME]</span> and its owners, officers, employees, contractors, and affiliates disclaim all warranties, express or implied, including any implied warranties of merchantability, fitness for a particular purpose, and non-infringement, and shall not be liable for any direct, indirect, incidental, consequential, special, or exemplary damages arising out of or related to your use of, or inability to use, this document — including any personal injury, illness, or loss. Where liability cannot lawfully be excluded, it is limited to the amount you paid for this document. Nothing in these terms excludes or limits liability for death or personal injury caused by negligence, for fraud, or for any other liability that cannot be excluded under applicable law. Some jurisdictions do not allow certain exclusions or limitations, so parts of this section may not apply to you.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 8</small>Intellectual property and licence</h3>
+      <div>
+        <p>© <span class="placeholder">[YEAR]</span> <span class="placeholder">[LEGAL ENTITY NAME]</span>. All rights reserved. "Coach Colin" and the associated shield device are trademarks of <span class="placeholder">[LEGAL ENTITY NAME]</span>.</p>
+        <p>Purchase grants a <strong>single-user, non-exclusive, non-transferable licence</strong> for your own personal, non-commercial use. You may not reproduce, resell, sublicense, distribute, publish, upload, share access to, or create derivative works from this document, in whole or in part, without prior written permission. You may not use it to coach, train, or advise third parties, whether paid or unpaid.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 9</small>Purchases, refunds and communications</h3>
+      <div>
+        <p>This is a digital product delivered immediately on purchase. Refund policy: <span class="placeholder">[STATE YOUR REFUND POLICY]</span>. Consumers in some jurisdictions have statutory cancellation rights for digital content, which may be waived on immediate delivery where the law permits; nothing here removes a right you hold under applicable consumer law.</p>
+        <p>Any coaching, review, or feedback offered in connection with this document is general wellness coaching and is <strong>not</strong> a licensed clinical, medical, psychological, or dietetic service. If you send progress reports, measurements, or photographs, you do so voluntarily; do not send information you consider medically sensitive. Data you submit is handled in accordance with our privacy policy at <span class="placeholder">[PRIVACY POLICY URL]</span>. Any affiliate relationships or paid endorsements relating to products mentioned are disclosed at <span class="placeholder">[DISCLOSURE URL]</span>.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 10</small>Interactive features</h3>
+      <div>
+        <p>The checklist and report-card tools in this document run entirely in your own browser and are provided for convenience only. Entries are not stored on a server by this page and may be lost if you close or reload it. They generate no medical assessment of any kind.</p>
+      </div>
+    </section>
+
+    <section>
+      <h3><small>§ 11</small>Governing law and severability</h3>
+      <div>
+        <p>These terms are governed by the laws of <span class="placeholder">[STATE / COUNTRY]</span>, without regard to conflict-of-law rules, and the courts of <span class="placeholder">[JURISDICTION]</span> shall have jurisdiction, subject to any mandatory rights you have under the law of your country of residence. If any provision is found unenforceable, the remainder stays in force. We may update these terms; the version in force is the one supplied with your copy.</p>
+        <p>Questions, corrections, or takedown requests: <span class="placeholder">[CONTACT EMAIL]</span> · <span class="placeholder">[BUSINESS ADDRESS]</span>.</p>
+      </div>
+    </section>
+
+    <div class="colophon">
+      <span>Coach Colin — The 72-Hour Deflate · v1.0</span>
+      <span>Educational use only · Not medical advice</span>
+      <span>© <span class="placeholder">[YEAR]</span> <span class="placeholder">[LEGAL ENTITY NAME]</span></span>
+    </div>
+  </div>
+</footer>
+
+</div><!-- /shell -->
+
+<script>
+(function(){
+  "use strict";
+
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------------------------------------------------
+     1. 3D gold-dust field — real perspective projection.
+        Scroll drives the camera forward through the field.
+     --------------------------------------------------------- */
+  var canvas = document.getElementById("dust");
+  if (canvas && !reduced) {
+    var ctx = canvas.getContext("2d");
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0, motes = [], FOV = 340, DEPTH = 900;
+
+    function resize(){
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function seed(){
+      var count = Math.min(210, Math.round((W * H) / 7200));
+      motes = [];
+      for (var i = 0; i < count; i++){
+        motes.push({
+          x: (Math.random() - 0.5) * 2200,
+          y: (Math.random() - 0.5) * 1600,
+          z: Math.random() * DEPTH,
+          r: 0.5 + Math.random() * 1.7,
+          drift: (Math.random() - 0.5) * 0.22,
+          tw: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    var camZ = 0, targetV = 0, curV = 0, lastY = window.scrollY;
+
+    function frame(){
+      // camera velocity eases toward scroll velocity, with a slow idle drift
+      curV += (targetV - curV) * 0.07;
+      targetV *= 0.9;
+      camZ += curV * 0.35 + 0.32;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "lighter";
+
+      var cx = W / 2, cy = H / 2;
+      for (var i = 0; i < motes.length; i++){
+        var m = motes[i];
+        var z = m.z - (camZ % DEPTH);
+        if (z < 1) z += DEPTH;
+        if (z > DEPTH) z -= DEPTH;
+
+        var k = FOV / (FOV + z);
+        var px = cx + (m.x + Math.sin((camZ + i * 40) * 0.002) * 40 * m.drift) * k;
+        var py = cy + m.y * k;
+        if (px < -40 || px > W + 40 || py < -40 || py > H + 40) continue;
+
+        m.tw += 0.012;
+        var depthFade = 1 - (z / DEPTH);
+        var a = Math.max(0, depthFade * depthFade) * (0.35 + 0.35 * Math.sin(m.tw)) * 0.85;
+        if (a <= 0.004) continue;
+
+        var rad = Math.max(0.35, m.r * k * 2.6);
+        var g = ctx.createRadialGradient(px, py, 0, px, py, rad * 4);
+        g.addColorStop(0, "rgba(255, 231, 160, " + a.toFixed(3) + ")");
+        g.addColorStop(0.4, "rgba(247, 201, 72, " + (a * 0.42).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(247, 201, 72, 0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(px, py, rad * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+      requestAnimationFrame(frame);
+    }
+
+    window.addEventListener("resize", function(){ resize(); seed(); }, { passive: true });
+    window.addEventListener("scroll", function(){
+      var d = window.scrollY - lastY;
+      lastY = window.scrollY;
+      targetV = Math.max(-26, Math.min(26, d));
+    }, { passive: true });
+
+    resize(); seed(); requestAnimationFrame(frame);
+  }
+
+  /* ---------------------------------------------------------
+     2. Badge — CSS 3D driven by scroll position and pointer.
+     --------------------------------------------------------- */
+  var badge = document.getElementById("badge");
+  if (badge && !reduced) {
+    var by = 0, bx = 0, tby = 0, tbx = 0, raf = null;
+
+    function tick(){
+      by += (tby - by) * 0.08;
+      bx += (tbx - bx) * 0.08;
+      badge.style.setProperty("--by", by.toFixed(2) + "deg");
+      badge.style.setProperty("--bx", bx.toFixed(2) + "deg");
+      if (Math.abs(tby - by) > 0.02 || Math.abs(tbx - bx) > 0.02) {
+        raf = requestAnimationFrame(tick);
+      } else { raf = null; }
+    }
+    function kick(){ if (!raf) raf = requestAnimationFrame(tick); }
+
+    window.addEventListener("scroll", function(){
+      var p = Math.min(1, window.scrollY / (window.innerHeight * 1.2));
+      tby = -30 + p * 46;
+      tbx = 6 - p * 20;
+      kick();
+    }, { passive: true });
+
+    window.addEventListener("pointermove", function(e){
+      if (window.scrollY > window.innerHeight) return;
+      var nx = (e.clientX / window.innerWidth) - 0.5;
+      var ny = (e.clientY / window.innerHeight) - 0.5;
+      tby = -30 + nx * 34;
+      tbx = 6 - ny * 22;
+      kick();
+    }, { passive: true });
+
+    tby = -18; tbx = 5; kick();
+  }
+
+  /* ---------------------------------------------------------
+     3. Scroll reveals + gauge fills.
+     --------------------------------------------------------- */
+  var risers = document.querySelectorAll(".rise");
+  if ("IntersectionObserver" in window && !reduced) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+    Array.prototype.forEach.call(risers, function(el){ io.observe(el); });
+
+    var gauge = document.getElementById("gauge");
+    if (gauge) {
+      var gio = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if (!en.isIntersecting) return;
+          var bars = en.target.querySelectorAll("[data-fill]");
+          Array.prototype.forEach.call(bars, function(b, i){
+            setTimeout(function(){ b.style.width = b.getAttribute("data-fill") + "%"; }, i * 130);
+          });
+          gio.unobserve(en.target);
+        });
+      }, { threshold: 0.35 });
+      gio.observe(gauge);
+    }
+  } else {
+    Array.prototype.forEach.call(risers, function(el){ el.classList.add("in"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-fill]"), function(b){
+      b.style.width = b.getAttribute("data-fill") + "%";
+    });
+  }
+
+  /* ---------------------------------------------------------
+     4. Progress rail.
+     --------------------------------------------------------- */
+  var dots = document.querySelectorAll(".rail__dot");
+  var railFill = document.getElementById("railFill");
+
+  Array.prototype.forEach.call(dots, function(d){
+    d.addEventListener("click", function(){
+      var t = document.getElementById(d.getAttribute("data-go"));
+      if (t) t.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    });
+  });
+
+  var sections = ["p1","p2","p3","p4","p5","legal"].map(function(id){ return document.getElementById(id); });
+
+  function onScroll(){
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - window.innerHeight;
+    var p = max > 0 ? window.scrollY / max : 0;
+    if (railFill) railFill.style.height = "calc((100% - 192px) * " + p.toFixed(4) + ")";
+
+    var mid = window.scrollY + window.innerHeight * 0.4;
+    var active = 0;
+    for (var i = 0; i < sections.length; i++){
+      if (sections[i] && sections[i].offsetTop <= mid) active = i;
+    }
+    Array.prototype.forEach.call(dots, function(d, i){
+      d.setAttribute("aria-current", i === active ? "true" : "false");
+    });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll, { passive: true });
+
+  /* ---------------------------------------------------------
+     5. Scorecard.
+     --------------------------------------------------------- */
+  var PLAN = [
+    { day: "Day one", tag: "Hours 0–24", note: "Baseline day",
+      items: [
+        ["Record baseline", "morning weight, waist at navel, front + side photo"],
+        ["Name your person", "tell one specific human you are running 72 hours"],
+        ["Write three if-then plans", "on paper, specific, before you need them"],
+        ["Clear the environment", "carbonation, gum, sugar alcohols out of the house"],
+        ["Three potassium foods", "spread across the day"],
+        ["Protein first at every meal", "then vegetables, starch last"],
+        ["Ninety-minute clean gaps", "nothing caloric between meals"],
+        ["Ten-minute walk after every meal", "non-negotiable"],
+        ["Five minutes of slow breathing", "before each meal"],
+        ["Four-hour finish line", "last calorie four hours before bed"],
+        ["Two kiwifruit in the evening", "or your agreed alternative"],
+        ["Bloat score 0–10", "logged before bed"]
+      ]},
+    { day: "Day two", tag: "Hours 24–48", note: "The day people quit",
+      items: [
+        ["Do not weigh yourself", "banned — this is the day the number lies"],
+        ["Fixed wake time", "within thirty minutes of yesterday"],
+        ["Daylight in the first half hour", "outside, no sunglasses, five minutes"],
+        ["Three potassium foods", "again"],
+        ["+5g fibre maximum", "soluble first, with extra water"],
+        ["Protein first at every meal", "sequence holds"],
+        ["Ninety-minute clean gaps", "the splash of milk counts"],
+        ["Ten-minute walk after every meal", "even if the food was perfect"],
+        ["Twenty-five chews, fork down", "one full meal minimum"],
+        ["Two minutes humming or gargling", "in the shower"],
+        ["Thirty seconds cold on the face", "evening"],
+        ["Four-hour finish line", "hold it"],
+        ["Bloat score 0–10", "logged before bed"]
+      ]},
+    { day: "Day three", tag: "Hours 48–72", note: "Finisher + report",
+      items: [
+        ["Fixed wake time", "third consecutive morning"],
+        ["Three potassium foods", "final day"],
+        ["Protein first at every meal", "sequence holds"],
+        ["Ninety-minute clean gaps", "final day"],
+        ["Ten-minute walk after every meal", "final day"],
+        ["Moderate carbohydrate at the last meal", "the cosmetic finisher"],
+        ["Four-hour finish line", "hold it"],
+        ["Zero alcohol across all three days", "confirm"],
+        ["Hour 72 measurements", "weight, waist, photos in identical conditions"],
+        ["Fill in the report card", "below"],
+        ["Send it to Coach Colin", "the protocol is not finished until you do"]
+      ]}
+  ];
+
+  var daysEl = document.getElementById("days");
+  var total = 0;
+
+  if (daysEl) {
+    PLAN.forEach(function(day, di){
+      var art = document.createElement("article");
+      art.className = "day rise";
+      art.style.setProperty("--d", (di * 70) + "ms");
+
+      var head = document.createElement("div");
+      head.className = "day__head";
+      var h4 = document.createElement("h4");
+      h4.textContent = day.day + " — " + day.note;
+      var em = document.createElement("em");
+      em.textContent = day.tag;
+      head.appendChild(h4); head.appendChild(em);
+      art.appendChild(head);
+
+      var ul = document.createElement("ul");
+      day.items.forEach(function(item, ii){
+        total++;
+        var li = document.createElement("li");
+        var label = document.createElement("label");
+        label.className = "check";
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = "d" + di + "i" + ii;
+        var span = document.createElement("span");
+        var b = document.createElement("b");
+        b.textContent = item[0];
+        span.appendChild(b);
+        span.appendChild(document.createTextNode(" — " + item[1]));
+        label.appendChild(input);
+        label.appendChild(span);
+        li.appendChild(label);
+        ul.appendChild(li);
+      });
+      art.appendChild(ul);
+      daysEl.appendChild(art);
+    });
+  }
+
+  var ringFill = document.getElementById("ringFill");
+  var ringPct = document.getElementById("ringPct");
+  var tallyCount = document.getElementById("tallyCount");
+  var CIRC = 2 * Math.PI * 52;
+
+  function updateTally(){
+    var boxes = document.querySelectorAll(".day input[type=checkbox]");
+    var done = 0;
+    Array.prototype.forEach.call(boxes, function(b){ if (b.checked) done++; });
+    var pct = total ? Math.round((done / total) * 100) : 0;
+    if (ringFill) ringFill.style.strokeDashoffset = String(CIRC * (1 - pct / 100));
+    if (ringPct) ringPct.textContent = pct + "%";
+    if (tallyCount) tallyCount.textContent = done + " / " + total + " actions";
+  }
+
+  if (daysEl) {
+    daysEl.addEventListener("change", function(e){
+      if (e.target && e.target.type === "checkbox") updateTally();
+    });
+  }
+  if (ringFill) { ringFill.setAttribute("stroke-dasharray", CIRC.toFixed(1)); ringFill.style.strokeDashoffset = String(CIRC); }
+  updateTally();
+
+  // late-built cards still need the reveal observer
+  if ("IntersectionObserver" in window && !reduced) {
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting){ en.target.classList.add("in"); io2.unobserve(en.target); }
+      });
+    }, { threshold: 0.05 });
+    Array.prototype.forEach.call(document.querySelectorAll(".day.rise"), function(el){ io2.observe(el); });
+  } else {
+    Array.prototype.forEach.call(document.querySelectorAll(".day.rise"), function(el){ el.classList.add("in"); });
+  }
+
+  /* ---------------------------------------------------------
+     6. Report card generator.
+     --------------------------------------------------------- */
+  function val(id, fallback){
+    var el = document.getElementById(id);
+    var v = el && el.value ? el.value.trim() : "";
+    return v || fallback;
+  }
+  function delta(a, b){
+    var x = parseFloat(a), y = parseFloat(b);
+    if (isNaN(x) || isNaN(y)) return null;
+    var d = y - x;
+    return (d > 0 ? "+" : "") + (Math.round(d * 10) / 10);
+  }
+
+  var genBtn = document.getElementById("genBtn");
+  var out = document.getElementById("rOut");
+
+  if (genBtn && out) {
+    genBtn.addEventListener("click", function(){
+      var boxes = document.querySelectorAll(".day input[type=checkbox]");
+      var done = 0;
+      Array.prototype.forEach.call(boxes, function(b){ if (b.checked) done++; });
+      var pct = total ? Math.round((done / total) * 100) : 0;
+
+      var w0 = val("rW0", "—"), w72 = val("rW72", "—");
+      var a0 = val("rWa0", "—"), a72 = val("rWa72", "—");
+      var dW = delta(w0, w72), dA = delta(a0, a72);
+
+      var lines = [
+        "COACH COLIN — 72-HOUR DEFLATE — REPORT CARD",
+        "-------------------------------------------",
+        "Name: " + val("rName", "—"),
+        "Compliance: " + pct + "% (" + done + " of " + total + " actions)",
+        "",
+        "Weight   " + w0 + "  ->  " + w72 + (dW !== null ? "   (" + dW + ")" : ""),
+        "Waist    " + a0 + "  ->  " + a72 + (dA !== null ? "   (" + dA + ")" : ""),
+        "Bloat    " + val("rBloat", "—"),
+        "Bowels   " + val("rBm", "—"),
+        "Fit      " + val("rFit", "—"),
+        "",
+        "Hardest rule to keep: " + val("rHard", "—"),
+        "",
+        "Photos: attached / not attached",
+        "Ready for day four? Tell me why."
+      ];
+      out.value = lines.join("\n");
+      out.scrollTop = 0;
+    });
+  }
+
+  var copyBtn = document.getElementById("copyBtn");
+  var copyMsg = document.getElementById("copyMsg");
+  if (copyBtn && out) {
+    copyBtn.addEventListener("click", function(){
+      out.removeAttribute("readonly");
+      out.focus();
+      out.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+      out.setAttribute("readonly", "readonly");
+
+      if (ok) {
+        if (copyMsg) copyMsg.textContent = "Copied — now send it.";
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(out.value).then(function(){
+          if (copyMsg) copyMsg.textContent = "Copied — now send it.";
+        })["catch"](function(){
+          if (copyMsg) copyMsg.textContent = "Select the text above and copy manually.";
+        });
+      } else if (copyMsg) {
+        copyMsg.textContent = "Select the text above and copy manually.";
+      }
+      setTimeout(function(){ if (copyMsg) copyMsg.textContent = ""; }, 4200);
+    });
+  }
+
+  onScroll();
+})();
+</script>
