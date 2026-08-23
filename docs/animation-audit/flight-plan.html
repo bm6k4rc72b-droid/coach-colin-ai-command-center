@@ -1,0 +1,1050 @@
+<title>Command Center Flight Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ============================================================
+   COMMAND CENTER FLIGHT PLAN
+   Single committed visual world: dark cockpit / holographic HUD.
+   Every colour painted explicitly so the page holds on any host ground.
+   ============================================================ */
+
+:root{
+  /* ground */
+  --void:#05060B;
+  --hull:#0C1020;
+  --hull-2:#11172B;
+  --line:#1E2740;
+  --line-hot:#2B3A63;
+
+  /* ink — blue-biased neutrals, chosen not inherited */
+  --ice:#E8EDFF;
+  --ice-2:#B9C4E4;
+  --dim:#7C88A8;
+  --dimmer:#4C5878;
+
+  /* holographic triad — used as gradients, almost never as flat fill */
+  --h1:#00F0FF;
+  --h2:#7B5CFF;
+  --h3:#FF4FD8;
+  --holo:linear-gradient(100deg,var(--h1),var(--h2),var(--h3),var(--ice),var(--h1),var(--h2),var(--h3),var(--h1));
+
+  /* single instrument accent */
+  --ember:#FF9A3C;
+
+  /* type */
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+
+  /* scroll telemetry, written by JS */
+  --sv:0;        /* scroll velocity, 0..1 */
+  --sp:0;        /* page progress, 0..1 */
+
+  --col:min(72rem,calc(100vw - 3rem));
+  --read:66ch;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--void);
+  color:var(--ice-2);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ---------- atmosphere ---------- */
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;pointer-events:none}
+.nebula{
+  position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(48rem 34rem at 18% 12%, color-mix(in oklab,var(--h2) 26%,transparent) 0%, transparent 62%),
+    radial-gradient(40rem 40rem at 84% 30%, color-mix(in oklab,var(--h1) 16%,transparent) 0%, transparent 60%),
+    radial-gradient(56rem 30rem at 60% 96%, color-mix(in oklab,var(--h3) 17%,transparent) 0%, transparent 64%);
+  filter:blur(28px);
+  opacity:.75;
+  mix-blend-mode:screen;
+}
+.vignette{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 42%, transparent 42%, rgba(3,4,9,.72) 100%);
+}
+.grain{
+  position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+
+/* ---------- persistent HUD chrome ---------- */
+.hud{position:fixed;inset:0;z-index:40;pointer-events:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer)}
+.hud .bracket{position:absolute;width:20px;height:20px;border:1px solid var(--line-hot)}
+.hud .tl{top:16px;left:16px;border-right:0;border-bottom:0}
+.hud .tr{top:16px;right:16px;border-left:0;border-bottom:0}
+.hud .bl{bottom:16px;left:16px;border-right:0;border-top:0}
+.hud .br{bottom:16px;right:16px;border-left:0;border-top:0}
+
+.statusbar{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:1.4rem;align-items:center;
+  padding:.42rem .95rem;
+  background:rgba(8,11,22,.94);
+  border:1px solid var(--line);
+  backdrop-filter:blur(10px);
+}
+.statusbar b{color:var(--ice-2);font-weight:500}
+.statusbar .live{color:var(--h1)}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ember);margin-right:.45rem;vertical-align:middle;animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.depthscale{position:absolute;left:18px;top:50%;transform:translateY(-50%);height:min(46vh,340px);width:34px;display:none}
+@media (min-width:1100px){.depthscale{display:block}}
+.depthscale .rail{position:absolute;left:6px;top:0;bottom:0;width:1px;background:linear-gradient(var(--line) 0%,var(--line-hot) 50%,var(--line) 100%)}
+.depthscale .tick{position:absolute;left:0;width:11px;height:1px;background:var(--line-hot)}
+.depthscale .head{position:absolute;left:1px;width:12px;height:12px;margin-top:-6px;border:1px solid var(--h1);background:rgba(0,240,255,.16);transition:none}
+.depthscale .head::after{content:"";position:absolute;inset:3px;background:var(--h1)}
+.depthscale .val{position:absolute;left:22px;white-space:nowrap;color:var(--h1);font-family:var(--mono);font-size:10px;letter-spacing:.1em;margin-top:-.55em}
+
+/* ---------- layout ---------- */
+.wrap{position:relative;z-index:10}
+.col{width:var(--col);margin-inline:auto}
+.prose{max-width:var(--read)}
+section{position:relative;padding-block:clamp(5rem,12vh,9rem)}
+
+/* ---------- type ---------- */
+h1,h2,h3{font-family:var(--display);color:var(--ice);text-wrap:balance;margin:0}
+h1{
+  font-variation-settings:"wdth" 118,"wght" 800;
+  font-size:clamp(2.7rem,8.4vw,6.4rem);
+  line-height:.92;letter-spacing:-.02em;text-transform:uppercase;
+}
+h2{
+  font-variation-settings:"wdth" 112,"wght" 750;
+  font-size:clamp(1.85rem,4.1vw,3rem);
+  line-height:1.02;letter-spacing:-.014em;text-transform:uppercase;
+}
+h3{
+  font-variation-settings:"wdth" 100,"wght" 650;
+  font-size:1.06rem;letter-spacing:.01em;
+}
+p{margin:0 0 1.05rem}
+p:last-child{margin-bottom:0}
+strong{color:var(--ice);font-weight:600}
+em{color:var(--ice);font-style:italic}
+a{color:var(--h1);text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--h1);outline-offset:3px}
+
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--dim);margin:0 0 .85rem;display:flex;align-items:center;gap:.7rem;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-hot),transparent)}
+
+.lede{font-size:clamp(1.05rem,1.9vw,1.3rem);line-height:1.55;color:var(--ice-2)}
+
+/* holographic text: gradient clipped to glyphs, drifting */
+.holo{
+  /* must be a single background box — an inline box fragments per line
+     and each fragment samples its own slice, flattening the gradient */
+  display:inline-block;
+  background:var(--holo);
+  background-size:200% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;
+  animation:drift 9s linear infinite;
+}
+@keyframes drift{to{background-position:200% 0}}
+
+/* Chromatic aberration, intensity driven by scroll velocity.
+   NOTE: must be drop-shadow, not text-shadow. A background-clip:text fill
+   paints in the background phase, so a text-shadow would paint on top of
+   the gradient and hide it. drop-shadow filters the rendered result. */
+.ca{
+  filter:
+    drop-shadow(calc(var(--sv) * -3px) 0 color-mix(in oklab,var(--h1) 85%,transparent))
+    drop-shadow(calc(var(--sv) *  3px) 0 color-mix(in oklab,var(--h3) 85%,transparent));
+}
+
+/* ---------- waypoint header ---------- */
+.waypoint{display:flex;align-items:baseline;gap:1.1rem;margin-bottom:1.5rem}
+.waypoint .no{
+  font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--h1);
+  border:1px solid var(--line-hot);padding:.2rem .5rem;flex:none;
+}
+
+/* ---------- panels ---------- */
+.panel{
+  position:relative;
+  background:linear-gradient(160deg,rgba(17,23,43,.82),rgba(8,11,22,.86));
+  border:1px solid var(--line);
+  padding:1.5rem 1.6rem;
+}
+.panel::before{
+  content:"";position:absolute;left:-1px;top:-1px;width:38px;height:1px;background:var(--holo);background-size:200% 100%;
+}
+.grid{display:grid;gap:1rem}
+@media (min-width:820px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+
+/* ---------- stages (live demos) ---------- */
+.stagewrap{position:relative;margin-block:2.2rem}
+.stage{
+  position:relative;overflow:hidden;
+  border:1px solid var(--line);
+  background:radial-gradient(120% 100% at 50% 100%, rgba(19,26,50,.6), rgba(5,6,11,.9));
+}
+.stage-label{
+  position:absolute;top:10px;left:12px;z-index:6;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ice-2);
+  background:rgba(5,6,11,.78);padding:.2rem .45rem;border:1px solid var(--line);
+}
+.caption{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--dim);margin-top:.7rem}
+
+/* 01 — flight spine */
+.spine{height:300vh;border:0;background:none;overflow:visible}
+.spine-view{
+  position:sticky;top:0;height:100vh;overflow:hidden;
+  perspective:900px;perspective-origin:50% 46%;
+  border-block:1px solid var(--line);
+  background:radial-gradient(90% 70% at 50% 50%, rgba(16,22,44,.5), rgba(4,5,10,.92));
+}
+.spine-3d{position:absolute;inset:0;transform-style:preserve-3d}
+.orb{
+  position:absolute;top:50%;left:50%;border-radius:50%;
+  transform-style:preserve-3d;will-change:transform,opacity;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), transparent 42%),
+    radial-gradient(circle at 50% 50%, var(--c1), var(--c2) 72%, #05060B 100%);
+  box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 0 70px -8px var(--c1);
+}
+.orb .ring{
+  position:absolute;inset:-26%;border-radius:50%;
+  border:1px solid color-mix(in oklab,var(--c1) 55%,transparent);
+  transform:rotateX(74deg);
+}
+.orb .tag{
+  position:absolute;left:106%;top:44%;white-space:nowrap;
+  opacity:var(--tagop,1);
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ice-2);
+}
+.orb .tag i{display:block;color:var(--dim);font-style:normal;font-size:9.5px;letter-spacing:.2em;margin-top:.15rem}
+.orb .tag::before{content:"";position:absolute;left:-14px;top:.55em;width:10px;height:1px;background:var(--c1)}
+
+.readout{
+  position:absolute;left:0;right:0;bottom:0;z-index:5;
+  display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  padding:.7rem 1rem;border-top:1px solid var(--line);
+  background:linear-gradient(rgba(5,6,11,0),rgba(5,6,11,.86));
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+}
+.readout b{color:var(--h1);font-weight:500}
+
+/* 02 — velocity */
+.velstage{height:min(58vh,420px)}
+#velcanvas{position:absolute;inset:0;width:100%;height:100%}
+.velmeter{
+  position:absolute;right:12px;top:12px;z-index:6;width:150px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+}
+.velmeter .bar{height:4px;background:var(--hull-2);border:1px solid var(--line);margin-top:.4rem;overflow:hidden}
+.velmeter .fill{height:100%;width:0%;background:var(--holo);background-size:200% 100%}
+
+/* 03 — constellation */
+.sysstage{height:min(76vh,620px);display:grid;place-items:center}
+.orbits{position:relative;width:min(96%,560px);aspect-ratio:1;transform:rotateX(58deg) rotateZ(0deg);transform-style:preserve-3d}
+.ring-o{position:absolute;inset:0;border:1px solid var(--line-hot);border-radius:50%;transform-style:preserve-3d}
+.ring-o::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid transparent;
+  background:conic-gradient(from 0deg, transparent 0 70%, color-mix(in oklab,var(--h1) 45%,transparent) 88%, transparent 100%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));
+          mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1px));}
+.node{
+  position:absolute;top:50%;left:50%;width:0;height:0;
+  transform-style:preserve-3d;
+}
+.node .body{
+  position:absolute;width:var(--d);height:var(--d);margin:calc(var(--d)/-2) 0 0 calc(var(--d)/-2);
+  border-radius:50%;transform:rotateX(-58deg);
+  background:radial-gradient(circle at 34% 30%, rgba(255,255,255,.6), transparent 44%),
+             radial-gradient(circle at 50% 50%, var(--c1), var(--c2) 76%, #06070E 100%);
+  box-shadow:0 0 34px -6px var(--c1);
+  cursor:pointer;
+}
+.node .lab{
+  position:absolute;left:calc(var(--d)/2 + 10px);top:0;transform:rotateX(-58deg) translateY(-50%);
+  transform-origin:left center;white-space:nowrap;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ice-2);
+  opacity:.55;transition:opacity .25s;pointer-events:none;
+}
+.node:hover .lab,.node:focus-within .lab{opacity:1}
+.core{
+  position:absolute;top:50%;left:50%;width:78px;height:78px;margin:-39px 0 0 -39px;border-radius:50%;
+  transform:rotateX(-58deg);
+  background:radial-gradient(circle,#fff 0%,var(--h1) 26%,var(--h2) 62%,transparent 76%);
+  filter:blur(1px);
+}
+.sysinfo{
+  position:absolute;left:14px;bottom:52px;z-index:6;max-width:min(94%,330px);
+  font-family:var(--mono);font-size:11.5px;line-height:1.6;color:var(--ice-2);
+  border-left:1px solid var(--h1);padding-left:.75rem;
+}
+.sysinfo b{display:block;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ice);margin-bottom:.2rem}
+.sysinfo span{color:var(--dim)}
+
+/* 04 — material lab */
+.matgrid{display:grid;gap:1rem}
+@media (min-width:760px){.matgrid{grid-template-columns:1fr 1fr}}
+.chip{
+  position:relative;overflow:hidden;min-height:150px;padding:1.1rem;
+  border:1px solid var(--line);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ice-2);
+}
+.chip small{display:block;color:var(--ice-2);letter-spacing:.14em;margin-top:.25rem;text-transform:none;font-size:10px;opacity:.9}
+.chip .fx{position:absolute;inset:0;z-index:0}
+.chip .scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(transparent 38%, rgba(4,5,10,.62) 74%, rgba(4,5,10,.9) 100%)}
+.chip .cap{position:relative;z-index:2;display:block;text-shadow:0 1px 6px rgba(3,4,9,.85)}
+
+/* fresnel / iridescent sheet, follows pointer */
+.fx-fresnel{
+  background:
+    radial-gradient(120% 120% at calc(var(--mx,50%)) calc(var(--my,50%)),
+      color-mix(in oklab,var(--h1) 72%,transparent) 0%,
+      color-mix(in oklab,var(--h2) 62%,transparent) 34%,
+      color-mix(in oklab,var(--h3) 52%,transparent) 58%,
+      transparent 78%),
+    linear-gradient(160deg,#0A0E1C,#141B33);
+  mix-blend-mode:screen;
+}
+/* diffraction: fine ruling that splits light */
+.fx-diffract{
+  background:
+    repeating-linear-gradient(calc(var(--ang,120)*1deg),
+      color-mix(in oklab,var(--h1) 42%,transparent) 0 2px,
+      color-mix(in oklab,var(--h2) 34%,transparent) 2px 4px,
+      color-mix(in oklab,var(--h3) 30%,transparent) 4px 6px,
+      transparent 6px 13px),
+    #0A0E1C;
+  mix-blend-mode:screen;opacity:.62;
+}
+/* scanline glass */
+.fx-glass{
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
+    linear-gradient(140deg, color-mix(in oklab,var(--h2) 34%,transparent), color-mix(in oklab,var(--h1) 20%,transparent) 60%, transparent),
+    #0A0E1C;
+}
+/* thin-film oil slick */
+.fx-film{
+  background:conic-gradient(from calc(var(--ang,0)*1deg) at 40% 55%,
+    var(--h1),var(--h2),var(--h3),var(--ember),var(--h1));
+  filter:blur(14px) saturate(1.3);opacity:.72;
+}
+
+/* ---------- code ---------- */
+pre{
+  margin:1.1rem 0 0;padding:1rem 1.1rem;overflow-x:auto;
+  background:#070A14;border:1px solid var(--line);
+  font-family:var(--mono);font-size:12.5px;line-height:1.62;color:var(--ice-2);
+}
+pre .c{color:var(--dimmer)}
+pre .k{color:var(--h3)}
+pre .s{color:var(--h1)}
+pre .n{color:var(--ember)}
+code{font-family:var(--mono);font-size:.88em;color:var(--h1);background:rgba(0,240,255,.07);padding:.08em .32em;border:1px solid rgba(0,240,255,.14)}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:inherit}
+
+/* ---------- lists ---------- */
+ul.spec{list-style:none;margin:1.1rem 0 0;padding:0;display:grid;gap:.75rem}
+ul.spec li{position:relative;padding-left:1.5rem}
+ul.spec li::before{content:"";position:absolute;left:0;top:.62em;width:8px;height:1px;background:var(--h1)}
+ul.spec b{color:var(--ice)}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;margin-top:1.2rem;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:14px}
+th,td{text-align:left;padding:.7rem .9rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);background:#080B16}
+td b{color:var(--ice)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--h1);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+
+/* ---------- note ---------- */
+.note{
+  border:1px solid var(--line-hot);border-left:2px solid var(--ember);
+  background:rgba(255,154,60,.045);padding:1.1rem 1.3rem;
+}
+.note .eyebrow{color:var(--ember)}
+.note .eyebrow::after{background:linear-gradient(90deg,rgba(255,154,60,.4),transparent)}
+
+/* ---------- hero ---------- */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-block:7rem 4rem}
+.hero .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin-bottom:1.6rem}
+.hero h1{margin-bottom:1.4rem}
+.scrollcue{margin-top:3rem;display:flex;align-items:center;gap:.8rem;font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+.scrollcue .track{width:64px;height:1px;background:var(--line-hot);position:relative;overflow:hidden}
+.scrollcue .track::after{content:"";position:absolute;top:0;left:-40%;width:40%;height:1px;background:var(--h1);animation:sweep 2.4s ease-in-out infinite}
+@keyframes sweep{to{left:100%}}
+
+/* reveal on enter */
+.rise{opacity:0;transform:translateY(22px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rise.in{opacity:1;transform:none}
+
+footer{border-top:1px solid var(--line);padding-block:3rem 4rem;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dimmer)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .rise{opacity:1;transform:none}
+  .spine{height:auto}
+  .spine-view{position:relative;height:min(70vh,520px)}
+}
+</style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="nebula" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="hud" aria-hidden="true">
+  <div class="bracket tl"></div><div class="bracket tr"></div>
+  <div class="bracket bl"></div><div class="bracket br"></div>
+  <div class="statusbar">
+    <span><span class="dot"></span>Flight plan</span>
+    <span>Route <b>CC-01</b></span>
+    <span>V <b id="hud-v">0.00</b></span>
+    <span class="live" id="hud-wp">WP 00</span>
+  </div>
+  <div class="depthscale">
+    <div class="rail"></div>
+    <div class="tick" style="top:0%"></div><div class="tick" style="top:25%"></div>
+    <div class="tick" style="top:50%"></div><div class="tick" style="top:75%"></div>
+    <div class="tick" style="top:100%"></div>
+    <div class="head" id="depth-head" style="top:0%"></div>
+    <div class="val" id="depth-val" style="top:0%">0.00 AU</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ HERO ============ -->
+<header class="hero col">
+  <div class="kicker">Animation &amp; interaction audit — coach colin ai command center</div>
+  <h1><span class="holo ca" id="scramble">Stop building a website.<br>Build a vessel.</span></h1>
+  <p class="lede prose">You asked how to make this feel like nothing anyone has seen — a journey through space where every agent category is its own world, in holographic colour, with the authority of someone who was doing this before it had a name. Here is the flight plan. Every technique below is running live on this page, so you can feel it before you fund it.</p>
+  <div class="scrollcue"><span class="track"></span> Scroll to depart</div>
+</header>
+
+<!-- ============ 00 PRE-FLIGHT ============ -->
+<section class="col rise">
+  <div class="note prose">
+    <p class="eyebrow">00 — Pre-flight, read this first</p>
+    <p><strong>I could not open your live site.</strong> This session's network policy blocks <code>dynamic-axolotl-24629f.netlify.app</code> at the egress proxy (403 on CONNECT), and this repo currently holds only a README — no site source has been committed yet. So this is <em>not</em> a line-by-line audit of what you have built. It is a direction and an implementation spec for what you asked to build, and it is worth more to you than a critique of a hero section.</p>
+    <p>To get the specific audit too, do any one of these: commit the site source to this repo and I will read it directly; paste the page's HTML/JS here; or have the domain allow-listed for this environment. Then I will diff what exists against everything below.</p>
+  </div>
+</section>
+
+<!-- ============ 01 THE SPINE ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">01</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">The spine</p>
+      <h2>One camera. No sections.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>The single biggest reason "space scroll" sites feel derivative is that they are still <em>pages</em> wearing a space costume. A hero, then a card grid, then a testimonial band — each with its own little scroll-triggered fade. The starfield is wallpaper behind a normal website.</p>
+    <p>Invert it. There is <strong>one continuous camera path</strong> from the first pixel to the last, and content is not stacked on it — content is <em>positioned in the world the camera is flying through</em>. Scrolling does not advance a page; it advances your position along a route. Sections stop existing. Waypoints replace them.</p>
+    <p>That single decision is what people mean when they say a site "felt different." Everything else here is detail. Below, six of your agent categories are placed at real z-depths and the scroll flies you past them.</p>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage spine" id="spine">
+      <div class="spine-view">
+        <span class="stage-label">Live — waypoint transit</span>
+        <div class="spine-3d" id="spine3d"></div>
+        <div class="readout">
+          <span>Heading <b>014.7</b></span>
+          <span>Range <b id="sp-range">4000</b> km</span>
+          <span>Next <b id="sp-next">VOX</b></span>
+          <span>Transit <b id="sp-pct">0%</b></span>
+        </div>
+      </div>
+    </div>
+    <p class="caption">CSS 3D, one <code>perspective</code> container, six children on a shared z-axis. No library. ~60 lines.</p>
+  </div>
+
+  <div class="prose">
+    <h3>Why this beats a normal parallax stack</h3>
+    <ul class="spec">
+      <li><b>Depth is real, not faked.</b> Elements have genuine z positions in one perspective space, so occlusion, scale, and blur all fall out of the geometry for free. Layered 2D parallax always betrays itself at the edges.</li>
+      <li><b>The route is memorable.</b> People remember spatial sequences far better than page order. "The one after the magenta planet" is a thing a person can actually recall.</li>
+      <li><b>It is reversible with meaning.</b> Scrolling up is not undoing an animation, it is flying back. That is why it does not feel cheap on the second pass.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 02 VELOCITY ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">02</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">Velocity</p>
+      <h2>Make the scroll itself an instrument.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>Here is the actual answer to "how do I make the scrolling animation more unique," and almost nobody does it: <strong>stop treating scroll as a position and start treating it as a velocity.</strong></p>
+    <p>Every ScrollTrigger site on the internet maps <em>progress</em> — 0 to 1 through a section — onto an animation timeline. Scrub. That is the whole genre, and it is why they all feel the same: the site responds to <em>where</em> you are, never to <em>how you are moving</em>.</p>
+    <p>Velocity-reactive scroll means the interface responds to your hand. Flick hard and the stars streak into warp, type smears with chromatic aberration, the HUD destabilises. Ease off and everything settles. The site is suddenly a physical object with mass. Scroll fast in the panel below — the whole page reacts too, including this text.</p>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage velstage">
+      <span class="stage-label">Live — velocity → warp</span>
+      <canvas id="velcanvas"></canvas>
+      <div class="velmeter">
+        Scroll velocity
+        <div class="bar"><div class="fill" id="velfill"></div></div>
+        <div style="margin-top:.35rem;color:var(--h1)" id="velnum">0.00 c</div>
+      </div>
+    </div>
+    <p class="caption">Streak length, star density, and aberration are all functions of |dy/dt|, smoothed with a critically-damped spring.</p>
+  </div>
+
+  <div class="prose">
+    <p>The implementation is small. One rAF loop, one smoothed value, published as a CSS custom property so <em>any</em> element can subscribe without JavaScript:</p>
+<pre><code><span class="c">// one loop, one number, the whole page subscribes</span>
+<span class="k">let</span> last = scrollY, v = <span class="n">0</span>, smooth = <span class="n">0</span>;
+
+<span class="k">function</span> frame(){
+  <span class="k">const</span> y = scrollY;
+  v = (y - last); last = y;
+
+  <span class="c">// critically-damped smoothing — no jitter, no lag</span>
+  smooth += (Math.min(Math.abs(v) / <span class="n">55</span>, <span class="n">1</span>) - smooth) * <span class="n">0.12</span>;
+
+  document.documentElement.style.setProperty(<span class="s">'--sv'</span>, smooth.toFixed(<span class="n">3</span>));
+  requestAnimationFrame(frame);
+}
+frame();</code></pre>
+<pre><code><span class="c">/* now anything can react, in pure CSS */</span>
+.headline {
+  <span class="c">/* drop-shadow, NOT text-shadow: if the headline is filled with a</span>
+  <span class="c">   background-clip:text gradient, a text-shadow paints over it and</span>
+  <span class="c">   hides the gradient completely. Cost me twenty minutes. */</span>
+  filter:
+    drop-shadow(calc(<span class="k">var</span>(--sv) * -<span class="n">3px</span>) <span class="n">0</span> <span class="s">#00F0FF</span>)
+    drop-shadow(calc(<span class="k">var</span>(--sv) *  <span class="n">3px</span>) <span class="n">0</span> <span class="s">#FF4FD8</span>);
+  letter-spacing: calc(<span class="n">-0.02em</span> + <span class="k">var</span>(--sv) * <span class="n">0.03em</span>);
+}
+.hull { filter: blur(calc(<span class="k">var</span>(--sv) * <span class="n">1.5px</span>)); }</code></pre>
+
+    <h3>Three more scroll mechanics worth stealing</h3>
+    <ul class="spec">
+      <li><b>Soft gravity wells.</b> As you approach a waypoint, scroll decelerates slightly — the planet's mass pulling you in — then releases as you pass. Crucially this is <em>damping, not snapping</em>: never take the scroll away from the user. Scroll-jacking is the one thing that will make this feel amateur instead of expensive.</li>
+      <li><b>Direction-aware narrative.</b> Flying outbound, each world introduces itself. Flying back inbound, it shows its result instead — the metric, the outcome. Same geometry, different payload. Nobody does this, and it doubles the reason to scroll up.</li>
+      <li><b>Persistent coordinates.</b> The depth scale on the left of this page, and the status bar at the top, never leave. A journey needs a position indicator or it is just drifting. This is also your accessibility escape hatch: it doubles as a jump-to-waypoint nav.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 03 THE SYSTEM ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">03</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">The system</p>
+      <h2>Every agent category is a world.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>You have this instinct right, but make it structural rather than decorative. A planet per category only works if the <em>planet's properties encode the category's properties</em>. Otherwise they are just round buttons.</p>
+    <p>Bind the data to the geometry: <strong>orbital radius = how close that agent sits to the client</strong> (voice reception is innermost, it answers the phone; analytics is outermost, it observes everything). <strong>Size = workload handled.</strong> <strong>Moons = individual workflows inside that agent.</strong> <strong>Orbital speed = how often it runs.</strong> Now the map is a dashboard. It <em>tells the truth</em>, and it will keep telling the truth as you add agents.</p>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage sysstage" id="sysstage">
+      <span class="stage-label">Live — system map</span>
+      <div class="orbits" id="orbits"><div class="core"></div></div>
+      <div class="sysinfo" id="sysinfo"><b>Select a world</b><span>Hover or focus a body to read its telemetry. Radius encodes proximity to the client; diameter encodes volume.</span></div>
+    </div>
+    <p class="caption">Hover any body. In production these are also the site's navigation — clicking one flies the camera to that waypoint.</p>
+  </div>
+
+  <div class="prose">
+    <h3>The ship layer</h3>
+    <p>Planets are categories. <strong>Ships are the things that move between them</strong> — and that is your best unused idea. A workflow that hands off from the voice receptionist to the CRM agent is literally a vessel travelling between two worlds. Render live handoffs as small craft on transit arcs. When a real workflow fires, a real ship launches.</p>
+    <p>That is the moment the site stops being a brochure and becomes a <em>command center</em>, which is what you named the repo. A visitor watching actual traffic move between actual agents is the single most persuasive thing you could put on this page. It is also the hardest to fake, which is exactly why it lands.</p>
+  </div>
+</section>
+
+<!-- ============ 04 MATERIAL ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">04</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">Material</p>
+      <h2>Holographic is a behaviour, not a gradient.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>Most "holographic" sites paste a static purple-to-cyan gradient on a card and stop. That reads as a 2019 Dribbble shot. Real iridescence has one defining property: <strong>the colour changes with the viewing angle.</strong> Nothing on a flat gradient changes when you move, so your eye instantly files it as printed, not lit.</p>
+    <p>So make angle an input. Pointer position, scroll velocity, and device tilt all drive the hue. Move your cursor across these four materials — each is a different physical model, all in pure CSS:</p>
+  </div>
+
+  <div class="matgrid stagewrap" id="matlab">
+    <div class="chip"><span class="fx fx-fresnel"></span><span class="scrim"></span><span class="cap">Fresnel sheet<small>Rim brightens away from the light. Use for panels and cards.</small></span></div>
+    <div class="chip"><span class="fx fx-diffract"></span><span class="scrim"></span><span class="cap">Diffraction ruling<small>Fine parallel lines split light. Use for dividers and edges.</small></span></div>
+    <div class="chip"><span class="fx fx-glass"></span><span class="scrim"></span><span class="cap">Scanned glass<small>Scanlines + tint. Use for readouts and data surfaces.</small></span></div>
+    <div class="chip"><span class="fx fx-film"></span><span class="scrim"></span><span class="cap">Thin film<small>Oil-slick conic bleed. Use once, large, as an accent.</small></span></div>
+  </div>
+
+  <div class="prose">
+    <p>The mechanic is three lines: publish pointer position as custom properties, then let the gradient's origin follow it.</p>
+<pre><code>el.addEventListener(<span class="s">'pointermove'</span>, e =&gt; {
+  <span class="k">const</span> r = el.getBoundingClientRect();
+  el.style.setProperty(<span class="s">'--mx'</span>, ((e.clientX - r.left) / r.width  * <span class="n">100</span>) + <span class="s">'%'</span>);
+  el.style.setProperty(<span class="s">'--my'</span>, ((e.clientY - r.top ) / r.height * <span class="n">100</span>) + <span class="s">'%'</span>);
+});</code></pre>
+<pre><code>.panel::before {
+  background: radial-gradient(<span class="n">120%</span> <span class="n">120%</span> <span class="k">at</span> <span class="k">var</span>(--mx) <span class="k">var</span>(--my),
+    <span class="s">#00F0FF</span> <span class="n">0%</span>, <span class="s">#7B5CFF</span> <span class="n">34%</span>, <span class="s">#FF4FD8</span> <span class="n">58%</span>, transparent <span class="n">78%</span>);
+  mix-blend-mode: screen;   <span class="c">/* this is the whole trick */</span>
+}</code></pre>
+
+    <h3>Palette discipline — the part that will save you</h3>
+    <p>Holographic goes wrong when everything is holographic. The rule that keeps it looking expensive instead of like a gamer keyboard:</p>
+    <ul class="spec">
+      <li><b>One deep, blue-biased ground.</b> Not black — <code>#05060B</code>. Pure black kills the bloom that makes cyan glow.</li>
+      <li><b>Iridescence only on edges, text, and light.</b> Never on large flat fills. A 1px holographic hairline reads as precision-engineered; a holographic background reads as a screensaver.</li>
+      <li><b>Exactly one non-spectrum accent.</b> Here it is amber <code>#FF9A3C</code>. It is the only warm thing on the page, so it means "attention" without a single word. Semantic colour must sit outside your spectrum or it stops being readable as a signal.</li>
+      <li><b>Text stays near-white with a blue bias</b> (<code>#E8EDFF</code>). Coloured body copy is the fastest way to look cheap. Let the chrome be spectral; keep the words clean.</li>
+    </ul>
+
+    <h3>If you want the real thing: one shader</h3>
+    <p>CSS gets you 80% of the way. The last 20% — volumetric nebula, actual light scattering, planets with atmospheres — is one WebGL fullscreen quad behind everything. It costs about 40 lines of GLSL and one <code>&lt;canvas&gt;</code>, and it is the difference between "nice CSS" and "how did they do that."</p>
+<pre><code><span class="c">// fragment shader — iridescent nebula, drives the whole background</span>
+<span class="k">vec3</span> iridescence(<span class="k">float</span> t){          <span class="c">// thin-film approximation</span>
+  <span class="k">return</span> <span class="n">0.5</span> + <span class="n">0.5</span>*cos(<span class="n">6.28318</span>*(t + <span class="k">vec3</span>(<span class="n">0.0</span>, <span class="n">0.33</span>, <span class="n">0.67</span>)));
+}
+<span class="k">void</span> main(){
+  <span class="k">vec2</span> uv = (gl_FragCoord.xy - <span class="n">0.5</span>*uRes) / uRes.y;
+  <span class="k">float</span> d  = fbm(uv*<span class="n">2.2</span> + uTime*<span class="n">0.03</span> + uScroll*<span class="n">0.5</span>);   <span class="c">// scroll drives the flow</span>
+  <span class="k">vec3</span>  col = iridescence(d + uVelocity*<span class="n">0.25</span>) * pow(d, <span class="n">2.0</span>);
+  gl_FragColor = <span class="k">vec4</span>(col, <span class="n">1.0</span>);
+}</code></pre>
+    <p class="caption" style="margin-top:.8rem">Note <code>uScroll</code> and <code>uVelocity</code> as uniforms — the shader is wired to the same telemetry as everything else. One source of truth for motion across the entire site.</p>
+  </div>
+</section>
+
+<!-- ============ 05 AUTHORITY ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">05</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">Authority</p>
+      <h2>How "from the future" is actually signalled.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>One honest note before the technique, because it will make the site better: <strong>do not position yourself as a clone of anyone.</strong> The aesthetic you are reaching for is real and I will spec it below — but "I'm like Elon Musk" is a comparison that puts you second. "I was building AI agents before there was a job title for it" puts you first, and it is a claim only you can make. Take the aerospace <em>visual language</em>; keep your own name on the door.</p>
+    <p>Now the mechanics. The reason SpaceX, Anduril, and mission-control interfaces read as "future" is not that they are flashy. It is the opposite — they are <strong>instrumented</strong>. Four rules produce the entire effect:</p>
+    <ul class="spec">
+      <li><b>Everything is measured.</b> A future interface never says "fast." It says <code>142ms</code>. Replace every adjective on your site with a number. "Handles lots of calls" → <code>1,204 calls routed · 0 missed · 11 mo</code>. This is also just better marketing.</li>
+      <li><b>Monospace for data, never for prose.</b> Numbers, labels, coordinates, statuses in <code>IBM Plex Mono</code>. Sentences in a humanist sans. The <em>contrast</em> between the two is the signal — a page set entirely in mono reads as a 1980s terminal, which is the past, not the future.</li>
+      <li><b>Restraint is the flex.</b> Amateur futurism is loud: glows, beeps, everything pulsing. Real operator interfaces are calm and dark, with one thing bright because it needs your attention. Spend your entire animation budget on <em>one</em> orchestrated moment — the departure sequence — and keep the rest still.</li>
+      <li><b>It responds like hardware.</b> Weight, inertia, damping. Nothing linear, nothing bouncy. Ease with a long tail (<code>cubic-bezier(.2,.7,.2,1)</code>) reads as mass; <code>ease-in-out</code> reads as PowerPoint.</li>
+    </ul>
+
+    <h3>The one orchestrated moment: cold start</h3>
+    <p>Give the site a <strong>boot sequence</strong> — 1.4 seconds, once per session, stored in <code>sessionStorage</code> so returning visitors skip it. Systems come online in sequence, telemetry begins streaming, the hull lights, then the camera pushes forward and you are moving. It costs almost nothing and it is the single highest-return animation on the whole site, because it establishes the fiction before the visitor has decided what kind of page this is.</p>
+    <p>Pair it with a <strong>decrypt-in</strong> for the headline — glyphs resolving from noise, like a signal locking. Two effects, one moment, then the page goes quiet and lets you read. That restraint <em>is</em> the sophistication.</p>
+
+    <h3>Copy that carries the same voice</h3>
+    <div class="grid g2" style="margin-top:1.1rem">
+      <div class="panel">
+        <p class="eyebrow" style="color:var(--dimmer)">Generic</p>
+        <p style="margin:0;color:var(--dim)">"I help businesses leverage AI to unlock their potential and transform their workflows."</p>
+      </div>
+      <div class="panel">
+        <p class="eyebrow" style="color:var(--h1)">Instrumented</p>
+        <p style="margin:0;color:var(--ice)">"Six agents. One command center. Your phone gets answered at 3am by something I built, and you find out about it in the morning."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FLIGHT ENVELOPE ============ -->
+<section class="col rise">
+  <div class="waypoint">
+    <span class="no">06</span>
+    <div style="flex:1">
+      <p class="eyebrow" style="margin-bottom:.45rem">Flight envelope</p>
+      <h2>What it costs, and what will break it.</h2>
+    </div>
+  </div>
+  <div class="prose">
+    <p>Ambitious motion work fails in three predictable ways: it is slow on phones, it makes people motion-sick, and it takes so long to build that it never ships. Budget for all three from day one.</p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Constraint</th><th>Target</th><th>How you hold it</th></tr></thead>
+      <tbody>
+        <tr><td><b>Frame budget</b></td><td class="num">≤ 8ms</td><td>Animate only <code>transform</code>, <code>opacity</code>, and custom properties. One rAF loop for the whole site — never one per component. Nothing that triggers layout, ever.</td></tr>
+        <tr><td><b>Mobile tier</b></td><td class="num">≤ 30 bodies</td><td>Detect <code>deviceMemory</code> and pointer type; drop the shader to a static gradient, halve the star count, disable the ship layer. The route survives; the fidelity scales.</td></tr>
+        <tr><td><b>First paint</b></td><td class="num">&lt; 1.5s</td><td>Boot sequence covers the shader compile. Fonts <code>display:swap</code>. Nothing in the critical path waits on WebGL.</td></tr>
+        <tr><td><b>Vestibular safety</b></td><td class="num">Non-negotiable</td><td><code>prefers-reduced-motion</code> collapses the flight into a clean vertical document with the same content. This is a legal accessibility requirement in several markets, and it is <em>already implemented on this page</em> — turn it on and reload.</td></tr>
+        <tr><td><b>Scroll ownership</b></td><td class="num">100% user</td><td>Damping, never hijacking. No forced snap, no locked scroll, no "scroll to continue" gates. The moment a visitor feels the scrollbar fighting them, the magic becomes an irritation.</td></tr>
+        <tr><td><b>SEO / no-JS</b></td><td class="num">Full content</td><td>All copy in the DOM as real semantic HTML behind the canvas layers — as it is here. The 3D is an enhancement over a readable document, not a replacement for one.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose" style="margin-top:2.4rem">
+    <h3>Build order</h3>
+    <p>Ship in this sequence — each stage is independently launchable, so you are never sitting on an unreleasable branch:</p>
+    <ul class="spec">
+      <li><b>Stage 1 — The telemetry bus.</b> One rAF loop publishing <code>--sp</code> and <code>--sv</code>. Half a day. Everything else plugs into it, so build it first and build it once.</li>
+      <li><b>Stage 2 — The spine.</b> CSS 3D waypoint transit, real content placed in depth, persistent HUD and depth scale. This alone is already a site nobody else has.</li>
+      <li><b>Stage 3 — Material pass.</b> Pointer-reactive iridescence, the palette discipline above, mono/sans split, every adjective replaced with a number.</li>
+      <li><b>Stage 4 — The system map.</b> Data-bound orbits doubling as navigation. Requires you to actually define the six agents' metrics — which is useful work regardless.</li>
+      <li><b>Stage 5 — The shader.</b> WebGL nebula on the same telemetry bus, with the CSS gradient as fallback.</li>
+      <li><b>Stage 6 — Live ships.</b> Real workflow handoffs rendered as transit craft. The closer. Do not start here, however tempting.</li>
+    </ul>
+    <p style="margin-top:1.5rem">Stages 1 and 2 are where essentially all of the "never seen before" perception comes from. Stages 5 and 6 are what make it undeniable. Stage 3 is what keeps it from looking like a demo.</p>
+  </div>
+</section>
+
+<footer class="col">
+  End of flight plan · Route CC-01 · Six waypoints · Live techniques: CSS 3D transit, velocity telemetry, pointer-reactive iridescence, data-bound orbital map
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const R = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+  const lerp  = (a,b,t)=>a+(b-a)*t;
+  const root  = document.documentElement;
+
+  /* ---------- agent categories: the real content ---------- */
+  const WORLDS = [
+    {code:"VOX",   name:"Voice Reception",     desc:"Answers, qualifies, books. Innermost orbit — it touches the client first.",
+     c1:"#00F0FF", c2:"#0B5C8A", r:0.30, d:26, spd:1.00, size:120},
+    {code:"HAIL",  name:"Lead Capture",        desc:"Inbound routing and enrichment. Fires on every new signal.",
+     c1:"#54C8FF", c2:"#1A4A9E", r:0.44, d:20, spd:0.74, size:88},
+    {code:"FORGE", name:"Content Engine",      desc:"Drafts, repurposes, schedules. Highest volume, lowest urgency.",
+     c1:"#7B5CFF", c2:"#2B1E7A", r:0.58, d:32, spd:0.55, size:150},
+    {code:"GATE",  name:"Client Onboarding",   desc:"Intake, contracts, first-90-days sequence. Runs per client.",
+     c1:"#B95CFF", c2:"#4A1C7A", r:0.72, d:18, spd:0.41, size:76},
+    {code:"ARCH",  name:"Knowledge Archive",   desc:"Shared memory. Every other agent reads from this one.",
+     c1:"#FF4FD8", c2:"#7A1050", r:0.86, d:24, spd:0.30, size:108},
+    {code:"OBS",   name:"Observatory",         desc:"Analytics and alerting. Outermost — it watches the whole system.",
+     c1:"#FF9A3C", c2:"#8A3A08", r:1.00, d:16, spd:0.22, size:70}
+  ];
+
+  /* ============ shared telemetry bus ============ */
+  let lastY = window.scrollY, sv = 0, svRaw = 0, t0 = performance.now();
+
+  /* ============ 01 — flight spine ============ */
+  const spine3d = document.getElementById("spine3d");
+  const SPACING = 900, NEAR = -900, TRAVEL = SPACING * WORLDS.length;
+  const orbs = WORLDS.map(function(w,i){
+    const el = document.createElement("div");
+    el.className = "orb";
+    el.style.setProperty("--c1", w.c1);
+    el.style.setProperty("--c2", w.c2);
+    el.style.width = w.size + "px";
+    el.style.height = w.size + "px";
+    el.style.marginLeft = (-w.size/2) + "px";
+    el.style.marginTop  = (-w.size/2) + "px";
+    el.innerHTML = '<span class="ring"></span><span class="tag">'+w.code+'<i>'+w.name+'</i></span>';
+    spine3d.appendChild(el);
+    const ang = (i/WORLDS.length)*Math.PI*2 + 0.7;
+    return {el:el, x:Math.cos(ang)*(250+i*30), y:Math.sin(ang)*(130+(i%3)*40), z0:NEAR - i*SPACING, w:w};
+  });
+
+  const spine   = document.getElementById("spine");
+  const spRange = document.getElementById("sp-range");
+  const spNext  = document.getElementById("sp-next");
+  const spPct   = document.getElementById("sp-pct");
+
+  function drawSpine(){
+    if(!spine) return;
+    const r = spine.getBoundingClientRect();
+    const total = r.height - window.innerHeight;
+    // reduced motion drops the sticky scrub: park the camera mid-transit
+    const p = (R || total <= 0) ? 0.5 : clamp(-r.top / total, 0, 1);
+    let nearest = null, nd = 1e9;
+    for(let i=0;i<orbs.length;i++){
+      const o = orbs[i];
+      const z = o.z0 + p*TRAVEL;
+      const dz = Math.abs(z);
+      if(dz < nd){ nd = dz; nearest = o; }
+      // fade in from far, fade out as it sweeps past the camera
+      const a = clamp((z + 5000)/2400, 0, 1) * clamp((420 - z)/760, 0, 1);
+      o.el.style.opacity = a.toFixed(3);
+      o.el.style.setProperty("--tagop", clamp((1700 - dz)/800, 0, 1).toFixed(3));
+      // never place a body at or behind the perspective plane — it inverts
+      o.el.style.visibility = a > 0.004 ? "visible" : "hidden";
+      if(a > 0.004){
+        o.el.style.transform = "translate3d("+o.x+"px,"+o.y+"px,"+z.toFixed(1)+"px)";
+      }
+    }
+    if(spRange) spRange.textContent = Math.round(nd);
+    if(spNext)  spNext.textContent  = nearest ? nearest.w.code : "—";
+    if(spPct)   spPct.textContent   = Math.round(p*100) + "%";
+  }
+
+  /* ============ 02 — velocity warp canvas ============ */
+  const vc = document.getElementById("velcanvas");
+  const vctx = vc ? vc.getContext("2d") : null;
+  let vstars = [], vw = 0, vh = 0, vvis = false;
+
+  function sizeVel(){
+    if(!vc) return;
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    const r = vc.getBoundingClientRect();
+    vw = r.width; vh = r.height;
+    vc.width = Math.max(1, r.width*dpr); vc.height = Math.max(1, r.height*dpr);
+    vctx.setTransform(dpr,0,0,dpr,0,0);
+    vstars = [];
+    const n = Math.min(300, Math.round(vw*vh/2200));
+    for(let i=0;i<n;i++) vstars.push({x:Math.random()*vw, y:Math.random()*vh, z:Math.random()*0.9+0.1});
+  }
+
+  function drawVel(){
+    if(!vctx || !vvis) return;
+    vctx.fillStyle = "rgba(5,6,11,0.34)";
+    vctx.fillRect(0,0,vw,vh);
+    const streak = 4 + sv*150;
+    for(let i=0;i<vstars.length;i++){
+      const s = vstars[i];
+      const len = streak * s.z;
+      const speed = 0.35 + sv*26*s.z;
+      s.y += speed;
+      if(s.y - len > vh){ s.y = -len; s.x = Math.random()*vw; }
+      // spectral split at high velocity
+      if(sv > 0.18){
+        vctx.strokeStyle = "rgba(0,240,255,"+(0.30*s.z*sv)+")";
+        vctx.lineWidth = s.z*1.4;
+        vctx.beginPath(); vctx.moveTo(s.x-1.6, s.y-len); vctx.lineTo(s.x-1.6, s.y); vctx.stroke();
+        vctx.strokeStyle = "rgba(255,79,216,"+(0.30*s.z*sv)+")";
+        vctx.beginPath(); vctx.moveTo(s.x+1.6, s.y-len); vctx.lineTo(s.x+1.6, s.y); vctx.stroke();
+      }
+      vctx.strokeStyle = "rgba(232,237,255,"+(0.20+0.62*s.z)+")";
+      vctx.lineWidth = s.z*1.15;
+      vctx.beginPath(); vctx.moveTo(s.x, s.y-len); vctx.lineTo(s.x, s.y); vctx.stroke();
+    }
+  }
+
+  const velfill = document.getElementById("velfill");
+  const velnum  = document.getElementById("velnum");
+
+  /* ============ ambient starfield (fixed background) ============ */
+  const sc = document.getElementById("stars");
+  const sctx = sc ? sc.getContext("2d") : null;
+  let bstars = [], bw = 0, bh = 0;
+
+  function sizeStars(){
+    if(!sc) return;
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    bw = innerWidth; bh = innerHeight;
+    sc.width = Math.max(1,bw*dpr); sc.height = Math.max(1,bh*dpr);
+    sctx.setTransform(dpr,0,0,dpr,0,0);
+    bstars = [];
+    const n = Math.min(340, Math.round(bw*bh/5200));
+    for(let i=0;i<n;i++) bstars.push({
+      x:Math.random()*bw, y:Math.random()*bh,
+      z:Math.random()*0.85+0.15, ph:Math.random()*6.28
+    });
+  }
+
+  function drawStars(now){
+    if(!sctx) return;
+    sctx.clearRect(0,0,bw,bh);
+    const y = window.scrollY;
+    for(let i=0;i<bstars.length;i++){
+      const s = bstars[i];
+      // parallax by depth, wrapped
+      let py = R ? s.y : (s.y - y*s.z*0.16) % bh; if(py < 0) py += bh;
+      const tw = R ? 1 : 0.55 + 0.45*Math.sin(now*0.0013 + s.ph);
+      const len = sv*44*s.z;
+      sctx.globalAlpha = (0.16 + 0.6*s.z) * tw;
+      if(len > 1.2){
+        sctx.strokeStyle = "#CFE0FF"; sctx.lineWidth = s.z*1.1;
+        sctx.beginPath(); sctx.moveTo(s.x, py-len); sctx.lineTo(s.x, py); sctx.stroke();
+      } else {
+        sctx.fillStyle = s.z > 0.72 ? "#DCE8FF" : "#8FA6D8";
+        sctx.fillRect(s.x, py, s.z*1.7, s.z*1.7);
+      }
+    }
+    sctx.globalAlpha = 1;
+  }
+
+  /* ============ 03 — orbital system map ============ */
+  const orbitsEl = document.getElementById("orbits");
+  const sysinfo  = document.getElementById("sysinfo");
+  const nodes = [];
+  if(orbitsEl){
+    WORLDS.forEach(function(w){
+      const ring = document.createElement("div");
+      ring.className = "ring-o";
+      const inset = (1 - w.r) * 50;
+      ring.style.inset = inset + "%";
+      orbitsEl.appendChild(ring);
+
+      const node = document.createElement("div");
+      node.className = "node";
+      node.style.setProperty("--d",  w.d + "px");
+      node.style.setProperty("--c1", w.c1);
+      node.style.setProperty("--c2", w.c2);
+      node.innerHTML = '<button class="body" style="border:0;padding:0" aria-label="' +
+        w.name + '"></button><span class="lab">' + w.code + '</span>';
+      orbitsEl.appendChild(node);
+
+      const rec = {el:node, w:w, ang:Math.random()*Math.PI*2, paused:false};
+      const btn = node.querySelector(".body");
+      function show(){
+        rec.paused = true;
+        sysinfo.innerHTML = "<b>"+w.code+" · "+w.name+"</b><span>"+w.desc+
+          "<br>Orbit "+w.r.toFixed(2)+" · Ø "+w.d+" · Period "+(1/w.spd).toFixed(1)+"</span>";
+      }
+      function hide(){ rec.paused = false; }
+      node.addEventListener("pointerenter", show);
+      node.addEventListener("pointerleave", hide);
+      btn.addEventListener("focus", show);
+      btn.addEventListener("blur", hide);
+      nodes.push(rec);
+    });
+  }
+
+  let sysvis = false;
+  function drawSystem(dt){
+    if(!sysvis) return;
+    const box = orbitsEl.getBoundingClientRect();
+    const R0 = box.width/2;
+    for(let i=0;i<nodes.length;i++){
+      const n = nodes[i];
+      if(!n.paused && !R) n.ang += dt*0.00028*n.w.spd;
+      const rr = R0 * n.w.r;
+      n.el.style.transform = "translate3d("+(Math.cos(n.ang)*rr).toFixed(1)+"px,"+
+                             (Math.sin(n.ang)*rr).toFixed(1)+"px,0)";
+    }
+  }
+
+  /* ============ 04 — pointer-reactive material lab ============ */
+  const lab = document.getElementById("matlab");
+  if(lab){
+    lab.querySelectorAll(".chip").forEach(function(chip){
+      chip.addEventListener("pointermove", function(e){
+        const r = chip.getBoundingClientRect();
+        const mx = (e.clientX - r.left)/r.width;
+        const my = (e.clientY - r.top)/r.height;
+        chip.style.setProperty("--mx", (mx*100).toFixed(1)+"%");
+        chip.style.setProperty("--my", (my*100).toFixed(1)+"%");
+        chip.style.setProperty("--ang", (mx*360).toFixed(0));
+      });
+    });
+  }
+
+  /* ============ HUD ============ */
+  const hudV = document.getElementById("hud-v");
+  const hudWp = document.getElementById("hud-wp");
+  const dHead = document.getElementById("depth-head");
+  const dVal  = document.getElementById("depth-val");
+  const sections = Array.prototype.slice.call(document.querySelectorAll("section"));
+
+  function drawHud(){
+    const max = Math.max(1, document.body.scrollHeight - innerHeight);
+    const p = clamp(window.scrollY/max, 0, 1);
+    root.style.setProperty("--sp", p.toFixed(4));
+    if(hudV) hudV.textContent = sv.toFixed(2);
+    if(dHead) dHead.style.top = (p*100).toFixed(2)+"%";
+    if(dVal){ dVal.style.top = (p*100).toFixed(2)+"%"; dVal.textContent = (p*4.2).toFixed(2)+" AU"; }
+    if(hudWp){
+      let wp = 0;
+      for(let i=0;i<sections.length;i++){
+        if(sections[i].getBoundingClientRect().top < innerHeight*0.5) wp = i;
+      }
+      hudWp.textContent = "WP " + ("0"+wp).slice(-2);
+    }
+  }
+
+  /* ============ reveal ============ */
+  const io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, {rootMargin:"0px 0px -12% 0px"});
+  document.querySelectorAll(".rise").forEach(function(el){ io.observe(el); });
+
+  // only run the heavy canvases while they are on screen
+  const vio = new IntersectionObserver(function(es){ es.forEach(function(e){ vvis = e.isIntersecting; }); });
+  if(vc) vio.observe(vc);
+  const sio = new IntersectionObserver(function(es){ es.forEach(function(e){ sysvis = e.isIntersecting; }); });
+  const sysstage = document.getElementById("sysstage");
+  if(sysstage) sio.observe(sysstage);
+
+  /* ============ headline decrypt ============ */
+  (function(){
+    const el = document.getElementById("scramble");
+    if(!el || R) return;
+    const html  = el.innerHTML;
+    const lines = html.split(/<br\s*\/?>/i);   // keep the line break intact
+    const len   = lines.reduce(function(a,l){ return a + l.length; }, 0);
+    const glyph = "▚▞░▒█/\\<>{}[]#*+=-_";
+    let f = 0, seen = 0;
+    const total = 34;
+    const tick = setInterval(function(){
+      f++;
+      const reveal = Math.floor((f/total)*len);
+      let n = 0;
+      const out = lines.map(function(line){
+        let s = "";
+        for(let i=0;i<line.length;i++,n++){
+          const ch = line[i];
+          s += (ch === " " || n < reveal) ? ch
+             : glyph[(Math.random()*glyph.length)|0];
+        }
+        return s;
+      }).join("<br>");
+      el.innerHTML = out;
+      if(f >= total){ clearInterval(tick); el.innerHTML = html; }
+    }, 34);
+  })();
+
+  /* ============ the one loop ============ */
+  let lastT = performance.now();
+  function frame(now){
+    const dt = Math.min(64, now - lastT); lastT = now;
+
+    const y = window.scrollY;
+    svRaw = Math.abs(y - lastY); lastY = y;
+    const target = R ? 0 : clamp(svRaw/58, 0, 1);
+    sv = lerp(sv, target, 0.13);
+    if(sv < 0.0015) sv = 0;
+    root.style.setProperty("--sv", sv.toFixed(4));
+
+    drawHud();
+    drawSpine();
+    drawStars(now);
+    drawVel();
+    drawSystem(dt);
+
+    if(velfill) velfill.style.width = (sv*100).toFixed(1)+"%";
+    if(velnum)  velnum.textContent  = (sv*0.99).toFixed(2)+" c";
+
+    requestAnimationFrame(frame);
+  }
+
+  function resize(){ sizeStars(); sizeVel(); }
+  addEventListener("resize", resize, {passive:true});
+  resize();
+  requestAnimationFrame(frame);
+})();
+</script>
