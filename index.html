@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#04070f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="LOOPBREAK" />
+<meta name="description" content="LOOPBREAK QB — a tactical neuroscience OODA-loop trainer for quarterbacks." />
+<title>LOOPBREAK QB — OODA Command Deck</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./assets/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./css/holo.css" />
+<link rel="stylesheet" href="./css/screens.css" />
+</head>
+<body>
+
+<!-- ============ AMBIENT HOLO LAYERS ============ -->
+<canvas id="bg-grid" class="bg-layer" aria-hidden="true"></canvas>
+<div class="bg-aurora" aria-hidden="true"></div>
+<div class="bg-scan" aria-hidden="true"></div>
+<div class="bg-vignette" aria-hidden="true"></div>
+<div class="bg-noise" aria-hidden="true"></div>
+<video id="mirror-feed" class="mirror-feed" playsinline muted autoplay aria-hidden="true"></video>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="app">
+
+  <!-- ---------- BOOT / GATE ---------- -->
+  <section class="screen screen--boot is-active" data-screen="boot">
+    <div class="boot-wrap">
+      <div class="boot-mark">
+        <svg viewBox="0 0 120 120" class="boot-sigil" aria-hidden="true">
+          <defs>
+            <linearGradient id="sigGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#4DF0FF"/><stop offset="55%" stop-color="#B96BFF"/><stop offset="100%" stop-color="#FF3DDA"/>
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="52" fill="none" stroke="url(#sigGrad)" stroke-width="1.2" opacity=".5"/>
+          <circle cx="60" cy="60" r="41" fill="none" stroke="url(#sigGrad)" stroke-width="2" stroke-dasharray="180 78" class="sigil-spin"/>
+          <circle cx="60" cy="60" r="29" fill="none" stroke="#4DF0FF" stroke-width="1" stroke-dasharray="6 9" class="sigil-spin-rev"/>
+          <path d="M60 24 L60 44 M60 76 L60 96 M24 60 L44 60 M76 60 L96 60" stroke="#4DF0FF" stroke-width="1.4" opacity=".7"/>
+          <path d="M46 60 A14 14 0 0 1 74 60 A14 14 0 0 1 46 60" fill="none" stroke="#FF3DDA" stroke-width="1.6"/>
+          <circle cx="60" cy="60" r="4" fill="#4DF0FF"/>
+        </svg>
+      </div>
+      <h1 class="boot-title" data-glitch="LOOPBREAK">LOOPBREAK</h1>
+      <p class="boot-sub">OODA COMMAND DECK &nbsp;·&nbsp; QB NEURO-TACTICAL TRAINER</p>
+
+      <div class="boot-lines" id="boot-lines" aria-live="polite"></div>
+
+      <div class="gate-panel holo-panel" id="gate-panel" hidden>
+        <div class="holo-panel__label">SYSTEM LINK REQUIRED</div>
+        <p class="gate-copy">
+          LOOPBREAK reads your body, not just your thumbs. Grant the sensors you want live.
+          Everything is processed on-device. Nothing leaves this phone.
+        </p>
+        <div class="gate-grid">
+          <button class="gate-tile" data-gate="motion">
+            <span class="gate-ico">◉</span>
+            <span class="gate-name">MOTION CORE</span>
+            <span class="gate-desc">Gyro + accelerometer. Pans the holo-field with your head, clocks your release, measures pocket tremor.</span>
+            <span class="gate-state" data-state="idle">LINK</span>
+          </button>
+          <button class="gate-tile" data-gate="camera">
+            <span class="gate-ico">◎</span>
+            <span class="gate-name">OPTIC CORE</span>
+            <span class="gate-desc">Camera. Powers PULSE LAB heart-rate/HRV and the live mirror HUD.</span>
+            <span class="gate-state" data-state="idle">LINK</span>
+          </button>
+          <button class="gate-tile" data-gate="audio">
+            <span class="gate-ico">◈</span>
+            <span class="gate-name">AUDIO CORE</span>
+            <span class="gate-desc">Crowd noise, cadence, kill-signal tones. Stress is a training variable.</span>
+            <span class="gate-state" data-state="idle">LINK</span>
+          </button>
+        </div>
+        <button class="holo-btn holo-btn--primary holo-btn--wide" id="gate-enter">ENTER COMMAND DECK</button>
+        <button class="holo-link" id="gate-skip">Skip sensors — thumbs only</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- HOME / COMMAND DECK ---------- -->
+  <section class="screen screen--home" data-screen="home">
+    <header class="deck-head">
+      <div class="deck-id">
+        <div class="deck-rank" id="home-rank">CLIPBOARD</div>
+        <div class="deck-call" id="home-callsign">QB-01</div>
+      </div>
+      <button class="deck-avatar" id="home-settings" aria-label="Settings">
+        <span class="deck-avatar__ring"></span><span class="deck-avatar__core">⚙</span>
+      </button>
+    </header>
+
+    <div class="xp-strip holo-panel holo-panel--tight">
+      <div class="xp-row">
+        <span class="xp-label">NEURAL XP</span>
+        <span class="xp-val"><b id="home-xp">0</b> / <i id="home-xpnext">1000</i></span>
+      </div>
+      <div class="xp-bar"><div class="xp-bar__fill" id="home-xpfill"></div><div class="xp-bar__tick"></div></div>
+      <div class="xp-row xp-row--sub">
+        <span id="home-nextrank">NEXT: QB3</span>
+        <span id="home-streak">STREAK 0d</span>
+      </div>
+    </div>
+
+    <div class="deck-stats">
+      <div class="stat-cell holo-panel holo-panel--tight">
+        <div class="stat-cell__k">Δ-LOOP</div>
+        <div class="stat-cell__v" id="home-delta">—</div>
+        <div class="stat-cell__u">ms inside</div>
+      </div>
+      <div class="stat-cell holo-panel holo-panel--tight">
+        <div class="stat-cell__k">ORIENT</div>
+        <div class="stat-cell__v" id="home-orient">—</div>
+        <div class="stat-cell__u">ms avg</div>
+      </div>
+      <div class="stat-cell holo-panel holo-panel--tight">
+        <div class="stat-cell__k">POISE</div>
+        <div class="stat-cell__v" id="home-poise">—</div>
+        <div class="stat-cell__u">under load</div>
+      </div>
+    </div>
+
+    <div class="daily holo-panel" id="daily-card">
+      <div class="holo-panel__label">TODAY'S LOOP</div>
+      <div class="daily-body">
+        <div class="daily-name" id="daily-name">—</div>
+        <div class="daily-desc" id="daily-desc">—</div>
+      </div>
+      <div class="daily-foot">
+        <span class="chip chip--gold" id="daily-bonus">+0% XP</span>
+        <button class="holo-btn holo-btn--primary" id="daily-run">RUN IT</button>
+      </div>
+    </div>
+
+    <div class="section-title"><span>TRAINING BLOCKS</span><em id="block-mode">RANDOM · interleaved</em></div>
+    <div class="drill-grid" id="drill-grid"></div>
+
+    <nav class="deck-nav">
+      <button class="nav-btn is-active" data-nav="home"><span>◇</span>DECK</button>
+      <button class="nav-btn" data-nav="map"><span>❋</span>BRAIN</button>
+      <button class="nav-btn" data-nav="dossier"><span>▤</span>DOSSIER</button>
+      <button class="nav-btn" data-nav="lab"><span>❍</span>PULSE</button>
+    </nav>
+  </section>
+
+  <!-- ---------- DRILL BRIEF ---------- -->
+  <section class="screen screen--brief" data-screen="brief">
+    <button class="back-btn" data-back>‹ DECK</button>
+    <div class="brief-wrap">
+      <div class="brief-tag" id="brief-tag">BLOCK 01</div>
+      <h2 class="brief-title" id="brief-title">—</h2>
+      <p class="brief-line" id="brief-line">—</p>
+
+      <div class="holo-panel brief-sci">
+        <div class="holo-panel__label">WHY THIS WORKS</div>
+        <p id="brief-sci">—</p>
+        <div class="region-tags" id="brief-regions"></div>
+      </div>
+
+      <div class="holo-panel brief-cfg">
+        <div class="holo-panel__label">LOAD</div>
+        <div class="cfg-row">
+          <span>STRESS GOVERNOR</span>
+          <div class="seg" id="cfg-stress">
+            <button data-v="1">CALM</button><button data-v="2" class="is-on">GAME</button><button data-v="3">CHAOS</button>
+          </div>
+        </div>
+        <div class="cfg-row">
+          <span>REPS</span>
+          <div class="seg" id="cfg-reps">
+            <button data-v="8">8</button><button data-v="14" class="is-on">14</button><button data-v="24">24</button>
+          </div>
+        </div>
+        <div class="cfg-row cfg-row--note" id="cfg-sensor-note"></div>
+      </div>
+
+      <button class="holo-btn holo-btn--primary holo-btn--wide holo-btn--xl" id="brief-start">BREAK THE LOOP</button>
+    </div>
+  </section>
+
+  <!-- ---------- LIVE DRILL STAGE ---------- -->
+  <section class="screen screen--stage" data-screen="stage">
+    <div class="stage-root" id="stage-root"></div>
+  </section>
+
+  <!-- ---------- RESULTS ---------- -->
+  <section class="screen screen--result" data-screen="result">
+    <div class="result-wrap" id="result-wrap"></div>
+  </section>
+
+  <!-- ---------- NEURAL MAP ---------- -->
+  <section class="screen screen--map" data-screen="map">
+    <header class="deck-head">
+      <div class="deck-id"><div class="deck-rank">NEURAL MAP</div><div class="deck-call">TRAINING LOAD BY SYSTEM</div></div>
+    </header>
+    <div class="map-wrap">
+      <canvas id="brain-canvas" class="brain-canvas"></canvas>
+      <div class="map-legend" id="map-legend"></div>
+    </div>
+    <div class="map-list" id="map-list"></div>
+    <nav class="deck-nav">
+      <button class="nav-btn" data-nav="home"><span>◇</span>DECK</button>
+      <button class="nav-btn is-active" data-nav="map"><span>❋</span>BRAIN</button>
+      <button class="nav-btn" data-nav="dossier"><span>▤</span>DOSSIER</button>
+      <button class="nav-btn" data-nav="lab"><span>❍</span>PULSE</button>
+    </nav>
+  </section>
+
+  <!-- ---------- DOSSIER ---------- -->
+  <section class="screen screen--dossier" data-screen="dossier">
+    <header class="deck-head">
+      <div class="deck-id"><div class="deck-rank">DOSSIER</div><div class="deck-call" id="dossier-sub">CAREER FILE</div></div>
+    </header>
+    <div class="dossier-wrap" id="dossier-wrap"></div>
+    <nav class="deck-nav">
+      <button class="nav-btn" data-nav="home"><span>◇</span>DECK</button>
+      <button class="nav-btn" data-nav="map"><span>❋</span>BRAIN</button>
+      <button class="nav-btn is-active" data-nav="dossier"><span>▤</span>DOSSIER</button>
+      <button class="nav-btn" data-nav="lab"><span>❍</span>PULSE</button>
+    </nav>
+  </section>
+
+  <!-- ---------- SETTINGS ---------- -->
+  <section class="screen screen--settings" data-screen="settings">
+    <button class="back-btn" data-back>‹ BACK</button>
+    <div class="settings-wrap" id="settings-wrap"></div>
+  </section>
+</div>
+
+<!-- ============ OVERLAYS ============ -->
+<div class="toast-rail" id="toast-rail" aria-live="polite"></div>
+<div class="reward-veil" id="reward-veil" hidden></div>
+<div class="flash-veil" id="flash-veil" aria-hidden="true"></div>
+
+<script type="module" src="./js/main.js"></script>
+<noscript><p style="color:#4DF0FF;font-family:monospace;padding:2rem">LOOPBREAK requires JavaScript.</p></noscript>
+</body>
+</html>
