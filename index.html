@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="prism">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>PRISM — Holographic AI Command Deck</title>
+<meta name="description" content="A holographic command deck of ten specialist AI agents. Split your intent into a spectrum.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/holo.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ══ volumetric backdrop ══ -->
+<canvas id="fx-field" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ══ boot sequence ══ -->
+<div id="boot" class="boot" role="status" aria-label="Starting PRISM">
+  <div class="boot__core">
+    <svg viewBox="0 0 120 104" class="boot__prism" aria-hidden="true">
+      <polygon points="60,8 112,96 8,96" class="boot__glass"/>
+      <polygon points="60,8 112,96 8,96" class="boot__edge"/>
+    </svg>
+    <div class="boot__beam" aria-hidden="true"></div>
+    <h1 class="boot__word">PRISM</h1>
+    <p class="boot__sub" id="boot-line">initialising spectrum…</p>
+    <div class="boot__bar"><i id="boot-fill"></i></div>
+  </div>
+</div>
+
+<!-- ══ heads-up display ══ -->
+<header class="hud" id="hud" hidden>
+  <button class="hud__brand" data-nav="deck" title="Back to the deck">
+    <svg viewBox="0 0 24 22" class="hud__mark" aria-hidden="true"><polygon points="12,2 23,20 1,20"/></svg>
+    <span>PRISM</span>
+  </button>
+
+  <div class="hud__rank" title="Your rank and progress">
+    <div class="ring" id="hud-ring" style="--pct:0">
+      <span class="ring__num" id="hud-level">1</span>
+    </div>
+    <div class="hud__rankmeta">
+      <b id="hud-rankname">Initiate</b>
+      <span id="hud-xp">0 / 100 XP</span>
+    </div>
+  </div>
+
+  <div class="hud__stats">
+    <button class="chip chip--streak" id="hud-streak" data-nav="progress" title="Daily streak">
+      <span class="chip__ico">◆</span><span id="streak-n">0</span><small>day</small>
+    </button>
+    <button class="chip chip--quest" id="hud-quests" data-nav="progress" title="Daily directives">
+      <span class="chip__ico">▤</span><span id="quest-n">0/3</span><small>directives</small>
+    </button>
+    <div class="chip chip--combo" id="hud-combo" data-live="0" title="Chain actions to raise your multiplier">
+      <span class="chip__ico">✦</span><span id="combo-x">×1.0</span>
+      <i class="chip__decay" id="combo-decay"></i>
+    </div>
+  </div>
+
+  <nav class="hud__nav">
+    <button class="iconbtn" data-nav="deck" title="Deck" aria-label="Deck">▚</button>
+    <button class="iconbtn" data-nav="progress" title="Progress" aria-label="Progress">◈</button>
+    <button class="iconbtn" data-nav="archive" title="Archive" aria-label="Archive">▤</button>
+    <button class="iconbtn" data-nav="settings" title="Settings" aria-label="Settings">⚙</button>
+  </nav>
+</header>
+
+<!-- ══ views ══ -->
+<main id="stage" class="stage" hidden>
+
+  <!-- deck -->
+  <section class="view" id="view-deck" data-view="deck">
+    <div class="deck__head">
+      <p class="eyebrow">command deck</p>
+      <h2 class="display" id="deck-greeting">Split your intent into a spectrum.</h2>
+      <p class="lede">Tell the beam what you need — or pick a facet below. Every agent hands you a finished
+        piece of work, not a conversation you have to steer.</p>
+    </div>
+
+    <form class="beam" id="beam-form" autocomplete="off">
+      <div class="beam__glass">
+        <span class="beam__ico" aria-hidden="true">▶</span>
+        <input id="beam-input" class="beam__input" type="text" aria-label="Describe what you need"
+               placeholder="e.g. write me a reel hook about protein for busy mums">
+        <button class="beam__go" type="submit">Refract</button>
+      </div>
+      <div class="beam__hints" id="beam-hints"></div>
+    </form>
+
+    <div class="prism-stage" id="prism-stage">
+      <canvas id="fx-prism" aria-hidden="true"></canvas>
+      <div class="facets" id="facets" role="list" aria-label="Agents"></div>
+    </div>
+
+    <div class="deck__next">
+      <h3 class="section-title"><span>Next best moves</span></h3>
+      <div class="nextgrid" id="next-moves"></div>
+    </div>
+  </section>
+
+  <!-- agent -->
+  <section class="view" id="view-agent" data-view="agent" hidden></section>
+
+  <!-- progress -->
+  <section class="view" id="view-progress" data-view="progress" hidden></section>
+
+  <!-- archive -->
+  <section class="view" id="view-archive" data-view="archive" hidden></section>
+
+  <!-- settings -->
+  <section class="view" id="view-settings" data-view="settings" hidden></section>
+
+</main>
+
+<!-- ══ transient layers ══ -->
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div class="rewards" id="rewards" aria-live="assertive"></div>
+<div class="modal" id="modal" hidden></div>
+
+<script src="js/core/util.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/data/agents.js"></script>
+<script src="js/data/quests.js"></script>
+<script src="js/core/compose.js"></script>
+<script src="js/core/engine.js"></script>
+<script src="js/core/progress.js"></script>
+<script src="js/ui/fx.js"></script>
+<script src="js/ui/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
