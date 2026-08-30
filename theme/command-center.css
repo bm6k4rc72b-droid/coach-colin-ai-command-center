@@ -1,0 +1,372 @@
+/* ============================================================================
+   COMMAND CENTER — a dark, high-tech instrumentation skin for God's Eye View.
+   ----------------------------------------------------------------------------
+   Loaded AFTER style.css so it wins on equal specificity. Everything here is
+   additive: token overrides plus a decorative layer. No upstream rule is
+   deleted, so pulling new commits from upstream stays a clean merge.
+
+   Design intent — "reading instruments in a dark room":
+     - The globe is the light source. Chrome recedes to near-black glass.
+     - One cold accent (signal cyan) carries live/active state.
+     - One warm accent (ember amber) carries alert/attention state.
+     - Data is monospaced and tracked out; labels are small, uppercase, quiet.
+     - Panels read as machined hardware: square corners, hairline rules,
+       bracket marks at the corners rather than soft rounded cards.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. TOKENS
+   Upstream's palette is already dark; this pushes it colder, deeper and
+   higher-contrast. Layout tokens (--left-stack-x, --dock-*, etc.) are
+   deliberately NOT touched — geometry stays exactly as upstream tuned it.
+   ------------------------------------------------------------------------ */
+:root {
+  /* Ground: near-black with a blue cast, so the globe reads as the only warmth */
+  --bg-dark: #03060b;
+
+  /* Glass: darker and less milky than upstream, letting the globe bleed through */
+  --glass-bg: rgba(5, 9, 16, 0.78);
+  --glass-border: rgba(56, 240, 255, 0.14);
+  --glass-border-hover: rgba(56, 240, 255, 0.4);
+
+  /* Signal cyan — live data, active state, everything "on".
+     --accent-rgb feeds the ~98 rgba() call sites in style.css that were
+     hardcoded upstream; tokenizing them is what lets this one line
+     re-tint the entire interface. */
+  --accent: #38f0ff;
+  --accent-rgb: 56, 240, 255;
+  --accent-dim: rgba(56, 240, 255, 0.12);
+  --accent-glow: rgba(56, 240, 255, 0.55);
+
+  /* Text: cooled off from upstream's neutral grey */
+  --text-primary: #dfeaf2;
+  --text-secondary: rgba(223, 234, 242, 0.58);
+  --text-dim: rgba(223, 234, 242, 0.32);
+
+  /* HUD reticles and cockpit furniture */
+  --hud-color: rgba(56, 240, 255, 0.72);
+  --hud-border: rgba(56, 240, 255, 0.22);
+  --hud-glow: rgba(56, 240, 255, 0.5);
+  --cockpit-accent: #38f0ff;
+
+  /* Machined, not rounded */
+  --panel-radius: 4px;
+  --btn-radius: 3px;
+
+  /* -- theme-local tokens (not used by upstream) -------------------------- */
+  --cc-ember: #ffa63d;          /* alerts, warnings, warm data */
+  --cc-ember-glow: rgba(255, 166, 61, 0.45);
+  --cc-hairline: rgba(56, 240, 255, 0.22);
+  --cc-bracket: rgba(56, 240, 255, 0.55);
+  --cc-grid: rgba(56, 240, 255, 0.045);
+  --cc-grid-size: 46px;
+  --cc-scanline: rgba(120, 220, 255, 0.028);
+  --cc-vignette: rgba(0, 2, 6, 0.72);
+  --cc-panel-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(56, 240, 255, 0.06),
+    inset 0 1px 0 rgba(160, 240, 255, 0.07);
+}
+
+/* ---------------------------------------------------------------------------
+   2. ATMOSPHERE
+   A single non-interactive film over the globe: survey grid, scanlines and a
+   vignette. Sits at z-index 1 and early in the DOM, so every later UI element
+   paints over it. pointer-events:none — it can never eat a click.
+   ------------------------------------------------------------------------ */
+#cc-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Compositor hint: this layer never changes, so it should never repaint. */
+  will-change: opacity;
+}
+
+/* Survey grid — faint graticule suggesting a measured, instrumented world */
+#cc-atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--cc-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cc-grid) 1px, transparent 1px);
+  background-size: var(--cc-grid-size) var(--cc-grid-size);
+  /* Grid fades toward the centre so it never fights the subject */
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 34%, #000 100%);
+          mask-image: radial-gradient(ellipse at center, transparent 34%, #000 100%);
+  opacity: 0.9;
+}
+
+/* Scanlines + vignette — CRT-adjacent, kept far below "novelty" strength */
+#cc-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      var(--cc-scanline) 0px,
+      var(--cc-scanline) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at center, transparent 52%, var(--cc-vignette) 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   3. PANELS AS INSTRUMENTS
+   Upstream panels are soft glass cards. These become machined plates: square,
+   hairline-ruled at the top edge, with bracket marks at two corners.
+   ------------------------------------------------------------------------ */
+.panel-inner,
+.data-panel-inner,
+.cctv-panel-inner,
+.scene-panel-inner,
+.location-inner,
+.global-context-panel-inner {
+  position: relative;
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  box-shadow: var(--cc-panel-shadow);
+}
+
+/* Top hairline — the bright machined edge catching light */
+.panel-inner::before,
+.data-panel-inner::before,
+.cctv-panel-inner::before,
+.scene-panel-inner::before,
+.location-inner::before,
+.global-context-panel-inner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--cc-hairline) 22%,
+    var(--accent) 50%,
+    var(--cc-hairline) 78%,
+    transparent
+  );
+  opacity: 0.55;
+  transition: opacity var(--transition-smooth);
+}
+
+.panel-inner:hover::before,
+.data-panel-inner:hover::before,
+.cctv-panel-inner:hover::before,
+.scene-panel-inner:hover::before,
+.location-inner:hover::before,
+.global-context-panel-inner:hover::before {
+  opacity: 1;
+}
+
+/* Corner brackets — drawn with a border on an inset box, masked to two corners.
+   Two corners rather than four: enough to read as targeting furniture without
+   boxing every panel in. */
+.panel-inner::after,
+.data-panel-inner::after,
+.cctv-panel-inner::after,
+.scene-panel-inner::after,
+.location-inner::after,
+.global-context-panel-inner::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  border: 1px solid var(--cc-bracket);
+  border-radius: 2px;
+  opacity: 0.42;
+  transition: opacity var(--transition-smooth);
+  /* Keep only ~14px legs at the top-left and bottom-right corners */
+  -webkit-mask-image:
+    linear-gradient(to right, #000 14px, transparent 14px),
+    linear-gradient(to bottom, #000 14px, transparent 14px),
+    linear-gradient(to left, #000 14px, transparent 14px),
+    linear-gradient(to top, #000 14px, transparent 14px);
+  -webkit-mask-position: top left, top left, bottom right, bottom right;
+  -webkit-mask-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-image:
+    linear-gradient(to right, #000 14px, transparent 14px),
+    linear-gradient(to bottom, #000 14px, transparent 14px),
+    linear-gradient(to left, #000 14px, transparent 14px),
+    linear-gradient(to top, #000 14px, transparent 14px);
+  mask-position: top left, top left, bottom right, bottom right;
+  mask-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+  mask-repeat: no-repeat;
+}
+
+.panel-inner:hover::after,
+.data-panel-inner:hover::after,
+.cctv-panel-inner:hover::after,
+.scene-panel-inner:hover::after,
+.location-inner:hover::after,
+.global-context-panel-inner:hover::after {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   4. TYPOGRAPHY — labels recede, values advance
+   ------------------------------------------------------------------------ */
+.panel-title,
+.param-panel-title,
+.panel-mini-label,
+.indicator-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.panel-mini-value,
+.indicator-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Rules become hairlines that fade at both ends rather than hard 1px lines */
+.panel-divider,
+.param-panel-divider {
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--cc-hairline) 20%,
+    var(--cc-hairline) 80%,
+    transparent
+  );
+  height: 1px;
+  border: none;
+}
+
+/* ---------------------------------------------------------------------------
+   5. TITLE — the one place the theme is allowed to be loud
+   ------------------------------------------------------------------------ */
+#title-bar h1 {
+  letter-spacing: 0.2em;
+  text-shadow:
+    0 0 22px rgba(56, 240, 255, 0.32),
+    0 2px 30px rgba(0, 0, 0, 0.85);
+}
+
+#title-bar .title-accent {
+  color: var(--accent);
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+#title-bar .subtitle {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------------------------------------------------
+   6. CONTROLS — flat, square, and lit only when live
+   ------------------------------------------------------------------------ */
+#top-center-actions button {
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast);
+}
+
+#top-center-actions button:hover {
+  border-color: var(--glass-border-hover);
+  color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent-dim),
+    0 0 22px rgba(56, 240, 255, 0.22);
+}
+
+/* Keyboard focus stays clearly visible against the dark ground */
+#top-center-actions button:focus-visible,
+.panel-collapse-btn:focus-visible,
+.panel-layer-toggle:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 18px var(--accent-glow);
+}
+
+/* ---------------------------------------------------------------------------
+   7. STATUS CHIPS — transient loading/sync readouts as telemetry
+   ------------------------------------------------------------------------ */
+#global-loading-status,
+#traffic-sync-chip,
+#cctv-sync-chip {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--cc-hairline);
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+#global-loading-label {
+  color: var(--accent);
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+#traffic-sync-progress,
+#cctv-sync-progress {
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-ember);
+  text-shadow: 0 0 12px var(--cc-ember-glow);
+}
+
+/* ---------------------------------------------------------------------------
+   8. SCROLLBARS — thin, dark, cyan on contact
+   ------------------------------------------------------------------------ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 240, 255, 0.3) transparent;
+}
+
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(56, 240, 255, 0.22);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(56, 240, 255, 0.45); }
+
+/* ---------------------------------------------------------------------------
+   9. TEXT SELECTION
+   ------------------------------------------------------------------------ */
+::selection {
+  background: rgba(56, 240, 255, 0.26);
+  color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   10. REDUCED MOTION / REDUCED TRANSPARENCY
+   The decorative film is the first thing to go when the OS asks for calm.
+   ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  #cc-atmosphere::after { display: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-bg: rgba(3, 6, 11, 0.96);
+  }
+  #cc-atmosphere { display: none; }
+}
