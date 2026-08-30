@@ -1,23 +1,35 @@
 /* ============================================================
    HOLOGRAPHIC FIELD RENDERER
-   A perspective wireframe projected from the quarterback's own eye
-   line. The camera yaws with the phone, so the athlete physically
-   turns to find a defender instead of scrolling to one — the scan
-   pattern being trained is the real one.
+   A perspective wireframe projected from the athlete's own vantage.
+   The camera yaws with the phone, so the player physically turns to
+   find a defender instead of scrolling to one — the scan pattern
+   being trained is the real one.
+
+   The camera is a per-position preset. A quarterback gets a raised
+   view from behind the pocket that holds both numbers in frame. A
+   receiver gets first-person from their own alignment at eye height,
+   which means the safety is genuinely OUT OF FRAME until they turn
+   their head to peek him — the exact thing the drill is training.
    ============================================================ */
 import { clamp, lerp } from '../core/rng.js';
 
-/* The hologram is projected from behind and above the quarterback —
-   far enough back to hold both numbers in frame, high enough that
-   depth still separates. Tuned by eye on a 390pt phone. */
-const CAM_Y = -14;        // yards behind the line of scrimmage
-const CAM_H = 22;         // projector height in yards
-const YAW_LIMIT = 62;     // degrees each way
+export const DEFAULT_CAM = {
+  x: 0,            // yards from the middle of the field
+  y: -14,          // yards behind the line of scrimmage
+  h: 22,           // eye/projector height in yards
+  focal: 0.36,     // fraction of canvas width
+  horizon: 0.26,   // fraction of canvas height
+  near: 2.2,       // near clip in yards
+  baseYaw: 0,      // degrees of built-in head turn
+  yawLimit: 62,
+  pocket: true,    // draw the pocket ring and QB glyph
+};
 
 export class FieldRenderer {
-  constructor(canvas){
+  constructor(canvas, cam = null){
     this.c = canvas;
     this.ctx = canvas.getContext('2d');
+    this.cam = { ...DEFAULT_CAM, ...(cam || {}) };
     this.yaw = 0; this.pitch = 0;
     this.shake = 0; this.jitterPx = 0;
     this.scene = { defense:null, receivers:[], ball:null, t:0, target:null, highlight:null, pocket:1 };
@@ -29,6 +41,12 @@ export class FieldRenderer {
 
   destroy(){ this._ro?.disconnect(); }
 
+  /** Swap camera preset (and optionally re-aim it) between reps. */
+  setCamera(cam){
+    this.cam = { ...DEFAULT_CAM, ...(cam || {}) };
+    this._resize();
+  }
+
   _resize(){
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     const r = this.c.getBoundingClientRect();
@@ -36,27 +54,33 @@ export class FieldRenderer {
     this.c.width = Math.round(this.W * dpr);
     this.c.height = Math.round(this.H * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.focal = this.W * 0.36;
-    this.horizon = this.H * 0.26;
+    this.focal = this.W * this.cam.focal;
+    this.horizon = this.H * this.cam.horizon;
   }
 
-  setYaw(deg){ this.yaw = clamp(deg, -YAW_LIMIT, YAW_LIMIT); }
+  setYaw(deg){ this.yaw = clamp(deg, -this.cam.yawLimit, this.cam.yawLimit); }
   setPitch(deg){ this.pitch = clamp(deg, -28, 28); }
   kick(amount = 1){ this.shake = Math.max(this.shake, amount); }
 
   /* world (yards) → screen (px) */
   project(x, y){
-    const rad = this.yaw * Math.PI / 180;
-    const dx = x, dz = y - CAM_Y;
+    const cam = this.cam;
+    const rad = (this.yaw + cam.baseYaw) * Math.PI / 180;
+    const dx = x - cam.x, dz = y - cam.y;
     const rx = dx * Math.cos(rad) - dz * Math.sin(rad);
     const rz = dx * Math.sin(rad) + dz * Math.cos(rad);
-    if(rz < 2.2) return null;
+    if(rz < cam.near) return null;
     const s = this.focal / rz;
     return {
       x: this.W / 2 + rx * s + this._sx,
-      y: this.horizon + CAM_H * s + this.pitch * 6 + this._sy,
+      y: this.horizon + cam.h * s + this.pitch * 6 + this._sy,
       s, rz,
     };
+  }
+
+  /** Heading, in the same degrees as yaw, that would centre a world point. */
+  bearingTo(x, y){
+    return Math.atan2(x - this.cam.x, y - this.cam.y) * 180 / Math.PI;
   }
 
   /* how far off-center (in screen px) an object sits — used for the
@@ -158,6 +182,7 @@ export class FieldRenderer {
   }
 
   _pocket(){
+    if(!this.cam.pocket) return;
     const s = this.scene;
     const g = this.ctx;
     const p = this.project(0, -5.5);
@@ -269,12 +294,12 @@ export class FieldRenderer {
 
   _ball(){
     const b = this.scene.ball;
-    if(!b) return;
+    if(!b || this.scene.ballHidden) return;
     const g = this.ctx;
     const p = this.project(b.x, b.y);
     if(!p) return;
     const arc = Math.sin(clamp(b.k, 0, 1) * Math.PI) * p.s * 2.6;
-    const r = clamp(p.s * 0.42, 4, 12);
+    const r = clamp(p.s * 0.42, 4, 46);
     g.save();
     g.globalCompositeOperation = 'screen';
     // trail
@@ -305,16 +330,52 @@ export class FieldRenderer {
     g.moveTo(cx, cy-26); g.lineTo(cx, cy-19);
     g.moveTo(cx, cy+19); g.lineTo(cx, cy+26);
     g.stroke();
-    // yaw tape, laid along the horizon
+    // Yaw tape along the horizon. Ticks are absolute headings; the BALL
+    // marker is the real bearing to the football from wherever the camera
+    // is standing, which is not straight ahead unless you are the QB.
     const tapeY = this.horizon - 34;
+    const head = this.yaw + this.cam.baseYaw;
+    const scale = this.W / 130;
     g.font = "9px ui-monospace, monospace"; g.textAlign = 'center';
     g.fillStyle = 'rgba(127,166,189,.55)';
-    for(let d = -60; d <= 60; d += 15){
-      const off = (d - this.yaw) * (this.W / 130);
+    const ticks = [];
+    for(let d = -75; d <= 75; d += 15){
+      const off = (d - head) * scale;
       if(Math.abs(off) > this.W/2 - 18) continue;
       g.fillRect(cx + off - 0.5, tapeY, 1, d % 30 === 0 ? 8 : 4);
-      if(d % 30 === 0) g.fillText(d === 0 ? 'BALL' : `${d > 0 ? 'R' : 'L'}${Math.abs(d)}`, cx + off, tapeY + 19);
+      if(d % 30 === 0 && d !== 0) ticks.push({ off, label:`${d > 0 ? 'R' : 'L'}${Math.abs(d)}` });
     }
+    // From a receiver's stance the ball is behind and inside you, so the
+    // marker often falls off the tape entirely. Pin it to the edge with a
+    // chevron rather than hiding it — "it is that way" is the useful part.
+    let bearing = this.bearingTo(0, -5.5) - head;
+    while(bearing > 180) bearing -= 360;
+    while(bearing < -180) bearing += 360;
+    const limit = this.W/2 - 22;
+    const raw = bearing * scale;
+    const boff = clamp(raw, -limit, limit);
+    const pinned = Math.abs(raw) > limit;
+    g.fillStyle = 'rgba(255,196,77,.85)';
+    g.beginPath();
+    if(pinned){
+      const dir = Math.sign(raw);
+      g.moveTo(cx + boff + dir * 6, tapeY);
+      g.lineTo(cx + boff - dir * 3, tapeY - 6);
+      g.lineTo(cx + boff - dir * 3, tapeY + 6);
+    } else {
+      g.moveTo(cx + boff, tapeY - 5); g.lineTo(cx + boff + 4, tapeY);
+      g.lineTo(cx + boff, tapeY + 5); g.lineTo(cx + boff - 4, tapeY);
+    }
+    g.closePath(); g.fill();
+    const labelX = cx + boff + (pinned ? -Math.sign(raw) * 12 : 0);
+    g.fillText('BALL', labelX, tapeY + 19);
+
+    // heading labels, minus any the BALL marker would sit on top of
+    g.fillStyle = 'rgba(127,166,189,.55)';
+    ticks.forEach(t => {
+      if(Math.abs(cx + t.off - labelX) < 30) return;
+      g.fillText(t.label, cx + t.off, tapeY + 19);
+    });
     g.restore();
   }
 }

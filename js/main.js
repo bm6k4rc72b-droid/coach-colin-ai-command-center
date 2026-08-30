@@ -8,14 +8,15 @@ import { audio } from './core/audio.js';
 import { haptics } from './core/haptics.js';
 import { motion } from './sensors/motion.js';
 import { camera, cameraProbe } from './sensors/camera.js';
-import { DRILLS, byId } from './drills/index.js';
+import { byId } from './drills/index.js';
+import { POSITIONS, usePosition } from './engine/positions.js';
 import { renderHome, renderBrief, renderResult, renderMap, stopMap, renderDossier, renderSettings, applyMirror } from './ui/views.js';
 
 /* ---------------- boot sequence ---------------- */
 const BOOT_LINES = [
   'INITIALISING OODA COMMAND DECK…',
-  'LOADING COVERAGE LIBRARY … <b>8 SHELLS</b>',
-  'LOADING CONCEPT LIBRARY … <b>8 CONCEPTS</b>',
+  'LOADING POSITION PACKS … <b>QB · WR</b>',
+  'LOADING PICTURE LIBRARIES … <b>8 SHELLS · 5 LOOKS</b>',
   'CALIBRATING PHASE CLOCKS … <b>OBSERVE · ORIENT · DECIDE · ACT</b>',
   'MOUNTING NEURAL MAP … <b>9 SYSTEMS</b>',
   'ATHLETE FILE … <b>LOADED</b>',
@@ -37,6 +38,33 @@ async function boot(){
   const total = state.s.totals.reps;
   if(total > 0) $('#gate-panel').querySelector('.gate-copy').textContent =
     `Welcome back. ${total.toLocaleString()} reps on file. Re-link the sensors you want live for this session.`;
+}
+
+/* ---------------- position gate ---------------- */
+function wirePositions(){
+  const grid = $('#pos-grid');
+  const paint = () => {
+    $$('.pos-tile', grid).forEach(t => {
+      const p = POSITIONS[t.dataset.pos];
+      t.style.setProperty('--pos', p.accent);
+      t.classList.toggle('is-on', t.dataset.pos === state.s.position);
+    });
+  };
+  $$('.pos-tile', grid).forEach(tile => {
+    tile.addEventListener('click', () => {
+      const id = tile.dataset.pos;
+      usePosition(id);
+      state.patch(st => {
+        const wasDefault = !st.position || st.callsign === `${POSITIONS[st.position].code}-01`;
+        st.position = id;
+        if(wasDefault) st.callsign = `${POSITIONS[id].code}-01`;
+      });
+      paint();
+      audio.good(); haptics.fire('good');
+      toast(`${POSITIONS[id].name} — Δ-LOOP VS ${POSITIONS[id].opponentClock.toUpperCase()}`, 'li');
+    });
+  });
+  paint();
 }
 
 /* ---------------- sensor gate ---------------- */
@@ -67,10 +95,14 @@ function wireGate(){
   });
 
   $('#gate-enter').addEventListener('click', async () => {
+    if(!state.s.position){ toast('PICK A POSITION FIRST', 'gold'); return; }
     await audio.unlock();
     enterDeck();
   });
-  $('#gate-skip').addEventListener('click', () => enterDeck());
+  $('#gate-skip').addEventListener('click', () => {
+    if(!state.s.position){ toast('PICK A POSITION FIRST', 'gold'); return; }
+    enterDeck();
+  });
 }
 
 function enterDeck(){
@@ -259,7 +291,9 @@ function ambientGrid(){
 
 /* ---------------- go ---------------- */
 function init(){
+  usePosition(state.s.position || 'qb');
   ambientGrid();
+  wirePositions();
   wireGate();
   wireNav();
   boot();

@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="LOOPBREAK" />
-<meta name="description" content="LOOPBREAK QB — a tactical neuroscience OODA-loop trainer for quarterbacks." />
-<title>LOOPBREAK QB — OODA Command Deck</title>
+<meta name="description" content="LOOPBREAK — a tactical neuroscience OODA-loop trainer for quarterbacks and receivers." />
+<title>LOOPBREAK — OODA Command Deck</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="apple-touch-icon" href="./assets/icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -49,12 +49,26 @@
         </svg>
       </div>
       <h1 class="boot-title" data-glitch="LOOPBREAK">LOOPBREAK</h1>
-      <p class="boot-sub">OODA COMMAND DECK &nbsp;·&nbsp; QB NEURO-TACTICAL TRAINER</p>
+      <p class="boot-sub">OODA COMMAND DECK &nbsp;·&nbsp; NEURO-TACTICAL POSITION TRAINER</p>
 
       <div class="boot-lines" id="boot-lines" aria-live="polite"></div>
 
       <div class="gate-panel holo-panel" id="gate-panel" hidden>
-        <div class="holo-panel__label">SYSTEM LINK REQUIRED</div>
+        <div class="holo-panel__label">SELECT POSITION</div>
+        <div class="pos-grid" id="pos-grid">
+          <button class="pos-tile" data-pos="qb">
+            <span class="pos-code">QB</span>
+            <span class="pos-name">QUARTERBACK</span>
+            <span class="pos-desc">Eleven defenders, four phases, raced against the coverage's rotation.</span>
+          </button>
+          <button class="pos-tile" data-pos="wr">
+            <span class="pos-code">WR</span>
+            <span class="pos-name">WIDE RECEIVER</span>
+            <span class="pos-desc">First person off the line, raced against one defender's hip flip.</span>
+          </button>
+        </div>
+
+        <div class="holo-panel__label" style="margin-top:18px">SYSTEM LINK</div>
         <p class="gate-copy">
           LOOPBREAK reads your body, not just your thumbs. Grant the sensors you want live.
           Everything is processed on-device. Nothing leaves this phone.

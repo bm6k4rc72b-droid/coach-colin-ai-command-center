@@ -3,12 +3,17 @@
    Boyd put orientation at the centre of the loop for a reason: it is
    the only phase where prior experience actually lives. This drill
    does nothing but build and test that library, with interleaved
-   coverage order so the gains survive the session.
+   presentation order so the gains survive the session.
+
+   The PICTURES come from the active position pack: a quarterback names
+   coverages from behind the pocket, a receiver names leverage and
+   technique from his own stance. The staircase, the scoring and the
+   retention measure are identical, because the underlying skill is.
    ============================================================ */
 import { Stage } from './stage.js';
 import { el, cue, flash, wait } from '../ui/ui.js';
-import { COVERAGES, COVERAGE_IDS } from '../engine/playbook.js';
-import { buildDefense, chooseCoverage, chooseDisguise } from '../engine/defense.js';
+import { chooseCoverage } from '../engine/defense.js';
+import { pack } from '../engine/positions.js';
 import { stressProfile } from '../engine/ooda.js';
 import { shuffle, pick, clamp, rand, lerp } from '../core/rng.js';
 import { audio } from '../core/audio.js';
@@ -33,10 +38,11 @@ export async function run(root, cfg){
   const stage = new Stage(root, { reps:cfg.reps, title:'LOOK', phases:false, dial:false });
   audio.crowd(stress.crowd * 0.7);
 
+  const rec = pack().recognition;
   let exposure = 1500;              // ms, staircased
   let aborted = false, streak = 0, heat = 0;
   const trials = [], recent = [];
-  const seenAt = {};                // coverage -> trial index, for the retention index
+  const seenAt = {};                // picture id -> trial index, for the retention index
 
   stage.quitBtn.addEventListener('click', () => { aborted = true; stage.alive = false; });
 
@@ -44,11 +50,9 @@ export async function run(root, cfg){
     if(aborted) break;
     stage.setRep(i, cfg.reps);
 
-    const coverage = chooseCoverage(recent);
-    const disguise = Math.random() < stress.disguise ? chooseDisguise(coverage, 4) : null;
-    const blitz = coverage === 'C0' || Math.random() < 0.14;
-    const strength = Math.random() < 0.5 ? 1 : -1;
-    const defense = buildDefense({ coverage, disguise, blitz, strength });
+    const coverage = chooseCoverage(recent, rec.ids);
+    const { picture: defense, cam } = rec.build(coverage, { level:4, disguise:stress.disguise });
+    if(cam) stage.field.setCamera(cam);
     defense.men.forEach(m => m.pos = m.show);
     stage.field.scene = { defense, receivers:[], ball:null, t:0, target:null, highlight:null, pocket:1 };
     stage.field.jitterPx = stress.jitterPx;
@@ -75,8 +79,9 @@ export async function run(root, cfg){
     audio.tick();
 
     const started = performance.now();
-    const opts = shuffle([coverage, ...shuffle(COVERAGE_IDS.filter(c => c !== coverage)).slice(0, 5)]);
-    const chosen = await tray(stage, 'NAME IT', opts);
+    const spread = Math.min(5, rec.ids.length - 1);
+    const opts = shuffle([coverage, ...shuffle(rec.ids.filter(c => c !== coverage)).slice(0, spread)]);
+    const chosen = await tray(stage, rec.question, opts, rec.meta);
     stage.field.tint = 1;
     if(chosen === null){ aborted = true; break; }
 
@@ -100,20 +105,20 @@ export async function run(root, cfg){
     seenAt[coverage] = i;
 
     const banner = el('div', { class:'verdict' },
-      el('div', { class:`verdict__head ${right ? 'v-good' : 'v-bad'}`, text: right ? COVERAGES[coverage].label : 'MISS' }),
+      el('div', { class:`verdict__head ${right ? 'v-good' : 'v-bad'}`, text: right ? rec.meta(coverage).label : 'MISS' }),
       el('div', { class:'verdict__row' },
         el('span', { class:'chip', text:`${rt}ms` }),
         el('span', { class:'chip chip--vi', text:`EXPOSURE ${Math.round(exposure)}ms` }),
         el('span', { class:'chip chip--gold', text:`+${xp} XP` }),
       ),
-      el('div', { class:'verdict__note', text:COVERAGES[coverage].tell }),
+      el('div', { class:'verdict__note', text:rec.meta(coverage).tell }),
     );
     stage.overlay(banner);
     await wait(right ? 1100 : 1750);
     banner.remove();
     chosen.tray.remove();
 
-    trials.push({ coverage, right, rt, exposure:Math.round(exposure), gap, disguised:defense.disguised });
+    trials.push({ coverage, right, rt, exposure:Math.round(exposure), gap, disguised:!!defense.disguised });
     recent.unshift(coverage); recent.length = Math.min(recent.length, 5);
   }
 
@@ -132,10 +137,10 @@ export async function run(root, cfg){
     drillId:meta.id, reps:trials.length, score, aborted, stress:cfg.stress,
     orient:rt,
     metrics:[
-      { k:'RECOGNITION', v:Math.round(acc*100) + '%', d:'coverages named correctly', pr:'covAcc', raw:acc },
+      { k:'RECOGNITION', v:Math.round(acc*100) + '%', d:'pictures named correctly', pr:'covAcc', raw:acc },
       { k:'FLOOR', v:best + 'ms', d:'shortest exposure you beat', pr:'exposureFloor', raw:best, lower:true },
       { k:'DECISION RT', v:rt ? rt + 'ms' : '—', d:'on correct calls', pr:'orientMs', raw:rt },
-      { k:'RETENTION', v:retention == null ? '—' : Math.round(retention*100) + '%', d:'after ≥2 intervening looks', pr:'retention', raw:retention },
+      { k:'RETENTION', v:retention == null ? '—' : Math.round(retention*100) + '%', d:'after ≥2 intervening pictures', pr:'retention', raw:retention },
     ],
     regions:meta.regions,
     extra:{ retention },
@@ -149,12 +154,14 @@ function at(m, t){
   return lp(m.rot, m.end, clamp((t-0.45)/2.0, 0, 1));
 }
 
-function tray(stage, q, ids){
+function tray(stage, q, ids, meta){
   return new Promise(resolve => {
-    const grid = el('div', { class:'answer-grid answer-grid--3' });
+    const cols = ids.length > 4 ? 3 : 2;
+    const grid = el('div', { class:`answer-grid answer-grid--${cols}` });
     const box = el('div', { class:'answer-tray' }, el('div', { class:'answer-tray__q', text:q }), grid);
     ids.forEach(id => {
-      const b = el('button', { class:'ans', 'data-key':id }, COVERAGES[id].label, el('small', { text:COVERAGES[id].short }));
+      const m = meta(id);
+      const b = el('button', { class:'ans', 'data-key':id }, m.label, el('small', { text:m.short }));
       b.addEventListener('pointerdown', () => { clearInterval(iv); resolve({ key:id, node:b, tray:box }); }, { once:true });
       grid.append(b);
     });

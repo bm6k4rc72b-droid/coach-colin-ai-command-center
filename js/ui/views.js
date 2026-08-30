@@ -2,11 +2,12 @@
    dossier and settings. */
 import { $, $$, el, screens, toast, fmtMs, pct } from './ui.js';
 import { state, RANKS, BADGES, REGIONS } from '../core/state.js';
-import { DRILLS, byId, dailyFor } from '../drills/index.js';
+import { drillsFor, byId, dailyFor } from '../drills/index.js';
 import { gradeOf, PHASE_META, BENCH, phaseScore } from '../engine/ooda.js';
 import { drawBrain } from '../render/brain.js';
 import { clamp } from '../core/rng.js';
 import { motion } from '../sensors/motion.js';
+import { POSITIONS, POSITION_IDS, pack, activeId, usePosition } from '../engine/positions.js';
 import { camera } from '../sensors/camera.js';
 import { audio } from '../core/audio.js';
 
@@ -15,8 +16,14 @@ export function renderHome(onOpen, onDaily){
   const s = state.s;
   const { rank, next, floor, ceil } = state.rank();
 
+  const pos = pack();
   $('#home-rank').textContent = rank.name;
-  $('#home-callsign').textContent = `${s.callsign} · ${s.totals.reps} REPS LOGGED`;
+  const call = $('#home-callsign');
+  call.innerHTML = '';
+  call.append(
+    el('span', { class:'deck-pos', style:`color:${pos.accent}`, text:pos.code }),
+    `${s.callsign} · ${s.totals.reps} REPS LOGGED`,
+  );
   $('#home-xp').textContent = s.xp.toLocaleString();
   $('#home-xpnext').textContent = next ? ceil.toLocaleString() : 'MAX';
   const p = next ? clamp((s.xp - floor) / (ceil - floor), 0, 1) : 1;
@@ -51,7 +58,7 @@ export function renderHome(onOpen, onDaily){
   /* drill grid */
   const grid = $('#drill-grid');
   grid.innerHTML = '';
-  DRILLS.forEach(d => {
+  drillsFor().forEach(d => {
     const locked = s.xp < (d.unlock || 0);
     const runs = s.drills[d.id]?.runs || 0;
     const best = s.drills[d.id]?.bestScore || 0;
@@ -183,6 +190,16 @@ function coachNote(drill, res){
   if(drill.id === 'ironhand') return 'SSRT under 250ms is quick cancellation. If inhibition is high but go RT is slow, you are hedging — the fix is to commit harder on go trials, not to hesitate on every rep.';
   if(drill.id === 'periph') return 'If your field of view shrank as the session went on, that is perceptual narrowing under load, not fatigue. PULSE LAB is the direct counter-measure.';
   if(drill.id === 'twitch') return 'Chase the standard deviation, not the mean. A consistent 280ms release beats a release that ranges from 210 to 400.';
+  if(drill.id === 'wrread'){
+    const e = res.extra || {};
+    let t = res.delta < 0
+      ? `You are declaring the break after he can already flip and drive — Δ ${Math.round(res.delta)}ms. Separation has to be created before the break, not during it. Drop a notch on the governor and rebuild the read. `
+      : `You beat his hips by ${Math.round(res.delta)}ms on average, which is where the ${(e.sep ?? 0).toFixed(1)} yards of separation came from. `;
+    if(e.pressureAcc != null && e.pressureAcc < 0.6) t += `Pressure reps are the leak — ${Math.round(e.pressureAcc*100)}% converted. When the rush gets home the route rule stops mattering and the sight adjustment takes over. `;
+    if(e.scrambleAcc != null && e.scrambleAcc < 0.7) t += 'And you are running timed routes after the pocket breaks. Scramble rules are free yards nobody drills.';
+    return t;
+  }
+  if(drill.id === 'track') return 'Read the bias before the accuracy. A consistent early or late number is a timing habit you can correct in one session; a wide spread with no bias means you are still reacting to the ball rather than predicting it, and that only comes down with occluded reps.';
   if(drill.id === 'pulse') return 'The recovery slope is the number that matters. Anyone can be calm in the baseline block. Run this after a hard LOOP BREAK session to train the return, not the resting state.';
   return '';
 }
@@ -241,6 +258,10 @@ export function renderDossier(){
     ['ufovEcc','FIELD OF VIEW','%'], ['releaseMs','RELEASE','ms'],
     ['releaseSd','RELEASE SD','ms'], ['recoverySlope','RECOVERY','bpm/min'],
     ['retention','RETENTION','%'], ['exposureFloor','EXPOSURE FLOOR','ms'],
+    ['sepYards','SEPARATION','yd'], ['lookAcc','LEVERAGE READ','%'],
+    ['convAcc','CONVERSION','%'], ['peek','PRE-SNAP PEEK','%'],
+    ['trackErr','TRACK ERROR','ms'], ['trackSd','TRACK SD','ms'],
+    ['trackOcc','OCCLUSION','%'], ['handsAcc','HANDS','%'],
   ].filter(([k]) => s.pr[k] != null);
   if(prs.length){
     const grid = el('div', { class:'dz-grid' });
@@ -349,8 +370,30 @@ export function renderSettings(onRelink){
     el('button', { class:'holo-btn holo-btn--ghost holo-btn--wide', style:'margin-top:10px', onclick:onRelink }, 'RE-LINK SENSORS'),
   ));
 
+  const posSeg = el('div', { class:'seg' });
+  POSITION_IDS.forEach(id => {
+    const b = el('button', { text:POSITIONS[id].code });
+    b.classList.toggle('is-on', id === activeId());
+    b.onclick = () => {
+      if(id === activeId()) return;
+      usePosition(id);
+      state.patch(st => { st.position = id; });
+      audio.tick();
+      toast(`${POSITIONS[id].name} PACK LOADED`, 'li');
+      renderSettings(onRelink);
+    };
+    posSeg.append(b);
+  });
+  wrap.append(panel('POSITION',
+    el('div', { class:'set-row' },
+      el('div', { class:'set-row__l' },
+        el('div', { class:'set-row__t', text:pack().name }),
+        el('div', { class:'set-row__d', text:`Δ-loop is measured against ${pack().opponentClock}. Switching swaps the drill list, the pictures and the phase benchmarks — your XP, records and neural map carry over.` })),
+      posSeg),
+  ));
+
   wrap.append(panel('TRAINING',
-    toggle('interleave', 'INTERLEAVED SCHEDULE', 'Randomises coverage order. Lower scores today, better retention next week. Leave this on.'),
+    toggle('interleave', 'INTERLEAVED SCHEDULE', 'Randomises the order pictures are shown. Lower scores today, better retention next week. Leave this on.'),
     toggle('recoveryGuard', 'RECOVERY GUARD', 'Warns you when you are grinding past the point where reps still consolidate.'),
     toggle('reduceFlash', 'REDUCE FLASH', 'Suppresses full-screen flashes. Turn on if you are photosensitive.'),
   ));

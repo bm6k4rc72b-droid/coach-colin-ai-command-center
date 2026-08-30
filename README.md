@@ -1,6 +1,7 @@
-# LOOPBREAK QB — OODA Command Deck
+# LOOPBREAK — OODA Command Deck
 
-A tactical, neuroscience-grounded quarterback trainer built around John Boyd's OODA loop.
+A tactical, neuroscience-grounded position trainer built around John Boyd's OODA loop.
+Ships with two position packs: **quarterback** and **wide receiver**.
 
 Most QB apps are film quizzes with a stopwatch. This one takes Boyd's actual claim seriously:
 the point was never *go fast*, it was **operate inside the opponent's decision cycle**, so that by
@@ -13,8 +14,17 @@ So every rep runs **two clocks**.
 | **Your loop** | Observe → Orient → Decide → Act, each phase timestamped from a real input — a sensor lock, a tap, an accelerometer-detected release. |
 | **Defense loop** | How long the coverage needs to finish *its* cycle: pass off, re-leverage, and close the window it just opened. |
 
-**Δ-LOOP = defenseLoop − yourLoop.** Positive means you released while their picture was still old.
+**Δ-LOOP = opponentLoop − yourLoop.** Positive means you acted while their picture was still old.
 That single number is the app's north star, and every other metric exists to diagnose it.
+
+What the opponent clock *is* depends on where you line up:
+
+| Position | Δ-loop is measured against | You win by |
+|---|---|---|
+| **Quarterback** | the coverage finishing its rotation and closing the window | releasing before the picture you read goes stale |
+| **Wide receiver** | the covering defender flipping his hips | declaring the break before he can turn and drive |
+
+Same engine, same four phases, same scoring. Different denominator.
 
 ---
 
@@ -46,6 +56,13 @@ service worker has cached it, runs offline on a practice field with no signal.
 Holographic tactical projection: a perspective wireframe field rendered on canvas, corner-bracketed
 glass panels, chromatic scanline atmosphere, and a live loop-race dial. With the **OPTIC CORE**
 mirror enabled, the front camera runs behind the hologram so the athlete is inside the display.
+
+**The camera is a position preset, and it changes what the drill is.** A quarterback gets a raised
+view from behind the pocket that holds both numbers in frame. A receiver gets *first person from his
+own spot on the line*, through a wide field of view — which means the safety is genuinely off-screen
+until he physically turns his head to peek him. The pre-snap scan being trained is the real one, not a habit of reading a
+diagram. On the receiver's break the camera travels the route with him, so the defender slides across
+his view exactly as he would over a shoulder.
 
 Everything is drawn at runtime. There are no image assets beyond the app icon.
 
@@ -83,7 +100,9 @@ Gravity-included fallback with a high-pass filter covers devices that do not exp
 
 ---
 
-## The six blocks
+## The blocks
+
+### Quarterback
 
 | Block | Trains | The honest metric |
 |---|---|---|
@@ -94,7 +113,41 @@ Gravity-included fallback with a high-pass filter covers devices that do not exp
 | **TWITCH** | Release latency and motor consistency | Mean latency and, more importantly, trial-to-trial SD |
 | **PULSE LAB** | Autonomic control under a stress-recovery challenge | Recovery slope in bpm/min, RMSSD, coherence |
 
-### Why these, specifically
+### Wide receiver
+
+| Block | Trains | The honest metric |
+|---|---|---|
+| **RELEASE** | The full four-phase rep, first person off the line | Δ-loop, separation in yards, leverage-read and conversion accuracy |
+| **LEVERAGE READ** | Flash-recognition of technique and the top of the coverage | Exposure floor (ms), retention after ≥2 intervening pictures |
+| **TRACK** | Coincidence-anticipation with the ball occluded in flight | Absolute, **constant** and **variable** error; occlusion reached |
+| **SPLIT VISION** | Useful field of view while running the stem | Threshold eccentricity, dual-task hit rate, tremor |
+| **OFF THE BALL** | Get-off burst and release consistency | Mean latency and trial-to-trial SD |
+| **HOLD** | Inhibition — the flinch on a hard count, the break you abort | SSRT with a staircased stop-signal delay |
+| **PULSE LAB** | Autonomic control under a stress-recovery challenge | Recovery slope in bpm/min, RMSSD, coherence |
+
+`SPLIT VISION`, `OFF THE BALL`, `HOLD` and `PULSE LAB` are the same mechanics as their quarterback
+counterparts — because the underlying capacity is the same — re-aimed at what the position actually
+does. `RELEASE`, `LEVERAGE READ` and `TRACK` are receiver-specific.
+
+### Why these, specifically — receiver
+
+- **A receiver reads three things, not a call.** Leverage, technique, and whether the middle of the
+  field is open or closed. Those collapse into five *looks*, and every option route in football is an
+  explicit if-then rule mapping a look onto a conversion. That makes it measurable: there is exactly
+  one correct conversion per picture, so leverage-read accuracy and conversion accuracy are timed
+  separately and the leak is locatable.
+- **Separation is created before the break, not during it.** `RELEASE` derives separation in yards
+  directly from Δ-loop, so the number on screen is the decision speed, expressed in the unit a
+  receiver actually cares about.
+- **Catching is prediction, not reaction.** `TRACK` is coincidence-anticipation with the final
+  portion of the flight occluded, which removes the option of reacting to the ball and forces
+  extrapolation from early flight information. It reports constant error (a systematic early/late
+  bias, correctable in an afternoon) separately from variable error (spread, which is what actually
+  improves with reps) — those two numbers call for completely different coaching.
+- **Scramble rules are free yards nobody drills.** The kill-signal slot in the receiver rep is the
+  quarterback leaving the pocket: the route clock restarts and the rule changes mid-rep.
+
+### Why these, specifically — quarterback
 
 - **Orientation is the decisive phase.** Boyd put it at the centre of the loop because it is the only
   phase where prior experience lives. Expertise research (de Groot; Chase & Simon) shows expert
@@ -142,19 +195,38 @@ erases the athlete file permanently, and **WIPE ATHLETE FILE** in settings does 
 
 ---
 
+## Position packs
+
+The OODA engine, the sensors, the renderer, the progression and the whole UI shell are
+position-agnostic. A pack (`js/engine/positions.js`) supplies exactly four things:
+
+- **the picture** — what the hologram shows and from where (the camera preset)
+- **the menus** — what each of the four phases is actually asking
+- **the benchmarks** — a receiver's orient window is a fraction of a quarterback's, and scoring one
+  against the other's numbers would make the grade meaningless
+- **the opponent clock** — what Δ-loop is measured against
+
+It also re-words the shared drills, because the same mechanic means something different depending on
+where you line up. Adding a position is a pack plus whatever position-specific drills it needs.
+
+Switching position swaps the drill list, the pictures and the benchmarks. XP, ranks, personal
+records and the neural map carry over — the brain systems being trained are the same ones.
+
 ## Layout
 
 ```
 index.html                  shell + all screen markup
 css/holo.css                design system: glass, brackets, scanlines, buttons
 css/screens.css             per-screen layout
-js/main.js                  boot, sensor gate, router, session lifecycle
+js/main.js                  boot, position + sensor gate, router, session lifecycle
 js/core/       state, event bus, RNG + variable-ratio scheduler, WebAudio synth, haptics
 js/sensors/    motion (gyro/accel/tremor/release), camera, PPG
-js/engine/     playbook (coverages, concepts, read rules), defense generator,
-               route geometry, the OODA scoring engine
-js/render/     holographic field, loop dial, neural map
-js/drills/     the six blocks + shared live-drill stage
+js/engine/     positions   the position pack registry
+               playbook    QB: coverages, concepts, read rules
+               wrplaybook  WR: looks, option routes, conversion rules, first-person camera
+               defense, routes, ooda (the scoring engine)
+js/render/     holographic field (per-position camera), loop dial, neural map
+js/drills/     the blocks + shared live-drill stage
 js/ui/         DOM helpers, router, and the non-live screens
 sw.js          offline shell
 ```

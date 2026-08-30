@@ -48,6 +48,7 @@ export async function run(root, cfg){
     if(aborted) break;
     stage.setRep(i, cfg.reps);
     stage.clearPhases();
+    stage.dial?.set(0, 1, 0);
     const r = await oneRep({ stage, stress, level, recentCov, vr, heat, index:i });
     if(!r){ aborted = true; break; }
     reps.push(r);

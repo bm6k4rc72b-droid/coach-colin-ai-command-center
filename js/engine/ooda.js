@@ -27,8 +27,10 @@ export const PHASE_META = {
   act:    { label:'ACT',     color:'#7CFF9E', note:'Time from decision to ball out of your hand.' },
 };
 
-/* Benchmarks in ms — what a rep should look like at each rank tier.
-   Sourced from the app's own population of reps, not from a lab. */
+/* Benchmarks in ms. These are POSITION-DEPENDENT and are overwritten in
+   place by the active position pack — a receiver's orient window is a
+   fraction of a quarterback's, and scoring one against the other's
+   numbers would make the grade meaningless. Defaults are quarterback. */
 export const BENCH = {
   observe:{ elite:220, good:380, ok:600 },
   orient: { elite:420, good:700, ok:1100 },
@@ -42,6 +44,16 @@ export function defenseLoopMs(level = 1, stress = 2){
   const base = lerp(2900, 1450, clamp((level - 1) / 9, 0, 1));
   const stressCut = (stress - 2) * 140;
   return Math.round(jitter(base - stressCut, 130));
+}
+
+/** Point the shared phase scoring at a position's benchmarks. */
+export function applyBench(b){
+  for(const p of PHASES) if(b[p]) Object.assign(BENCH[p], b[p]);
+}
+
+/** Re-word what each phase means for the active position. */
+export function applyPhaseNotes(notes){
+  for(const p of PHASES) if(notes?.[p]) PHASE_META[p].note = notes[p];
 }
 
 export class OodaRep {

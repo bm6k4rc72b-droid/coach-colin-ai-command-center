@@ -9,7 +9,7 @@ import { audio } from '../core/audio.js';
 import { state } from '../core/state.js';
 
 export class Stage {
-  constructor(root, { field = true, dial = true, phases = true, reps = 0, title = '' } = {}){
+  constructor(root, { field = true, dial = true, phases = true, reps = 0, title = '', cam = null } = {}){
     this.root = root;
     root.innerHTML = '';
     this.alive = true;
@@ -20,7 +20,7 @@ export class Stage {
     if(field){
       this.canvas = el('canvas', { class:'field-canvas' });
       root.append(this.canvas);
-      this.field = new FieldRenderer(this.canvas);
+      this.field = new FieldRenderer(this.canvas, cam);
     }
 
     this.hud = el('div', { class:'stage-hud' });

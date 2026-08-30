@@ -30,6 +30,9 @@ export const BADGES = [
   { id:'chaos',      ico:'☢', name:'CHAOS PROOF',   test:s => (s.totals.chaosSessions||0) >= 5 },
   { id:'thousand',   ico:'∞', name:'1000 REPS',     test:s => s.totals.reps >= 1000 },
   { id:'retention',  ico:'❋', name:'RETENTION+',    test:s => (s.pr.retention||0) >= 0.8 },
+  { id:'uncovered',  ico:'⟿', name:'UNCOVERED',     test:s => (s.pr.sepYards||0) >= 3 },
+  { id:'softhands',  ico:'◎', name:'SOFT HANDS',    test:s => (s.pr.trackErr||9e9) <= 70 },
+  { id:'blindtrack', ico:'☾', name:'BLIND TRACK',   test:s => (s.pr.trackOcc||0) >= 60 },
 ];
 
 /* Brain systems the drills actually load. Each carries a decay so the map
@@ -48,6 +51,7 @@ export const REGIONS = {
 
 const fresh = () => ({
   v: 1,
+  position: null,          // 'qb' | 'wr' — chosen at first boot
   callsign: 'QB-01',
   xp: 0,
   created: Date.now(),
@@ -127,7 +131,7 @@ export const state = {
      opening baseline, false otherwise. */
   record(key, value){
     const lowerBetter = ['orientMs','observeMs','decideMs','actMs','ssrtMs','loopMs',
-      'releaseMs','releaseSd','goRt','restHr','exposureFloor'];
+      'releaseMs','releaseSd','goRt','restHr','exposureFloor','trackErr','trackSd'];
     const cur = S.pr[key];
     const first = cur === undefined;
     const better = first ? true : (lowerBetter.includes(key) ? value < cur : value > cur);
