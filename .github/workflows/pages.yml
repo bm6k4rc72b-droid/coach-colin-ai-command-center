@@ -1,0 +1,60 @@
+# Publishes a static, server-less copy of the app to GitHub Pages.
+#
+# To turn it on: repo Settings -> Pages -> Build and deployment -> Source ->
+# "GitHub Actions". Then run this workflow (Actions tab -> Deploy to GitHub
+# Pages -> Run workflow), or push to main.
+#
+# Scope note: a static host has no backend, so the 16 /api/* routes that serve
+# aircraft, ships, CCTV, traffic, fires and voice are absent and those layers
+# report unavailable. The globe, the interface and the skin work with no keys.
+# Running ./start.sh locally is what gives you the live layers.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Derive the base path from the repo name so a fork or a rename keeps
+      # working without editing this file.
+      - name: Build static site
+        run: ./scripts/build-static.sh "${GITHUB_REPOSITORY#*/}"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

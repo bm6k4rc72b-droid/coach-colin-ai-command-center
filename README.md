@@ -83,29 +83,69 @@ the darker ground.
 
 ## Running it
 
-Requires Node — upstream declares `>=24.14.0 <25 || >=26 <27` (it also builds
-and runs fine on Node 22, which is what this copy was verified against).
+**Just run this:**
 
 ```bash
-cp .env.example .env      # then add your keys
-npm install
-npm run dev -- --host localhost --port 4173
+./start.sh
 ```
 
-**Without any keys you get a blank white globe.** The UI, HUD and skin all work,
-but there is no imagery to draw. A Google Maps API key is the one that matters
-— it unlocks the photorealistic 3D tiles the whole thing is built around
-(1,000 free sessions/month, ~$6 per 1,000 after).
+Then open <http://localhost:4173/>. That's it — it installs what it needs on
+first run, creates your `.env`, and starts the app. Ctrl+C stops it. You only
+need [Node.js](https://nodejs.org) installed first (the LTS build; `start.sh`
+checks the version and tells you if it's too old).
 
-Ten layers need no keys at all: anonymous OpenSky flights, military ADS-B,
-satellites, earthquakes, CCTV, radio, bikeshare, space missions and the bundled
-infrastructure datasets. Optional free keys add ships (AISStream), fires (NASA
-FIRMS), real traffic (TomTom) and voice (OpenAI). See `.env.example` and
-[`DATA_SOURCES.md`](DATA_SOURCES.md).
+### No API keys required
 
-Keys are brokered server-side by the dev server — the dev server binds to
-localhost by default, and exposing it on a LAN exposes your keys with it. Set
-budget caps provider-side, not just in the app.
+The app used to abort with `GOOGLE_MAPS_API_KEY not found`, so a keyless run
+gave a dead white sphere. That check is now optional — `src/main.js` skips the
+Google tileset when there's no key and lets `MapStackController`'s existing
+keyless path take over, which was already written and already defaulted to
+`'osm'` whenever no tileset was passed. Nothing else changed.
+
+So with **zero keys, zero signup, zero credit card** you get:
+
+- a real globe with OpenStreetMap imagery, and the whole interface and skin
+- the no-key live layers: flights, military ADS-B, satellites, earthquakes,
+  CCTV, radio, bikeshare, launches, and the bundled infrastructure datasets
+
+Keys only add things on top. Put them in `.env` whenever you like:
+
+| Key | Unlocks | Cost |
+| --- | --- | --- |
+| `GOOGLE_MAPS_API_KEY` | Photorealistic 3D tiles — the cinematic look | 1,000 free sessions/mo, then ~$6/1,000 |
+| `CESIUM_ION_TOKEN` | Bing imagery, Cesium World Terrain | Free tier |
+| `AISSTREAM_API_KEY` | Live ships | Free |
+| `FIRMS_MAP_KEY` | Active fires | Free |
+| `TOMTOM_API_KEY` | Real road traffic | Free tier |
+| `OPENAI_API_KEY` | Voice control | Metered, $5 session cap |
+
+Keys are brokered server-side by the dev server, never exposed to the browser.
+It binds to localhost by default — putting it on a LAN exposes your keys with
+it, so set budget caps provider-side too.
+
+## Publishing a link (and its limits)
+
+`.github/workflows/pages.yml` publishes a static copy to GitHub Pages. Enable
+it under **Settings → Pages → Source → GitHub Actions**, then run it from the
+Actions tab.
+
+**Read this before relying on it.** A static host has no backend, and this app
+is not a static app: `vite.config.js` implements **16 `/api/*` routes** that
+proxy and key-broker every live feed. Deployed statically you get the globe,
+the interface and the skin — but aircraft, ships, CCTV, traffic, fires and
+voice have nothing to call and report unavailable.
+
+The link is a shop window. `./start.sh` is the app.
+
+There is also no way to publish this as a Claude Artifact: Artifact pages are
+sandboxed with a CSP that blocks all outbound fetch/XHR/WebSocket, which is
+every data source and every map tile this depends on.
+
+`scripts/build-static.sh` produces the same build locally. It handles two
+things a plain `vite build` gets wrong for a project subpath: `vite-plugin-cesium`
+writes its runtime to `dist/<base>/cesium` while the app requests
+`/<base>/cesium` (so it is hoisted), and the hand-written root-absolute asset
+paths (`/logo.svg`, `/models/*.glb`) are rewritten to include the base.
 
 ## Tweaking or removing the skin
 
