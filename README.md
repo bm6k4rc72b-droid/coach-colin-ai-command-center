@@ -1,7 +1,5 @@
 # QB Vision — Coach Colin AI Command Center
 
-**Live: https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/**
-
 Point an iPhone at a quarterback rep and measure the pocket around him: when
 pressure arrived, how fast he reacted, how much ground he covered, how long he
 held the ball.
@@ -122,26 +120,38 @@ npm run smoke      # drives the real page in Chromium with a fake camera
 
 ## Deploying
 
-The site is published to GitHub Pages from the `gh-pages` branch. To ship a
-change:
+**The repo's GitHub Pages site is not available for this app.** It is occupied
+by God's Eye View, which deploys to the site root from `main` via
+`.github/workflows/pages.yml` with the Pages source set to *GitHub Actions*.
+While that source is selected, branch-based publishing is ignored entirely, so
+pushing to a `gh-pages` branch has no effect on the live site.
 
-```bash
-npm run deploy
-```
+So QB Vision is hosted separately. The fastest route:
 
-That builds with the correct base path, publishes to `gh-pages` through a
-temporary worktree (your current branch is never touched), and the live site
-updates within about a minute.
+1. `npm run build` — produces `dist/`, with root-relative asset paths.
+2. Zip the **contents** of `dist/` (not the folder itself).
+3. Drop the zip on <https://app.netlify.com/drop>.
 
-**Why the base path matters.** Pages serves this as a *project site*, at
-`/<repo>/` rather than a domain root, so asset URLs need the repo-name prefix.
-A build made without it deploys a blank page that 404s on its own JavaScript.
-`npm run deploy` derives it from the git remote; a plain `npm run build`
-produces a root-relative build for local dev and for hosts that serve from the
-root (Netlify, Vercel, Replit).
+That returns an HTTPS URL immediately, which is what the iPhone camera needs.
+Netlify will prompt you to create an account to keep the site permanently.
 
-First-time Pages setup, if it is ever reset: repo **Settings → Pages → Source →
-Deploy from a branch → `gh-pages` / `root`**.
+Vercel, Cloudflare Pages and Replit all work the same way: they serve from a
+domain root, which is what a default `npm run build` targets.
+
+### If the Pages site ever frees up
+
+`scripts/deploy-pages.sh` (`npm run deploy`) publishes a correctly-prefixed
+build to a `gh-pages` branch. It only takes effect if the repo's Pages source is
+switched back to **Deploy from a branch → `gh-pages` → `/ (root)`**, which would
+take the site away from God's Eye View. The two apps can also coexist by
+building QB Vision into a `qb-vision/` subfolder of the existing Pages artifact.
+
+**Why the base path matters.** A build for a Pages *project site* needs its
+asset URLs prefixed with the repo name, because the site lives at `/<repo>/`
+rather than a domain root; `npm run deploy` derives that prefix from the git
+remote. A plain `npm run build` produces the root-relative build that Netlify,
+Vercel and Replit want. Using the wrong one deploys a blank page that 404s on
+its own JavaScript.
 
 ## Self-hosting the model weights
 

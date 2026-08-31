@@ -11,6 +11,14 @@
 # Publishing happens through a temporary git worktree so your current branch,
 # working tree and staged changes are never touched.
 #
+# NOTE: as of this writing the repo's Pages source is set to "GitHub Actions"
+# (God's Eye View publishes to the site root from main via
+# .github/workflows/pages.yml). While that source is selected GitHub ignores
+# branch-based publishing, so this script will push a perfectly good gh-pages
+# branch that does not appear on the live site. It only takes effect if the
+# source is switched back to "Deploy from a branch" -> gh-pages -> / (root).
+# For hosting that does not fight over the Pages site, see README "Deploying".
+#
 # Usage:  ./scripts/deploy-pages.sh
 set -euo pipefail
 
