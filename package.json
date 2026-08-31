@@ -9,7 +9,8 @@
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
     "verify": "node scripts/verify-math.mjs && node scripts/verify-engine.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "deploy": "bash scripts/deploy-pages.sh"
   },
   "dependencies": {
     "@tensorflow-models/pose-detection": "^2.1.3",

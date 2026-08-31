@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  // GitHub Pages serves a project site from /<repo>/, not from the domain root,
+  // so asset URLs need that prefix. Left as '/' for local dev and for hosts that
+  // serve from the root (Vercel, Netlify, Replit); the deploy script sets it.
+  base: process.env.BASE_PATH || '/',
   plugins: [react()],
   resolve: {
     alias: {

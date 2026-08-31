@@ -1,5 +1,7 @@
 # QB Vision — Coach Colin AI Command Center
 
+**Live: https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/**
+
 Point an iPhone at a quarterback rep and measure the pocket around him: when
 pressure arrived, how fast he reacted, how much ground he covered, how long he
 held the ball.
@@ -117,6 +119,29 @@ npm run smoke      # drives the real page in Chromium with a fake camera
 5. **Save rep**. Export the session as CSV from the Reps panel.
 
 ---
+
+## Deploying
+
+The site is published to GitHub Pages from the `gh-pages` branch. To ship a
+change:
+
+```bash
+npm run deploy
+```
+
+That builds with the correct base path, publishes to `gh-pages` through a
+temporary worktree (your current branch is never touched), and the live site
+updates within about a minute.
+
+**Why the base path matters.** Pages serves this as a *project site*, at
+`/<repo>/` rather than a domain root, so asset URLs need the repo-name prefix.
+A build made without it deploys a blank page that 404s on its own JavaScript.
+`npm run deploy` derives it from the git remote; a plain `npm run build`
+produces a root-relative build for local dev and for hosts that serve from the
+root (Netlify, Vercel, Replit).
+
+First-time Pages setup, if it is ever reset: repo **Settings → Pages → Source →
+Deploy from a branch → `gh-pages` / `root`**.
 
 ## Self-hosting the model weights
 
