@@ -81,6 +81,18 @@ the darker ground.
 
 ---
 
+## Companion app — Sentinel Cyber Command Center
+
+Alongside the globe there's a self-contained defensive security console in
+[`cyber/`](cyber/): an autonomous **AI pentest agent** (a defensive reimagining
+of the "AI hacker that finds your weak spots"), a live threat radar, an OWASP
+Top 10 coverage matrix, a weighted-CVSS posture gauge, a filterable
+vulnerability board with remediation, and an offline credential-hardening lab.
+It's a single no-build HTML file — open [`cyber/index.html`](cyber/index.html)
+in any browser. It's a **simulation/training** environment (all targets are
+non-routable `.test` hosts) and nothing leaves the page. See
+[`cyber/README.md`](cyber/README.md) for the full module list and scope notes.
+
 ## Running it
 
 **Just run this:**

