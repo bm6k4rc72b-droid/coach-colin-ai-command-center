@@ -1,0 +1,112 @@
+<section class="fm">
+  <h1 id="intro" data-toc="front" data-toc-title="Introduction">Introduction: What an AI Engineer Is</h1>
+
+  <p class="lede opener">There is a job that did not exist in its current form five
+  years ago, and it is not the job of a machine-learning researcher. The
+  researcher's product is a claim: this method beats that one, under these
+  conditions, and here is the evidence. The AI engineer's product is a
+  <em>system</em> — something that runs, costs money per request, fails in
+  specific ways, and is used by people who did not read the paper.</p>
+
+  <p>The two roles share a body of mathematics and diverge immediately after it.
+  A researcher may reasonably stop when the curve goes up. An engineer's work
+  starts there: which of the ten thousand tokens per second is the one that
+  matters, what happens at the ninety-ninth percentile of latency, what the model
+  does when the retrieval index is stale, what it says to a user trying to make
+  it say something it should not.</p>
+
+  <h2>The four competences</h2>
+
+  <p class="lede">Everything in this course serves one of four competences. They
+  are not sequential — a working engineer exercises all four in a week — but they
+  are teachable in the order given.</p>
+
+  <table>
+   <thead><tr><th>Competence</th><th>The question it answers</th><th>Modules</th></tr></thead>
+   <tbody>
+    <tr><td><strong>Formulation</strong></td>
+        <td>What kind of problem is this, and what would a solution even look like?</td>
+        <td class="num-col">01–03</td></tr>
+    <tr><td><strong>Modelling</strong></td>
+        <td>What function class, trained how, on what data, evaluated against what?</td>
+        <td class="num-col">04–07</td></tr>
+    <tr><td><strong>Scaling</strong></td>
+        <td>How does this behave when it is a thousand times larger?</td>
+        <td class="num-col">08–11</td></tr>
+    <tr><td><strong>Operation</strong></td>
+        <td>How does it run reliably, cheaply and safely for people who are not you?</td>
+        <td class="num-col">12–15</td></tr>
+   </tbody>
+  </table>
+
+  <div class="call">
+    <span class="lbl">Key idea</span>
+    The field's centre of gravity has moved from <em>training a model for a task</em>
+    to <em>steering a general model toward a task</em>. That shift does not make
+    the fundamentals optional; it makes them diagnostic. When a prompt fails, the
+    engineers who can say why are the ones who know what the forward pass is
+    doing.
+  </div>
+
+  <h2>Why the fundamentals still pay</h2>
+
+  <p class="lede">It is possible to build a useful product on a hosted model
+  without knowing what attention computes. It is not possible to debug one. Every
+  recurring production pathology in modern AI systems has a mechanical
+  explanation that this course supplies:</p>
+
+  <ul>
+    <li>A model that repeats itself under long context — a decoding and
+    positional-encoding problem (Modules 8, 13).</li>
+    <li>Retrieval that returns plausible but wrong passages — an embedding
+    geometry and chunking problem (Modules 5, 12).</li>
+    <li>Fine-tuning that improves your benchmark and destroys general ability —
+    catastrophic forgetting and distribution shift (Modules 4, 10).</li>
+    <li>An inference bill that grows faster than usage — a batching, KV-cache
+    and quantisation problem (Module 13).</li>
+    <li>Confident wrong answers that survive every test you wrote — a calibration
+    and evaluation-design problem (Modules 1, 10, 14).</li>
+  </ul>
+
+  <p>None of these are prompt problems, though all of them are usually first
+  attacked with prompts. The engineer who reaches for the mechanism instead is
+  worth several who reach for another instruction.</p>
+
+  <h2>How the field actually progressed</h2>
+
+  <p class="lede">A short orientation, because knowing the order in which ideas
+  arrived tells you which ones are load-bearing.</p>
+
+  <table class="long">
+   <thead><tr><th>Era</th><th>Governing idea</th><th>What it could not do</th></tr></thead>
+   <tbody>
+    <tr><td>Symbolic, 1956–1990</td><td>Intelligence is search over symbolic states with explicit rules.</td>
+        <td>Acquire its own representations; cope with noise and ambiguity.</td></tr>
+    <tr><td>Statistical, 1990–2011</td><td>Learn a decision function from labelled data; control capacity to generalise.</td>
+        <td>Learn the features themselves — performance was bounded by hand-engineering.</td></tr>
+    <tr><td>Deep, 2012–2017</td><td>Learn the representation and the decision jointly, with gradients and GPUs.</td>
+        <td>Handle long-range structure efficiently; transfer across tasks.</td></tr>
+    <tr><td>Attention &amp; scale, 2017–2022</td><td>One architecture, self-supervised on everything, made larger.</td>
+        <td>Follow intent; say what it does not know.</td></tr>
+    <tr><td>Alignment &amp; systems, 2022–</td><td>Post-train for intent; surround the model with retrieval, tools and evaluation.</td>
+        <td>— the open problem this course leaves you standing in.</td></tr>
+   </tbody>
+  </table>
+
+  <p>Note that each era's governing idea was not refuted so much as absorbed.
+  Search did not disappear; it reappeared as beam search, as Monte-Carlo tree
+  search, and as the test-time reasoning of Module&nbsp;10. Statistical learning
+  theory did not disappear; it is the only reason we can say anything about
+  whether a benchmark result will hold. This is why Part&nbsp;One is not history.</p>
+
+  <div class="call practice">
+    <span class="lbl">In practice</span>
+    Keep a lab notebook — literally a file — from Module&nbsp;1. Record every
+    experiment as hypothesis, change, result, conclusion. The engineers who
+    advance fastest in this field are not the ones who run the most experiments;
+    they are the ones who can still say, three months later, what they learned
+    from each one.
+  </div>
+
+  <p class="lede">Begin.</p>
+</section>

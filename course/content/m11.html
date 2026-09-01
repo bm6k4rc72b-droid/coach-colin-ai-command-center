@@ -1,0 +1,235 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">11</div>
+    <div class="meta">
+      <div class="kicker">Part Three · Frontier Systems</div>
+      <div class="lineage">Stanford CS231n &amp; CS236 · NVIDIA generative-AI track</div>
+    </div>
+  </div>
+  <h1 id="m11" data-toc="module" data-toc-n="11" data-toc-title="Generative Models Beyond Text">Generative Models<br>Beyond Text</h1>
+  <div class="epigraph">Every generative model answers the same question — how do I
+   sample from a distribution I can only observe? — and each family answers it by
+   giving up something different.
+   <span class="attrib">On the family tree</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Place any generative model in a family and state what it trades away.</li>
+         <li>Derive the diffusion training objective and explain why it reduces to denoising.</li>
+         <li>Build a conditional generation pipeline with classifier-free guidance.</li>
+         <li>Evaluate generative quality without deceiving yourself.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 05, 07, 08.</li>
+         <li>The ELBO from Module 05.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 9 h</li>
+         <li>Problem set: 5 h · Lab: 9 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Week</b>18</div>
+     <div><b>Total hours</b>23</div>
+     <div><b>Deliverable</b>A conditional diffusion model</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">A generative model wants three properties: high sample
+ quality, fast sampling, and a tractable likelihood. No family delivers all
+ three, and the history of the subject is the history of choosing which to
+ sacrifice.</p>
+
+ <table>
+  <caption>The families, and the corner of the triangle each gives up.</caption>
+  <thead><tr><th>Family</th><th>Training</th><th>Sampling</th><th>Likelihood</th><th>Gives up</th></tr></thead>
+  <tbody>
+   <tr><td>Autoregressive</td><td>Stable, exact MLE</td><td>Sequential, slow</td><td>Exact</td><td>Sampling speed</td></tr>
+   <tr><td>VAE</td><td>Stable, ELBO</td><td>One pass, fast</td><td>Lower bound</td><td>Sample sharpness</td></tr>
+   <tr><td>GAN</td><td>Adversarial, unstable</td><td>One pass, fast</td><td>None</td><td>Coverage and a likelihood</td></tr>
+   <tr><td>Normalising flow</td><td>Exact MLE</td><td>Fast both ways</td><td>Exact</td><td>Architectural freedom</td></tr>
+   <tr><td>Diffusion / flow matching</td><td>Stable, simple regression</td><td>Many steps</td><td>Bound</td><td>Sampling speed (recoverable)</td></tr>
+  </tbody>
+ </table>
+
+ <h2><span class="num">11.1</span>Diffusion, from the idea to the loss</h2>
+
+ <p class="lede">Take a data point and add Gaussian noise repeatedly until nothing
+ remains but noise. That forward process is fixed and requires no learning. Now
+ learn to reverse one step of it. If you can reverse a single small step, you can
+ start from pure noise and walk all the way back to a sample.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">q(x_t \mid x_0) = \mathcal{N}\!\left(x_t;\; \sqrt{\bar\alpha_t}\, x_0,\; (1-\bar\alpha_t)\mathbf{I}\right), \qquad x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon</span></div><span class="tag-n"></span></div>
+
+ <p>The closed form for arbitrary <span class="m">t</span> is what makes training
+ cheap: no simulation is needed, just sample a timestep, noise the image once, and
+ ask the network to identify the noise that was added. The variational bound
+ simplifies — after a well-known reparameterisation and dropping the weighting —
+ to a plain regression objective.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\mathcal{L}_{\text{simple}} = \E_{x_0,\, \epsilon \sim \mathcal{N}(0,\mathbf{I}),\, t}\Big[ \big\| \epsilon - \epsilon_\theta(x_t, t) \big\|^{2} \Big]</span></div><span class="tag-n"></span></div>
+
+ <div class="call deriv">
+   <span class="lbl">Denoising is score estimation</span>
+   Predicting the noise is equivalent, up to a scale, to estimating the gradient
+   of the log density of the noised data:
+   <span class="m">\nabla_{x_t} \log q(x_t) = -\epsilon_\theta(x_t,t) / \sqrt{1-\bar\alpha_t}</span>.
+   That is why sampling is Langevin-like — repeatedly step along the score with a
+   little noise — and why diffusion, score matching and stochastic differential
+   equations turn out to be three descriptions of one object. Flow matching
+   generalises the picture further, learning a velocity field that transports
+   noise to data along a straighter path, which is why it needs fewer sampling
+   steps.
+ </div>
+
+ <h3>Conditioning and guidance</h3>
+ <p class="lede">Conditional generation trains <span class="m">\epsilon_\theta(x_t, t, c)</span>
+ with the condition <span class="m">c</span> — a text embedding, a class, a depth map —
+ randomly dropped during training. At sampling time the conditional and
+ unconditional predictions are extrapolated apart:</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\tilde\epsilon = \epsilon_\theta(x_t, t, \varnothing) + w\big(\epsilon_\theta(x_t,t,c) - \epsilon_\theta(x_t,t,\varnothing)\big)</span></div><span class="tag-n"></span></div>
+
+ <p>The guidance weight <span class="m">w</span> is the most consequential dial in
+ practical image generation: low values give diverse, loosely-related samples;
+ high values give prompt-faithful, saturated, homogeneous ones. It buys fidelity
+ with diversity, and it costs a second forward pass per step.</p>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Latent diffusion — running the whole process inside a pretrained
+   autoencoder's latent space rather than in pixels — reduces the spatial
+   dimensions by roughly 8× per side and therefore the compute by one to two
+   orders of magnitude. It is the single change that moved image generation from
+   research clusters to consumer hardware, and it composes with everything else
+   in this module.
+ </div>
+
+ <h2><span class="num">11.2</span>Multimodal models</h2>
+
+ <p class="lede">A vision–language model is, mechanically, a transformer whose
+ token stream contains image patches as well as text. The interesting engineering
+ is in the join: a vision encoder produces patch embeddings, a projector maps
+ them into the language model's embedding space, and training proceeds in stages —
+ align the projector first with the language model frozen, then unfreeze for
+ instruction tuning.</p>
+
+ <p>The failure modes are specific and worth knowing before you meet them:
+ resolution loss on dense text or small objects (addressed by tiling the image
+ into multiple crops), positional confusion across many images in one context,
+ and a strong language prior that overrides visual evidence — the model answers
+ from what is usually true rather than from what is in front of it.</p>
+
+ <h3>Audio, video, 3D</h3>
+ <ul>
+   <li><strong>Speech.</strong> Recognition is now an encoder–decoder transformer
+   over log-mel spectrograms trained on very weakly supervised data at scale.
+   Synthesis is typically autoregressive or diffusion over discrete audio codec
+   tokens — the codec being the crucial component, since it determines the
+   compression and therefore the sequence length.</li>
+   <li><strong>Video.</strong> Add a time axis and the cost problem becomes
+   severe. Spatio-temporal patching, factorised attention, and cascades that
+   generate keyframes before interpolating are the standard responses. Temporal
+   consistency, not per-frame quality, is the binding constraint.</li>
+   <li><strong>3D.</strong> Neural radiance fields represent a scene as a function
+   from position and view direction to colour and density, rendered by volume
+   integration; Gaussian splatting replaces the implicit field with millions of
+   explicit anisotropic Gaussians and rasterises them, trading memory for real-time
+   rendering. Both are optimisation-per-scene by default, and both are being
+   folded into feed-forward generative models.</li>
+ </ul>
+
+ <h2><span class="num">11.3</span>Evaluating generation</h2>
+
+ <p class="lede">Generative evaluation is genuinely hard, and the standard metrics
+ are weaker than their ubiquity suggests.</p>
+
+ <table>
+  <caption>What the usual metrics do and do not tell you.</caption>
+  <thead><tr><th>Metric</th><th>Measures</th><th>Blind to</th></tr></thead>
+  <tbody>
+   <tr><td>FID</td><td>Distance between feature distributions</td><td>Per-sample quality; biased by sample count and by the feature extractor</td></tr>
+   <tr><td>Inception Score</td><td>Confidence and diversity of a classifier</td><td>Fidelity to the target distribution; anything outside the classifier's classes</td></tr>
+   <tr><td>CLIP score</td><td>Prompt–image agreement</td><td>Realism, composition, counting, spatial relations</td></tr>
+   <tr><td>Precision / recall for generative models</td><td>Fidelity and coverage, separately</td><td>Requires care in the embedding space chosen</td></tr>
+   <tr><td>Human pairwise preference</td><td>What you actually care about</td><td>Expensive; needs many raters and swapped positions</td></tr>
+  </tbody>
+ </table>
+
+ <p>Report at least one distributional metric, one alignment metric and one human
+ comparison. And check memorisation: query your training set for near-duplicates
+ of your samples. A model that reproduces its training data is not a generative
+ model — it is a lossy database, with the legal and ethical exposure that
+ implies.</p>
+
+ <div class="bench">
+   <h4>The Bench · Lab 11</h4>
+   <div class="title">Build a conditional diffusion model and find the guidance frontier</div>
+   <ol>
+     <li>Implement DDPM from scratch on a small image dataset: noise schedule,
+     a U-Net with timestep embeddings, and the simplified loss. Verify the forward
+     process empirically — the marginal at <span class="m">t = T</span> must be
+     indistinguishable from standard normal.</li>
+     <li>Implement both DDPM ancestral sampling and a deterministic DDIM sampler.
+     Compare quality against the number of steps (1 000, 250, 50, 10).</li>
+     <li>Add class conditioning with classifier-free guidance. Sweep
+     <span class="m">w</span> and plot the fidelity–diversity frontier using FID against
+     a coverage metric. Identify the knee.</li>
+     <li>Train a small autoencoder and run the same diffusion model in its latent
+     space. Report the compute saving and the quality cost.</li>
+     <li>Audit memorisation: for your 100 best samples, find the nearest training
+     example in an embedding space and report the distance distribution against a
+     held-out baseline.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> sample grids at each guidance weight, the
+   step-count quality curve, the fidelity–diversity frontier with its knee marked,
+   and the memorisation audit. <b>Acceptance:</b> DDIM at 50 steps matches DDPM at
+   1 000 within a stated FID tolerance, and you can state the guidance weight you
+   would ship and why.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 11 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Taxonomy</td><td>Names the families</td><td>States each family's trade and picks one for a use case</td><td>Explains why diffusion won for images and autoregression for text</td></tr>
+   <tr><td>Derivation</td><td>Uses a diffusion library</td><td>Implements DDPM from the objective</td><td>Connects denoising, score matching and the SDE view</td></tr>
+   <tr><td>Control</td><td>Prompts a model</td><td>Implements guidance and characterises its trade-off</td><td>Designs a conditioning scheme for a novel control signal</td></tr>
+   <tr><td>Evaluation</td><td>Reports FID</td><td>Reports fidelity, coverage and alignment separately</td><td>Audits memorisation and reasons about the consequences</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why can diffusion training sample an arbitrary timestep directly instead of simulating the chain?</li>
+  <li>What does classifier-free guidance trade, and why does <span class="m">w = 1</span> recover ordinary conditional sampling?</li>
+  <li>Your FID improves and your samples look worse. Give two explanations.</li>
+  <li>Why did GANs lose to diffusion for image generation, given that GAN sampling is far faster?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Ho, Jain &amp; Abbeel, "Denoising Diffusion Probabilistic Models" (2020).</li>
+   <li><span class="k">Paper</span>Song et al., "Score-Based Generative Modeling through Stochastic Differential Equations" (2021) — the unifying view.</li>
+   <li><span class="k">Paper</span>Rombach et al., "High-Resolution Image Synthesis with Latent Diffusion Models" (2022).</li>
+   <li><span class="k">Paper</span>Ho &amp; Salimans, "Classifier-Free Diffusion Guidance" (2022).</li>
+   <li><span class="k">Paper</span>Lipman et al., "Flow Matching for Generative Modeling" (2023).</li>
+   <li><span class="k">Paper</span>Kerbl et al., "3D Gaussian Splatting for Real-Time Radiance Field Rendering" (2023).</li>
+   <li><span class="k">Course</span>Stanford CS236, <em>Deep Generative Models</em> — the full taxonomy with derivations.</li>
+  </ul>
+ </div>
+</section>

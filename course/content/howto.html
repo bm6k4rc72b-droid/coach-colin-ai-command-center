@@ -1,0 +1,70 @@
+<section class="fm">
+  <h1 id="howto" data-toc="front" data-toc-title="How to Use This Course">How to Use This Course</h1>
+
+  <p class="lede">This is a working curriculum with a fixed shape: read, derive,
+  build, ship, assess. Each module contains a body of theory, at least one
+  hands-on <em>Bench</em> lab with an acceptance test, a four-row rubric, and a
+  short reading list. The modules are ordered as dependencies, not as topics —
+  Module&nbsp;9 assumes Module&nbsp;6's vocabulary, and Module&nbsp;13 assumes
+  Module&nbsp;9's arithmetic.</p>
+
+  <h2>Three routes through the same material</h2>
+
+  <table>
+   <caption>Choose a route by the time you actually have, not the time you wish you had.</caption>
+   <thead><tr><th>Route</th><th>Length</th><th>Weekly load</th><th>Scope</th></tr></thead>
+   <tbody>
+    <tr><td><strong>The Full Program</strong></td><td class="num-col">26 weeks</td><td class="num-col">12–15 h</td>
+        <td>All fifteen modules, every lab, the capstone. The intended path.</td></tr>
+    <tr><td><strong>The Applied Sprint</strong></td><td class="num-col">12 weeks</td><td class="num-col">10 h</td>
+        <td>Modules 1, 4, 6, 8, 10, 12, 13, 14 — enough to build and operate LLM systems responsibly. Skips classical AI and generative vision.</td></tr>
+    <tr><td><strong>The Systems Track</strong></td><td class="num-col">14 weeks</td><td class="num-col">12 h</td>
+        <td>Modules 1, 6, 8, 9, 11, 13, 14 — for engineers whose job is throughput, cost and latency rather than modelling.</td></tr>
+   </tbody>
+  </table>
+
+  <h2>The rule of the labs</h2>
+
+  <p class="lede">Every lab has an <em>acceptance criterion</em> that a machine can
+  check and a <em>ship</em> line describing the artefact. The criterion matters
+  more than the code. If your autodiff engine's gradients do not agree with a
+  reference to <code>1e-5</code>, you have not finished Module&nbsp;1, however
+  elegant the file is.</p>
+
+  <p>Build the labs in a single repository, one directory per module, with a
+  README that states what you learned and what broke. By Module&nbsp;15 that
+  repository is your portfolio, and it will be a better one than a certificate.</p>
+
+  <div class="call practice">
+    <span class="lbl">In practice</span>
+    Write the failing test before the implementation, in every lab. The habit is
+    worth more than any single technique in this book, and it is the only
+    discipline that survives contact with non-deterministic models.
+  </div>
+
+  <h2>Assessment</h2>
+
+  <p class="lede">Each module closes with a four-row rubric scored 1–4. Score
+  yourself honestly at the end of the module and again two weeks later; the
+  second score is the real one. A score of 3 on every row is the gate to the
+  next module. Self-check questions are diagnostic, not decorative: if you cannot
+  answer them without notes, the module has not landed.</p>
+
+  <h2>What you need</h2>
+
+  <table>
+   <thead><tr><th>Resource</th><th>Minimum</th><th>Comfortable</th></tr></thead>
+   <tbody>
+    <tr><td>Compute</td><td>A laptop CPU and a free hosted notebook GPU</td><td>One 16–24&nbsp;GB GPU, rented by the hour</td></tr>
+    <tr><td>Software</td><td>Python 3.11+, PyTorch, NumPy, a terminal</td><td>Add CUDA toolkit, a profiler, a container runtime</td></tr>
+    <tr><td>Data</td><td>Public datasets under 5&nbsp;GB</td><td>A fast local disk and 200&nbsp;GB free</td></tr>
+    <tr><td>Time</td><td>10 h per week, protected</td><td>15 h per week, and a study partner</td></tr>
+   </tbody>
+  </table>
+
+  <p>Modules 9 and 13 describe hardware most readers will not own. They are
+  written so that the arithmetic can be done on paper and the labs can be run at
+  one-hundredth scale on a single GPU. Scale is a coefficient, not a concept:
+  everything Module&nbsp;9 teaches about parallelism can be observed on two
+  processes on one machine.</p>
+</section>

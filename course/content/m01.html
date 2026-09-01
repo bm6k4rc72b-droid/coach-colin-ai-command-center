@@ -1,0 +1,324 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">01</div>
+    <div class="meta">
+      <div class="kicker">Part One · Foundations</div>
+      <div class="lineage">Harvard STAT&nbsp;110 · Stanford CS229 review</div>
+    </div>
+  </div>
+  <h1 id="m01" data-toc="module" data-toc-n="01" data-toc-title="The Mathematics of Machine Intelligence">The Mathematics of<br>Machine Intelligence</h1>
+  <div class="epigraph">A neural network is a very large function, fitted by a very simple idea:
+    walk downhill.  Everything difficult about the field is a consequence of the
+    <em>size</em> of the function and the <em>shape</em> of the hill.
+    <span class="attrib">The premise of this course</span></div>
+ </div>
+
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Read a machine-learning paper's notation without stalling.</li>
+         <li>Differentiate any composite function by hand and by autodiff, and say why the two agree.</li>
+         <li>Reason about a model's behaviour in terms of eigenvalues, gradients and distributions.</li>
+         <li>Diagnose a failing training run from its loss curve using convexity and conditioning.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Single-variable calculus.</li>
+         <li>Programming in any language; Python is used throughout.</li>
+         <li>No linear algebra or probability is assumed — both are built here.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 9&nbsp;h</li>
+         <li>Problem set: 6&nbsp;h · Lab: 5&nbsp;h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>1–2</div>
+     <div><b>Total hours</b>20</div>
+     <div><b>Deliverable</b>A working autodiff engine</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Every idea in this book is, underneath, one of four
+ mathematical objects: a <em>vector</em>, a <em>derivative</em>, a
+ <em>probability</em>, or a <em>bound</em>.  Vectors give us a language for data
+ and for the internal states of a model.  Derivatives give us a mechanism for
+ improvement.  Probabilities give us a calculus of uncertainty, which is the
+ only honest way to talk about learning from finite samples.  Bounds tell us
+ when to stop — how much data is enough, how much error is irreducible, how much
+ compute buys how much capability.</p>
+
+ <p>This module is deliberately not a mathematics course.  It is the working
+ subset a practising AI engineer uses daily, presented in the order that makes
+ the later modules legible.  Where a full treatment would prove a theorem, we
+ state it, show what it buys us, and point to the canonical source.  Where a
+ full treatment would skip an implementation detail, we dwell on it, because
+ that detail is usually where a training run dies.</p>
+
+ <h2><span class="num">1.1</span>Linear algebra as a language for data</h2>
+
+ <p class="lede">Represent one example as a column vector <span class="m">x \in \R^{d}</span>
+ whose entries are features.  A dataset of <span class="m">n</span> examples becomes a
+ matrix <span class="m">X \in \R^{n \times d}</span>, one example per row.  Almost every
+ model in this book is then a function that takes <span class="m">X</span> and produces
+ predictions by interleaving two operations: a linear map, and a pointwise
+ nonlinearity.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">h = \sigma\!\left(W x + b\right), \qquad W \in \R^{m \times d},\; b \in \R^{m}</span></div><span class="tag-n"></span></div>
+
+ <p>The linear map <span class="m">W</span> is the only part with free parameters, and
+ understanding a model means understanding what its matrices do to space.  Four
+ facts carry most of the weight.</p>
+
+ <h3>Rank, span and the information a layer can carry</h3>
+
+ <p class="lede">The <em>rank</em> of <span class="m">W</span> is the dimension of its image.  A
+ layer of rank <span class="m">r</span> cannot transmit more than <span class="m">r</span>
+ independent directions of variation, no matter how many output units it has.
+ This single fact explains low-rank adaptation (LoRA), bottleneck autoencoders,
+ embedding-dimension choices, and why a badly initialised network can collapse:
+ if the effective rank of activations falls, the layer is throwing information
+ away that no later layer can recover.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Composition of linear maps is still linear.  Depth without nonlinearity buys
+   nothing: <span class="m">W_2 W_1 x</span> is just <span class="m">W' x</span>.  Every
+   architectural advance in this book is, in part, an answer to the question
+   <em>where do we put the nonlinearity, and how do we keep gradients alive
+   through it?</em>
+ </div>
+
+ <h3>Eigenvalues, singular values and conditioning</h3>
+
+ <p class="lede">The singular value decomposition writes any matrix as
+ <span class="m">W = U \Sigma V\T</span>: a rotation, an axis-wise scaling by the
+ singular values <span class="m">\sigma_1 \ge \dots \ge \sigma_r > 0</span>, and another
+ rotation.  The largest singular value is the most a vector's length can be
+ amplified; the ratio <span class="m">\kappa = \sigma_{\max} / \sigma_{\min}</span> is the
+ <em>condition number</em>.</p>
+
+ <p>Conditioning is the difference between a training run that converges in an
+ hour and one that oscillates for a day.  For gradient descent on a quadratic
+ with Hessian condition number <span class="m">\kappa</span>, the error contracts by a
+ factor of roughly <span class="m">(\kappa-1)/(\kappa+1)</span> per step, so the number
+ of iterations required grows linearly in <span class="m">\kappa</span>.  Normalisation
+ layers, careful initialisation, and adaptive optimisers are all, in different
+ ways, attempts to reduce the effective <span class="m">\kappa</span> that the optimiser
+ sees.</p>
+
+ <table>
+  <caption>The linear-algebra facts that recur in later modules, and where.</caption>
+  <thead><tr><th>Object</th><th>What it tells you</th><th>Where it returns</th></tr></thead>
+  <tbody>
+   <tr><td>Rank</td><td>Independent directions a map can carry</td><td>LoRA (M10), bottlenecks (M05), embedding size (M12)</td></tr>
+   <tr><td>Singular values</td><td>Amplification per direction</td><td>Spectral norm, gradient clipping (M06)</td></tr>
+   <tr><td>Eigenvectors of covariance</td><td>Directions of maximal variance</td><td>PCA and whitening (M05)</td></tr>
+   <tr><td>Condition number</td><td>Optimisation difficulty</td><td>Normalisation, Adam (M06), loss spikes (M09)</td></tr>
+   <tr><td>Orthogonality</td><td>Isometry — lengths preserved</td><td>Rotary embeddings (M08), init schemes (M06)</td></tr>
+   <tr><td>Matrix product cost</td><td><span class="m">2mnk</span> FLOPs</td><td>All scaling arithmetic (M09, M13)</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Learn to count FLOPs before you learn to profile.  A matrix multiply of
+   <span class="m">(m \times k)</span> by <span class="m">(k \times n)</span> costs
+   <span class="m">2mnk</span> floating-point operations.  A forward pass through a dense
+   transformer of <span class="m">N</span> non-embedding parameters costs about
+   <span class="m">2N</span> FLOPs per token, and the backward pass roughly twice that —
+   hence the famous <span class="m">C \approx 6ND</span> rule you will use in Module&nbsp;9
+   to price a training run before requesting a single GPU-hour.
+ </div>
+
+ <h2><span class="num">1.2</span>Calculus: the mechanism of improvement</h2>
+
+ <p class="lede">Learning is the minimisation of a scalar loss
+ <span class="m">L(\theta)</span> over parameters <span class="m">\theta \in \R^{P}</span>.  The
+ gradient <span class="m">\nabla_\theta L</span> is the vector of partial derivatives; it
+ points in the direction of steepest ascent, so we step against it.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\theta_{t+1} = \theta_t - \eta \, \nabla_\theta L(\theta_t)</span></div><span class="tag-n"></span></div>
+
+ <p>That is the entire algorithm.  The remaining ninety-nine percent of the
+ engineering is about computing <span class="m">\nabla_\theta L</span> efficiently for
+ functions with <span class="m">P</span> in the billions, and about choosing
+ <span class="m">\eta</span>.</p>
+
+ <h3>The chain rule, read backwards</h3>
+
+ <p class="lede">For a composition <span class="m">L = f_k \circ f_{k-1} \circ \dots \circ f_1</span>
+ the chain rule gives the Jacobian of the whole as a product of Jacobians.
+ Because <span class="m">L</span> is scalar, it is far cheaper to multiply that product
+ from the left — from the loss backwards — than from the right.  Multiplying
+ right-to-left (forward mode) costs one pass per <em>input</em> dimension;
+ left-to-right (reverse mode) costs one pass per <em>output</em> dimension, and
+ there is exactly one output.  This asymmetry is the whole reason
+ backpropagation exists.</p>
+
+ <div class="call deriv">
+   <span class="lbl">Why reverse mode wins</span>
+   Let <span class="m">J_i</span> be the Jacobian of layer <span class="m">i</span>.  We need
+   <span class="m">\nabla_\theta L = J_k J_{k-1} \cdots J_1</span>.  A left-to-right
+   accumulation only ever forms vector–matrix products, each costing
+   <span class="m">O(\text{params of that layer})</span>.  A right-to-left accumulation forms
+   matrix–matrix products of width <span class="m">P</span>.  For
+   <span class="m">P \sim 10^{10}</span> the difference is the difference between possible
+   and impossible.  The price is memory: reverse mode must retain the forward
+   activations, which is why activation checkpointing (Module&nbsp;9) exists.
+ </div>
+
+ <h3>Curvature, and what second order would buy</h3>
+
+ <p class="lede">The Hessian <span class="m">H = \nabla^2_\theta L</span> describes local
+ curvature.  Newton's method rescales the step by <span class="m">H^{-1}</span>, making
+ convergence independent of conditioning — but <span class="m">H</span> has
+ <span class="m">P^2</span> entries, so it is never formed for large models.  Adam,
+ RMSProp and Shampoo are all cheap diagonal or block approximations to this
+ idea, and knowing that is enough to predict how they will behave when they
+ fail.</p>
+
+ <h2><span class="num">1.3</span>Probability: the calculus of uncertainty</h2>
+
+ <p class="lede">Machine learning estimates a conditional distribution
+ <span class="m">p(y \mid x)</span> from samples.  Three constructions do most of the work
+ in this book: expectation, the maximum-likelihood principle, and the family of
+ divergences that measure how far one distribution is from another.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\hat{\theta}_{\text{MLE}} = \argmax_{\theta} \; \sum_{i=1}^{n} \log p_\theta(y_i \mid x_i)</span></div><span class="tag-n"></span></div>
+
+ <p>Nearly every loss function you will meet is a negative log-likelihood in
+ disguise.  Squared error is the negative log-likelihood of a Gaussian with
+ fixed variance; cross-entropy is the negative log-likelihood of a categorical
+ distribution.  Recognising this saves you from treating loss functions as
+ arbitrary design choices — they are statements about the noise model you
+ believe in.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\KL\!\left(p \,\|\, q\right) = \E_{x \sim p}\!\left[\log \frac{p(x)}{q(x)}\right] \; \ge \; 0</span></div><span class="tag-n"></span></div>
+
+ <p>The Kullback–Leibler divergence measures the extra bits needed to encode
+ samples from <span class="m">p</span> using a code built for <span class="m">q</span>.  It is
+ asymmetric, and that asymmetry has teeth: <span class="m">\KL(p\|q)</span> punishes
+ <span class="m">q</span> for missing mass that <span class="m">p</span> has (mode-covering),
+ while <span class="m">\KL(q\|p)</span> punishes <span class="m">q</span> for putting mass where
+ <span class="m">p</span> has none (mode-seeking).  You will meet both in Module&nbsp;10,
+ where the KL term in RLHF keeps a policy near its reference model, and in
+ Module&nbsp;11, where the choice of direction distinguishes families of
+ generative models.</p>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Cross-entropy, perplexity and bits-per-token are the same quantity in
+   different units, and mixing them silently is a classic reporting error.  If
+   the mean loss <span class="m">\ell</span> is in nats per token, then perplexity is
+   <span class="m">e^{\ell}</span> and bits-per-token is <span class="m">\ell / \ln 2</span>.
+   Always state the base and the tokeniser: a perplexity comparison across
+   different vocabularies is meaningless.
+ </div>
+
+ <h3>Concentration: why finite samples say anything at all</h3>
+
+ <p class="lede">Hoeffding's inequality bounds the chance that an empirical mean
+ of <span class="m">n</span> bounded samples deviates from its expectation, and it
+ decays as <span class="m">e^{-2n\epsilon^2}</span>.  Read practically: to halve the
+ uncertainty of an evaluation metric you need four times the evaluation set.
+ This is the arithmetic behind every "our model scores 62.1 versus 61.8"
+ discussion in Module&nbsp;10, and the reason so many of those discussions are
+ noise.</p>
+
+ <h2><span class="num">1.4</span>Optimisation as the shape of the problem</h2>
+
+ <p class="lede">A convex problem has one basin, and gradient descent finds it.
+ Neural-network losses are not convex; they are high-dimensional landscapes
+ whose critical points are overwhelmingly saddles rather than local minima —
+ in <span class="m">P</span> dimensions, a random critical point is a minimum only if
+ all <span class="m">P</span> curvature eigenvalues are positive, which becomes
+ vanishingly unlikely as <span class="m">P</span> grows.</p>
+
+ <p>This is unexpectedly good news, and it is the empirical reason deep learning
+ works: escaping saddles requires only noise, and stochastic gradients supply it
+ for free.  What remains hard is not finding <em>a</em> minimum but finding one
+ that generalises — a question that belongs to Module&nbsp;4.</p>
+
+ <table>
+  <caption>The four objects, the questions they answer, and the failure they explain.</caption>
+  <thead><tr><th>Object</th><th>Question it answers</th><th>Failure it explains</th></tr></thead>
+  <tbody>
+   <tr><td>Vector / matrix</td><td>What is the model holding?</td><td>Representation collapse</td></tr>
+   <tr><td>Derivative</td><td>How does it improve?</td><td>Vanishing and exploding gradients</td></tr>
+   <tr><td>Probability</td><td>How confident should it be?</td><td>Miscalibration, hallucination</td></tr>
+   <tr><td>Bound</td><td>When can we stop?</td><td>Overfitting, noisy evaluations</td></tr>
+  </tbody>
+ </table>
+
+ <div class="bench">
+   <h4>The Bench · Lab 01</h4>
+   <div class="title">Build a reverse-mode autodiff engine, then train something with it</div>
+   <p>Write, from scratch and with no autodiff library, a scalar-valued
+   computation graph that supports <code>+</code>, <code>*</code>, <code>tanh</code>,
+   <code>exp</code> and <code>log</code>, each recording its local derivative.  Then
+   extend it to tensors.</p>
+   <ol>
+     <li>Implement a <code>Value</code> class holding <code>data</code>, <code>grad</code>
+       and a closure <code>_backward</code>; build the graph on every operation.</li>
+     <li>Topologically sort the graph and propagate gradients from the output
+       backwards.  Verify every operator against a finite-difference check to
+       within <code>1e-6</code>.</li>
+     <li>Generalise to <code>numpy</code> arrays: implement <code>matmul</code>,
+       broadcasting-aware <code>add</code>, and <code>softmax_cross_entropy</code> with
+       a numerically stable log-sum-exp.</li>
+     <li>Train a two-layer MLP on a two-moons dataset to &gt;&nbsp;99&nbsp;% training
+       accuracy, using only your engine.</li>
+     <li>Instrument it: log the condition number of each weight matrix and the
+       gradient norm per layer, every fifty steps.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a single Python file under 400 lines, a test
+   suite proving gradient correctness for every operator, and one figure showing
+   gradient norm per layer over training.  <b>Acceptance:</b> your gradients
+   agree with a reference framework to <code>1e-5</code> on a fixed random seed, and
+   you can explain, from your own logs, why the first layer's gradient is
+   smaller than the last's.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 01 rubric.  Score each row 1–4; a score of 3 is the passing gate.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Notation fluency</td><td>Needs a key for standard symbols</td><td>Reads a paper's method section unaided</td><td>Rewrites a paper's notation into consistent form and finds its errors</td></tr>
+   <tr><td>Differentiation</td><td>Chain rule by rote</td><td>Derives backward passes for novel ops</td><td>Derives and implements a fused custom gradient</td></tr>
+   <tr><td>Probabilistic reasoning</td><td>Applies formulas</td><td>Identifies the implied noise model of a loss</td><td>Designs a loss from a stated generative assumption</td></tr>
+   <tr><td>Diagnosis</td><td>Reports that training failed</td><td>Attributes failure to conditioning, scale or noise</td><td>Predicts the failure from the initialisation before running</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why does reverse-mode autodiff cost <span class="m">O(1)</span> passes regardless of parameter count, and what does it cost instead?</li>
+  <li>A layer's activations have effective rank 12 out of 768 dimensions. What has gone wrong, and which two interventions would you try first?</li>
+  <li>Your evaluation set has 500 examples and two models differ by 1.2 accuracy points. Is that difference real? Show the arithmetic.</li>
+  <li>Derive squared error as a negative log-likelihood, and state the assumption you had to make.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Core</span>Strang, <em>Introduction to Linear Algebra</em> — chapters on SVD and least squares; or MIT 18.06 lectures 1–10.</li>
+   <li><span class="k">Core</span>Blitzstein &amp; Hwang, <em>Introduction to Probability</em> (Harvard STAT 110) — chapters 1–7 and 9.</li>
+   <li><span class="k">Core</span>Deisenroth, Faisal &amp; Ong, <em>Mathematics for Machine Learning</em> — free PDF; parts I and II.</li>
+   <li><span class="k">Paper</span>Baydin et al., "Automatic Differentiation in Machine Learning: a Survey" (2018).</li>
+   <li><span class="k">Lecture</span>Stanford CS229 linear-algebra and probability review notes — the canonical two-document primer.</li>
+   <li><span class="k">Watch</span>Karpathy, "The spelled-out intro to neural networks and backpropagation" — build the engine alongside the video, then discard it and rebuild from your own notes.</li>
+  </ul>
+ </div>
+</section>

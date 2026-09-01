@@ -1,0 +1,243 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">04</div>
+    <div class="meta">
+      <div class="kicker">Part Two · Learning</div>
+      <div class="lineage">Stanford CS229 · Harvard CS181</div>
+    </div>
+  </div>
+  <h1 id="m04" data-toc="module" data-toc-n="04" data-toc-title="Supervised Learning and the Bias–Variance Bargain">Supervised Learning and<br>the Bias–Variance Bargain</h1>
+  <div class="epigraph">Fitting the data you have is trivial. The entire discipline
+   is about fitting the data you do not have.
+   <span class="attrib">On generalisation</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Derive linear and logistic regression from probabilistic assumptions rather than memorising them.</li>
+         <li>Decompose an error into bias, variance and noise, and act on the decomposition.</li>
+         <li>Design an evaluation protocol that will not lie to you.</li>
+         <li>Choose between a linear model, a kernel, an ensemble and a network on evidence.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 01 and 03.</li>
+         <li>NumPy; the ability to write a training loop.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 9 h</li>
+         <li>Problem set: 6 h · Lab: 7 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>5–6</div>
+     <div><b>Total hours</b>22</div>
+     <div><b>Deliverable</b>An honest benchmark</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Supervised learning is the estimation of a function
+ <span class="m">f: \mathcal{X} \to \mathcal{Y}</span> from pairs
+ <span class="m">(x_i, y_i)</span> drawn from an unknown joint distribution
+ <span class="m">\mathcal{D}</span>. Everything hinges on a quiet assumption: the
+ examples you will be judged on come from the same <span class="m">\mathcal{D}</span>
+ as the examples you learned from. Most production failures in machine learning
+ are that assumption breaking, quietly, months after deployment.</p>
+
+ <h2><span class="num">4.1</span>Linear models, derived rather than declared</h2>
+
+ <p class="lede">Assume <span class="m">y = \theta\T x + \varepsilon</span> with
+ <span class="m">\varepsilon \sim \mathcal{N}(0, \sigma^2)</span>. Then the log-likelihood
+ of the data is, up to constants, the negative sum of squared residuals — so
+ least squares <em>is</em> maximum likelihood under Gaussian noise, and the
+ normal equations follow in two lines.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\hat{\theta} = (X\T X)^{-1} X\T y, \qquad \text{minimising } \; \|X\theta - y\|_2^2</span></div><span class="tag-n"></span></div>
+
+ <p>Change the assumed noise model and you get a different loss for free. A
+ Bernoulli response gives logistic regression and the cross-entropy loss; a
+ Poisson response gives Poisson regression; the general recipe is the
+ exponential family and generalised linear models. This is worth internalising
+ because it converts loss-function selection from taste into modelling.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\ell(\theta) = -\sum_{i} \Big[ y_i \log \sigma(\theta\T x_i) + (1-y_i)\log\big(1 - \sigma(\theta\T x_i)\big) \Big]</span></div><span class="tag-n"></span></div>
+
+ <p>Logistic regression has no closed form, is convex, and is solved by gradient
+ descent or Newton's method — which makes it the smallest complete example of
+ everything Module&nbsp;6 will do at scale. Its gradient,
+ <span class="m">X\T(\sigma(X\theta) - y)</span>, is one of the few worth memorising:
+ prediction minus target, projected back through the inputs. That form recurs in
+ every softmax classifier in this book.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Regularisation is a prior. Adding <span class="m">\lambda\|\theta\|_2^2</span> is
+   maximum-a-posteriori estimation under a Gaussian prior on the weights; adding
+   <span class="m">\lambda\|\theta\|_1</span> is a Laplace prior, whose sharp peak at zero
+   is why <span class="m">L_1</span> produces sparsity. Weight decay is not a trick; it
+   is a statement of belief about the size of the effects you expect.
+ </div>
+
+ <h2><span class="num">4.2</span>The decomposition that organises everything</h2>
+
+ <p class="lede">For squared loss, the expected error of a learned predictor at a
+ point decomposes exactly into three terms.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\E\big[(y - \hat{f}(x))^2\big] = \underbrace{\big(\E[\hat{f}(x)] - f(x)\big)^2}_{\text{bias}^2} + \underbrace{\operatorname{Var}\big[\hat{f}(x)\big]}_{\text{variance}} + \underbrace{\sigma^2}_{\text{noise}}</span></div><span class="tag-n"></span></div>
+
+ <p>Bias is the error from the model being unable to represent the truth;
+ variance is the error from the model being sensitive to which sample it saw;
+ noise is irreducible. The practical value of the decomposition is diagnostic:
+ high training error means bias, and a large gap between training and validation
+ error means variance. Those two symptoms have opposite remedies, and applying
+ the wrong one is the most common wasted week in applied machine learning.</p>
+
+ <table>
+  <caption>Diagnosis and treatment. Read the symptom, then act — do not tune blindly.</caption>
+  <thead><tr><th>Symptom</th><th>Diagnosis</th><th>Do this</th><th>Not this</th></tr></thead>
+  <tbody>
+   <tr><td>Train error high, val error similar</td><td>Underfitting (bias)</td><td>Bigger model, better features, train longer, less regularisation</td><td>Collect more data</td></tr>
+   <tr><td>Train error low, val error high</td><td>Overfitting (variance)</td><td>More data, augmentation, stronger regularisation, simpler model, early stopping</td><td>Train longer</td></tr>
+   <tr><td>Both low, test error high</td><td>Distribution shift or leakage</td><td>Audit the split; rebuild the test set from the deployment distribution</td><td>Tune hyperparameters</td></tr>
+   <tr><td>Val error below train error</td><td>Almost always a bug</td><td>Check for leakage, duplicated rows, wrong split, dropout at eval time</td><td>Celebrate</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   The classical U-shaped curve is not the whole story. Very overparameterised
+   models exhibit <em>double descent</em>: test error rises to a peak at the
+   interpolation threshold, then falls again as capacity grows past it. This is
+   why "the model is too big" is rarely a sufficient diagnosis in deep learning,
+   and why Module&nbsp;6's remedies differ from this module's.
+ </div>
+
+ <h2><span class="num">4.3</span>The model families worth knowing</h2>
+
+ <p class="lede">Four families cover nearly all tabular and small-data practice.
+ Knowing when each is the right answer saves more time than knowing any of them
+ deeply.</p>
+
+ <table>
+  <caption>What to reach for, and why.</caption>
+  <thead><tr><th>Family</th><th>Strength</th><th>Weakness</th><th>Reach for it when</th></tr></thead>
+  <tbody>
+   <tr><td>Regularised linear / GLM</td><td>Interpretable, calibrated, fast, few samples</td><td>Cannot represent interactions unless you build them</td><td>You must explain every coefficient</td></tr>
+   <tr><td>Kernel methods (SVM, GP)</td><td>Non-linear with convex training; principled uncertainty (GP)</td><td>Cost grows as <span class="m">O(n^2)</span>–<span class="m">O(n^3)</span></td><td><span class="m">n \lesssim 10^4</span> and structure is smooth</td></tr>
+   <tr><td>Gradient-boosted trees</td><td>Best default on tabular data; handles mixed types and missingness</td><td>Poor extrapolation; large models</td><td>Rows and columns, not pixels or tokens</td></tr>
+   <tr><td>Neural networks</td><td>Learns representations; scales with data and compute</td><td>Data-hungry, opaque, expensive to tune</td><td>Perceptual or sequential data, or lots of it</td></tr>
+  </tbody>
+ </table>
+
+ <p>The support vector machine deserves a paragraph for its idea rather than its
+ popularity: maximise the <em>margin</em>, the distance from the boundary to the
+ nearest points, because a wide margin is a low-variance commitment. The kernel
+ trick then replaces every inner product <span class="m">x_i\T x_j</span> with
+ <span class="m">k(x_i, x_j)</span>, computing distances in a feature space that may be
+ infinite-dimensional without ever visiting it. Attention in Module&nbsp;8 is a
+ close relative — a data-dependent, learned similarity kernel.</p>
+
+ <h2><span class="num">4.4</span>Evaluation that does not lie</h2>
+
+ <p class="lede">An evaluation protocol is a scientific instrument, and most are
+ miscalibrated. Four rules cover the common failures.</p>
+
+ <ol>
+   <li><strong>Split by the unit of generalisation.</strong> If you will see new
+   users, split by user. New hospitals, split by hospital. Random row splits leak
+   whenever rows are correlated, which is nearly always.</li>
+   <li><strong>Split by time when time exists.</strong> Train on the past,
+   validate on the future. A random split of time-series data reports a number
+   you will never see again.</li>
+   <li><strong>Fit every preprocessing step inside the fold.</strong> Scalers,
+   imputers, feature selectors and target encoders all leak if fitted on the full
+   dataset first. This single error inflates more published results than any
+   other.</li>
+   <li><strong>Report an interval, not a point.</strong> Bootstrap the test set
+   and quote the interval. If two models' intervals overlap heavily, you have not
+   shown a difference.</li>
+ </ol>
+
+ <p>Choose the metric before you see the results. Accuracy is meaningless at
+ class imbalance; precision and recall require a threshold you must justify;
+ <span class="sc">ROC-AUC</span> is threshold-free but optimistic under heavy
+ imbalance, where average precision is the honest choice. And for any system that
+ outputs a probability, measure <em>calibration</em> — expected calibration error,
+ or a reliability diagram — because a model whose 0.9 means 0.6 is dangerous in a
+ way that accuracy will never reveal.</p>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Build the evaluation harness before the model. Write it so that a random
+   predictor and a constant predictor both run through it, and check their scores
+   are what theory says they should be. A harness that cannot detect a broken
+   baseline cannot be trusted to rank two good models.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 04</h4>
+   <div class="title">Beat a strong baseline honestly, and prove the margin is real</div>
+   <ol>
+     <li>Take a tabular dataset with genuine leakage risk (patient, user or
+     transaction structure). Define the unit of generalisation and build a
+     grouped, time-aware split.</li>
+     <li>Implement regularised logistic regression yourself, with gradients
+     checked against your Module&nbsp;01 engine. Establish it as the baseline.</li>
+     <li>Add gradient-boosted trees and a small MLP. Tune each with the same
+     budget under nested cross-validation, and record every trial.</li>
+     <li>Produce learning curves for all three: error versus training-set size.
+     Use them to argue whether more data or a better model is the right next
+     investment.</li>
+     <li>Report bootstrap confidence intervals and a reliability diagram for each
+     model. Then deliberately introduce a leak (fit the scaler outside the fold)
+     and quantify how much it inflates the score.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a results table with intervals, three learning
+   curves, three reliability diagrams, and a short note on the leakage experiment.
+   <b>Acceptance:</b> your best model's interval is disjoint from the baseline's,
+   or you state plainly that it is not — and the leakage experiment shows a
+   measurable inflation you can explain.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 04 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Derivation</td><td>Applies formulas</td><td>Derives a loss from a stated noise model</td><td>Designs a loss for a novel response type</td></tr>
+   <tr><td>Diagnosis</td><td>Reports metrics</td><td>Reads bias versus variance from curves and acts correctly</td><td>Predicts the effect of an intervention before running it</td></tr>
+   <tr><td>Evaluation design</td><td>Random train/test split</td><td>Splits by the unit of generalisation, no leakage</td><td>Builds a harness that detects its own failures</td></tr>
+   <tr><td>Model selection</td><td>Picks by leaderboard</td><td>Justifies the family from data shape and constraints</td><td>Quantifies the trade against latency, cost and interpretability</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Derive the logistic-regression gradient and explain why it has the same shape as the linear-regression gradient.</li>
+  <li>Your validation error is below your training error. List four causes in order of likelihood.</li>
+  <li>Why does <span class="m">L_1</span> produce exactly zero coefficients when <span class="m">L_2</span> does not? Answer geometrically.</li>
+  <li>A model has 94&nbsp;% accuracy on a 96/4 imbalanced problem. What have you learned? What would you measure instead?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Core</span>Stanford CS229 lecture notes 1–5 — supervised learning, GLMs, kernels, regularisation. The canonical derivations.</li>
+   <li><span class="k">Core</span>Hastie, Tibshirani &amp; Friedman, <em>The Elements of Statistical Learning</em> — chapters 2, 3, 7. Free from the authors.</li>
+   <li><span class="k">Core</span>Murphy, <em>Probabilistic Machine Learning: An Introduction</em> — chapters 4, 10, 11.</li>
+   <li><span class="k">Paper</span>Belkin et al., "Reconciling Modern Machine-Learning Practice and the Bias–Variance Trade-off" (2019) — double descent.</li>
+   <li><span class="k">Paper</span>Guo et al., "On Calibration of Modern Neural Networks" (2017) — read before you trust a softmax.</li>
+   <li><span class="k">Paper</span>Grinsztajn et al., "Why do tree-based models still outperform deep learning on tabular data?" (2022).</li>
+  </ul>
+ </div>
+</section>

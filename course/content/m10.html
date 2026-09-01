@@ -1,0 +1,256 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">10</div>
+    <div class="meta">
+      <div class="kicker">Part Three · Frontier Systems</div>
+      <div class="lineage">Stanford CS234 &amp; CS224N · Harvard embedded ethics</div>
+    </div>
+  </div>
+  <h1 id="m10" data-toc="module" data-toc-n="10" data-toc-title="Alignment and Post-Training">Alignment and<br>Post-Training</h1>
+  <div class="epigraph">Pretraining produces something that can continue any text.
+   Post-training decides which continuations it should offer, and that is a
+   question of values before it is a question of gradients.
+   <span class="attrib">On what fine-tuning is for</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Build a supervised fine-tuning dataset that improves a model rather than narrowing it.</li>
+         <li>Explain RLHF and derive DPO's equivalence to it.</li>
+         <li>Choose between full fine-tuning, LoRA and prompting on evidence.</li>
+         <li>Design an evaluation that survives contact with a model trained to look good.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 03, 08, 09.</li>
+         <li>Access to open weights of 1–8 B parameters.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 10 h</li>
+         <li>Problem set: 5 h · Lab: 10 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>16–17</div>
+     <div><b>Total hours</b>25</div>
+     <div><b>Deliverable</b>An aligned model + eval suite</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">A pretrained language model is a very good model of text.
+ Asked a question, it may answer it, or continue with a list of similar questions,
+ because both are plausible continuations of the corpus it saw. The gap between
+ <em>modelling text</em> and <em>being useful</em> is closed by post-training, and
+ the techniques that close it are the most consequential engineering of the last
+ five years.</p>
+
+ <h2><span class="num">10.1</span>Supervised fine-tuning</h2>
+
+ <p class="lede">The first stage is ordinary supervised learning on demonstrations:
+ prompt–response pairs, with the loss computed on the response tokens only. It is
+ mechanically simple. Everything difficult is in the data.</p>
+
+ <ul>
+   <li><strong>Quality beats quantity, decisively.</strong> A thousand carefully
+   written, diverse, correct examples routinely outperform a hundred thousand
+   scraped ones. The model is not learning facts here; it is learning a
+   <em>format</em> and a <em>disposition</em>.</li>
+   <li><strong>Diversity is the active ingredient.</strong> Coverage of task
+   types, lengths, styles and refusal cases matters more than volume within any
+   one type.</li>
+   <li><strong>Mask the prompt.</strong> Training on prompt tokens teaches the
+   model to generate instructions, which is not what you want.</li>
+   <li><strong>Decontaminate.</strong> Check your fine-tuning data against your
+   evaluation sets by n-gram overlap. Contamination is the default state of
+   scraped data, and it invalidates every number you will report.</li>
+ </ul>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   <em>Catastrophic forgetting.</em> Fine-tuning hard on a narrow task improves
+   that task and degrades everything else, often severely and invisibly. Always
+   evaluate on a general held-out suite before and after. Remedies: lower
+   learning rates, fewer epochs, parameter-efficient methods that constrain the
+   update, and mixing a fraction of general data into the fine-tuning mixture.
+ </div>
+
+ <h3>Parameter-efficient adaptation</h3>
+ <p class="lede">Low-rank adaptation freezes the base weights and learns a
+ low-rank update <span class="m">\Delta W = BA</span> with
+ <span class="m">B \in \R^{d\times r}</span>, <span class="m">A \in \R^{r\times k}</span> and
+ <span class="m">r \ll d</span>. For a rank of 16 on a 7-billion-parameter model this
+ trains well under 1&nbsp;% of the parameters, fits on a single consumer GPU when
+ combined with a quantised base (QLoRA), and produces adapters of a few tens of
+ megabytes that can be swapped per customer at serving time.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">h = W_0 x + \frac{\alpha}{r} B A x, \qquad B \text{ initialised to } 0</span></div><span class="tag-n"></span></div>
+
+ <p>The rank is a capacity dial: rank 4–8 for style and format, 16–64 for genuine
+ new capability, full fine-tuning when the target distribution is far from the
+ base. Recall Module&nbsp;1 — rank bounds the number of independent directions the
+ update can move in, which is exactly why this works and exactly where it stops
+ working.</p>
+
+ <h2><span class="num">10.2</span>Learning from preferences</h2>
+
+ <p class="lede">Demonstrations teach the model what a good answer looks like.
+ They cannot teach it that this answer is better than that one, because nobody
+ writes the bad answer. Preference data — a prompt with a chosen and a rejected
+ response — supplies exactly that signal, and it is far cheaper to collect than
+ demonstrations.</p>
+
+ <p>The classical pipeline fits a reward model to the preferences under the
+ Bradley–Terry likelihood, then optimises the policy against that reward with PPO,
+ penalised by a KL divergence from the reference model to stop it drifting into
+ nonsense that the reward model happens to like.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\max_{\pi_\theta} \; \E_{x \sim \mathcal{D},\, y \sim \pi_\theta(\cdot\mid x)} \big[ r_\phi(x,y) \big] \; - \; \beta\, \KL\!\big(\pi_\theta(\cdot\mid x) \,\|\, \pi_{\text{ref}}(\cdot\mid x)\big)</span></div><span class="tag-n"></span></div>
+
+ <div class="call deriv">
+   <span class="lbl">Why DPO removes the reward model</span>
+   The KL-regularised objective above has a closed-form optimum:
+   <span class="m">\pi^{*}(y\mid x) \propto \pi_{\text{ref}}(y \mid x)\exp\!\big(r(x,y)/\beta\big)</span>.
+   Invert it and the reward is expressed in terms of the optimal policy:
+   <span class="m">r(x,y) = \beta \log \frac{\pi^{*}(y\mid x)}{\pi_{\text{ref}}(y\mid x)} + \beta\log Z(x)</span>.
+   Substituting into the Bradley–Terry preference likelihood, the intractable
+   partition function <span class="m">Z(x)</span> cancels between the chosen and
+   rejected responses, leaving a plain classification loss on the policy itself.
+   Direct preference optimisation is therefore not an approximation to RLHF; under
+   its assumptions it optimises the same objective, without a reward model and
+   without sampling.
+ </div>
+
+ <div class="eq numbered"><div class="body"><span class="md">\mathcal{L}_{\text{DPO}} = -\E \left[ \log \sigma\!\left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]</span></div><span class="tag-n"></span></div>
+
+ <table>
+  <caption>The post-training toolkit. Most production pipelines use two or three of these in sequence.</caption>
+  <thead><tr><th>Method</th><th>Needs</th><th>Strength</th><th>Cost</th></tr></thead>
+  <tbody>
+   <tr><td>SFT</td><td>Demonstrations</td><td>Simple, stable, fast</td><td>Data is expensive to write</td></tr>
+   <tr><td>Reward model + PPO</td><td>Preferences, online sampling</td><td>Most control; online exploration</td><td>Complex, unstable, four models in memory</td></tr>
+   <tr><td>DPO and relatives</td><td>Preferences only</td><td>Simple, offline, reproducible</td><td>No exploration; sensitive to the reference</td></tr>
+   <tr><td>GRPO and group methods</td><td>A verifiable reward</td><td>No value network; strong for reasoning</td><td>Needs a checkable objective</td></tr>
+   <tr><td>RLAIF / constitutional</td><td>A written policy and a judge model</td><td>Scales past human labelling</td><td>Inherits the judge's biases</td></tr>
+   <tr><td>Rejection sampling / best-of-n</td><td>A reward signal at inference</td><td>Trivial to implement; strong baseline</td><td>Multiplies inference cost</td></tr>
+  </tbody>
+ </table>
+
+ <h2><span class="num">10.3</span>Reasoning and test-time compute</h2>
+
+ <p class="lede">A model that emits an answer immediately has spent a fixed
+ amount of computation on it, regardless of difficulty. Allowing it to produce
+ intermediate reasoning before answering lets computation scale with the problem —
+ and where the final answer can be automatically verified, reinforcement learning
+ on that verification signal produces large, durable gains.</p>
+
+ <p>This is Module&nbsp;2's search under a new name. Sampling many chains and
+ taking a majority vote is stochastic search with a consensus evaluation; a
+ process reward model that scores partial reasoning is a heuristic evaluation
+ function; tree-of-thought is best-first search over partial solutions. The
+ classical vocabulary is the right one for reasoning about the trade-offs, and it
+ tells you where the costs are: every one of these methods buys accuracy with
+ inference tokens, which Module&nbsp;13 will make you pay for.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Reward hacking is not a bug in a particular reward model; it is the expected
+   behaviour of an optimiser given an imperfect proxy. Goodhart's law is a
+   theorem about optimisation pressure, not a proverb. Assume every reward you
+   write will be exploited, and design the monitoring that will catch it —
+   including the KL penalty, which exists precisely to bound how far the policy
+   may travel to find an exploit.
+ </div>
+
+ <h2><span class="num">10.4</span>Evaluating something trained to look good</h2>
+
+ <p class="lede">Post-training makes evaluation harder, because the model has been
+ optimised against a proxy for what you want. Four defences:</p>
+
+ <ol>
+   <li><strong>Hold out a private set</strong> that never touches training, never
+   appears in a prompt, and is regenerated periodically. Public benchmarks leak
+   into pretraining corpora within months of publication.</li>
+   <li><strong>Test capability and behaviour separately.</strong> A model may
+   improve on helpfulness while quietly degrading on refusal calibration.
+   Measure both, always, and report the pair.</li>
+   <li><strong>Use pairwise comparison with position swapping.</strong> Absolute
+   scores from an LLM judge are unstable; pairwise preferences are far more
+   reliable — but judges have a well-documented position bias, so always evaluate
+   both orderings and discard inconsistent verdicts.</li>
+   <li><strong>Red-team adversarially and keep the transcripts.</strong> Every
+   successful jailbreak becomes a permanent regression test. This corpus is worth
+   more than any published benchmark you could adopt.</li>
+ </ol>
+
+ <div class="bench">
+   <h4>The Bench · Lab 10</h4>
+   <div class="title">Take a base model to an assistant, and prove you did not break it</div>
+   <ol>
+     <li>Build an SFT set of 1&nbsp;000 examples across at least eight task types,
+     including refusals and ambiguous requests. Decontaminate against your
+     evaluation suite by 13-gram overlap and report what you removed.</li>
+     <li>Fine-tune an open base model with LoRA. Sweep rank
+     <span class="m">r \in \{4, 16, 64\}</span> and report task performance against
+     trainable parameters and against a general capability suite measured before
+     and after.</li>
+     <li>Collect or synthesise 2 000 preference pairs on your task. Train with
+     DPO. Sweep <span class="m">\beta</span> and plot task win-rate against KL from the
+     reference — this curve is the central artefact of the lab.</li>
+     <li>Build an evaluation suite with three parts: a capability set, a behaviour
+     set, and a private held-out set. Implement a pairwise LLM judge with position
+     swapping and measure its agreement with your own labels on 100 items.</li>
+     <li>Red-team your model for one hour. Record every success, convert each into
+     a regression test, and re-measure.</li>
+     <li>Demonstrate reward hacking deliberately: train with an over-simple reward
+     (say, response length) and show the pathology it produces.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> the model plus adapters, the decontamination
+   report, the win-rate-versus-KL curve, the judge agreement number, and the
+   red-team regression suite. <b>Acceptance:</b> your model beats the base model
+   on task win-rate with no more than a 2-point regression on the general
+   capability suite — and you can point to the <span class="m">\beta</span> that bought
+   that trade.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 10 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Data</td><td>Uses a public SFT set</td><td>Curates for diversity; decontaminates and reports</td><td>Designs data to close a measured capability gap</td></tr>
+   <tr><td>Method</td><td>Runs a fine-tuning script</td><td>Chooses among SFT, LoRA, DPO with reasons</td><td>Derives DPO from the KL-regularised objective</td></tr>
+   <tr><td>Evaluation</td><td>Reports one benchmark</td><td>Measures capability and behaviour, before and after</td><td>Builds an evaluation an adversary cannot game</td></tr>
+   <tr><td>Judgement</td><td>Optimises the metric</td><td>Anticipates and detects reward hacking</td><td>Designs the reward and the monitoring together</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Show how the partition function cancels in the DPO derivation, and state the assumption that makes it valid.</li>
+  <li>What does <span class="m">\beta</span> control, and what happens at <span class="m">\beta \to 0</span> and <span class="m">\beta \to \infty</span>?</li>
+  <li>Your fine-tuned model is better on your task and worse at arithmetic. Name the mechanism and three remedies.</li>
+  <li>An LLM judge prefers your model 80&nbsp;% of the time. List four reasons that number might be meaningless.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Ouyang et al., "Training Language Models to Follow Instructions with Human Feedback" (InstructGPT, 2022).</li>
+   <li><span class="k">Paper</span>Rafailov et al., "Direct Preference Optimization" (2023) — read the derivation in full; it is the module's centrepiece.</li>
+   <li><span class="k">Paper</span>Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models" (2021), and Dettmers et al., "QLoRA" (2023).</li>
+   <li><span class="k">Paper</span>Bai et al., "Constitutional AI: Harmlessness from AI Feedback" (2022).</li>
+   <li><span class="k">Core</span>Sutton &amp; Barto, chapters 13 and 3 — policy gradients and the MDP framing this module rests on.</li>
+   <li><span class="k">Course</span>Stanford CS234 for the reinforcement-learning foundations; CS224N's post-training lectures for the language-model specifics.</li>
+  </ul>
+ </div>
+</section>

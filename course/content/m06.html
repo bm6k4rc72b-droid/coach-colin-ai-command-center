@@ -1,0 +1,293 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">06</div>
+    <div class="meta">
+      <div class="kicker">Part Two · Learning</div>
+      <div class="lineage">Stanford CS230 · NVIDIA DLI, Fundamentals of Deep Learning</div>
+    </div>
+  </div>
+  <h1 id="m06" data-toc="module" data-toc-n="06" data-toc-title="Deep Learning Foundations">Deep Learning<br>Foundations</h1>
+  <div class="epigraph">Deep learning is an empirical science with a small amount
+   of theory attached. The skill is not knowing the theory; it is knowing which
+   experiment to run next.
+   <span class="attrib">On method</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Derive backpropagation for an arbitrary layer and implement it correctly.</li>
+         <li>Explain initialisation, normalisation and residual connections as a single story about signal propagation.</li>
+         <li>Choose an optimiser and a learning-rate schedule for reasons.</li>
+         <li>Run a disciplined tuning campaign that converges on a good model in a known budget.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 01 and 04. Your own autodiff engine.</li>
+         <li>PyTorch basics; access to one GPU for a few hours.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 10 h</li>
+         <li>Problem set: 5 h · Lab: 9 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>8–9</div>
+     <div><b>Total hours</b>24</div>
+     <div><b>Deliverable</b>A tuning campaign log</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">A deep network is a composition of parameterised
+ functions, trained by stochastic gradient descent on a differentiable loss. Every
+ statement in that sentence is simple. What is not simple is that composing
+ fifty such functions creates a numerical system in which signals can vanish,
+ explode, or drift, and most of this module is about the engineering that keeps
+ that system stable long enough to learn.</p>
+
+ <h2><span class="num">6.1</span>Backpropagation, stated once and properly</h2>
+
+ <p class="lede">Let layer <span class="m">\ell</span> compute
+ <span class="m">z^{(\ell)} = W^{(\ell)} a^{(\ell-1)} + b^{(\ell)}</span> and
+ <span class="m">a^{(\ell)} = \phi(z^{(\ell)})</span>. Define the error signal
+ <span class="m">\delta^{(\ell)} = \partial L / \partial z^{(\ell)}</span>. Then the whole
+ algorithm is four equations.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\delta^{(L)} = \nabla_{a} L \odot \phi'\!\big(z^{(L)}\big), \qquad \delta^{(\ell)} = \big(W^{(\ell+1)}\big)\!\T \delta^{(\ell+1)} \odot \phi'\!\big(z^{(\ell)}\big)</span></div><span class="tag-n"></span></div>
+
+ <div class="eq numbered"><div class="body"><span class="md">\frac{\partial L}{\partial W^{(\ell)}} = \delta^{(\ell)} \big(a^{(\ell-1)}\big)\!\T, \qquad \frac{\partial L}{\partial b^{(\ell)}} = \delta^{(\ell)}</span></div><span class="tag-n"></span></div>
+
+ <p>Notice the recursion multiplies by <span class="m">W\T</span> and by
+ <span class="m">\phi'</span> at every layer. If those factors are systematically
+ smaller than one, the gradient decays geometrically with depth and early layers
+ stop learning; if larger, it explodes. That single observation explains
+ initialisation schemes, the death of sigmoid activations, normalisation layers,
+ residual connections and gradient clipping. They are five answers to one
+ question.</p>
+
+ <h2><span class="num">6.2</span>Keeping the signal alive</h2>
+
+ <h3>Initialisation</h3>
+ <p class="lede">Choose the initial weight scale so that the variance of
+ activations is preserved layer to layer. For a layer with
+ <span class="m">n_{\text{in}}</span> inputs, Xavier initialisation uses variance
+ <span class="m">2/(n_{\text{in}} + n_{\text{out}})</span> for symmetric activations;
+ He initialisation uses <span class="m">2/n_{\text{in}}</span> for
+ <span class="sc">ReLU</span>, the factor of two compensating for the half of the
+ distribution the rectifier removes. This is not folklore — it is a variance
+ calculation you should do once by hand.</p>
+
+ <h3>Normalisation</h3>
+ <p class="lede">Batch normalisation standardises each feature across the batch;
+ layer normalisation standardises each example across its features; RMSNorm drops
+ the mean subtraction and keeps only the scale. Layer-based variants dominate in
+ transformers because they are independent of batch composition and therefore
+ behave identically at training and inference — a property batch norm famously
+ lacks.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\operatorname{LN}(x) = \gamma \odot \frac{x - \mu}{\sqrt{\sigma^{2} + \epsilon}} + \beta, \qquad \operatorname{RMSNorm}(x) = \gamma \odot \frac{x}{\sqrt{\tfrac{1}{d}\sum_i x_i^{2} + \epsilon}}</span></div><span class="tag-n"></span></div>
+
+ <h3>Residual connections</h3>
+ <p class="lede">Writing <span class="m">a^{(\ell)} = a^{(\ell-1)} + F(a^{(\ell-1)})</span>
+ gives the gradient an unobstructed path: the derivative of the identity branch is
+ one, so the error signal reaches early layers undiminished regardless of what
+ <span class="m">F</span> does. This is why networks went from thirty layers to a
+ thousand in a single paper, and why every architecture in Part&nbsp;Three is
+ residual.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Initialisation, normalisation and residuals are one idea in three costumes:
+   <em>make the network's forward and backward signals scale-stable by
+   construction, so the optimiser only has to solve the learning problem and not
+   also a numerical-conditioning problem.</em>
+ </div>
+
+ <h2><span class="num">6.3</span>Optimisers</h2>
+
+ <p class="lede">Plain SGD with momentum accumulates a velocity, damping
+ oscillation across steep directions and accelerating along consistent ones. Adam
+ additionally divides by a running estimate of the gradient's second moment,
+ giving each parameter its own effective step size — a cheap diagonal
+ approximation to the curvature rescaling Newton's method would perform.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">m_t = \beta_1 m_{t-1} + (1-\beta_1) g_t, \quad v_t = \beta_2 v_{t-1} + (1-\beta_2) g_t^{2}, \quad \theta_{t+1} = \theta_t - \eta \frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon}</span></div><span class="tag-n"></span></div>
+
+ <p>Use AdamW rather than Adam: coupling <span class="m">L_2</span> regularisation into
+ the gradient means the adaptive denominator rescales the regularisation too,
+ which is not what you asked for. AdamW decouples them, and it is the default for
+ essentially every transformer trained since 2019.</p>
+
+ <table>
+  <caption>Defaults that are usually right, and the symptom that says otherwise.</caption>
+  <thead><tr><th>Knob</th><th>Sensible default</th><th>Change it when</th></tr></thead>
+  <tbody>
+   <tr><td>Optimiser</td><td>AdamW, <span class="m">\beta = (0.9, 0.95)</span></td><td>Vision CNNs, where SGD+momentum often generalises better</td></tr>
+   <tr><td>Peak learning rate</td><td>Found by a short LR range test</td><td>Always find it; never inherit it across scale changes</td></tr>
+   <tr><td>Schedule</td><td>Linear warmup then cosine decay to ~10&nbsp;%</td><td>Continual training, where a constant-then-decay schedule is easier to resume</td></tr>
+   <tr><td>Warmup</td><td>1–3&nbsp;% of total steps</td><td>Loss spikes early — lengthen it</td></tr>
+   <tr><td>Weight decay</td><td>0.1 on weights, none on biases and norm gains</td><td>Small data — raise it; heavy augmentation — lower it</td></tr>
+   <tr><td>Grad clipping</td><td>Global norm 1.0</td><td>Spikes persist — clip harder and inspect the offending batch</td></tr>
+   <tr><td>Batch size</td><td>The largest that fits, then tune LR together</td><td>Generalisation degrades — the LR is now wrong, not the batch</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Changing batch size without changing learning rate. The gradient noise scale
+   falls as batch size rises, so the same learning rate becomes effectively
+   smaller relative to the noise. Scale the learning rate roughly linearly with
+   batch size (or as the square root for Adam) and re-run the range test at the
+   new scale. Half the "large batch generalises worse" folklore is this error.
+ </div>
+
+ <h2><span class="num">6.4</span>Where the memory goes</h2>
+
+ <p class="lede">Before you can scale anything, you must know what a training step
+ costs. This figure is the mental model that Module&nbsp;9 makes quantitative.</p>
+
+ <figure>
+  <svg viewBox="0 0 440 178" role="img" aria-label="Anatomy of a training step">
+   <defs><style>
+     .b{stroke-width:.7}
+     .t{font-family:Inter,sans-serif;font-size:7.5px;fill:#16181F}
+     .t.w{fill:#F2ECDE}
+     .s{font-family:Inter,sans-serif;font-size:6.5px;fill:#6E7382}
+     .s.g{fill:#C6A968}
+     .h{font-family:Inter,sans-serif;font-size:6.5px;fill:#6E7382;letter-spacing:.18em}
+     .ar{stroke:#A2803C;stroke-width:.8;fill:none}
+   </style>
+   <marker id="a2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5.5" markerHeight="5.5" orient="auto">
+     <path d="M0 0 L8 4 L0 8 z" fill="#A2803C"/></marker>
+   </defs>
+
+   <text class="h" x="0" y="9">ONE OPTIMISER STEP</text>
+
+   <rect class="b" x="0"   y="18" width="86" height="24" fill="#F3F0E9" stroke="#D8D3C6"/>
+   <text class="t" x="8" y="30">Forward</text><text class="s" x="8" y="39">2N FLOPs / token</text>
+   <rect class="b" x="98"  y="18" width="86" height="24" fill="#F3F0E9" stroke="#D8D3C6"/>
+   <text class="t" x="106" y="30">Loss</text><text class="s" x="106" y="39">cross-entropy</text>
+   <rect class="b" x="196" y="18" width="86" height="24" fill="#F3F0E9" stroke="#D8D3C6"/>
+   <text class="t" x="204" y="30">Backward</text><text class="s" x="204" y="39">4N FLOPs / token</text>
+   <rect class="b" x="294" y="18" width="86" height="24" fill="#0E1626" stroke="#0E1626"/>
+   <text class="t w" x="302" y="30">Update</text><text class="s g" x="302" y="39">AdamW</text>
+
+   <path class="ar" d="M86 30 H96" marker-end="url(#a2)"/>
+   <path class="ar" d="M184 30 H194" marker-end="url(#a2)"/>
+   <path class="ar" d="M282 30 H292" marker-end="url(#a2)"/>
+
+   <text class="h" x="0" y="82">RESIDENT MEMORY, PER PARAMETER, MIXED PRECISION</text>
+
+   <rect class="b" x="0"   y="90" width="60"  height="20" fill="#EFE6D2" stroke="#C6A968"/>
+   <text class="t" x="6" y="103">Weights 2 B</text>
+   <rect class="b" x="64"  y="90" width="60"  height="20" fill="#EFE6D2" stroke="#C6A968"/>
+   <text class="t" x="70" y="103">Grads 2 B</text>
+   <rect class="b" x="128" y="90" width="76"  height="20" fill="#EFE6D2" stroke="#C6A968"/>
+   <text class="t" x="134" y="103">FP32 master 4 B</text>
+   <rect class="b" x="208" y="90" width="100" height="20" fill="#EFE6D2" stroke="#C6A968"/>
+   <text class="t" x="214" y="103">Adam m, v  8 B</text>
+   <rect class="b" x="312" y="90" width="128" height="20" fill="#0E1626" stroke="#0E1626"/>
+   <text class="t w" x="318" y="103">Activations — batch-dependent</text>
+
+   <text class="s" x="0" y="124">Fixed cost ≈ 16 bytes per parameter before a single activation is stored:</text>
+   <text class="s" x="0" y="134">a 7-billion-parameter model needs ~112 GB of optimiser state alone.</text>
+
+   <rect x="0" y="146" width="440" height="0.6" fill="#D8D3C6"/>
+   <text class="s" x="0" y="160">Activation memory scales with batch × sequence × depth, and is the term you can trade for</text>
+   <text class="s" x="0" y="170">compute via checkpointing (M9). Optimiser state is the term you shard (ZeRO, M9).</text>
+  </svg>
+  <figcaption><b>Figure 6.1</b> &nbsp;Where a training step spends compute and where it
+  spends memory. The two are traded against each other by every technique in
+  Module&nbsp;9; knowing which term dominates tells you which technique to reach for.</figcaption>
+ </figure>
+
+ <h2><span class="num">6.5</span>The tuning campaign</h2>
+
+ <p class="lede">Hyperparameter tuning is a search problem (Module&nbsp;2) with an
+ expensive, noisy objective. Treat it like one.</p>
+
+ <ol>
+   <li><strong>Overfit one batch first.</strong> If your model cannot drive the
+   loss on sixteen examples to nearly zero, there is a bug. Do not proceed. This
+   test finds more errors than any other five minutes you will spend.</li>
+   <li><strong>Establish a baseline you trust</strong> — smallest model, shortest
+   schedule, fixed seed — and record it.</li>
+   <li><strong>Random search, not grid.</strong> With <span class="m">k</span> important
+   parameters out of <span class="m">d</span>, random search explores each important
+   axis at full resolution; grid search wastes its budget on the unimportant ones.</li>
+   <li><strong>Tune learning rate first,</strong> then batch size and schedule,
+   then regularisation, then architecture. The ordering reflects sensitivity.</li>
+   <li><strong>Use successive halving.</strong> Start many short runs, keep the
+   best fraction, extend them. Most bad configurations are visible within
+   10&nbsp;% of a run.</li>
+   <li><strong>Log everything, seed everything, and change one thing at a
+   time.</strong> A tuning campaign whose results cannot be reproduced has
+   produced nothing.</li>
+ </ol>
+
+ <div class="bench">
+   <h4>The Bench · Lab 06</h4>
+   <div class="title">A network you can defend, from a campaign you can reproduce</div>
+   <ol>
+     <li>Implement an MLP and a small residual network in raw PyTorch — no
+     high-level trainer. Verify against your Module&nbsp;01 engine on a tiny case.</li>
+     <li>Run the one-batch overfit test. Then deliberately break initialisation
+     (all zeros; scale ×100) and record what each failure looks like in the loss
+     and in per-layer gradient norms. Keep these plots — they are your fault
+     dictionary for the rest of the course.</li>
+     <li>Perform an LR range test and identify the peak learning rate. Compare
+     constant, step, cosine and one-cycle schedules at equal budget.</li>
+     <li>Ablate normalisation and residuals at depths 8, 20 and 50. Plot final
+     loss against depth for each of the four combinations.</li>
+     <li>Run a 40-trial random search with successive halving over five
+     hyperparameters. Report the best configuration, the marginal effect of each
+     parameter, and the compute spent.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a fault dictionary of failure-mode plots, the
+   depth ablation figure, and a campaign log with all 40 trials.
+   <b>Acceptance:</b> the depth-50 network trains only with residuals and
+   normalisation, and you can point at the gradient-norm plot that shows why.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 06 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Mechanism</td><td>Calls <code>.backward()</code></td><td>Derives and implements a layer's backward pass</td><td>Explains a training failure from signal-propagation first principles</td></tr>
+   <tr><td>Stability</td><td>Copies a known-good config</td><td>Chooses init, norm and residual structure deliberately</td><td>Predicts the maximum trainable depth of an architecture</td></tr>
+   <tr><td>Optimisation</td><td>Uses Adam defaults</td><td>Finds LR empirically; couples batch size and LR correctly</td><td>Reasons about gradient noise scale and critical batch size</td></tr>
+   <tr><td>Method</td><td>Tunes by intuition</td><td>Runs a logged, reproducible campaign under a budget</td><td>Reports marginal effects and knows when to stop</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why does He initialisation carry a factor of two that Xavier does not?</li>
+  <li>Your loss is flat for 400 steps then drops sharply. Give two mechanisms that produce this and how to distinguish them.</li>
+  <li>Why do transformers use layer norm rather than batch norm? Give two independent reasons.</li>
+  <li>You double batch size and accuracy falls. What is the first thing to change, and why is it not the batch size?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Course</span>Stanford CS230 — the structuring-machine-learning-projects material is the best short treatment of method that exists.</li>
+   <li><span class="k">Course</span>NVIDIA DLI, <em>Fundamentals of Deep Learning</em> — for the hands-on GPU-side intuition this module assumes.</li>
+   <li><span class="k">Core</span>Goodfellow, Bengio &amp; Courville, <em>Deep Learning</em>, chapters 6–8.</li>
+   <li><span class="k">Paper</span>He et al., "Deep Residual Learning for Image Recognition" (2015).</li>
+   <li><span class="k">Paper</span>Loshchilov &amp; Hutter, "Decoupled Weight Decay Regularization" (AdamW, 2019).</li>
+   <li><span class="k">Paper</span>McCandlish et al., "An Empirical Model of Large-Batch Training" (2018) — gradient noise scale.</li>
+   <li><span class="k">Read</span>Godbole et al., <em>Deep Learning Tuning Playbook</em> — the discipline of §6.5, at length.</li>
+  </ul>
+ </div>
+</section>

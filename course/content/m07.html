@@ -1,0 +1,235 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">07</div>
+    <div class="meta">
+      <div class="kicker">Part Two · Learning</div>
+      <div class="lineage">Stanford CS231n · NVIDIA DLI computer-vision track</div>
+    </div>
+  </div>
+  <h1 id="m07" data-toc="module" data-toc-n="07" data-toc-title="Vision and Sequence Architectures">Vision and Sequence<br>Architectures</h1>
+  <div class="epigraph">Architecture is the art of building your assumptions into
+   the wiring, so that the optimiser does not have to discover them.
+   <span class="attrib">On inductive bias</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>State the inductive bias of a convolution and of a recurrence, and say what each costs.</li>
+         <li>Compute the receptive field, parameter count and FLOPs of a convolutional stack by hand.</li>
+         <li>Explain why recurrence failed at long range and what attention replaced it with.</li>
+         <li>Fine-tune a pretrained vision backbone competently, including the parts that are not the model.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Module 06 and its lab.</li>
+         <li>One GPU; familiarity with a dataloader.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 8 h</li>
+         <li>Problem set: 4 h · Lab: 8 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Week</b>10</div>
+     <div><b>Total hours</b>20</div>
+     <div><b>Deliverable</b>A fine-tuned detector</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">A fully connected layer assumes nothing about its input,
+ and pays for that neutrality in parameters and data. Every successful
+ architecture is a bet that some structure in the domain is real: that nearby
+ pixels are related, that a cat is a cat wherever it appears, that the recent
+ past matters more than the distant past. When the bet is right, the model learns
+ from far less data. When it is wrong, the bet becomes a ceiling.</p>
+
+ <h2><span class="num">7.1</span>Convolution: locality and weight sharing</h2>
+
+ <p class="lede">A convolutional layer slides a small kernel across the input,
+ applying identical weights everywhere. Two assumptions are encoded: relevant
+ features are <em>local</em>, and they are useful <em>anywhere</em> in the image.
+ The consequences are a parameter count independent of input size, and
+ translation equivariance for free.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">H_{\text{out}} = \left\lfloor \frac{H_{\text{in}} + 2p - k}{s} \right\rfloor + 1, \qquad \text{params} = k^{2} C_{\text{in}} C_{\text{out}} + C_{\text{out}}</span></div><span class="tag-n"></span></div>
+
+ <p>The receptive field — how much of the input one output unit can see — grows
+ linearly with depth for stacked <span class="m">3\times 3</span> kernels and
+ multiplicatively with stride or pooling. Two stacked
+ <span class="m">3\times3</span> convolutions have the receptive field of one
+ <span class="m">5\times5</span> at fewer parameters and with an extra nonlinearity,
+ which is the entire argument of the VGG paper and a useful demonstration that
+ architecture choices are often arithmetic.</p>
+
+ <table>
+  <caption>The convolutional lineage, and the single idea each contributed.</caption>
+  <thead><tr><th>Model</th><th>Year</th><th>Contribution</th></tr></thead>
+  <tbody>
+   <tr><td>LeNet-5</td><td class="num-col">1998</td><td>Convolution + pooling + backprop, end to end</td></tr>
+   <tr><td>AlexNet</td><td class="num-col">2012</td><td>GPUs, ReLU, dropout, augmentation — the field's turning point</td></tr>
+   <tr><td>VGG</td><td class="num-col">2014</td><td>Uniform <span class="m">3\times3</span> stacks; depth as the variable</td></tr>
+   <tr><td>Inception</td><td class="num-col">2014</td><td>Multi-scale branches; <span class="m">1\times1</span> convolutions as cheap channel mixing</td></tr>
+   <tr><td>ResNet</td><td class="num-col">2015</td><td>Identity shortcuts; depth stops being the obstacle</td></tr>
+   <tr><td>U-Net</td><td class="num-col">2015</td><td>Encoder–decoder with skips — still the backbone of diffusion (M11)</td></tr>
+   <tr><td>EfficientNet</td><td class="num-col">2019</td><td>Compound scaling of depth, width and resolution together</td></tr>
+   <tr><td>ConvNeXt</td><td class="num-col">2022</td><td>A convnet modernised with transformer-era recipes matches ViT</td></tr>
+  </tbody>
+ </table>
+
+ <h3>Detection and segmentation, briefly</h3>
+ <p class="lede">Classification answers <em>what</em>; detection answers <em>what
+ and where</em>; segmentation answers <em>which pixels</em>. The engineering
+ differences are in the head and the loss, not the backbone: detection needs an
+ assignment between predictions and ground-truth boxes, plus non-maximum
+ suppression at inference; segmentation needs a decoder that restores resolution
+ and a loss that survives class imbalance, usually Dice combined with
+ cross-entropy. Report mean average precision at a stated <span class="sc">IoU</span>
+ threshold, and state the threshold — an <span class="sc">mAP</span> without one is
+ not a number.</p>
+
+ <h2><span class="num">7.2</span>Recurrence, and why it lost</h2>
+
+ <p class="lede">A recurrent network carries a hidden state forward:
+ <span class="m">h_t = \phi(W_h h_{t-1} + W_x x_t)</span>. The assumption is that a
+ fixed-size state can summarise the past — the same Markov idea as
+ Module&nbsp;3, made learnable.</p>
+
+ <p>Backpropagating through <span class="m">T</span> steps multiplies by
+ <span class="m">W_h\T</span> exactly <span class="m">T</span> times, so gradients decay or
+ explode as <span class="m">\lambda_{\max}(W_h)^{T}</span>. Clipping handles the
+ explosion; the decay is structural. The LSTM's answer was an additive cell state
+ with multiplicative gates — an early residual connection — which extended usable
+ range from tens of steps to hundreds. Two problems remained, and both were
+ fatal:</p>
+
+ <ul>
+   <li><strong>Sequential dependency.</strong> Step <span class="m">t</span> cannot be
+   computed before step <span class="m">t-1</span>, so training cannot be parallelised
+   along the sequence. On hardware whose entire advantage is parallelism, this is
+   disqualifying.</li>
+   <li><strong>The bottleneck.</strong> Everything the model knows about the past
+   must fit through one fixed-size vector. Attention began as a patch for this —
+   letting a decoder look back at all encoder states — and then ate the
+   architecture whole.</li>
+ </ul>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   The path length between two positions determines how easily a gradient
+   connects them. Recurrence gives path length <span class="m">O(T)</span>;
+   convolution with kernel <span class="m">k</span> gives
+   <span class="m">O(\log_k T)</span> with dilation; attention gives
+   <span class="m">O(1)</span>. That is the whole argument for the transformer, and it
+   is a statement about optimisation, not expressivity.
+ </div>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Recurrence is not dead — it returned as structured state-space models (S4,
+   Mamba), which recover a parallel training formulation via convolution or
+   associative scan while keeping <span class="m">O(1)</span> memory per step at
+   inference. For very long sequences at fixed memory they are genuinely
+   competitive, and Module&nbsp;8 treats them as a first-class alternative rather
+   than a curiosity.
+ </div>
+
+ <h2><span class="num">7.3</span>Transfer learning done properly</h2>
+
+ <p class="lede">Almost nobody trains a vision model from scratch, and the skill
+ that matters is adapting one. The decisions, in order of impact:</p>
+
+ <ol>
+   <li><strong>What to freeze.</strong> With few hundred labels, freeze the
+   backbone and train a linear head. With thousands, unfreeze the last block.
+   With tens of thousands, fine-tune everything at a low learning rate.</li>
+   <li><strong>Discriminative learning rates.</strong> Early layers encode
+   general features and need a learning rate an order of magnitude smaller than
+   the head. A single global rate either destroys the backbone or starves the
+   head.</li>
+   <li><strong>Match the preprocessing exactly.</strong> Normalisation statistics,
+   interpolation mode and input resolution must match what the backbone was
+   trained with. Silent mismatches here cost more accuracy than most
+   architectural choices win.</li>
+   <li><strong>Augment for the invariances you actually want.</strong> Horizontal
+   flips help for natural scenes and destroy text recognition. RandAugment and
+   Mixup are strong defaults; both are wrong somewhere.</li>
+ </ol>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Fine-tuning with batch-norm layers left in training mode on a small batch. The
+   running statistics get overwritten by noisy estimates from a handful of
+   examples and the backbone degrades while training accuracy looks fine. Freeze
+   the norm layers when the batch is small, and check that evaluation-mode
+   accuracy tracks training-mode accuracy.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 07</h4>
+   <div class="title">From a frozen backbone to a working detector, measured at every step</div>
+   <ol>
+     <li>By hand, compute the receptive field, parameter count and FLOPs of a
+     given five-block convolutional stack. Then verify each number
+     programmatically. Any disagreement is your misunderstanding, not the tool's.</li>
+     <li>Train a small ResNet from scratch on a 5&nbsp;000-image dataset.
+     Establish the accuracy ceiling with your Module&nbsp;06 discipline.</li>
+     <li>Fine-tune a pretrained backbone on the same data under four regimes:
+     linear probe, last block, full fine-tune with one learning rate, full
+     fine-tune with discriminative rates. Plot accuracy against labelled-data
+     fraction for all four.</li>
+     <li>Extend the best model to detection with a simple head. Report
+     <span class="sc">mAP</span> at IoU 0.5 and 0.5–0.95, and show the
+     precision–recall curve.</li>
+     <li>Build a confusion analysis: the twenty worst errors, inspected by eye,
+     grouped into causes. Write one paragraph on what the model has actually
+     learned to key on.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> the hand-computed arithmetic sheet, the
+   four-regime transfer curve, a PR curve, and the error taxonomy.
+   <b>Acceptance:</b> the linear probe beats from-scratch training at
+   10&nbsp;% of labels, and your hand computations match the profiler to within
+   rounding.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 07 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Inductive bias</td><td>Names architectures</td><td>States each one's assumption and its cost</td><td>Chooses an architecture from a stated property of the data</td></tr>
+   <tr><td>Arithmetic</td><td>Reads a summary table</td><td>Computes receptive field, params and FLOPs by hand</td><td>Redesigns a stack to a FLOP budget</td></tr>
+   <tr><td>Sequence models</td><td>Knows RNNs exist</td><td>Explains the two failures that motivated attention</td><td>Compares recurrence, convolution and attention by path length and parallelism</td></tr>
+   <tr><td>Transfer</td><td>Fine-tunes with defaults</td><td>Chooses freezing and rates by data size; matches preprocessing</td><td>Diagnoses transfer failure from error structure</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Two <span class="m">3\times3</span> convolutions versus one <span class="m">5\times5</span>: compare receptive field, parameters and nonlinearity.</li>
+  <li>Why does an LSTM's cell state help gradients, and what is its structural analogue in a transformer?</li>
+  <li>Your fine-tuned model scores well in training mode and badly in eval mode. Name the mechanism.</li>
+  <li>You have 300 labelled images. Give your training plan in four sentences, with the reason for each choice.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Course</span>Stanford CS231n — lectures and notes on convolutional networks, training tricks and transfer learning.</li>
+   <li><span class="k">Paper</span>Krizhevsky, Sutskever &amp; Hinton, "ImageNet Classification with Deep Convolutional Neural Networks" (2012).</li>
+   <li><span class="k">Paper</span>Ronneberger et al., "U-Net" (2015) — read it now; you will need it in Module 11.</li>
+   <li><span class="k">Paper</span>Hochreiter &amp; Schmidhuber, "Long Short-Term Memory" (1997), with Bahdanau et al., "Neural Machine Translation by Jointly Learning to Align and Translate" (2014) — attention's first appearance, as a patch.</li>
+   <li><span class="k">Paper</span>Liu et al., "A ConvNet for the 2020s" (2022) — a controlled study of what actually mattered.</li>
+   <li><span class="k">Paper</span>Gu &amp; Dao, "Mamba: Linear-Time Sequence Modeling with Selective State Spaces" (2023).</li>
+  </ul>
+ </div>
+</section>

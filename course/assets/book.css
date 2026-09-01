@@ -1,0 +1,437 @@
+/* ============================================================================
+   THE AI ENGINEER — book design system
+   Trim: 170 x 240 mm (royal octavo).  Ink on warm paper, antique brass rules.
+   ========================================================================== */
+
+:root{
+  --paper:      #FBFAF7;
+  --paper-deep: #F3F0E9;
+  --ink:        #16181F;
+  --ink-soft:   #3A3E4A;
+  --ink-faint:  #6E7382;
+  --rule:       #D8D3C6;
+  --brass:      #A2803C;
+  --brass-lt:   #C6A968;
+  --brass-pale: #EFE6D2;
+  --navy:       #0E1626;
+  --navy-lt:    #1B2A44;
+  --crimson:    #8C2F39;
+  --sage:       #2E5A52;
+
+  --measure: 118mm;
+}
+
+/* ---------- page ---------------------------------------------------------- */
+@page { size: 170mm 240mm; }
+
+html{ -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      background: var(--paper); }
+
+body{
+  margin:0;
+  background: transparent;
+  color: var(--ink);
+  font-family: "Spectral", Georgia, serif;
+  font-size: 10.2pt;
+  line-height: 1.62;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  font-variant-numeric: oldstyle-num;
+  font-feature-settings: "onum" 1, "kern" 1, "liga" 1;
+}
+
+/* ---------- typography primitives ---------------------------------------- */
+h1,h2,h3,h4,h5{
+  font-family:"Fraunces", Georgia, serif;
+  font-weight:600;
+  text-align:left;
+  hyphens:none;
+  break-after: avoid-page;
+  font-variant-numeric: lining-num;
+  font-feature-settings:"lnum" 1,"kern" 1;
+}
+
+p{ margin:0; }
+p + p{ text-indent: 1.35em; }
+.lede{ text-indent:0 !important; }
+
+/* small-caps lead-in for the first line of a section */
+.opener::first-letter{
+  font-family:"Fraunces", Georgia, serif;
+  font-weight:600;
+  font-size: 3.05em;
+  line-height: .84;
+  float:left;
+  padding: .06em .09em 0 0;
+  color: var(--brass);
+}
+
+.sc{ font-variant-caps: all-small-caps; letter-spacing:.06em; font-feature-settings:"c2sc" 1,"smcp" 1; }
+.tag{
+  font-family:"Inter", sans-serif; font-size:6.6pt; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint);
+}
+em{ font-style:italic; }
+strong{ font-weight:600; }
+.tnum{ font-variant-numeric: lining-num tabular-nums; }
+
+a{ color: inherit; text-decoration:none; }
+
+/* invisible anchor markers used to resolve TOC folios */
+.mark{ font-size:4px; color:var(--paper); letter-spacing:0; }
+.mark.dark{ color:var(--navy); }
+
+/* ---------- section furniture -------------------------------------------- */
+.part{ break-before: page; }
+
+/* Part opening plate: an inset dark plate framed by paper */
+.plate{
+  break-before: page; break-inside: avoid;
+  background: var(--navy);
+  color:#EDE7D8;
+  padding: 26mm 16mm 22mm;
+  margin: 4mm 0 0;
+  position:relative;
+  text-align:center;
+  min-height: 150mm;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.plate::before, .plate::after{
+  content:""; position:absolute; left:10mm; right:10mm; height:0;
+  border-top:.5pt solid rgba(198,169,104,.55);
+}
+.plate::before{ top:8mm; } .plate::after{ bottom:8mm; }
+.plate .roman{
+  font-family:"Fraunces",serif; font-size:9pt; letter-spacing:.42em;
+  color:var(--brass-lt); text-transform:uppercase; margin-bottom:9mm;
+}
+.plate h1{
+  font-family:"Fraunces",serif; font-weight:400; font-size:27pt; line-height:1.14;
+  color:#F6F1E4; text-align:center; margin:0 0 7mm; letter-spacing:.005em;
+}
+.plate .plate-rule{
+  width:26mm; height:0; border-top:1pt solid var(--brass-lt); margin:0 auto 7mm;
+}
+.plate .blurb{
+  font-size:9.4pt; line-height:1.7; color:#C9C3B4; text-align:center;
+  max-width:104mm; margin:0 auto; hyphens:none;
+}
+.plate .contents{
+  margin-top:11mm; font-family:"Inter",sans-serif; font-size:7.4pt;
+  letter-spacing:.1em; text-transform:uppercase; color:rgba(198,169,104,.85);
+  line-height:2.1; text-align:center; hyphens:none;
+}
+
+/* Module opener */
+.module{ counter-reset: eq fig; }
+.mod-open{ break-before: page; break-after: page; }
+.mod-head{ break-inside: avoid; margin-bottom: 8mm; }
+.mod-rail{
+  display:flex; align-items:baseline; gap:5mm;
+  border-bottom:.5pt solid var(--rule); padding-bottom:2.4mm; margin-bottom:7mm;
+}
+.mod-rail .n{
+  font-family:"Fraunces",serif; font-weight:700; font-size:38pt; line-height:.82;
+  color:var(--brass); font-variant-numeric:lining-num;
+}
+.mod-rail .meta{ flex:1; }
+.mod-rail .meta .kicker{
+  font-family:"Inter",sans-serif; font-size:6.6pt; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint);
+  margin-bottom:1.6mm;
+}
+.mod-rail .meta .lineage{
+  font-family:"Inter",sans-serif; font-size:6.6pt; letter-spacing:.08em;
+  color:var(--brass); text-transform:uppercase; font-weight:600;
+}
+.module h1{
+  font-size:20.5pt; font-weight:600; line-height:1.14; margin:0 0 5mm;
+  letter-spacing:-.004em;
+}
+.epigraph{
+  font-size:9.2pt; font-style:italic; color:var(--ink-soft);
+  border-left:1pt solid var(--brass); padding-left:5mm; margin:0 0 8mm;
+  text-align:left; hyphens:none;
+}
+.epigraph .attrib{
+  display:block; font-style:normal; font-family:"Inter",sans-serif;
+  font-size:6.8pt; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); margin-top:2mm;
+}
+
+h2{
+  font-size:13pt; margin:9mm 0 3.6mm; letter-spacing:-.003em;
+  padding-bottom:1.6mm; border-bottom:.5pt solid var(--rule);
+}
+h2 .num{ color:var(--brass); font-weight:400; margin-right:2.2mm; font-size:.82em; }
+h3{ font-size:10.6pt; margin:6mm 0 2.2mm; font-weight:600; }
+h4{
+  font-family:"Inter",sans-serif; font-size:7.6pt; font-weight:700;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-faint);
+  margin:5mm 0 2mm;
+}
+
+/* ---------- the instrument panel (module front matter) -------------------- */
+.panel{
+  break-inside: avoid;
+  background: var(--paper-deep);
+  border-top:1.6pt solid var(--brass);
+  padding: 5.5mm 6.5mm 5mm;
+  margin: 0 0 0;
+  font-size:8.5pt; line-height:1.5; text-align:left; hyphens:none;
+}
+.panel h4{ margin-top:0; color:var(--ink); }
+.panel .grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 3mm 7mm; }
+.panel ol, .panel ul{ margin:0; padding-left:4.6mm; }
+.panel li{ margin-bottom:1.2mm; }
+.panel .facts{
+  margin-top:4mm; padding-top:3.2mm; border-top:.5pt solid var(--rule);
+  display:grid; grid-template-columns: repeat(4, 1fr); gap:3mm;
+  font-family:"Inter",sans-serif; font-size:6.8pt; letter-spacing:.02em;
+  color:var(--ink-soft); line-height:1.35;
+}
+.panel .facts b{
+  display:block; font-size:6.4pt; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-faint); font-weight:600; margin-bottom:.8mm;
+}
+
+/* ---------- callouts ------------------------------------------------------ */
+.call{
+  break-inside: auto;
+  margin: 5.5mm 0; padding: 4mm 0 4mm 6mm;
+  border-left: 2pt solid var(--brass);
+  font-size:9.3pt; line-height:1.58; text-align:left;
+}
+.call .lbl{
+  display:block; font-family:"Inter",sans-serif; font-size:6.6pt; font-weight:700;
+  letter-spacing:.19em; text-transform:uppercase; color:var(--brass);
+  margin-bottom:1.8mm;
+}
+.call.pitfall{ border-left-color: var(--crimson); }
+.call.pitfall .lbl{ color: var(--crimson); }
+.call.practice{ border-left-color: var(--sage); }
+.call.practice .lbl{ color: var(--sage); }
+.call.deriv{
+  border-left:none; background: var(--paper-deep); padding: 5mm 6mm;
+  font-size:9pt;
+}
+.call.deriv .lbl{ color: var(--ink-faint); }
+
+/* ---------- the bench (lab) ----------------------------------------------- */
+.bench{
+  break-inside: avoid-page;
+  background: var(--navy); color:#DDE2EA;
+  padding: 7mm 8mm 6.5mm; margin: 8mm 0 6mm;
+  font-size:8.9pt; line-height:1.6; text-align:left; hyphens:none;
+}
+.bench h4{ color: var(--brass-lt); margin:0 0 1.5mm; }
+.bench .title{
+  font-family:"Fraunces",serif; font-size:12pt; font-weight:600; color:#F4EFE2;
+  margin:0 0 4mm; line-height:1.25;
+}
+.bench ol,.bench ul{ margin:0 0 0; padding-left:5mm; }
+.bench li{ margin-bottom:1.6mm; }
+.bench .ship{
+  margin-top:5mm; padding-top:4mm; border-top:.5pt solid rgba(198,169,104,.4);
+  font-size:8.4pt; color:#C8CEDA;
+}
+.bench .ship b{ color:var(--brass-lt); font-weight:600; }
+.bench code{ color:#E7D9B4; background:rgba(255,255,255,.06); }
+
+/* ---------- tables -------------------------------------------------------- */
+table{
+  width:100%; border-collapse:collapse; margin:5mm 0 6mm;
+  font-size:8.5pt; line-height:1.45; text-align:left; hyphens:none;
+  break-inside: avoid;
+}
+table.long{ break-inside:auto; }
+thead th{
+  font-family:"Inter",sans-serif; font-size:6.6pt; font-weight:700;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--ink-faint);
+  border-bottom:.9pt solid var(--ink); padding:0 3mm 1.8mm 0; vertical-align:bottom;
+}
+tbody td{
+  padding:1.9mm 3mm 1.9mm 0; border-bottom:.4pt solid var(--rule);
+  vertical-align:top;
+}
+tbody tr:last-child td{ border-bottom:.9pt solid var(--ink); }
+td:last-child, th:last-child{ padding-right:0; }
+caption{
+  caption-side:bottom; text-align:left; font-size:7.4pt; color:var(--ink-faint);
+  padding-top:2mm; font-family:"Inter",sans-serif; letter-spacing:.02em;
+}
+.num-col{ font-variant-numeric: lining-num tabular-nums; white-space:nowrap; }
+
+/* ---------- lists --------------------------------------------------------- */
+ul,ol{ margin:3mm 0 4mm; padding-left:5.5mm; }
+li{ margin-bottom:1.4mm; }
+ul.tight li, ol.tight li{ margin-bottom:.5mm; }
+ul.plain{ list-style:none; padding-left:0; }
+
+/* ---------- code ---------------------------------------------------------- */
+code{
+  font-family:"JetBrains Mono", monospace; font-size:.86em;
+  background: var(--paper-deep); padding:.05em .28em; border-radius:1px;
+}
+pre{
+  break-inside: avoid;
+  font-family:"JetBrains Mono", monospace; font-size:7.6pt; line-height:1.52;
+  background: var(--paper-deep); border-left:1.6pt solid var(--brass);
+  padding:4mm 5mm; margin:4.5mm 0 5mm; overflow:hidden; white-space:pre-wrap;
+  text-align:left; hyphens:none; color:#23262F;
+}
+pre code{ background:none; padding:0; font-size:1em; }
+pre .cm{ color:#8A8F9E; font-style:italic; }
+pre .kw{ color:#8C2F39; }
+pre .st{ color:#2E5A52; }
+
+/* ---------- equations ----------------------------------------------------- */
+.eq{
+  break-inside:avoid; margin:4.5mm 0; display:flex; align-items:center; gap:4mm;
+}
+.eq .body{ flex:1; text-align:center; }
+.eq .tag-n{
+  font-family:"Inter",sans-serif; font-size:7pt; color:var(--ink-faint);
+  font-variant-numeric:lining-num; white-space:nowrap;
+}
+.eq.numbered .body{ counter-increment: eq; }
+.eq.numbered .tag-n::before{ content:"(" counter(eq) ")"; }
+.katex{ font-size:1.02em; }
+.katex-display{ margin:0 !important; }
+
+/* ---------- figures ------------------------------------------------------- */
+figure{
+  break-inside:avoid; margin:6mm 0 6.5mm; text-align:center;
+}
+figure svg{ max-width:100%; height:auto; }
+figcaption{
+  margin-top:2.6mm; font-family:"Inter",sans-serif; font-size:7.2pt;
+  line-height:1.5; color:var(--ink-faint); text-align:left; hyphens:none;
+  border-top:.4pt solid var(--rule); padding-top:1.8mm;
+}
+figcaption b{
+  color:var(--brass); font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; font-size:6.6pt;
+}
+
+/* ---------- reading list -------------------------------------------------- */
+.reading{
+  break-inside:avoid-page; margin-top:7mm; padding-top:4mm;
+  border-top:.5pt solid var(--rule);
+}
+.reading ul{ list-style:none; padding:0; margin:0; font-size:8.2pt; line-height:1.45; }
+.reading li{ margin-bottom:2.2mm; padding-left:6mm; text-indent:-6mm; hyphens:none; text-align:left; }
+.reading .k{ font-family:"Inter",sans-serif; font-size:6.4pt; font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--brass); margin-right:1.6mm; }
+
+/* ---------- front matter -------------------------------------------------- */
+.cover{
+  position:relative; background:var(--navy); color:#F2ECDE;
+  height:240mm; width:170mm; margin:0; padding:0; overflow:hidden;
+  display:flex; flex-direction:column; break-after:page;
+}
+.cover .field{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(120% 80% at 50% 8%, rgba(198,169,104,.16), transparent 60%),
+    radial-gradient(90% 60% at 50% 108%, rgba(46,90,82,.30), transparent 62%);
+}
+.cover .frame{
+  position:absolute; inset:13mm; border:.6pt solid rgba(198,169,104,.42);
+}
+.cover .frame::before{
+  content:""; position:absolute; inset:2.4mm; border:.4pt solid rgba(198,169,104,.20);
+}
+.cover .inner{
+  position:relative; z-index:2; height:100%; box-sizing:border-box;
+  padding:26mm 24mm; display:flex; flex-direction:column; text-align:center;
+}
+.cover .house{
+  font-family:"Inter",sans-serif; font-size:7pt; letter-spacing:.42em;
+  text-transform:uppercase; color:rgba(198,169,104,.9);
+}
+.cover .mid{ flex:1; display:flex; flex-direction:column; justify-content:center; }
+.cover h1{
+  font-family:"Fraunces",serif; font-weight:400; font-size:44pt; line-height:1.0;
+  margin:0; color:#F7F2E5; text-align:center; letter-spacing:-.012em;
+}
+.cover h1 .the{
+  display:block; font-size:14pt; letter-spacing:.34em; text-indent:.34em; margin-bottom:6mm;
+  color:var(--brass-lt); font-weight:400;
+}
+.cover .sub{
+  margin-top:9mm; font-size:10.4pt; line-height:1.7; color:#CFC9BA;
+  font-style:italic; hyphens:none; text-align:center;
+}
+.cover .hair{ width:34mm; height:0; border-top:.8pt solid var(--brass-lt); margin:8mm auto; }
+.cover .schools{
+  font-family:"Inter",sans-serif; font-size:7.4pt; letter-spacing:.24em;
+  text-transform:uppercase; color:rgba(232,225,208,.72); line-height:2.2;
+}
+.cover .foot{
+  font-family:"Inter",sans-serif; font-size:6.8pt; letter-spacing:.2em;
+  text-transform:uppercase; color:rgba(198,169,104,.75);
+}
+.cover .seal{
+  width:23mm; height:23mm; margin:0 auto 8mm; border:.6pt solid rgba(198,169,104,.6);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:"Fraunces",serif; font-size:12pt; color:var(--brass-lt);
+  letter-spacing:.06em;
+}
+
+.fm{ break-before:page; }
+.fm h1{
+  font-size:17pt; font-weight:600; margin:0 0 6mm;
+  padding-bottom:2.4mm; border-bottom:.5pt solid var(--rule);
+}
+.fm h2{ font-size:11pt; border:none; padding:0; margin:6mm 0 2.4mm; }
+
+.colophon{
+  font-size:8.4pt; line-height:1.62; color:var(--ink-soft); text-align:left;
+  hyphens:none;
+}
+.colophon .rule{ width:20mm; border-top:.6pt solid var(--brass); margin:5mm 0; }
+
+/* Table of contents */
+.toc{ font-size:9pt; line-height:1.5; text-align:left; hyphens:none; }
+.toc .part-row{
+  margin:6.5mm 0 2.5mm; font-family:"Inter",sans-serif; font-size:6.8pt;
+  font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--brass);
+  border-bottom:.5pt solid var(--rule); padding-bottom:1.4mm;
+}
+.toc .row{ display:flex; align-items:baseline; gap:2mm; margin:1.9mm 0; }
+.toc .row .n{
+  font-family:"Inter",sans-serif; font-size:7pt; font-weight:600; color:var(--ink-faint);
+  width:7mm; flex:none; font-variant-numeric:lining-num;
+}
+.toc .row .t{ flex:none; max-width:118mm; }
+.toc .row .dots{
+  flex:1; border-bottom:.4pt dotted var(--rule); transform:translateY(-1mm);
+}
+.toc .row .p{
+  font-family:"Inter",sans-serif; font-size:7.6pt; color:var(--ink-soft);
+  font-variant-numeric:lining-num tabular-nums;
+}
+.toc .row.sub .t{ color:var(--ink-soft); font-size:8.4pt; }
+.toc .row.sub .n{ color:transparent; }
+
+/* map table on the curriculum page */
+.map{ font-size:8pt; }
+.map td:first-child{ width:26mm; font-family:"Inter",sans-serif; font-size:7pt;
+  font-weight:600; color:var(--brass); letter-spacing:.04em; }
+
+/* glossary */
+.gloss{ font-size:8.4pt; line-height:1.5; column-count:2; column-gap:8mm;
+  text-align:left; hyphens:auto; }
+.gloss dt{ font-weight:600; font-family:"Fraunces",serif; font-size:8.6pt;
+  margin-top:2.6mm; break-after:avoid; }
+.gloss dd{ margin:0; color:var(--ink-soft); }
+
+/* schedule */
+.sched td:first-child{ white-space:nowrap; font-family:"Inter",sans-serif;
+  font-size:7pt; font-weight:600; color:var(--brass); }
+
+.finis{ text-align:center; margin-top:18mm; }
+.finis .ornament{ font-family:"Fraunces",serif; color:var(--brass); font-size:13pt;
+  letter-spacing:.5em; }

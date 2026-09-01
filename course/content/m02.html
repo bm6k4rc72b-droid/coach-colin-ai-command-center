@@ -1,0 +1,241 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">02</div>
+    <div class="meta">
+      <div class="kicker">Part One · Foundations</div>
+      <div class="lineage">Harvard CS50-AI · Stanford CS221</div>
+    </div>
+  </div>
+  <h1 id="m02" data-toc="module" data-toc-n="02" data-toc-title="Search, Logic and the Classical Program">Search, Logic and<br>the Classical Program</h1>
+  <div class="epigraph">The oldest idea in artificial intelligence is that thinking
+   is search. It was declared dead twice, and it is currently running inside every
+   system you admire.
+   <span class="attrib">On the return of deliberation</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Cast a problem as states, actions, costs and a goal test — the single most transferable modelling skill in AI.</li>
+         <li>Implement and compare uninformed, informed and adversarial search.</li>
+         <li>Design an admissible heuristic and prove it does not lie.</li>
+         <li>Encode constraints in logic and hand them to a solver instead of a loop.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Module 01. Recursion, queues, hash maps.</li>
+         <li>Big-O reasoning about time and space.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 7 h</li>
+         <li>Problem set: 5 h · Lab: 6 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Week</b>3</div>
+     <div><b>Total hours</b>18</div>
+     <div><b>Deliverable</b>A solver with a proved heuristic</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">A search problem is four things: a set of states, a
+ successor function that says which states follow which, a cost on each
+ transition, and a test that recognises a goal. That is the whole formalism, and
+ its power is that an astonishing range of problems fit it — route planning,
+ puzzle solving, scheduling, protein folding, theorem proving, and the decoding
+ of a language model, which searches over token sequences under a probability
+ model.</p>
+
+ <p>The skill this module trains is not implementing breadth-first search. It is
+ the act of <em>formulation</em>: looking at a messy situation and choosing what
+ counts as a state. That choice determines whether the problem is tractable, and
+ it is where most of the intelligence in classical AI actually lives.</p>
+
+ <h2><span class="num">2.1</span>The search family</h2>
+
+ <p class="lede">All graph search is one algorithm with a different data structure
+ at its heart. Maintain a frontier of discovered-but-unexpanded states; repeatedly
+ remove one, test it, and add its successors. Change the removal rule and you
+ change the algorithm's name and its guarantees.</p>
+
+ <table>
+  <caption>One loop, five algorithms. <span class="m">b</span> is branching factor, <span class="m">d</span> goal depth, <span class="m">m</span> maximum depth.</caption>
+  <thead><tr><th>Frontier</th><th>Algorithm</th><th>Complete?</th><th>Optimal?</th><th>Time</th><th>Space</th></tr></thead>
+  <tbody>
+   <tr><td>FIFO queue</td><td>Breadth-first</td><td>Yes</td><td>Unit costs only</td><td class="num-col"><span class="m">O(b^d)</span></td><td class="num-col"><span class="m">O(b^d)</span></td></tr>
+   <tr><td>LIFO stack</td><td>Depth-first</td><td>Finite spaces</td><td>No</td><td class="num-col"><span class="m">O(b^m)</span></td><td class="num-col"><span class="m">O(bm)</span></td></tr>
+   <tr><td>Priority by <span class="m">g</span></td><td>Uniform-cost / Dijkstra</td><td>Yes</td><td>Yes</td><td class="num-col"><span class="m">O(b^{1+\lfloor C^*/\epsilon \rfloor})</span></td><td>Same</td></tr>
+   <tr><td>Priority by <span class="m">h</span></td><td>Greedy best-first</td><td>No</td><td>No</td><td>Varies</td><td>Varies</td></tr>
+   <tr><td>Priority by <span class="m">g+h</span></td><td>A<sup>*</sup></td><td>Yes</td><td>If <span class="m">h</span> admissible</td><td>Varies</td><td>Often the binding constraint</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   A heuristic <span class="m">h(s)</span> is <em>admissible</em> if it never
+   overestimates the true remaining cost <span class="m">h^*(s)</span>, and
+   <em>consistent</em> if <span class="m">h(s) \le c(s,a,s') + h(s')</span> for every
+   transition. Admissibility buys optimality for tree search; consistency buys it
+   for graph search and means each state is expanded once. Consistency implies
+   admissibility, not the reverse.
+ </div>
+
+ <p>The standard way to invent an admissible heuristic is to <em>relax</em> the
+ problem: delete a constraint, solve the easier problem exactly, and use its cost.
+ Straight-line distance is the relaxation of road travel in which you may fly.
+ The number of misplaced tiles is the relaxation of the sliding puzzle in which
+ tiles teleport. This is a mechanical procedure, and it is worth doing by hand
+ until it is reflexive.</p>
+
+ <div class="call deriv">
+   <span class="lbl">Why A<sup>*</sup> is optimal</span>
+   Suppose A<sup>*</sup> is about to expand a suboptimal goal <span class="m">G_2</span>
+   with <span class="m">f(G_2) = g(G_2) > C^*</span>. Somewhere on the frontier lies a
+   node <span class="m">n</span> on an optimal path to the true goal, with
+   <span class="m">f(n) = g(n) + h(n) \le g(n) + h^*(n) = C^*</span> by admissibility.
+   Then <span class="m">f(n) \le C^* < f(G_2)</span>, so <span class="m">n</span> would have
+   been expanded first — a contradiction. The proof is three lines and it is the
+   reason the algorithm is trusted.
+ </div>
+
+ <h2><span class="num">2.2</span>Adversarial search: when the world pushes back</h2>
+
+ <p class="lede">Add a second agent with opposing objectives and the value of a
+ state is no longer a cost but a <em>minimax</em> value: the best you can
+ guarantee against an optimal opponent.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">V(s) = \begin{cases} \text{utility}(s) & s \text{ terminal}\\ \max_{a} V(\text{result}(s,a)) & \text{our turn}\\ \min_{a} V(\text{result}(s,a)) & \text{their turn}\end{cases}</span></div><span class="tag-n"></span></div>
+
+ <p>Alpha–beta pruning computes the same value while skipping branches that
+ cannot affect it, reducing the effective branching factor from <span class="m">b</span>
+ to about <span class="m">\sqrt{b}</span> under good move ordering — which doubles the
+ depth reachable in a given time. Depth-limited search with an evaluation function
+ replaces the unreachable terminal utilities, and the quality of that evaluation
+ function was, for forty years, the entire game. In 2016 it was replaced by a
+ learned one, and Monte-Carlo tree search replaced the exhaustive expansion; the
+ formalism survived intact.</p>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Beam search in a language model is depth-limited search with an evaluation
+   function, and it inherits the classical pathologies: it prefers short
+   sequences unless you normalise by length, and it collapses diversity because
+   the beam concentrates. Every trick in Module&nbsp;13's decoding section is a
+   classical search remedy under a new name.
+ </div>
+
+ <h2><span class="num">2.3</span>Constraint satisfaction</h2>
+
+ <p class="lede">Many problems have no meaningful path — only a final assignment
+ that must satisfy constraints. Timetabling, register allocation, Sudoku, layout,
+ configuration. A CSP is variables, domains, and constraints; the solution is any
+ complete consistent assignment.</p>
+
+ <p>Naive backtracking is exponential and immediately unusable. Three refinements
+ make it practical, and they generalise far beyond CSPs:</p>
+
+ <ul>
+   <li><strong>Propagation.</strong> After each assignment, prune neighbours'
+   domains. Arc consistency (AC-3) enforces that every value of one variable has
+   some compatible partner, and often solves the puzzle without search.</li>
+   <li><strong>Ordering.</strong> Choose the most constrained variable next
+   (minimum remaining values), and try its least constraining value first. Fail
+   early, succeed cheaply.</li>
+   <li><strong>Structure.</strong> If the constraint graph is a tree, the problem
+   is linear-time. Cutset conditioning and tree decomposition trade an exponential
+   in the graph's <em>treewidth</em> for the exponential in the number of
+   variables.</li>
+ </ul>
+
+ <h2><span class="num">2.4</span>Logic, and why it came back</h2>
+
+ <p class="lede">Propositional logic gives a language of facts and a mechanism —
+ entailment — for deriving new facts that must be true whenever the old ones are.
+ The engineering question is not whether logic is expressive but whether we can
+ decide entailment fast. Modern SAT solvers, using conflict-driven clause
+ learning, routinely dispatch problems with millions of variables, which is why
+ hardware verification, planning and program analysis all reduce to SAT on
+ purpose.</p>
+
+ <p>First-order logic adds objects, relations and quantifiers, buying enormous
+ expressive power at the cost of decidability. The engineering lesson is the one
+ that recurs throughout this course: <em>choose the weakest formalism that can
+ express your problem</em>, because the weaker the language, the better the
+ solver.</p>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Treating a language model's output as an inference step. A model that emits
+   "therefore X" has produced a token sequence with high likelihood, not a
+   derivation. When correctness matters, extract the constraints and hand them to
+   a solver that can be checked — the neuro-symbolic pattern of Module&nbsp;12's
+   tool use. The model's job is translation; the solver's job is truth.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 02</h4>
+   <div class="title">A pathfinder, a heuristic, and a proof it is admissible</div>
+   <p>Build one search framework and instantiate it three ways, then measure.</p>
+   <ol>
+     <li>Implement a single <code>search(problem, frontier)</code> function and
+     obtain BFS, DFS, uniform-cost and A<sup>*</sup> by swapping the frontier
+     only. Instrument nodes expanded, maximum frontier size and solution cost.</li>
+     <li>Solve the 15-puzzle with two heuristics: misplaced tiles, and the sum of
+     Manhattan distances. Prove on paper that each is admissible by naming the
+     relaxation it solves exactly.</li>
+     <li>Add a third heuristic that is <em>not</em> admissible (say,
+     <span class="m">1.5\times</span> Manhattan) and measure the trade: nodes
+     expanded versus solution cost above optimal.</li>
+     <li>Implement alpha–beta for Connect&nbsp;Four with iterative deepening and
+     move ordering; report the effective branching factor with and without
+     ordering.</li>
+     <li>Encode a 9×9 Sudoku as a CSP, solve it with AC-3 plus MRV backtracking,
+     and separately encode it as SAT clauses for a solver. Compare wall time.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> one repository, a results table over at least
+   twenty puzzle instances, and a one-page note arguing why your Manhattan
+   heuristic is admissible and consistent. <b>Acceptance:</b> A<sup>*</sup> with
+   Manhattan expands at least an order of magnitude fewer nodes than uniform-cost
+   on the same instances, and every reported solution is verifiably optimal.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 02 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Formulation</td><td>Copies a given state representation</td><td>Chooses states and actions that make the problem tractable</td><td>Reformulates to shrink the space by an order of magnitude</td></tr>
+   <tr><td>Algorithms</td><td>Implements from pseudocode</td><td>Selects and instruments the right one, and says why</td><td>Derives the guarantee from the frontier discipline</td></tr>
+   <tr><td>Heuristics</td><td>Uses a supplied heuristic</td><td>Invents one by relaxation and proves admissibility</td><td>Compares dominance between heuristics empirically and analytically</td></tr>
+   <tr><td>Declarative modelling</td><td>Writes nested loops</td><td>Encodes constraints and calls a solver</td><td>Chooses between CSP, SAT and search on complexity grounds</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Give a heuristic that is admissible but not consistent, and show which guarantee breaks.</li>
+  <li>Why does good move ordering roughly square alpha–beta's reach? Show the arithmetic on <span class="m">b = 36</span>.</li>
+  <li>Your A<sup>*</sup> runs out of memory before time. Name two remedies and the guarantee each sacrifices.</li>
+  <li>Express "no two of these six meetings may overlap for the same person" as constraints, then as SAT clauses. Which encoding is smaller, and why does that matter?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Core</span>Russell &amp; Norvig, <em>Artificial Intelligence: A Modern Approach</em>, 4th ed. — chapters 3, 5, 6, 7. The field's reference text.</li>
+   <li><span class="k">Course</span>Harvard <em>CS50's Introduction to Artificial Intelligence with Python</em> — lectures on search, knowledge and optimisation, with their problem sets.</li>
+   <li><span class="k">Course</span>Stanford CS221 — the "reflex to states to variables to logic" arc; its lecture notes on search and CSPs are unusually clear.</li>
+   <li><span class="k">Paper</span>Hart, Nilsson &amp; Raphael, "A Formal Basis for the Heuristic Determination of Minimum Cost Paths" (1968) — the original A<sup>*</sup>.</li>
+   <li><span class="k">Paper</span>Silver et al., "Mastering the Game of Go without Human Knowledge" (2017) — classical search with learned evaluation.</li>
+  </ul>
+ </div>
+</section>

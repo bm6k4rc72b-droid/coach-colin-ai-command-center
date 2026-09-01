@@ -1,0 +1,233 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">03</div>
+    <div class="meta">
+      <div class="kicker">Part One · Foundations</div>
+      <div class="lineage">Harvard CS50-AI · Stanford CS221 &amp; CS228</div>
+    </div>
+  </div>
+  <h1 id="m03" data-toc="module" data-toc-n="03" data-toc-title="Reasoning and Deciding Under Uncertainty">Reasoning and Deciding<br>Under Uncertainty</h1>
+  <div class="epigraph">A system that cannot represent its own ignorance will
+   express it as confidence. Every hallucination is, at bottom, a missing
+   probability.
+   <span class="attrib">On calibration</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Build a Bayesian network for a real domain and read its conditional independences off the graph.</li>
+         <li>Perform exact and approximate inference, and know which is affordable.</li>
+         <li>Track a hidden state over time with filtering and smoothing.</li>
+         <li>Formulate a sequential decision problem as an MDP and solve it.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 01–02. Conditional probability and Bayes' rule.</li>
+         <li>Comfort with graphs and dynamic programming.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 8 h</li>
+         <li>Problem set: 5 h · Lab: 6 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Week</b>4</div>
+     <div><b>Total hours</b>19</div>
+     <div><b>Deliverable</b>A filter and a policy</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Uncertainty is not a defect to be engineered away; it is
+ the state of any agent with partial observations. The classical program's
+ failure was not that its logic was wrong but that the world refused to supply it
+ with certain premises. The repair, made in the 1980s and now foundational, was
+ to replace truth values with probabilities and entailment with conditioning.</p>
+
+ <p>This module is short on ceremony and long on structures you will meet again:
+ the graphical model that makes joint distributions tractable, the recursion that
+ tracks a hidden state, and the Bellman equation, which reappears in
+ Module&nbsp;10 as the theoretical backbone of every alignment algorithm.</p>
+
+ <h2><span class="num">3.1</span>Bayesian networks: structure as an assumption</h2>
+
+ <p class="lede">A joint distribution over <span class="m">n</span> binary variables
+ has <span class="m">2^n - 1</span> free parameters, which is hopeless by
+ <span class="m">n = 40</span>. A Bayesian network is a directed acyclic graph whose
+ edges assert which conditional dependencies exist; the joint then factorises
+ into a product of small local terms.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">P(X_1,\dots,X_n) = \prod_{i=1}^{n} P\!\left(X_i \mid \text{Parents}(X_i)\right)</span></div><span class="tag-n"></span></div>
+
+ <p>The saving is enormous and it is bought entirely with assumptions. Each
+ missing edge is a claim about the world: <em>given its parents, this variable
+ tells you nothing more about that one.</em> Reading those claims off the graph
+ is done with <span class="sc">d</span>-separation, and the single most useful
+ consequence is <em>explaining away</em>: two independent causes of a common
+ effect become dependent once the effect is observed. If the alarm sounds, and
+ you learn there was an earthquake, the probability of a burglary falls — even
+ though burglary and earthquake are a priori independent.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Structure is a prior. Choosing a graph is choosing what you believe about the
+   world's causal skeleton, and it is a stronger, more inspectable prior than
+   anything a regulariser gives you. This is why graphical models remain the
+   preferred tool wherever decisions must be audited.
+ </div>
+
+ <h3>Inference, and its price</h3>
+
+ <p class="lede">Exact inference by variable elimination costs an exponential in
+ the network's <em>treewidth</em>, not its size — so a large but chain-like
+ network is cheap and a small but densely coupled one is not. When treewidth is
+ too high, we sample: likelihood weighting, Gibbs sampling and, in general,
+ Markov-chain Monte Carlo, trading exactness for a convergence you must diagnose
+ rather than assume.</p>
+
+ <table>
+  <caption>Choosing an inference method by the shape of the problem.</caption>
+  <thead><tr><th>Method</th><th>Gives</th><th>Cost</th><th>Use when</th></tr></thead>
+  <tbody>
+   <tr><td>Variable elimination</td><td>Exact marginals</td><td>Exponential in treewidth</td><td>Treewidth ≲ 20</td></tr>
+   <tr><td>Belief propagation</td><td>Exact on trees, approximate otherwise</td><td>Linear per iteration</td><td>Sparse, near-tree graphs</td></tr>
+   <tr><td>Likelihood weighting</td><td>Unbiased estimates</td><td>Poor with unlikely evidence</td><td>Few observed variables</td></tr>
+   <tr><td>Gibbs / MCMC</td><td>Asymptotically exact</td><td>Unknown mixing time</td><td>High dimension, patience</td></tr>
+   <tr><td>Variational inference</td><td>A bound, deterministically</td><td>Optimisation, not sampling</td><td>Large scale; reappears in M11</td></tr>
+  </tbody>
+ </table>
+
+ <h2><span class="num">3.2</span>Time: hidden Markov models and filtering</h2>
+
+ <p class="lede">Add a time index and assume the Markov property — the future is
+ independent of the past given the present — and you get the model that underlies
+ speech recognition, robot localisation, target tracking and every sensor-fusion
+ system in the world.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">P(x_t \mid e_{1:t}) \;\propto\; P(e_t \mid x_t) \sum_{x_{t-1}} P(x_t \mid x_{t-1})\, P(x_{t-1} \mid e_{1:t-1})</span></div><span class="tag-n"></span></div>
+
+ <p>Read the recursion aloud and it is intuitive: predict forward through the
+ transition model, then correct by the likelihood of what you actually observed.
+ When the variables are continuous and everything is linear-Gaussian, the same
+ recursion has a closed form and is called the Kalman filter. When they are not,
+ you sample and get a particle filter. Smoothing runs the recursion backwards as
+ well and gives better estimates of the past; the Viterbi algorithm finds the
+ single most likely trajectory rather than the marginals — and is exactly the
+ dynamic program that beam search approximates in Module&nbsp;13.</p>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Multiplying many small probabilities underflows. Work in log space and use a
+   numerically stable log-sum-exp everywhere. This one habit prevents an entire
+   class of silent bugs, in HMMs and in the cross-entropy losses of every later
+   module.
+ </div>
+
+ <h2><span class="num">3.3</span>Deciding: utility, MDPs and Bellman</h2>
+
+ <p class="lede">Probability tells you what is likely; it does not tell you what
+ to do. For that you need a utility function, and the claim of decision theory —
+ justified by the von Neumann–Morgenstern axioms — is that any agent with
+ coherent preferences behaves as though maximising expected utility.</p>
+
+ <p>A Markov decision process makes that sequential: states, actions, a transition
+ kernel <span class="m">P(s' \mid s,a)</span>, a reward <span class="m">R(s,a,s')</span>
+ and a discount <span class="m">\gamma \in [0,1)</span>. The value of a state under an
+ optimal policy satisfies the Bellman optimality equation.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">V^{*}(s) = \max_{a} \sum_{s'} P(s' \mid s, a)\left[ R(s,a,s') + \gamma V^{*}(s') \right]</span></div><span class="tag-n"></span></div>
+
+ <p>Value iteration applies the right-hand side as an operator until convergence;
+ because the operator is a <span class="m">\gamma</span>-contraction in the supremum
+ norm, convergence is geometric and guaranteed. Policy iteration alternates exact
+ evaluation with greedy improvement and usually converges in remarkably few
+ rounds. Both assume you know <span class="m">P</span> and <span class="m">R</span>. When
+ you do not, you are doing reinforcement learning, and Module&nbsp;10 picks the
+ thread up there.</p>
+
+ <div class="call deriv">
+   <span class="lbl">Where the discount comes from</span>
+   <span class="m">\gamma</span> is usually justified as impatience, but its real work
+   is mathematical: it makes infinite-horizon returns finite and makes the Bellman
+   operator a contraction with modulus <span class="m">\gamma</span>. The effective
+   horizon is about <span class="m">1/(1-\gamma)</span> steps, so
+   <span class="m">\gamma = 0.99</span> means the agent is optimising over roughly a
+   hundred steps. Choosing <span class="m">\gamma</span> is choosing how far ahead your
+   system is allowed to care — a design decision, not a hyperparameter to sweep.
+ </div>
+
+ <h3>Partial observability</h3>
+
+ <p class="lede">If the agent cannot see the state, it must act on a
+ <em>belief</em> — a distribution over states — and the belief is itself a
+ Markov state, in a continuous space. POMDPs are the honest model of nearly every
+ real system and are computationally brutal; the practical response is to
+ approximate the belief with a learned recurrent state, which is precisely what a
+ language model's context window is doing when it conditions on a conversation.</p>
+
+ <div class="bench">
+   <h4>The Bench · Lab 03</h4>
+   <div class="title">Localise a robot you cannot see, then decide what it should do</div>
+   <ol>
+     <li>Build a 20×20 grid world with noisy motion (10&nbsp;% slip per axis) and a
+     noisy range sensor. Implement exact grid-based Bayes filtering and plot the
+     belief over twenty steps.</li>
+     <li>Implement a particle filter with resampling. Show empirically how the
+     error scales with particle count, and demonstrate particle deprivation by
+     removing the resampling noise.</li>
+     <li>Implement Viterbi on the same model and compare the most-likely path to
+     the sequence of per-step most-likely states. Explain why they differ.</li>
+     <li>Define rewards (goal +1, hazard −1, step −0.04) and solve the MDP by both
+     value iteration and policy iteration. Report iterations to convergence and
+     the resulting policies.</li>
+     <li>Sweep <span class="m">\gamma</span> from 0.5 to 0.999 and show the point at
+     which the optimal policy changes qualitatively. Explain it in terms of
+     effective horizon.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a notebook with five figures — belief evolution,
+   particle-count error curve, Viterbi versus marginals, the two policies, and the
+   discount sweep. <b>Acceptance:</b> value iteration and policy iteration agree
+   on the optimal policy for every state, and your particle filter's RMS error
+   falls as <span class="m">O(1/\sqrt{N})</span> in particle count.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 03 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Modelling</td><td>Uses a supplied network</td><td>Builds a network and defends each missing edge</td><td>Identifies which independences are testable from data</td></tr>
+   <tr><td>Inference</td><td>Calls a library</td><td>Chooses exact or approximate on complexity grounds</td><td>Diagnoses non-convergence of a sampler</td></tr>
+   <tr><td>Temporal reasoning</td><td>Implements filtering from pseudocode</td><td>Explains predict–correct and picks filter for the noise model</td><td>Derives the Kalman gain as a precision-weighted average</td></tr>
+   <tr><td>Decision making</td><td>Solves a given MDP</td><td>Formulates a real problem as an MDP, reward included</td><td>Anticipates reward hacking in their own formulation</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Two causes, one effect. Show numerically that observing the effect makes the causes dependent.</li>
+  <li>Why is exact inference exponential in treewidth rather than in the number of variables?</li>
+  <li>Your particle filter is confident and wrong after a sensor dropout. What happened, and what are two fixes?</li>
+  <li>A reward of −0.04 per step is changed to 0. Describe how the optimal policy changes and why.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Core</span>Russell &amp; Norvig, chapters 12–17 — probability, Bayes nets, temporal models, decisions, MDPs.</li>
+   <li><span class="k">Core</span>Koller &amp; Friedman, <em>Probabilistic Graphical Models</em> — chapters 3, 9 and 11 for structure, exact inference and variational methods.</li>
+   <li><span class="k">Course</span>Stanford CS228 lecture notes — the best free treatment of graphical models on the internet.</li>
+   <li><span class="k">Core</span>Sutton &amp; Barto, <em>Reinforcement Learning</em>, chapters 3–4 — MDPs and dynamic programming, read now and again before Module 10.</li>
+   <li><span class="k">Paper</span>Thrun, Burgard &amp; Fox, <em>Probabilistic Robotics</em>, chapters 2–4 — filtering, done properly.</li>
+  </ul>
+ </div>
+</section>

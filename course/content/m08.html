@@ -1,0 +1,309 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">08</div>
+    <div class="meta">
+      <div class="kicker">Part Three · Frontier Systems</div>
+      <div class="lineage">Stanford CS224N &amp; CS336 · NVIDIA DLI transformer NLP</div>
+    </div>
+  </div>
+  <h1 id="m08" data-toc="module" data-toc-n="08" data-toc-title="Transformers and Language Models">Transformers and<br>Language Models</h1>
+  <div class="epigraph">One architecture, applied to everything, made larger. It is
+   an unsatisfying summary of a decade and it is very nearly the whole story.
+   <span class="attrib">On the state of the art</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Derive scaled dot-product attention and implement multi-head attention from nothing.</li>
+         <li>Account for every parameter and every FLOP in a transformer block.</li>
+         <li>Explain tokenisation, positional encoding and the choices that make long context work.</li>
+         <li>Use scaling laws to plan a training run before spending money.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 06 and 07 with their labs.</li>
+         <li>Comfort reading PyTorch tensor shapes.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 11 h</li>
+         <li>Problem set: 6 h · Lab: 11 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>11–13</div>
+     <div><b>Total hours</b>28</div>
+     <div><b>Deliverable</b>A language model you wrote</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Attention is a differentiable dictionary lookup. Each
+ position emits a <em>query</em> describing what it is looking for; every position
+ also emits a <em>key</em> describing what it offers and a <em>value</em> carrying
+ its content. The query is compared against all keys, the comparisons are turned
+ into weights by a softmax, and the output is the weighted average of the values.
+ That is the entire mechanism, and everything else in a transformer is
+ plumbing.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\operatorname{Attention}(Q,K,V) = \softmax\!\left( \frac{QK\T}{\sqrt{d_k}} \right) V</span></div><span class="tag-n"></span></div>
+
+ <div class="call deriv">
+   <span class="lbl">Where <span class="m">\sqrt{d_k}</span> comes from</span>
+   If the entries of <span class="m">q</span> and <span class="m">k</span> are independent
+   with zero mean and unit variance, then <span class="m">q\T k</span> has variance
+   <span class="m">d_k</span>. Without rescaling, the logits grow as
+   <span class="m">\sqrt{d_k}</span>, the softmax saturates, and its gradient vanishes —
+   at <span class="m">d_k = 128</span> that is more than enough to stall training.
+   Dividing by <span class="m">\sqrt{d_k}</span> restores unit variance. This is the same
+   signal-propagation argument as Module&nbsp;6, applied to a single line.
+ </div>
+
+ <h2><span class="num">8.1</span>The block, in full</h2>
+
+ <p class="lede">A transformer layer is two sublayers, each wrapped in a residual
+ connection and a normalisation: multi-head attention, then a position-wise feed
+ forward network. Modern implementations place the norm <em>before</em> the
+ sublayer (pre-norm), which makes deep stacks trainable without a warmup so long
+ it hurts.</p>
+
+ <figure>
+  <svg viewBox="0 0 440 214" role="img" aria-label="Transformer block and attention">
+   <defs><style>
+     .t{font-family:Inter,sans-serif;font-size:7.5px;fill:#16181F}
+     .t.w{fill:#F2ECDE}
+     .s{font-family:Inter,sans-serif;font-size:6.4px;fill:#6E7382}
+     .s.g{fill:#C6A968}
+     .h{font-family:Inter,sans-serif;font-size:6.5px;fill:#6E7382;letter-spacing:.18em}
+     .bx{fill:#F3F0E9;stroke:#D8D3C6;stroke-width:.7}
+     .bd{fill:#0E1626;stroke:#0E1626}
+     .ln{stroke:#A2803C;stroke-width:.8;fill:none}
+     .dash{stroke:#A2803C;stroke-width:.6;fill:none;stroke-dasharray:2 2}
+   </style>
+   <marker id="a3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+     <path d="M0 0 L8 4 L0 8 z" fill="#A2803C"/></marker>
+   </defs>
+
+   <text class="h" x="0" y="9">ONE PRE-NORM BLOCK</text>
+   <text class="h" x="196" y="9">ATTENTION, INSIDE</text>
+
+   <rect class="bx" x="18" y="18"  width="120" height="17"/><text class="t" x="26" y="30">RMSNorm</text>
+   <rect class="bd" x="18" y="41"  width="120" height="21"/><text class="t w" x="26" y="52">Multi-head attention</text>
+   <text class="s g" x="26" y="60">h heads · causal mask · RoPE</text>
+   <rect class="bx" x="18" y="76"  width="120" height="14"/><text class="t" x="26" y="86">⊕ residual</text>
+   <rect class="bx" x="18" y="98"  width="120" height="17"/><text class="t" x="26" y="110">RMSNorm</text>
+   <rect class="bd" x="18" y="121" width="120" height="21"/><text class="t w" x="26" y="132">Feed forward</text>
+   <text class="s g" x="26" y="140">SwiGLU · d → 4d → d</text>
+   <rect class="bx" x="18" y="156" width="120" height="14"/><text class="t" x="26" y="166">⊕ residual</text>
+
+   <path class="ln" d="M78 35 V39" marker-end="url(#a3)"/>
+   <path class="ln" d="M78 62 V74" marker-end="url(#a3)"/>
+   <path class="ln" d="M78 90 V96" marker-end="url(#a3)"/>
+   <path class="ln" d="M78 115 V119" marker-end="url(#a3)"/>
+   <path class="ln" d="M78 142 V154" marker-end="url(#a3)"/>
+   <path class="dash" d="M14 14 V83 H16"/>
+   <path class="dash" d="M14 94 V163 H16"/>
+   <text class="s" x="0" y="180">×L layers</text>
+
+   <rect class="bx" x="196" y="18" width="52" height="15"/><text class="t" x="203" y="29">Q  n×d</text>
+   <rect class="bx" x="254" y="18" width="52" height="15"/><text class="t" x="261" y="29">K  n×d</text>
+   <rect class="bx" x="312" y="18" width="52" height="15"/><text class="t" x="319" y="29">V  n×d</text>
+
+   <path class="ln" d="M222 33 V44 H262 V50" marker-end="url(#a3)"/>
+   <path class="ln" d="M280 33 V50" marker-end="url(#a3)"/>
+
+   <rect class="bx" x="196" y="52" width="110" height="15"/><text class="t" x="203" y="63">QKᵀ / √d   →  n×n</text>
+   <rect class="bx" x="196" y="71" width="110" height="15"/><text class="t" x="203" y="82">+ causal mask (−∞)</text>
+   <rect class="bd" x="196" y="90" width="110" height="15"/><text class="t w" x="203" y="101">softmax, row-wise</text>
+   <path class="ln" d="M251 67 V69" marker-end="url(#a3)"/>
+   <path class="ln" d="M251 86 V88" marker-end="url(#a3)"/>
+   <path class="ln" d="M251 105 V116" marker-end="url(#a3)"/>
+   <path class="ln" d="M338 33 V116 H316" marker-end="url(#a3)"/>
+   <rect class="bx" x="196" y="118" width="110" height="15"/><text class="t" x="203" y="129">× V   →   n×d</text>
+
+   <text class="s" x="196" y="148">Cost: 2·n²·d for the two matmuls, plus n² memory</text>
+   <text class="s" x="196" y="158">for the score matrix — the term FlashAttention</text>
+   <text class="s" x="196" y="168">removes by never materialising it (M9).</text>
+
+   <rect x="0" y="186" width="440" height="0.6" fill="#D8D3C6"/>
+   <text class="s" x="0" y="200">Per layer, per token: 12d² FLOPs in the projections and FFN, plus 4nd attention terms.</text>
+   <text class="s" x="0" y="209">Attention dominates only once n ≳ 6d — for d = 4096 that is a context beyond 24k tokens.</text>
+  </svg>
+  <figcaption><b>Figure 8.1</b> &nbsp;The block on the left, the mechanism on the right.
+  Every optimisation in Modules 9 and 13 targets one of the boxes here: the
+  <span class="m">n^2</span> score matrix, the KV tensors, or the feed-forward matmuls.</figcaption>
+ </figure>
+
+ <h3>Multiple heads</h3>
+ <p class="lede">One attention pattern is a single relation. Splitting the model
+ dimension into <span class="m">h</span> heads of size <span class="m">d/h</span> lets the
+ layer attend to several relations at once — syntactic agreement in one head,
+ coreference in another — at identical total cost, since the head dimension
+ shrinks proportionally.</p>
+
+ <h3>Position</h3>
+ <p class="lede">Attention is permutation-equivariant: shuffle the input and the
+ output shuffles identically. Order must therefore be injected. Absolute learned
+ embeddings work but do not extrapolate past their trained length. Rotary
+ position embedding (RoPE) instead rotates query and key vectors by an angle
+ proportional to position, so that the dot product depends only on the
+ <em>relative</em> offset — which is what language actually cares about, and
+ which extrapolates far better. Interpolating or rescaling RoPE's base frequency
+ is the standard route to extending a model's context after training.</p>
+
+ <h3>Tokenisation</h3>
+ <p class="lede">Models do not read characters; they read tokens produced by
+ byte-pair encoding or a similar subword scheme, learned by greedily merging
+ frequent pairs. Tokenisation determines sequence length and therefore cost, and
+ it silently determines fairness: languages poorly represented in the merge
+ training data need two to four times as many tokens per word, which means they
+ are more expensive to serve and consume context faster. It is also the source of
+ the classic character-counting failures — the model never saw the letters.</p>
+
+ <h2><span class="num">8.2</span>Counting parameters and FLOPs</h2>
+
+ <p class="lede">Do this once by hand and the entire scaling literature becomes
+ readable. For a model of <span class="m">L</span> layers, model dimension
+ <span class="m">d</span>, feed-forward dimension <span class="m">4d</span> and vocabulary
+ <span class="m">V</span>:</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">N \;\approx\; \underbrace{12 L d^{2}}_{\text{blocks}} \;+\; \underbrace{V d}_{\text{embeddings}}</span></div><span class="tag-n"></span></div>
+
+ <p>The <span class="m">12</span> is four <span class="m">d \times d</span> attention
+ projections plus two <span class="m">d \times 4d</span> feed-forward matrices. Training
+ compute for <span class="m">D</span> tokens is then the celebrated approximation
+ <span class="m">C \approx 6ND</span> FLOPs: two per parameter for the forward pass and
+ four for the backward.</p>
+
+ <table>
+  <caption>Worked examples. Compute assumes <span class="m">C = 6ND</span> and no recomputation.</caption>
+  <thead><tr><th>Configuration</th><th class="num-col">L</th><th class="num-col">d</th><th class="num-col">N</th><th>Tokens</th><th>Training FLOPs</th></tr></thead>
+  <tbody>
+   <tr><td>Lab-scale</td><td class="num-col">12</td><td class="num-col">768</td><td class="num-col">~124 M</td><td class="num-col">3 B</td><td class="num-col">2.2 × 10<sup>18</sup></td></tr>
+   <tr><td>Small production</td><td class="num-col">32</td><td class="num-col">4096</td><td class="num-col">~7 B</td><td class="num-col">2 T</td><td class="num-col">8.4 × 10<sup>22</sup></td></tr>
+   <tr><td>Frontier-class</td><td class="num-col">80</td><td class="num-col">8192</td><td class="num-col">~70 B</td><td class="num-col">15 T</td><td class="num-col">6.3 × 10<sup>24</sup></td></tr>
+  </tbody>
+ </table>
+
+ <h2><span class="num">8.3</span>Scaling laws, and what they are for</h2>
+
+ <p class="lede">Loss falls as a power law in parameters, data and compute, over
+ many orders of magnitude. The engineering value is not the curve but its
+ corollary: given a fixed compute budget, there is an optimal split between model
+ size and training tokens, and it can be computed in advance.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">L(N, D) \;\approx\; E + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}}</span></div><span class="tag-n"></span></div>
+
+ <p>The Chinchilla result — that compute-optimal training uses roughly twenty
+ tokens per parameter — corrected a generation of models that were far too large
+ for the data they saw. But compute-optimal is not <em>deployment</em>-optimal: if
+ a model will serve billions of requests, it is rational to train a smaller model
+ on far more tokens than Chinchilla prescribes, paying more in training to pay
+ less forever in inference. That trade is the reason most widely deployed models
+ today are heavily "over-trained" by the compute-optimal standard.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Fit your own scaling law. Train four or five small models across a decade of
+   compute, fit the curve, and extrapolate one order of magnitude — no further.
+   This is a standard, cheap, and startlingly under-used practice: it converts
+   "will a bigger model help?" from an argument into a measurement.
+ </div>
+
+ <h2><span class="num">8.4</span>The variants that matter</h2>
+
+ <table class="long">
+  <caption>Modern architectural choices, and the constraint each is answering.</caption>
+  <thead><tr><th>Choice</th><th>What it does</th><th>Why</th></tr></thead>
+  <tbody>
+   <tr><td>Pre-norm + RMSNorm</td><td>Normalise before each sublayer; drop mean-centring</td><td>Trainable at depth; fewer operations, no measured loss</td></tr>
+   <tr><td>SwiGLU feed-forward</td><td>Gated activation, <span class="m">\tfrac{8}{3}d</span> hidden</td><td>Better loss at equal parameters</td></tr>
+   <tr><td>RoPE</td><td>Rotate Q and K by position</td><td>Relative positions; extrapolates and can be interpolated</td></tr>
+   <tr><td>Grouped-query attention</td><td>Many query heads share few KV heads</td><td>Shrinks the KV cache by 4–8×; the single biggest inference win (M13)</td></tr>
+   <tr><td>Mixture of experts</td><td>Route each token to <span class="m">k</span> of <span class="m">E</span> feed-forward experts</td><td>More parameters at constant FLOPs per token; costs memory and load-balancing</td></tr>
+   <tr><td>Sliding-window / local attention</td><td>Restrict most layers to a window</td><td>Linear cost in context; a few global layers restore long-range reach</td></tr>
+   <tr><td>State-space layers</td><td>Replace attention with a selective scan</td><td>Constant memory per step; strong at very long sequence lengths</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Reporting perplexity across models with different tokenisers. Fewer, larger
+   tokens mechanically lower per-token loss without any improvement in modelling.
+   Compare bits per <em>byte</em>, or evaluate on downstream tasks. This error
+   appears in published work regularly.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 08</h4>
+   <div class="title">Write a language model from scratch, then find its scaling law</div>
+   <p>This is the spine lab of the course. Budget three weeks; everything after
+   Module&nbsp;8 assumes you have done it.</p>
+   <ol>
+     <li>Implement byte-pair encoding: train merges on your corpus, encode,
+     decode, and verify round-trip identity on a megabyte of held-out text.
+     Report compression in bytes per token.</li>
+     <li>Implement a decoder-only transformer from scratch — embeddings, RoPE,
+     causal multi-head attention, SwiGLU feed-forward, pre-norm residual blocks,
+     tied output head. No <code>nn.Transformer</code>, no fused attention.</li>
+     <li>Verify correctness three ways: the causal mask leaks nothing (perturb a
+     future token, confirm earlier logits are bit-identical); attention rows sum
+     to one; a single batch can be overfitted to near-zero loss.</li>
+     <li>Train on a small corpus with warmup and cosine decay. Reach a stated
+     validation bits-per-byte and generate samples at three temperatures.</li>
+     <li>Fit a scaling law: train five models across roughly a decade of compute
+     at compute-optimal token counts, fit <span class="m">L(C)</span>, and predict the
+     loss of a sixth model an order of magnitude larger. Then train it and report
+     your prediction error.</li>
+     <li>Ablate three choices — RoPE versus learned positions, pre- versus
+     post-norm, GQA versus full multi-head — at fixed compute. Report loss and
+     step time for each.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> the tokeniser, the model, a training curve, the
+   fitted scaling law with its extrapolation and measured error, and the ablation
+   table. <b>Acceptance:</b> your scaling-law prediction lands within 3&nbsp;% of
+   the measured loss of the held-out larger model, and your causal-mask test is
+   part of an automated test suite.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 08 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Mechanism</td><td>Uses a library transformer</td><td>Implements attention and the block from scratch, correctly</td><td>Derives the scaling factor and the cost of each term</td></tr>
+   <tr><td>Arithmetic</td><td>Quotes parameter counts</td><td>Computes N and FLOPs for an arbitrary configuration</td><td>Predicts step time from arithmetic and confirms it empirically</td></tr>
+   <tr><td>Representation of position</td><td>Knows positional encodings exist</td><td>Explains RoPE and why it extrapolates</td><td>Extends a model's context and measures the degradation</td></tr>
+   <tr><td>Scaling</td><td>Cites Chinchilla</td><td>Fits a scaling law and uses it to plan</td><td>Reasons about training–inference trade-offs for a deployment</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why <span class="m">\sqrt{d_k}</span> and not <span class="m">d_k</span>? Show the variance calculation.</li>
+  <li>At what context length does attention overtake the feed-forward network in FLOPs, for <span class="m">d = 4096</span>?</li>
+  <li>Why does grouped-query attention barely change quality but transform inference cost?</li>
+  <li>You have <span class="m">10^{22}</span> FLOPs. Give a compute-optimal <span class="m">(N, D)</span>, then give the choice you would actually make for a high-traffic product, with the reason.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Vaswani et al., "Attention Is All You Need" (2017). Read it twice: once for the mechanism, once for what it does <em>not</em> claim.</li>
+   <li><span class="k">Course</span>Stanford CS224N — the full sequence; and CS336, <em>Language Modeling from Scratch</em>, whose assignments are the closest published analogue to this module's lab.</li>
+   <li><span class="k">Paper</span>Hoffmann et al., "Training Compute-Optimal Large Language Models" (Chinchilla, 2022).</li>
+   <li><span class="k">Paper</span>Su et al., "RoFormer: Enhanced Transformer with Rotary Position Embedding" (2021).</li>
+   <li><span class="k">Paper</span>Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models" (2023).</li>
+   <li><span class="k">Paper</span>Shazeer, "GLU Variants Improve Transformer" (2020) — two pages, one useful result.</li>
+   <li><span class="k">Read</span>Alammar, "The Illustrated Transformer" — for the picture; then return to the paper.</li>
+  </ul>
+ </div>
+</section>

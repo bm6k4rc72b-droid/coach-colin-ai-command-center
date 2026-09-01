@@ -1,0 +1,252 @@
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">09</div>
+    <div class="meta">
+      <div class="kicker">Part Three · Frontier Systems</div>
+      <div class="lineage">NVIDIA DLI accelerated computing &amp; multi-GPU · Stanford CS336</div>
+    </div>
+  </div>
+  <h1 id="m09" data-toc="module" data-toc-n="09" data-toc-title="Training at Scale">Training at Scale</h1>
+  <div class="epigraph">At small scale, machine learning is applied statistics. At
+   large scale it is applied computer architecture, and the loss curve is the last
+   thing to go wrong.
+   <span class="attrib">On what actually breaks</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Compute the arithmetic intensity of a kernel and predict whether it is compute- or memory-bound.</li>
+         <li>Explain mixed precision, and why FP8 and BF16 succeed where FP16 needed scaling.</li>
+         <li>Choose a parallelism strategy from model size, batch size and interconnect.</li>
+         <li>Estimate the cost and wall-clock time of a training run before starting it.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Module 08 and its lab.</li>
+         <li>Linux, containers, and access to at least two GPUs (or two processes).</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 10 h</li>
+         <li>Problem set: 5 h · Lab: 10 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>14–15</div>
+     <div><b>Total hours</b>25</div>
+     <div><b>Deliverable</b>A profiled, parallel training run</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+  </div>
+ </div>
+ </div>
+
+ <p class="lede opener">The single most useful fact about a modern accelerator is
+ that it can perform arithmetic far faster than it can fetch the numbers to
+ operate on. A contemporary datacentre GPU offers on the order of a thousand
+ teraFLOPs of low-precision matrix throughput against a few terabytes per second
+ of memory bandwidth — a ratio of several hundred operations per byte. Any kernel
+ that does less arithmetic per byte than that ratio is idle most of the time,
+ waiting on memory, no matter how good its algorithm is.</p>
+
+ <h2><span class="num">9.1</span>The roofline, and arithmetic intensity</h2>
+
+ <p class="lede">Define arithmetic intensity as FLOPs performed per byte moved
+ from memory. Plot achievable performance against it and you get a roof: a rising
+ line set by bandwidth, then a flat ceiling set by peak compute. Every kernel sits
+ somewhere under that roof, and where it sits tells you what to fix.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">I = \frac{\text{FLOPs}}{\text{bytes moved}}, \qquad \text{achievable} = \min\big(\pi_{\text{peak}},\; I \times \beta_{\text{mem}}\big)</span></div><span class="tag-n"></span></div>
+
+ <table>
+  <caption>Typical intensities. Only the first is compute-bound on modern hardware.</caption>
+  <thead><tr><th>Operation</th><th>Arithmetic intensity</th><th>Bound by</th><th>Remedy</th></tr></thead>
+  <tbody>
+   <tr><td>Large matrix multiply</td><td>High, grows with tile size</td><td>Compute</td><td>Better precision, larger tiles</td></tr>
+   <tr><td>Attention score matrix</td><td>Low — <span class="m">n^2</span> written then read</td><td>Memory</td><td>Fuse and tile: FlashAttention</td></tr>
+   <tr><td>LayerNorm, softmax, GELU</td><td>~1–2 FLOPs per byte</td><td>Memory</td><td>Fuse into neighbours</td></tr>
+   <tr><td>Optimiser update</td><td>&lt; 1</td><td>Memory</td><td>Fused multi-tensor kernels</td></tr>
+   <tr><td>Autoregressive decode</td><td>Very low — one token at a time</td><td>Memory</td><td>Batch, or speculate (M13)</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   FlashAttention is not a better attention algorithm; it computes exactly the
+   same function. It is a better <em>memory schedule</em> — tiling the computation
+   so the <span class="m">n \times n</span> score matrix is never written to high-bandwidth
+   memory at all. The lesson generalises: at scale, most wins come from moving
+   fewer bytes, not from doing less arithmetic.
+ </div>
+
+ <h2><span class="num">9.2</span>Precision</h2>
+
+ <p class="lede">Training in 32-bit floating point wastes bandwidth and leaves the
+ tensor cores idle. The modern recipe keeps a master copy of the weights in FP32
+ while computing in a narrower format.</p>
+
+ <table>
+  <caption>Formats and their trade-offs. Range, not precision, is what breaks training.</caption>
+  <thead><tr><th>Format</th><th>Bits (E/M)</th><th>Character</th><th>Practical note</th></tr></thead>
+  <tbody>
+   <tr><td>FP32</td><td class="num-col">8 / 23</td><td>Reference</td><td>Master weights and reductions</td></tr>
+   <tr><td>TF32</td><td class="num-col">8 / 10</td><td>FP32 range, reduced mantissa</td><td>Transparent speed-up on matmuls</td></tr>
+   <tr><td>FP16</td><td class="num-col">5 / 10</td><td>Narrow range</td><td>Needs dynamic loss scaling or gradients underflow</td></tr>
+   <tr><td>BF16</td><td class="num-col">8 / 7</td><td>FP32 range, coarse mantissa</td><td>The default; no loss scaling needed</td></tr>
+   <tr><td>FP8 (E4M3 / E5M2)</td><td class="num-col">4/3, 5/2</td><td>Very narrow</td><td>Per-tensor scaling; forward in E4M3, gradients in E5M2</td></tr>
+  </tbody>
+ </table>
+
+ <p>The insight worth carrying: deep learning tolerates low <em>precision</em>
+ remarkably well and tolerates insufficient <em>range</em> not at all. BF16 won
+ over FP16 because it kept FP32's exponent, making underflow a non-event and
+ loss scaling unnecessary.</p>
+
+ <h2><span class="num">9.3</span>Four ways to split a model</h2>
+
+ <p class="lede">When a model or its optimiser state exceeds one device, the work
+ must be divided. There are four axes, they compose, and each trades memory for a
+ different pattern of communication.</p>
+
+ <table class="long">
+  <caption>The parallelism axes. Choose by what does not fit and by what the interconnect can carry.</caption>
+  <thead><tr><th>Axis</th><th>Splits</th><th>Communicates</th><th>Use when</th></tr></thead>
+  <tbody>
+   <tr><td><strong>Data</strong></td><td>The batch</td><td>All-reduce of gradients each step</td><td>The model fits on one device; you want throughput</td></tr>
+   <tr><td><strong>Tensor</strong></td><td>Individual matrices, within a layer</td><td>All-reduce twice per layer — chatty</td><td>A single layer does not fit; only inside one fast-interconnect node</td></tr>
+   <tr><td><strong>Pipeline</strong></td><td>Layers across devices</td><td>Activations at stage boundaries — cheap</td><td>Crossing slower links between nodes</td></tr>
+   <tr><td><strong>Sequence / context</strong></td><td>The sequence dimension</td><td>Attention keys and values across ranks</td><td>Context length is the binding constraint</td></tr>
+   <tr><td><strong>Expert</strong></td><td>MoE experts across devices</td><td>All-to-all routing of tokens</td><td>Sparse models; needs load balancing</td></tr>
+  </tbody>
+ </table>
+
+ <p>Layered on top is <em>sharding</em>: ZeRO and FSDP partition optimiser state,
+ gradients and finally parameters across data-parallel ranks, gathering each
+ shard only when needed. Recall Figure&nbsp;6.1 — the sixteen fixed bytes per
+ parameter. Sharding that state across sixty-four ranks turns 112&nbsp;GB of
+ optimiser state for a 7-billion-parameter model into under 2&nbsp;GB per device,
+ and it is the reason ordinary clusters can train large models at all.</p>
+
+ <p>Pipeline parallelism introduces a characteristic pathology, the
+ <em>bubble</em>: while stage one computes the first microbatch, every other stage
+ is idle. With <span class="m">p</span> stages and <span class="m">m</span> microbatches the
+ fraction of time wasted is about <span class="m">(p-1)/(m+p-1)</span>, so the remedy is
+ many small microbatches and an interleaved schedule.</p>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Activation checkpointing trades compute for memory: discard intermediate
+   activations in the forward pass and recompute them during the backward pass.
+   The cost is roughly one extra forward pass — about 33&nbsp;% more compute — and
+   the saving in activation memory is often an order of magnitude. It is almost
+   always the first thing to enable when you hit an out-of-memory error, and
+   almost always the first thing to disable when you are chasing throughput and
+   have memory to spare.
+ </div>
+
+ <h2><span class="num">9.4</span>Planning a run before you pay for it</h2>
+
+ <p class="lede">Model FLOPs utilisation (MFU) is the fraction of the hardware's
+ peak that your run actually achieves. Well-tuned large-scale training reaches
+ roughly 35–55&nbsp;%; below 25&nbsp;% something is wrong and is worth a day of
+ profiling before it is worth a week of GPU time.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">T_{\text{days}} = \frac{6ND}{G \cdot \pi_{\text{peak}} \cdot \text{MFU} \cdot 86400}</span></div><span class="tag-n"></span></div>
+
+ <div class="call deriv">
+   <span class="lbl">A worked estimate</span>
+   Train <span class="m">N = 7\times10^{9}</span> parameters on
+   <span class="m">D = 2\times10^{12}</span> tokens. Compute needed:
+   <span class="m">6ND = 8.4\times10^{22}</span> FLOPs. On 256 accelerators at
+   <span class="m">4\times10^{14}</span> BF16 FLOP/s each and 40&nbsp;% MFU, delivered
+   throughput is <span class="m">4.1\times10^{16}</span> FLOP/s, giving
+   <span class="m">2.05\times10^{6}</span> seconds — about 24 days. Do this arithmetic
+   before every run. If the answer surprises you, one of your assumptions is
+   wrong, and it is much cheaper to find out now.
+ </div>
+
+ <h3>What goes wrong at scale</h3>
+ <ul>
+   <li><strong>Loss spikes.</strong> Usually a bad data shard or an outlier
+   activation. Keep frequent checkpoints, log per-shard loss, and be prepared to
+   skip a batch range and resume rather than restart.</li>
+   <li><strong>Silent divergence between ranks.</strong> Non-deterministic
+   reductions plus a subtle bug can leave ranks disagreeing. Periodically
+   all-reduce a hash of the weights and assert equality.</li>
+   <li><strong>Stragglers.</strong> One slow device throttles a synchronous
+   all-reduce. Monitor per-rank step time; a single thermally-throttled card can
+   cost 20&nbsp;% of a cluster.</li>
+   <li><strong>Dataloader starvation.</strong> An expensive GPU idling on disk or
+   tokenisation is the most common and most embarrassing cause of low MFU.
+   Pre-tokenise and store as memory-mapped shards.</li>
+   <li><strong>Failure.</strong> At thousands of devices, hardware failure during
+   a multi-week run is expected, not exceptional. Checkpoint asynchronously,
+   restart automatically, and test the restart path deliberately.</li>
+ </ul>
+
+ <div class="bench">
+   <h4>The Bench · Lab 09</h4>
+   <div class="title">Make your Module 8 model fast, then make it parallel</div>
+   <ol>
+     <li>Profile one training step of your Module&nbsp;08 model. Produce a kernel
+     time breakdown and compute achieved MFU. Identify the top three kernels by
+     time and classify each as compute- or memory-bound.</li>
+     <li>Convert to mixed precision (BF16 with FP32 master weights). Record the
+     speed-up, the memory change, and confirm the loss curve is unchanged within
+     noise.</li>
+     <li>Enable activation checkpointing. Measure the exact memory saved and
+     compute added; compare against the theoretical 33&nbsp;%.</li>
+     <li>Replace your attention with a fused implementation. Measure the speed-up
+     at sequence lengths 512, 2 048 and 8 192, and explain the trend from the
+     <span class="m">n^2</span> memory argument.</li>
+     <li>Run data-parallel training on two or more devices (or two processes on
+     one). Measure scaling efficiency, then shard optimiser state and measure the
+     memory change. Deliberately induce a straggler and quantify its cost.</li>
+     <li>Write the pre-flight estimate for a run ten times larger, then validate
+     one of its assumptions by measurement.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a profile report with MFU before and after each
+   change, a sequence-length scaling plot for attention, a scaling-efficiency
+   table, and the pre-flight estimate. <b>Acceptance:</b> MFU at least doubles
+   from your starting point, and your predicted step time for the fused-attention
+   configuration is within 15&nbsp;% of measured.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 09 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Hardware model</td><td>Knows GPUs are fast</td><td>Computes arithmetic intensity and predicts the bound</td><td>Reads a roofline and picks the correct optimisation first time</td></tr>
+   <tr><td>Precision</td><td>Enables AMP</td><td>Explains range versus precision and chooses a format</td><td>Debugs an overflow to the offending tensor</td></tr>
+   <tr><td>Parallelism</td><td>Uses one axis</td><td>Composes axes justified by memory and interconnect</td><td>Derives the pipeline bubble and schedules to minimise it</td></tr>
+   <tr><td>Planning</td><td>Starts and hopes</td><td>Produces a defensible pre-flight cost and time estimate</td><td>Runs the campaign with checkpointing, monitoring and a tested restart</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why is BF16 preferred over FP16 despite having fewer mantissa bits?</li>
+  <li>Compute the pipeline bubble fraction for 8 stages and 16 microbatches. How many microbatches would you need to get below 5&nbsp;%?</li>
+  <li>Your MFU is 12&nbsp;%. Give the three most likely causes in order, and the measurement that distinguishes them.</li>
+  <li>Why does tensor parallelism belong inside a node and pipeline parallelism between nodes?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Course</span>NVIDIA DLI — <em>Fundamentals of Accelerated Computing with CUDA</em>, and the model-parallel / multi-GPU training workshops. The hands-on counterpart to this module.</li>
+   <li><span class="k">Paper</span>Dao et al., "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" (2022).</li>
+   <li><span class="k">Paper</span>Rajbhandari et al., "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models" (2020).</li>
+   <li><span class="k">Paper</span>Narayanan et al., "Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM" (2021) — the definitive treatment of composing parallelism axes.</li>
+   <li><span class="k">Paper</span>Micikevicius et al., "Mixed Precision Training" (2018).</li>
+   <li><span class="k">Read</span>Williams, Waterman &amp; Patterson, "Roofline: An Insightful Visual Performance Model" (2009) — older than deep learning and still the right mental model.</li>
+  </ul>
+ </div>
+</section>
