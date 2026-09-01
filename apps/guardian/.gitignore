@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+# Generated native projects — recreated by `npx expo prebuild`.
+# Anchored to this directory so native/ios and native/android (our plugin
+# sources, which ARE tracked) are not caught by these patterns.
+/ios/
+/android/
+*.log
+.DS_Store

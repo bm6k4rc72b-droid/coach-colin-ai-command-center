@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Guardian",
+    "slug": "guardian",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#03060b",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.coachcolin.guardian",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Guardian watches the area you choose through this camera. Detection happens entirely on this device — no video is recorded or uploaded.",
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "package": "com.coachcolin.guardian",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.WAKE_LOCK",
+        "android.permission.FOREGROUND_SERVICE"
+      ]
+    },
+    "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "Guardian watches the area you choose through this camera. Everything is processed on this device.",
+          "enableFrameProcessors": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": { "minSdkVersion": 26, "compileSdkVersion": 35, "targetSdkVersion": 35 },
+          "ios": { "deploymentTarget": "15.1" }
+        }
+      ],
+      "expo-dev-client"
+    ]
+  }
+}
