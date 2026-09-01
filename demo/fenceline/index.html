@@ -1,0 +1,1389 @@
+<title>Fenceline Night Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#15181b;
+  --ground-2:#101315;
+  --panel:#1e2226;
+  --panel-2:#242a2f;
+  --line:#2f373d;
+  --line-soft:#262d32;
+  --bone:#e7e3da;
+  --muted:#98a1a4;
+  --dim:#6d777b;
+  --accent:#4fa3a0;
+  --accent-dim:#2f6a68;
+  --calm:#9bae8a;
+  --watch:#e0a93e;
+  --alert:#ce4a2c;
+  --alert-hot:#f0603a;
+  --sky:#1a2226;
+  --grass:#212a25;
+  --font-d:"Oswald","Haettenschweiler","Arial Narrow",sans-serif;
+  --font-b:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-m:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  --r:3px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--bone);
+  font-family:var(--font-b);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--font-d);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin:0;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+.lbl{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+
+/* ---------- top bar ---------- */
+.topbar{
+  border-bottom:1px solid var(--line);background:var(--ground-2);
+  position:sticky;top:0;z-index:40;
+}
+.topbar .wrap{display:flex;align-items:center;gap:18px;height:54px}
+.mark{display:flex;align-items:baseline;gap:9px}
+.mark b{font-family:var(--font-d);font-size:21px;font-weight:600;letter-spacing:.1em}
+.mark span{font-family:var(--font-m);font-size:10px;letter-spacing:.18em;color:var(--accent)}
+.site{font-family:var(--font-m);font-size:11px;color:var(--muted);letter-spacing:.08em}
+.site em{color:var(--dim);font-style:normal}
+.spacer{flex:1}
+.simbadge{
+  font-family:var(--font-m);font-size:10px;letter-spacing:.14em;
+  border:1px solid var(--watch);color:var(--watch);padding:3px 8px;border-radius:2px;
+}
+.clock{font-family:var(--font-m);font-size:13px;color:var(--bone);letter-spacing:.04em}
+
+/* ---------- console ---------- */
+.console{padding:22px 0 8px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 322px;gap:14px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.card-h{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft);
+}
+.card-h h3{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:500}
+.card-h .right{margin-left:auto;font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:.1em}
+
+.stage{position:relative;background:var(--sky);border-radius:var(--r) var(--r) 0 0;overflow:hidden}
+canvas#scene{display:block;width:100%;height:auto}
+.stage-tag{
+  position:absolute;left:10px;top:10px;font-family:var(--font-m);font-size:10px;
+  letter-spacing:.12em;color:var(--muted);background:rgba(16,19,21,.72);
+  border:1px solid var(--line);padding:3px 7px;border-radius:2px;
+}
+.stage-tag.r{left:auto;right:10px}
+
+/* transport */
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line-soft)}
+button{
+  font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--panel-2);color:var(--bone);border:1px solid var(--line);
+  padding:7px 11px;border-radius:2px;cursor:pointer;transition:border-color .12s,color .12s,background .12s;
+}
+button:hover{border-color:var(--accent);color:#fff}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[disabled]{opacity:.38;cursor:not-allowed}
+button[disabled]:hover{border-color:var(--line);color:var(--bone)}
+button.primary{border-color:var(--accent-dim);color:var(--accent)}
+button.primary:hover{background:var(--accent-dim);color:#fff}
+button.danger{border-color:#5d2b1e;color:var(--alert-hot)}
+button.danger:hover{background:#5d2b1e;color:#fff}
+button.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent-dim);color:#fff}
+.tsep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+
+/* rail */
+.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.risk{padding:14px 14px 12px}
+.risk-top{display:flex;align-items:flex-end;gap:12px}
+.risk-num{font-family:var(--font-d);font-size:62px;line-height:.82;font-weight:600;font-variant-numeric:tabular-nums;transition:color .3s}
+.risk-meta{padding-bottom:5px}
+.pill{
+  display:inline-block;font-family:var(--font-m);font-size:10px;letter-spacing:.16em;
+  padding:3px 8px;border-radius:2px;border:1px solid currentColor;
+}
+.risk-sub{font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:.08em;margin-top:6px}
+.dwell{height:3px;background:var(--line-soft);margin-top:11px;border-radius:2px;overflow:hidden}
+.dwell i{display:block;height:100%;width:0;background:var(--watch);transition:width .15s linear}
+.trend{display:block;width:100%;height:58px;margin-top:12px}
+
+.sig{padding:11px 14px 14px;display:flex;flex-direction:column;gap:9px}
+.sigrow{display:grid;grid-template-columns:118px 1fr 40px;align-items:center;gap:9px}
+.sigrow .n{font-family:var(--font-m);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+.bar{height:6px;background:var(--line-soft);border-radius:1px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;width:0;background:var(--calm);transition:width .2s,background .3s}
+.bar::after{content:"";position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--dim);opacity:.55;left:var(--base,35%)}
+.sigrow .v{font-family:var(--font-m);font-size:11px;text-align:right;color:var(--bone);font-variant-numeric:tabular-nums}
+
+.readouts{padding:11px 14px 13px;display:grid;grid-template-columns:1fr 1fr;gap:11px 12px}
+.ro .k{font-family:var(--font-m);font-size:9.5px;letter-spacing:.13em;color:var(--dim);text-transform:uppercase}
+.ro .v{font-family:var(--font-m);font-size:15px;margin-top:3px;font-variant-numeric:tabular-nums}
+.ro .v small{font-size:9.5px;color:var(--muted);letter-spacing:.04em}
+
+.log{max-height:196px;overflow-y:auto;padding:6px 0}
+.log li{list-style:none;display:grid;grid-template-columns:52px 1fr;gap:9px;padding:5px 13px;border-left:2px solid transparent;font-size:12.5px;line-height:1.42}
+.log li .t{font-family:var(--font-m);font-size:10.5px;color:var(--dim);padding-top:1px}
+.log li.calm{border-left-color:var(--calm)}
+.log li.watch{border-left-color:var(--watch)}
+.log li.alert{border-left-color:var(--alert);background:rgba(206,74,44,.07)}
+.log li.act{border-left-color:var(--accent)}
+.log ul{margin:0;padding:0}
+
+/* phone alert */
+.push{
+  position:fixed;right:22px;bottom:22px;width:322px;z-index:60;
+  background:#0d0f11;border:1px solid var(--alert);border-radius:9px;padding:13px 14px;
+  box-shadow:0 18px 44px rgba(0,0,0,.62);
+  transform:translateY(140%);opacity:0;transition:transform .42s cubic-bezier(.2,.9,.3,1),opacity .3s;
+}
+.push.show{transform:translateY(0);opacity:1}
+.push .ph{display:flex;align-items:center;gap:8px;font-family:var(--font-m);font-size:10px;letter-spacing:.13em;color:var(--alert-hot)}
+.push .ph .dot{width:7px;height:7px;border-radius:50%;background:var(--alert-hot)}
+.push .ph .tm{margin-left:auto;color:var(--dim)}
+.push h4{font-size:15px;margin:8px 0 5px;letter-spacing:.03em;color:#fff}
+.push p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.push .acts{display:flex;gap:7px;margin-top:11px}
+.push .acts button{flex:1;font-size:10px;padding:6px 4px}
+
+/* ---------- prose sections ---------- */
+section{padding:44px 0;border-top:1px solid var(--line-soft);scroll-margin-top:72px}
+.eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+h2{font-size:27px;margin:9px 0 0;letter-spacing:.03em}
+.lede{color:var(--muted);max-width:66ch;margin:11px 0 0;font-size:15.5px}
+.cols{display:grid;gap:16px;margin-top:26px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c2{grid-template-columns:repeat(2,1fr)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px}
+.box h4{font-size:13.5px;letter-spacing:.09em;margin-bottom:7px}
+.box p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.58}
+.box p+p{margin-top:9px}
+.num{font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:.14em;display:block;margin-bottom:9px}
+
+.feat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin-top:26px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.feat article{padding:16px 18px;border-bottom:1px solid var(--line-soft);border-right:1px solid var(--line-soft);background:var(--panel)}
+.feat article:nth-child(2n){border-right:0}
+.fh{display:flex;align-items:baseline;gap:9px;margin-bottom:6px}
+.fh h4{font-size:13px;letter-spacing:.08em}
+.tag{
+  font-family:var(--font-m);font-size:8.5px;letter-spacing:.13em;padding:2px 6px;border-radius:2px;
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap;margin-left:auto;
+}
+.tag.live{border-color:var(--accent-dim);color:var(--accent)}
+.tag.field{border-color:#4a3a1c;color:var(--watch)}
+.feat p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+
+/* roi */
+.roi{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:26px}
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px}
+.f label{display:block;font-family:var(--font-m);font-size:9.5px;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+.f input{
+  width:100%;background:var(--ground-2);border:1px solid var(--line);border-radius:2px;color:var(--bone);
+  font-family:var(--font-m);font-size:14px;padding:8px 10px;font-variant-numeric:tabular-nums;
+}
+.f input:focus{outline:none;border-color:var(--accent)}
+.f .hint{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.35}
+.roi-out{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:17px}
+.roi-out .big{font-family:var(--font-d);font-size:37px;font-weight:600;color:var(--calm);font-variant-numeric:tabular-nums;line-height:1.05}
+.roi-line{display:flex;justify-content:space-between;gap:10px;font-family:var(--font-m);font-size:12px;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+.roi-line:last-of-type{border-bottom:0}
+.roi-line span:last-child{font-variant-numeric:tabular-nums}
+
+ol.script{counter-reset:s;list-style:none;padding:0;margin:26px 0 0;display:grid;gap:2px}
+ol.script li{
+  counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:14px;
+  padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+}
+ol.script li::before{
+  content:counter(s,decimal-leading-zero);font-family:var(--font-m);font-size:11px;color:var(--accent);
+  letter-spacing:.1em;padding-top:3px;
+}
+ol.script h4{font-size:13px;letter-spacing:.08em;margin-bottom:4px}
+ol.script p{margin:0;font-size:13.5px;color:var(--muted)}
+ol.script .beat{font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:.1em;margin-top:6px}
+
+ul.plain{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:11px;max-width:74ch}
+ul.plain li{padding-left:19px;position:relative;color:var(--muted);font-size:14px;line-height:1.55}
+ul.plain li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:1px;background:var(--accent)}
+ul.plain li b{color:var(--bone);font-weight:600}
+
+footer{padding:30px 0 46px;border-top:1px solid var(--line-soft);color:var(--dim);font-size:12.5px}
+footer p{margin:0 0 7px;max-width:76ch}
+
+@media (max-width:1000px){
+  .grid{grid-template-columns:1fr}
+  .roi{grid-template-columns:1fr}
+  .c3,.c2{grid-template-columns:1fr}
+  .feat{grid-template-columns:1fr}
+  .feat article{border-right:0}
+  .push{left:16px;right:16px;width:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="mark"><b>FENCELINE</b><span>NIGHT WATCH</span></div>
+    <div class="site" id="siteName">CROSS-C RANCH <em>/</em> NORTH PASTURE <em>/</em> POST 4</div>
+    <div class="spacer"></div>
+    <div class="simbadge">SIMULATED — NO LIVE CAMERA</div>
+    <div class="clock mono" id="clock">02:11:40</div>
+  </div>
+</div>
+
+<div class="wrap console">
+  <div class="grid">
+
+    <div class="card">
+      <div class="stage">
+        <canvas id="scene" width="1000" height="600"></canvas>
+        <div class="stage-tag" id="stageTag">CAM 04 · THERMAL · 1000×600 · 12 FPS INFERENCE</div>
+        <div class="stage-tag r" id="stageWx">WIND NNE 6 MPH · 41°F · MOON 12%</div>
+      </div>
+      <div class="transport">
+        <button id="btnPlay" class="primary">Pause</button>
+        <div class="seg" id="scenarioSeg">
+          <button data-scn="pasture" class="on">Cattle · Night</button>
+          <button data-scn="coop">Poultry · Dawn</button>
+        </div>
+        <div class="tsep"></div>
+        <button id="btnThreat" class="danger">Release predator</button>
+        <button id="btnDeter" disabled>Deter</button>
+        <button id="btnReset">Reset</button>
+        <div class="tsep"></div>
+        <div class="seg" id="speedSeg">
+          <button data-sp="1" class="on">1×</button>
+          <button data-sp="2">2×</button>
+          <button data-sp="4">4×</button>
+        </div>
+        <div class="spacer"></div>
+        <button id="btnLabels" class="on">Track labels</button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="card">
+        <div class="card-h"><h3>Herd risk index</h3><span class="right" id="hriConf">CONF 0.00</span></div>
+        <div class="risk">
+          <div class="risk-top">
+            <div class="risk-num mono" id="hriNum">04</div>
+            <div class="risk-meta">
+              <span class="pill" id="hriPill" style="color:var(--calm)">NORMAL</span>
+              <div class="risk-sub" id="hriSub">BASELINE HELD 00:00</div>
+            </div>
+          </div>
+          <div class="dwell"><i id="dwellBar"></i></div>
+          <canvas class="trend" id="trend" width="600" height="110"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Contributing signals</h3><span class="right">VS 30-MIN BASELINE</span></div>
+        <div class="sig" id="sigs"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Readouts</h3></div>
+        <div class="readouts">
+          <div class="ro"><div class="k">Head counted</div><div class="v" id="roCount">24 <small>/ 24</small></div></div>
+          <div class="ro"><div class="k">Threat bearing</div><div class="v" id="roBear">—</div></div>
+          <div class="ro"><div class="k">Nearest to fence</div><div class="v" id="roFence">—</div></div>
+          <div class="ro"><div class="k">Lead time banked</div><div class="v" id="roLead">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Event log</h3><span class="right">LOCAL · ON-DEVICE</span></div>
+        <div class="log"><ul id="log"></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="push" id="push" role="status" aria-live="polite">
+  <div class="ph"><span class="dot"></span> FENCELINE ALERT <span class="tm mono" id="pushTime">02:14:07</span></div>
+  <h4 id="pushTitle">North pasture — herd panic pattern</h4>
+  <p id="pushBody">22 head bunched and moving south-west. Estimated threat bearing 041° (NE draw). No visual on predator yet.</p>
+  <div class="acts">
+    <button class="primary" id="pushDeter">Sound deterrent</button>
+    <button id="pushDismiss">Dismiss</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section>
+  <div class="eyebrow">The method</div>
+  <h2>It watches the herd, not the predator</h2>
+  <p class="lede">A coyote is small, fast, and usually in the brush. Twenty-four cattle reacting to it are large, slow, and lit up across the whole frame. So the detector's job is not to find the predator — it's to notice that the herd stopped behaving like a herd that is grazing.</p>
+  <div class="cols c3">
+    <div class="box">
+      <span class="num">SIGNAL 1</span>
+      <h4>Bunching</h4>
+      <p>Mean nearest-neighbour distance collapses. Grazing cattle spread out to eat; frightened cattle pull in tight. This is the earliest and most reliable of the four, and it's measurable from a top-down track set without any species classifier at all.</p>
+    </div>
+    <div class="box">
+      <span class="num">SIGNAL 2</span>
+      <h4>Polarisation</h4>
+      <p>Headings align. Grazing herds point every direction; a herd under threat points one way — away. The alignment vector, reversed, is where the threat is, which is how the system calls a bearing before anything appears on camera.</p>
+    </div>
+    <div class="box">
+      <span class="num">SIGNAL 3</span>
+      <h4>Heads up, then speed</h4>
+      <p>Head elevation rises across the group within a couple of seconds — a social cascade, not individual startle. Speed follows last. By the time speed moves, you're already late, which is exactly why speed alone makes a bad alarm.</p>
+    </div>
+  </div>
+  <div class="cols c2" style="margin-top:16px">
+    <div class="box">
+      <h4>The dwell timer is the product</h4>
+      <p>Any of these will spike on a passing truck, a deer, a hand walking the line, or a cow that startles herself. The index has to hold above threshold for a sustained window before it fires — that bar filling under the number in the console is the false-positive control, and it's the single setting that decides whether a rancher keeps the app on their phone or mutes it in week two.</p>
+    </div>
+    <div class="box">
+      <h4>Every alert carries its own evidence</h4>
+      <p>An alert that says "something happened" gets ignored. This one arrives with the clip, the bearing, the head count, and which four signals moved — so the person waking up at 2 a.m. can decide from bed whether to pull boots on, and can prove afterward what took the calf.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Beyond the video</div>
+  <h2>What would make it worth paying for</h2>
+  <p class="lede">Predator detection alone is a feature, not a business — most nights nothing happens, and a product that is silent for eleven months gets forgotten. The same cameras and the same tracker earn their keep every single day if you point them at these too.</p>
+
+  <div class="feat">
+    <article>
+      <div class="fh"><h4>Acoustic triangulation</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Three solar mic posts and time-difference-of-arrival puts a coyote chorus in a pasture quadrant. Audio is 360°, works through brush and fog where a camera is blind, costs a fraction of a camera, and coyotes announce themselves.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>The rooster as a sensor</h4><span class="tag live">IN DEMO</span></div>
+      <p>Roosters give different alarm calls for aerial and ground threats, and they are faster than any camera. Classify the call, and the flock's own warning system becomes the trigger that tells the vision model where to look. Switch the console to Poultry · Dawn to watch it fire.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Calving watch</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Same tracker, different pattern: isolation from the group, restlessness, tail elevation, up-down cycling. Predicts calving hours out and — the part with real money in it — flags a stalled labour so someone gets there in time.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Head count reconciliation</h4><span class="tag live">IN DEMO</span></div>
+      <p>Count at the water, count at the gate, count at dusk. "47 of 49 crossed to the north pasture" is a whole class of problems caught early — predation, sickness, a downed fence, theft — and it needs no behaviour model at all.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Off-feed and off-water flags</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Per-animal trough visits. An animal that stops drinking is often sick a day or two before it looks sick to a person on horseback. This is the feature that runs on the 364 nights nothing tries to eat your calves.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Automated deterrent</h4><span class="tag live">IN DEMO</span></div>
+      <p>Strobe, siren, and a recorded human voice on the post nearest the bearing — response inside two seconds instead of twenty minutes. Press <em>Deter</em> in the console during an alert and watch the index fall. Rotate the sound so nothing habituates.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Guardian dog tracking</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>The livestock guardian dog is the actual defence system. Track whether it's with the herd, whether it left, and whether it's alerting — a dog moving hard toward the fence line is itself one of the best predictors available.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Depredation evidence pack</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Confirmed-kill compensation programmes exist; the barrier is proof. Auto-assemble the clip, timestamp, GPS, and species call into the format a claim needs. That converts an alert into a cheque, which is the easiest ROI conversation there is.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Season hotspot map</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Every incident is a pin with a time. By the second season you know which draw and which two hours of night to worry about — so the dog, the fladry, and the calving pasture all move to where the data says.</p>
+    </article>
+    <article>
+      <div class="fh"><h4>Works with no signal</h4><span class="tag field">NEEDS FIELD DATA</span></div>
+      <p>Inference on the post, LoRa for the alert itself, video syncing only when a link exists. Pasture connectivity is the reason most ranch tech dies, so the alert path has to survive with no cell service and no power.</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The conversation that closes</div>
+  <h2>Run the numbers in their numbers</h2>
+  <p class="lede">Do not lead with the model. Lead with this, with their head count typed in while they watch. Every field below is blank of assumptions — put in what they actually tell you, and let the arithmetic be the argument.</p>
+  <div class="roi">
+    <div class="box">
+      <div class="inputs">
+        <div class="f"><label for="i1">Head in the herd</label><input id="i1" type="number" value="180" min="0"></div>
+        <div class="f"><label for="i2">Value per head ($)</label><input id="i2" type="number" value="1400" min="0"><div class="hint">Ask them. Market swings hard year to year.</div></div>
+        <div class="f"><label for="i3">Head lost per year</label><input id="i3" type="number" value="6" min="0" step="0.5"><div class="hint">Predation plus the unexplained missing.</div></div>
+        <div class="f"><label for="i4">Share preventable with 90s warning (%)</label><input id="i4" type="number" value="45" min="0" max="100"></div>
+        <div class="f"><label for="i5">Posts to cover the ground</label><input id="i5" type="number" value="4" min="1"></div>
+        <div class="f"><label for="i6">Cost per post + yr 1 service ($)</label><input id="i6" type="number" value="850" min="0"></div>
+      </div>
+      <p style="margin:16px 0 0;font-size:13px;color:var(--dim);line-height:1.5">Nothing here is a claim about what the system achieves — it's their loss, their share, their kit cost. If the arithmetic doesn't clear, tell them so in the room. That's the meeting they'll remember.</p>
+    </div>
+    <div class="roi-out">
+      <div class="lbl">Year one, net</div>
+      <div class="big mono" id="roiNet">$380</div>
+      <div style="margin-top:14px">
+        <div class="roi-line"><span>Losses today</span><span class="mono" id="roiLoss">$8,400</span></div>
+        <div class="roi-line"><span>Prevented</span><span class="mono" id="roiSave">$3,780</span></div>
+        <div class="roi-line"><span>System cost</span><span class="mono" id="roiCost">$3,400</span></div>
+        <div class="roi-line"><span>Payback</span><span class="mono" id="roiBack">11 mo</span></div>
+      </div>
+      <p style="margin:14px 0 0;font-size:12px;color:var(--dim);line-height:1.45" id="roiNote">Calving and sickness catches are excluded — they're usually the bigger half.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Run of show</div>
+  <h2>The eight-minute demo</h2>
+  <p class="lede">Built to run on a laptop on a truck hood with no internet. Nothing here needs a live camera, an account, or a signal — which is also the point you are making about the product.</p>
+  <ol class="script">
+    <li>
+      <div>
+        <h4>Open on boredom</h4>
+        <p>Console running, index sitting at four, nothing happening. Say: "this is a normal night, and this is what it looks like for eleven months." Let it sit for a beat longer than is comfortable. The calm baseline is what makes the spike mean something.</p>
+        <div class="beat">~40 SEC · SAY NOTHING FOR THE LAST TEN</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Hand them the mouse</h4>
+        <p>Let the rancher press <em>Release predator</em> themselves. Do not narrate over it. Watch where their eyes go — most people watch the cattle, not the numbers, which is the right instinct and worth telling them so.</p>
+        <div class="beat">~60 SEC</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Point at the bearing before the predator is visible</h4>
+        <p>The console calls the direction while the coyote is still in the draw. This is the moment the whole idea lands: the herd told the system where the threat was. "Your cattle already knew. Nobody was awake to hear them."</p>
+        <div class="beat">THE HINGE OF THE DEMO</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Let the phone buzz</h4>
+        <p>The alert card slides in with the bearing, the count, and the clip. Ask directly: at 2 a.m., is that enough to get you out of bed, or too little, or too much? Their answer is your product spec, so write it down in front of them.</p>
+        <div class="beat">~90 SEC · ASK, THEN STOP TALKING</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Press Deter and show the index fall</h4>
+        <p>Detection is interesting; response is what they're buying. Sound the post, watch the predator break off and the herd settle back to baseline over about a minute — and note that this happened without anyone waking up.</p>
+        <div class="beat">~60 SEC</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Switch to the coop</h4>
+        <p>Poultry · Dawn. The rooster calls before the vision model has anything, and the door closes on its own. If they keep birds, this is the part they'll repeat to somebody else later — and it demonstrates the same engine on a completely different animal.</p>
+        <div class="beat">~70 SEC · THE ONE THEY RETELL</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Type their numbers into the calculator</h4>
+        <p>Their head count, their losses, their guess at what a 90-second warning saves. Let them argue the percentage down — it's more persuasive when they set it, and a deal that only works at an optimistic number isn't a deal.</p>
+        <div class="beat">~2 MIN · THEY DRIVE</div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h4>Say plainly what it can't do</h4>
+        <p>It is not a fence, it will wake you for deer, and it needs a season of footage from <em>their</em> ground before the thresholds are right. Volunteering the limits is what separates this from every other pitch they've sat through — and the honest ask at the end is for one camera on one paddock for one season, not a purchase order.</p>
+        <div class="beat">~60 SEC · CLOSE HERE</div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <div class="eyebrow">Straight answers</div>
+  <h2>What this demo is and isn't</h2>
+  <ul class="plain">
+    <li><b>The scene is a simulation, and it's labelled as one on screen.</b> Cattle and birds are agents in a flocking model with a fear-contagion term; the predator is another agent. Nothing here is footage of a real ranch and it must never be shown as if it were.</li>
+    <li><b>The telemetry is computed, not scripted.</b> The risk index, bearing, dwell timer and fence estimate are all derived from the actual positions and velocities on screen each frame — the same four measurements a real pipeline would take from a tracker. Change the outcome by pressing Deter and every number responds. That's why it holds up when a rancher pokes at it.</li>
+    <li><b>What a real build still needs.</b> A detector and multi-object tracker tuned to livestock at distance and at night, a season of labelled footage from the actual property, thermal or good IR for the hours that matter, and threshold calibration per pasture. The behaviour maths above is the easy part; the data is the whole job.</li>
+    <li><b>The hard problem is false alarms, not detection.</b> Deer, wind, weather, a barn cat, a hand checking the line. An alarm that cries wolf twice a week is worse than no alarm, because it trains the one person who matters to ignore it.</li>
+    <li><b>It is not a fence and not a guardian dog.</b> It shortens the time between something starting and somebody knowing. Sell that, and nothing more than that.</li>
+  </ul>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">
+    <p>Fenceline Night Watch — a working design demo. Simulated data throughout; no live camera, no network calls, runs offline in a single page.</p>
+    <p>Built for a first conversation with a ranch owner. Bring the laptop charged; the pasture won't have a plug.</p>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= world constants ================= */
+const W = 1000, H = 600;
+const M_PER_UNIT = 0.3;                 // pasture is ~300 m across
+const cv = document.getElementById('scene');
+const ctx = cv.getContext('2d');
+const trendCv = document.getElementById('trend');
+const tctx = trendCv.getContext('2d');
+
+const COL = {
+  bone:'#e7e3da', muted:'#98a1a4', dim:'#6d777b', line:'#2f373d',
+  accent:'#4fa3a0', calm:'#9bae8a', watch:'#e0a93e', alert:'#ce4a2c', hot:'#f0603a'
+};
+
+/* ================= scenarios ================= */
+const SCN = {
+  pasture:{
+    name:'CROSS-C RANCH <em>/</em> NORTH PASTURE <em>/</em> POST 4',
+    tag:'CAM 04 · THERMAL · 1000×600 · 12 FPS INFERENCE',
+    wx:'WIND NNE 6 MPH · 41°F · MOON 12%',
+    clock:2*3600+11*60+40,
+    ground:'#1b241d', groundLo:'#141b17',
+    n:24, prefix:'COW', threatLabel:'Release predator', deterLabel:'Deter',
+    graze:1.6, flee:34, sep:24, neigh:110,
+    strategy:'bunch',
+    sigNames:['Bunching','Polarisation','Heads up','Motion'],
+    threat:{ label:'CANID', from:{x:958,y:56}, speed:26, creep:13, standoff:34, alt:0, confirmAt:100 },
+    deter:'SIREN + STROBE · POST 4 NE',
+    thresholdWatch:32, thresholdAlert:58, dwell:2.2
+  },
+  coop:{
+    name:'CROSS-C RANCH <em>/</em> HOME YARD <em>/</em> COOP CAM',
+    tag:'CAM 09 · RGB + MIC ARRAY · 1000×600 · 15 FPS INFERENCE',
+    wx:'WIND CALM · 52°F · SUNRISE 06:04',
+    clock:5*3600+48*60+10,
+    ground:'#232019', groundLo:'#191710',
+    n:18, prefix:'BIRD', threatLabel:'Release raptor', deterLabel:'Close coop',
+    graze:2.4, flee:30, sep:22, neigh:104,
+    strategy:'scatter',
+    sigNames:['Flush dispersion','Cover-seeking','Alarm call','Motion'],
+    threat:{ label:'RAPTOR', from:{x:520,y:-60}, speed:30, creep:30, standoff:0, alt:1, confirmAt:0 },
+    deter:'AUTO DOOR CLOSE + STROBE',
+    thresholdWatch:30, thresholdAlert:55, dwell:1.6
+  }
+};
+
+/* ================= state ================= */
+let scn = 'pasture', C = SCN.pasture;
+let animals = [], threat = null, terrain = null;
+let running = true, speed = 1, showLabels = true;
+let simT = 0, clockT = C.clock;
+let hri = 0, hriRaw = 0, conf = 0, sigs = [0,0,0,0];
+let nnd0 = 0, polar0 = 0, baselineReady = false;
+let phase = 'CALM', dwell = 0, calmHeld = 0;
+let alertAt = null, confirmAt = null, leadFrozen = null, leadNoVisual = false, lastAlertAt = -1e9;
+let deterUntil = -1, deterFired = false, doorClosed = false, securedCount = null, doorPending = false;
+let bearing = null, fenceNear = null, missing = 0, fencePressed = false;
+let trend = [], logRows = [];
+let lastFrame = performance.now();
+
+const rnd = (a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const fmtClock=s=>{s=Math.floor(s)%86400;const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');};
+const COMPASS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const compass=d=>COMPASS[Math.round(((d%360)+360)%360/22.5)%16];
+
+/* ================= geometry ================= */
+// fence rectangle, with a gate gap on the south edge (pasture only)
+const FENCE = {x0:44, y0:44, x1:956, y1:556};
+const GATE = {x0:300, x1:392};   // gap in the south fence
+
+function fenceDistance(a){
+  // distance to nearest fence segment, ignoring the gate gap
+  const d = [a.x-FENCE.x0, FENCE.x1-a.x, a.y-FENCE.y0, FENCE.y1-a.y];
+  let best = Math.min(d[0],d[1],d[2]);
+  const southOpen = scn==='pasture' && a.x>GATE.x0-6 && a.x<GATE.x1+6;
+  if(!southOpen) best = Math.min(best, d[3]);
+  return best;
+}
+function fencePush(a){
+  let fx=0, fy=0, m=34;
+  if(a.x-FENCE.x0<m) fx += (m-(a.x-FENCE.x0));
+  if(FENCE.x1-a.x<m) fx -= (m-(FENCE.x1-a.x));
+  if(a.y-FENCE.y0<m) fy += (m-(a.y-FENCE.y0));
+  const southOpen = scn==='pasture' && a.x>GATE.x0 && a.x<GATE.x1;
+  if(!southOpen && FENCE.y1-a.y<m) fy -= (m-(FENCE.y1-a.y));
+  return {fx,fy};
+}
+
+/* ================= setup ================= */
+function buildTerrain(){
+  const off = document.createElement('canvas');
+  off.width = W; off.height = H;
+  const c = off.getContext('2d');
+  const g = c.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, C.groundLo); g.addColorStop(.55, C.ground); g.addColorStop(1, C.groundLo);
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+
+  if(scn==='pasture'){
+    // the NE draw — a shallow ravine the predator comes down
+    c.beginPath(); c.moveTo(1000,4); c.quadraticCurveTo(902,74,846,164);
+    c.quadraticCurveTo(806,232,792,318); c.lineTo(846,330);
+    c.quadraticCurveTo(862,246,896,182); c.quadraticCurveTo(938,104,1000,52); c.closePath();
+    c.fillStyle='rgba(6,10,8,.34)'; c.fill();
+    c.strokeStyle='rgba(130,150,130,.09)'; c.lineWidth=1; c.stroke();
+    // tree clump
+    for(const t of [[726,196,25],[762,220,19],[706,232,16],[776,178,14]]){
+      c.beginPath(); c.arc(t[0],t[1],t[2],0,7); c.fillStyle='rgba(12,22,15,.5)'; c.fill();
+      c.beginPath(); c.arc(t[0]-t[2]*.28,t[1]-t[2]*.28,t[2]*.55,0,7); c.fillStyle='rgba(34,52,38,.34)'; c.fill();
+    }
+    // water trough
+    c.fillStyle='rgba(30,46,52,.9)'; c.fillRect(184,418,58,19);
+    c.strokeStyle='rgba(110,140,148,.38)'; c.lineWidth=1; c.strokeRect(184.5,418.5,57,18);
+  } else {
+    // coop building, seen from above: walls, roost bars, and the pop door
+    c.fillStyle='#332c24'; c.fillRect(92,232,156,146);
+    c.strokeStyle='#6a5c4a'; c.lineWidth=2; c.strokeRect(93,233,154,144);
+    c.fillStyle='#231e18'; c.fillRect(106,246,128,118);
+    c.strokeStyle='#4a4133'; c.lineWidth=2;
+    for(let i=0;i<3;i++){ c.beginPath(); c.moveTo(114,266+i*32); c.lineTo(226,266+i*32); c.stroke(); }
+    c.fillStyle='#8a7757'; c.fillRect(246,286,6,38);   // pop door
+    // brush pile (cover)
+    c.beginPath(); c.arc(706,432,46,0,7); c.fillStyle='rgba(22,30,18,.85)'; c.fill();
+    c.beginPath(); c.arc(688,414,26,0,7); c.fillStyle='rgba(36,48,28,.55)'; c.fill();
+    // feeder
+    c.beginPath(); c.arc(506,300,15,0,7); c.fillStyle='rgba(58,48,32,.9)'; c.fill();
+    c.strokeStyle='rgba(120,102,70,.5)'; c.lineWidth=1; c.stroke();
+  }
+  // ground texture tufts
+  for(let i=0;i<620;i++){
+    const x=rnd(0,W), y=rnd(0,H);
+    c.fillStyle = 'rgba(255,255,255,'+(0.012+Math.random()*0.022)+')';
+    c.fillRect(x,y,rnd(1,3),1);
+  }
+  terrain = off;
+}
+
+const COVER = ()=> scn==='coop' ? [{x:170,y:305,r:70,door:true},{x:702,y:428,r:44}] : [];
+
+function spawn(){
+  animals = [];
+  const n = C.n;
+  for(let i=0;i<n;i++){
+    const isRooster = scn==='coop' && i<2;
+    let x,y;
+    if(scn==='pasture'){ x = rnd(210,600); y = rnd(180,470); }
+    else { x = rnd(300,760); y = rnd(180,440); }
+    animals.push({
+      id:i, tag:C.prefix+'-'+String(101+i*7%89+i).padStart(3,'0'),
+      x, y, vx:rnd(-1,1), vy:rnd(-1,1),
+      fear:0, headUp:0, out:false, secured:false, rooster:isRooster,
+      wander:rnd(0,6.28), size: isRooster?7:(scn==='coop'?5.5:11)
+    });
+  }
+  threat = null;
+  simT=0; clockT=C.clock; hri=0; hriRaw=0; conf=0; sigs=[0,0,0,0];
+  nnd0=0; polar0=0; baselineReady=false;
+  phase='CALM'; dwell=0; calmHeld=0;
+  alertAt=null; confirmAt=null; leadFrozen=null; leadNoVisual=false; lastAlertAt=-1e9;
+  deterUntil=-1; deterFired=false; doorClosed=false; securedCount=null; doorPending=false;
+  bearing=null; fenceNear=null; missing=0; fencePressed=false;
+  trend=[]; logRows=[];
+  hidePush();
+  document.getElementById('btnDeter').disabled = true;
+  document.getElementById('btnThreat').disabled = false;
+  document.getElementById('btnThreat').textContent = C.threatLabel;
+  document.getElementById('btnDeter').textContent = C.deterLabel;
+  document.getElementById('siteName').innerHTML = C.name;
+  document.getElementById('stageTag').textContent = C.tag;
+  document.getElementById('stageWx').textContent = C.wx;
+  buildSigRows();
+  log('calm','Baseline learning — 30 min rolling window on '+C.n+' tracks.');
+}
+
+/* ================= simulation ================= */
+function releaseThreat(){
+  if(threat) return;
+  const t = C.threat;
+  threat = { x:t.from.x, y:t.from.y, vx:0, vy:0, mode:'approach', alt:t.alt, confirmed:false, ang:0 };
+  document.getElementById('btnThreat').disabled = true;
+  log('watch', scn==='pasture'
+    ? 'Motion in the NE draw — below classifier confidence, not reported.'
+    : 'Overhead motion at yard edge — outside camera focus plane.');
+}
+
+function deter(){
+  if(!threat || threat.mode==='gone') return;
+  threat.mode = 'flee';
+  deterUntil = simT + 6;
+  deterFired = true;
+  document.getElementById('btnDeter').disabled = true;
+  if(scn==='coop'){
+    doorClosed = true;
+    securedCount = animals.filter(a=>inCover(a) && a.x<300).length;
+    doorPending = true;
+    log('act','COOP DOOR CLOSING · '+securedCount+' of '+C.n+' birds inside. Holding 6 s for stragglers.');
+  } else {
+    log('act','DETERRENT FIRED · '+C.deter+' · 4.0 s burst, pattern rotated.');
+  }
+  hidePush();
+}
+
+function inCover(a){
+  for(const c of COVER()) if((a.x-c.x)**2+(a.y-c.y)**2 < c.r*c.r) return true;
+  return false;
+}
+
+function step(dt){
+  simT += dt; clockT += dt;
+  const live = animals.filter(a=>!a.out);
+  const cx = mean(live,'x'), cy = mean(live,'y');
+
+  /* --- threat agent --- */
+  let escX=0, escY=0;                       // the herd's shared escape heading
+  if(threat){
+    const t = C.threat;
+    if(threat.mode==='approach'){
+      let dx=cx-threat.x, dy=cy-threat.y, d=Math.hypot(dx,dy)||1;
+      if(scn==='coop'){
+        // circle high, then stoop
+        if(threat.born===undefined) threat.born = simT;
+        threat.ang += dt*0.5;
+        if(simT-threat.born > 16) threat.alt = Math.max(0, threat.alt - dt*0.22);
+        const r = 150 - (1-threat.alt)*112;
+        threat.x = lerp(threat.x, cx + Math.cos(threat.ang)*r, dt*1.1);
+        threat.y = lerp(threat.y, cy + Math.sin(threat.ang)*r*0.62, dt*1.1);
+        if(threat.alt < 0.5 && !threat.confirmed){ threat.confirmed = true; onConfirm(); }
+      } else {
+        // runs in, then creeps once it is close enough to be working the herd
+        const sp = d > 300 ? t.speed : t.creep;
+        const goal = Math.max(0, d - t.standoff);
+        const v = Math.min(sp, goal*1.5);
+        threat.x += dx/d*v*dt + rnd(-5,5)*dt;
+        threat.y += dy/d*v*dt + rnd(-5,5)*dt;
+        const near = live.reduce((m,a)=>Math.min(m,Math.hypot(a.x-threat.x,a.y-threat.y)),1e9);
+        if(near < t.confirmAt && !threat.confirmed){ threat.confirmed = true; onConfirm(); }
+      }
+    } else if(threat.mode==='flee'){
+      let dx=t.from.x-threat.x, dy=t.from.y-threat.y, d=Math.hypot(dx,dy)||1;
+      threat.alt = Math.min(1, threat.alt + dt*0.5);
+      threat.x += dx/d*52*dt; threat.y += dy/d*52*dt;
+      if(d<30){
+        if(alertAt!==null && leadFrozen===null){ leadFrozen = simT-alertAt; leadNoVisual = true; }
+        threat.mode='gone'; threat=null;
+        log('act', scn==='pasture' ? 'Predator broke off and left the draw. No contact with stock.'
+                                   : 'Raptor climbed out of the yard. No contact with birds.'); }
+    }
+    if(threat){
+      const dx=cx-threat.x, dy=cy-threat.y, d=Math.hypot(dx,dy)||1;
+      escX=dx/d; escY=dy/d;
+    }
+  }
+
+  /* --- animal update --- */
+  const cover = COVER();
+  const scatter = C.strategy==='scatter';
+  const alarmCall = scatter ? animals.reduce((m,a)=>a.rooster&&!a.out?Math.max(m,a.fear):m,0) : 0;
+  for(const a of animals){
+    if(a.out){
+      a.y += 14*dt;
+      a.fear = Math.max(0, a.fear - 0.22*dt);
+      if(a.fear < 0.18 && a.y > FENCE.y1+22){
+        a.out=false; a.y = FENCE.y1-16; missing = Math.max(0, missing-1);
+        log('calm','Head returned through south gate — count restored to '+C.n+'/'+C.n+'.');
+      }
+      continue;
+    }
+
+    /* fear = what this animal perceives, plus what its neighbours are doing */
+    let target = 0;
+    if(threat && threat.mode!=='gone'){
+      const d = Math.hypot(a.x-threat.x, a.y-threat.y);
+      if(scn==='coop'){
+        // roosters see the raptor far out and while it is still high; hens do not
+        const range = a.rooster ? 340 : 150;
+        const vis = a.rooster ? 1 : (1-threat.alt);
+        target = clamp((range-d)/range,0,1)*vis;
+      } else {
+        // stock wind a coyote well beyond anything a camera can classify
+        target = Math.pow(clamp((400-d)/400,0,1), 0.75);
+      }
+    }
+    if(deterFired && simT < deterUntil) target = Math.max(target, 0.40);
+
+    // social contagion — near-lossless inside the group. This is the mechanism
+    // the whole detector depends on: one animal's startle becomes a herd signal.
+    let peak = 0;
+    for(const b of animals){
+      if(b===a||b.out) continue;
+      const d2 = (a.x-b.x)**2+(a.y-b.y)**2;
+      if(d2 < C.neigh*C.neigh){
+        const w = 1 - 0.32*Math.sqrt(d2)/C.neigh;
+        if(b.fear*w > peak) peak = b.fear*w;
+      }
+    }
+    // a rooster that has started calling keeps calling; and the call is audio,
+    // so it reaches the whole yard rather than only the birds standing nearby
+    let rise;
+    if(a.rooster) rise = target;
+    else rise = Math.max(target, peak*0.97, alarmCall*0.90);
+    if(rise > a.fear) a.fear += Math.min(rise-a.fear, (2.4*(rise-a.fear)+0.22)*dt);
+    else{
+      const latched = a.rooster && a.fear>0.55 && threat && threat.mode!=='gone';
+      a.fear -= Math.min(a.fear-rise, (latched?0.05:0.19)*dt);
+    }
+    a.fear = clamp(a.fear,0,1);
+    a.headUp = Math.max(a.headUp - 0.9*dt, Math.min(1, a.fear*1.8));
+
+    /* steering */
+    let ax=0, ay=0, sepX=0, sepY=0, nSep=0, gx=0, gy=0, hx=0, hy=0, nC=0;
+    for(const b of animals){
+      if(b===a||b.out) continue;
+      const dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy;
+      if(d2 < C.sep*C.sep && d2>0.01){ const d=Math.sqrt(d2); sepX += dx/d*(C.sep-d); sepY += dy/d*(C.sep-d); nSep++; }
+      if(d2 < C.neigh*C.neigh){ gx+=b.x; gy+=b.y; hx+=b.vx; hy+=b.vy; nC++; }
+    }
+    if(nSep){
+      const sw = scatter ? (0.9 + a.fear*2.4) : (1.0 - a.fear*0.88);
+      ax += sepX*sw*0.17; ay += sepY*sw*0.17;
+    }
+    if(nC){
+      gx/=nC; gy/=nC;
+      // cattle pull together under fear; poultry break apart
+      const cw = scatter ? Math.max(0, 0.22 - a.fear*0.40) : (0.30 + a.fear*3.4);
+      ax += (gx-a.x)*0.014*cw; ay += (gy-a.y)*0.014*cw;
+      const aw = 0.30 + a.fear*2.2;
+      ax += hx/nC*0.07*aw; ay += hy/nC*0.07*aw;
+    }
+    // flight: partly straight away from the threat, mostly along the herd's
+    // shared escape heading — which is why a frightened herd polarises
+    if(threat && threat.mode!=='gone' && a.fear>0.10){
+      const dx=a.x-threat.x, dy=a.y-threat.y, d=Math.hypot(dx,dy)||1;
+      let fxv, fyv;
+      if(scatter){ fxv = dx/d; fyv = dy/d; }
+      else { fxv = 0.38*(dx/d) + 0.62*escX; fyv = 0.38*(dy/d) + 0.62*escY; }
+      const fl = Math.hypot(fxv,fyv)||1;
+      const w = a.fear*a.fear*(scatter?48:78);
+      ax += fxv/fl*w; ay += fyv/fl*w;
+    }
+    // poultry break for cover
+    if(scatter && a.fear>0.25 && cover.length){
+      let best=null, bd=1e9;
+      for(const c of cover){ if(c.door && doorClosed) continue;
+        const d=Math.hypot(a.x-c.x,a.y-c.y)*(c.door?1:1.9);   // the coop is home
+        if(d<bd){bd=d;best=c;} }
+      if(best){
+        const dd=Math.hypot(a.x-best.x,a.y-best.y)||1;
+        if(dd>34){ ax += (best.x-a.x)/dd*a.fear*76; ay += (best.y-a.y)/dd*a.fear*76; }
+      }
+    }
+    // wander while calm
+    a.wander += rnd(-2.4,2.4)*dt;
+    const ww = (1-a.fear)*(scatter?9:6);
+    ax += Math.cos(a.wander)*ww; ay += Math.sin(a.wander)*ww;
+    // fence — frightened stock press the wire instead of turning off it
+    const fp = fencePush(a);
+    const fw = 0.95 - a.fear*0.62;
+    ax += fp.fx*fw*0.62; ay += fp.fy*fw*0.62;
+
+    a.vx += ax*dt; a.vy += ay*dt;
+    const sp = Math.hypot(a.vx,a.vy);
+    const maxSp = lerp(C.graze, C.flee, Math.pow(a.fear,0.7));
+    if(sp > maxSp){ a.vx = a.vx/sp*maxSp; a.vy = a.vy/sp*maxSp; }
+    a.vx *= (1-2.1*dt); a.vy *= (1-2.1*dt);
+    a.x += a.vx*dt; a.y += a.vy*dt;
+    a.x = clamp(a.x, 8, W-8);
+    if(scn==='coop' || !(a.x>GATE.x0 && a.x<GATE.x1)) a.y = clamp(a.y, 8, H-8);
+
+    // bolt through the south gate
+    if(scn==='pasture' && !a.out && a.fear>0.84 && a.x>GATE.x0 && a.x<GATE.x1 && a.y>FENCE.y1-8 && missing<1){
+      a.out = true; missing++;
+      log('alert','ESCAPE — '+a.tag+' through south gate. Head count '+(C.n-1)+' of '+C.n+'.');
+    }
+    if(scn==='coop' && doorClosed) a.secured = inCover(a) && a.x<300;
+  }
+
+  if(doorPending && simT >= deterUntil){
+    doorPending = false;
+    securedCount = animals.filter(a=>inCover(a) && a.x<300).length;
+    const outside = C.n - securedCount;
+    log(outside>0?'watch':'act','DOOR SEALED · '+securedCount+' of '+C.n+' in the coop'
+      +(outside>0?'. '+outside+' still out in the brush — flagged for a walk-out.':'. Full flock secured.'));
+  }
+
+  measure(dt);
+}
+
+const mean=(arr,k)=>arr.reduce((s,a)=>s+a[k],0)/Math.max(1,arr.length);
+
+/* ================= the detector ================= */
+function measure(dt){
+  const live = animals.filter(a=>!a.out);
+  const n = live.length;
+  if(!n) return;
+  const cx = mean(live,'x'), cy = mean(live,'y');
+
+  // 1. mean nearest-neighbour distance
+  let nndSum=0;
+  for(const a of live){
+    let best=1e9;
+    for(const b of live){ if(a===b) continue; const d=(a.x-b.x)**2+(a.y-b.y)**2; if(d<best) best=d; }
+    nndSum += Math.sqrt(best);
+  }
+  const nnd = nndSum/n;
+
+  // 2. polarisation — how aligned the group's headings are — plus mean speed
+  //    and mean outward radial speed (the poultry flush signature)
+  let px=0, py=0, spd=0, rad=0;
+  for(const a of live){
+    const s=Math.hypot(a.vx,a.vy)||1e-6; px+=a.vx/s; py+=a.vy/s; spd+=s;
+    const dx=a.x-cx, dy=a.y-cy, d=Math.hypot(dx,dy)||1;
+    rad += Math.max(0,(a.vx*dx+a.vy*dy)/d);
+  }
+  const polar = Math.hypot(px,py)/n, meanSpd = spd/n, meanRad = rad/n;
+  const heads = mean(live,'headUp');
+
+  // rolling baseline, learned only while the scene is calm
+  if(!baselineReady){ nnd0=nnd; polar0=polar; baselineReady=true; }
+  else if(phase==='CALM' && !threat){
+    const k = Math.min(1, dt*(simT<8 ? 2.0 : 0.4));
+    nnd0=lerp(nnd0,nnd,k); polar0=lerp(polar0,polar,k);
+  }
+
+  const scatter = C.strategy==='scatter';
+  const motion = clamp((meanSpd-C.graze*0.95)/(C.flee*0.50),0,1);
+  let s0,s1,s2;
+
+  if(scatter){
+    // chickens do the opposite of cattle: they burst apart and run for cover.
+    // Same engine, inverted anti-predator strategy — which is why the model
+    // has to know what species it is looking at.
+    s0 = clamp((meanRad-C.graze*0.40)/(C.flee*0.40),0,1);              // flush burst
+    s1 = clamp(live.filter(a=>{
+      if(a.fear<0.12) return false;
+      if(inCover(a)) return true;
+      let best=null,bd=1e9;
+      for(const c of COVER()){ const d=Math.hypot(a.x-c.x,a.y-c.y); if(d<bd){bd=d;best=c;} }
+      if(!best) return false;
+      const s=Math.hypot(a.vx,a.vy)||1e-6;
+      return ((a.vx*(best.x-a.x)+a.vy*(best.y-a.y))/bd)/s > 0.5;
+    }).length/n,0,1);                                                   // cover-seeking
+    s2 = clamp(live.reduce((m,a)=>a.rooster?Math.max(m,a.fear*1.15):m,0),0,1); // alarm call
+  } else {
+    s0 = clamp((nnd0-nnd)/(nnd0*0.45),0,1);                             // bunching
+    s1 = clamp((polar-polar0)/Math.max(0.20,1-polar0),0,1);             // polarisation
+    s2 = heads;                                                          // heads up
+  }
+  sigs = [s0,s1,s2,motion];
+  hriRaw = 100*(s0*0.30 + s1*0.24 + s2*0.26 + motion*0.20);
+  hri = lerp(hri, hriRaw, Math.min(1, dt*3.0));
+
+  const agree = sigs.filter(s=>s>0.34).length;
+  conf = clamp(0.20 + 0.19*agree + hri/420, 0, 0.98);
+
+  /* threat bearing: the group's flight vector, reversed. Only meaningful for a
+     species that flees as a unit — a radial scatter points every direction at
+     once, so for poultry the bearing is reported as unresolvable, not guessed. */
+  if(scatter){ bearing = null; }
+  let fx=0, fy=0, fw=0;
+  for(const a of live){ if(a.fear>0.22){ const s=Math.hypot(a.vx,a.vy)||1e-6; fx+=a.vx/s*a.fear; fy+=a.vy/s*a.fear; fw+=a.fear; } }
+  if(fw>1.2 && !scatter){
+    const bx=-fx/fw, by=-fy/fw;
+    if(Math.hypot(bx,by)>0.20){
+      const deg=(Math.atan2(bx,-by)*180/Math.PI+360)%360;
+      if(bearing===null) bearing=deg;
+      else{ let d=((deg-bearing+540)%360)-180; bearing=(bearing+d*0.14+360)%360; }
+    }
+  } else if(!threat) bearing = null;
+
+  /* fence proximity of the group's leading edge */
+  let fmin=1e9, ftag=null;
+  for(const a of live){ const d=fenceDistance(a); if(d<fmin){ fmin=d; ftag=a.tag; } }
+  fenceNear = {d:Math.max(0,fmin)*M_PER_UNIT, tag:ftag};
+  if(!fencePressed && phase!=='CALM' && fenceNear.d < 2.5){
+    fencePressed = true;
+    log('alert','Herd pressed to the wire — leading edge '+fenceNear.d.toFixed(1)+' m off the fence line. Breach risk.');
+  }
+
+  /* --- state machine: threshold, then a dwell window before it fires --- */
+  if(simT < 5) return;
+  dwell = hri >= C.thresholdAlert ? Math.min(C.dwell, dwell+dt) : Math.max(0, dwell-dt*0.75);
+  const prev = phase;
+  if(phase==='ALERT'){
+    if(hri < C.thresholdWatch*0.75){
+      phase='CALM'; calmHeld=0;
+      log('calm','Herd back to baseline. Index '+Math.round(hri)+'. Incident closed and clipped.');
+    }
+  } else if(dwell >= C.dwell && simT-lastAlertAt > 25){
+    phase='ALERT';
+  } else if(dwell >= C.dwell){
+    if(phase!=='WATCH'){ phase='WATCH';
+      log('watch','Index over threshold again inside the 25 s re-alert window — logged, phone not buzzed.'); }
+  } else if(hri >= C.thresholdWatch){
+    if(phase!=='WATCH'){
+      phase='WATCH';
+      log('watch', scatter
+        ? 'WATCH — flush burst and alarm-call energy above baseline. Holding for confirmation.'
+        : 'WATCH — bunching and head elevation above baseline. Holding for confirmation.');
+    }
+  } else { phase='CALM'; calmHeld += dt; }
+
+  if(phase==='ALERT' && prev!=='ALERT') onAlert();
+}
+
+function onAlert(){
+  alertAt = simT; lastAlertAt = simT;
+  document.getElementById('btnDeter').disabled = false;
+  const b = bearing===null ? null : Math.round(bearing);
+  const live = animals.filter(a=>!a.out).length;
+  if(scn==='pasture'){
+    log('alert','ALERT — herd panic pattern. '+live+' head bunched and moving. Threat bearing '
+      +(b===null?'unresolved':(String(b).padStart(3,'0')+'° '+compass(b)))+'. No visual on predator.');
+    showPush('North pasture — herd panic pattern',
+      live+' head bunched and moving off. Estimated threat bearing '
+      +(b===null?'unresolved':(String(b).padStart(3,'0')+'° '+compass(b))+' (NE draw)')
+      +'. No visual on the predator yet — the herd is the detection.');
+  } else {
+    log('alert','ALERT — flock flush. Aerial alarm call classified (rooster, 0.91). Birds breaking to cover. Bearing unresolvable — a scatter response points every way at once.');
+    showPush('Home yard — flock flush, aerial',
+      'Rooster aerial alarm classified at 0.91 confidence, flock dispersing to cover. Raptor still above the focus plane. Coop door can close from here.');
+  }
+}
+function onConfirm(){
+  confirmAt = simT;
+  if(alertAt!==null && leadFrozen===null) leadFrozen = confirmAt - alertAt;
+  log('alert','VISUAL CONFIRMED — '+C.threat.label+' in frame, classifier 0.86. '
+    +(leadFrozen!==null ? 'Alert preceded visual by '+leadFrozen.toFixed(1)+' s.' : 'No prior alert.'));
+}
+
+/* ================= log + push ================= */
+function log(kind, text){
+  logRows.unshift({t:fmtClock(clockT).slice(0,5), kind, text});
+  if(logRows.length>40) logRows.pop();
+  const ul=document.getElementById('log');
+  ul.innerHTML = logRows.map(r=>'<li class="'+r.kind+'"><span class="t">'+r.t+'</span><span>'+r.text+'</span></li>').join('');
+}
+function showPush(title, body){
+  document.getElementById('pushTitle').textContent = title;
+  document.getElementById('pushBody').textContent = body;
+  document.getElementById('pushTime').textContent = fmtClock(clockT);
+  document.getElementById('push').classList.add('show');
+}
+function hidePush(){ document.getElementById('push').classList.remove('show'); }
+
+/* ================= drawing ================= */
+function fitCanvas(){
+  const dpr = Math.min(2, window.devicePixelRatio||1);
+  const w = cv.clientWidth || W;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(w*(H/W)*dpr);
+  ctx.setTransform(cv.width/W,0,0,cv.width/W,0,0);
+  const tw = trendCv.clientWidth||300;
+  trendCv.width = Math.round(tw*dpr); trendCv.height = Math.round(58*dpr);
+  tctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function phaseColor(){ return phase==='ALERT'?COL.alert:phase==='WATCH'?COL.watch:COL.calm; }
+
+let labelRects = [];
+function draw(){
+  labelRects = [];
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(terrain,0,0,W,H);
+  drawFence();
+
+  // bearing wedge from the herd centroid
+  const live = animals.filter(a=>!a.out);
+  if(bearing!==null && phase!=='CALM' && live.length){
+    const cx=mean(live,'x'), cy=mean(live,'y');
+    const rad=(bearing-90)*Math.PI/180;
+    ctx.save();
+    ctx.globalAlpha=.5; ctx.strokeStyle=phaseColor(); ctx.lineWidth=1.4; ctx.setLineDash([7,6]);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(rad)*300, cy+Math.sin(rad)*300); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha=.16; ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,300,rad-0.22,rad+0.22); ctx.closePath(); ctx.fillStyle=phaseColor(); ctx.fill();
+    ctx.restore();
+    label(cx+Math.cos(rad)*150, cy+Math.sin(rad)*150,
+      'EST. THREAT BEARING '+String(Math.round(bearing)).padStart(3,'0')+'°', phaseColor());
+  }
+
+  if(scn==='coop') drawCover();
+  for(const a of animals) drawAnimal(a);
+  if(threat) drawThreat();
+
+  // deterrent flash
+  if(deterFired && simT<deterUntil && Math.floor(simT*7)%2===0){
+    ctx.save(); ctx.globalAlpha=.10; ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H); ctx.restore();
+  }
+  drawTrend();
+}
+
+function drawFence(){
+  ctx.save();
+  ctx.strokeStyle='rgba(150,160,150,.30)'; ctx.lineWidth=1.2; ctx.setLineDash([2,7]);
+  ctx.beginPath();
+  ctx.moveTo(FENCE.x0,FENCE.y0); ctx.lineTo(FENCE.x1,FENCE.y0);
+  ctx.lineTo(FENCE.x1,FENCE.y1);
+  if(scn==='pasture'){
+    ctx.lineTo(GATE.x1,FENCE.y1); ctx.moveTo(GATE.x0,FENCE.y1); ctx.lineTo(FENCE.x0,FENCE.y1);
+  } else { ctx.lineTo(FENCE.x0,FENCE.y1); }
+  ctx.lineTo(FENCE.x0,FENCE.y0);
+  ctx.stroke(); ctx.setLineDash([]);
+  // posts
+  ctx.fillStyle='rgba(160,170,160,.32)';
+  for(let x=FENCE.x0;x<=FENCE.x1;x+=64){ ctx.fillRect(x-1,FENCE.y0-3,2,6); ctx.fillRect(x-1,FENCE.y1-3,2,6); }
+  for(let y=FENCE.y0;y<=FENCE.y1;y+=64){ ctx.fillRect(FENCE.x0-3,y-1,6,2); ctx.fillRect(FENCE.x1-3,y-1,6,2); }
+  if(scn==='pasture'){
+    label(GATE.x0+2, FENCE.y1+18, 'SOUTH GATE — OPEN', COL.dim, true, true);
+    label(186, 452, 'WATER', COL.dim, true, true);
+    label(880, 82, 'NE DRAW', COL.dim, true, true);
+    label(700, 268, 'TREE LINE', COL.dim, true, true);
+  } else {
+    label(94, 396, doorClosed?'COOP — DOOR CLOSED':'COOP — DOOR OPEN', doorClosed?COL.accent:COL.dim, true, true);
+    label(478, 332, 'FEEDER', COL.dim, true, true);
+    label(678, 492, 'BRUSH PILE', COL.dim, true, true);
+  }
+  ctx.restore();
+}
+
+function drawCover(){
+  ctx.save(); ctx.setLineDash([4,5]); ctx.lineWidth=1;
+  for(const c of COVER()){
+    ctx.strokeStyle = (c.door&&doorClosed) ? 'rgba(79,163,160,.5)' : 'rgba(155,174,138,.26)';
+    ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,7); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawAnimal(a){
+  const fear=a.fear;
+  const col = fear>0.62 ? COL.alert : fear>0.28 ? COL.watch : COL.calm;
+  const ang = Math.atan2(a.vy,a.vx);
+  ctx.save(); ctx.translate(a.x,a.y); ctx.rotate(ang);
+  ctx.globalAlpha = a.out?0.4:1;
+  // body
+  ctx.fillStyle = col;
+  ctx.globalAlpha *= 0.62 + fear*0.34;
+  if(scn==='pasture'){ roundRect(-a.size*0.62,-a.size*0.34,a.size*1.24,a.size*0.68,2.5); ctx.fill(); }
+  else { ctx.beginPath(); ctx.ellipse(0,0,a.size*0.9,a.size*0.62,0,0,7); ctx.fill(); }
+  // head — lifts (extends forward) as the animal raises it
+  ctx.globalAlpha = a.out?0.4:1;
+  ctx.beginPath();
+  ctx.arc(a.size*(0.58+a.headUp*0.24), 0, a.size*0.30, 0, 7);
+  ctx.fillStyle = a.headUp>0.4 ? COL.bone : col; ctx.fill();
+  if(a.rooster){ ctx.beginPath(); ctx.arc(a.size*0.95,-a.size*0.3,2.1,0,7); ctx.fillStyle=COL.alert; ctx.fill(); }
+  ctx.restore();
+
+  // tracking box + tag — a handful of tracks, never overlapping each other
+  if(showLabels && (a.rooster || a.id%(scn==='pasture'?7:6)===0 || fear>0.82)){
+    const s=a.size*1.9;
+    ctx.save();
+    ctx.strokeStyle=col; ctx.globalAlpha=.55; ctx.lineWidth=1;
+    ctx.strokeRect(a.x-s,a.y-s*0.72,s*2,s*1.44);
+    ctx.restore();
+    label(a.x-s, a.y-s*0.72-9,
+      (a.rooster?'ROOSTER ':'')+a.tag+(fear>0.5?' · '+(fear>0.78?'PANIC':'ALERT'):''), col, true, true);
+  }
+}
+
+function drawThreat(){
+  const confirmed = threat.confirmed;
+  ctx.save();
+  if(scn==='coop'){
+    const sx = threat.x + threat.alt*46, sy = threat.y + threat.alt*40;
+    ctx.globalAlpha=.30; ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(sx,sy,13+threat.alt*9,6+threat.alt*4,0,0,7); ctx.fill();  // shadow
+    ctx.globalAlpha=1;
+    ctx.fillStyle = confirmed?COL.alert:'rgba(200,200,200,.55)';
+    ctx.beginPath();
+    ctx.moveTo(threat.x-13,threat.y-4); ctx.quadraticCurveTo(threat.x,threat.y-11,threat.x+13,threat.y-4);
+    ctx.quadraticCurveTo(threat.x,threat.y+4,threat.x-13,threat.y-4); ctx.fill();
+  } else {
+    ctx.fillStyle = confirmed?COL.alert:'rgba(190,190,190,.4)';
+    roundRectAt(threat.x-7,threat.y-3.4,14,6.8,2); ctx.fill();
+    ctx.beginPath(); ctx.arc(threat.x+8,threat.y-1,2.4,0,7); ctx.fill();
+  }
+  if(confirmed){
+    ctx.strokeStyle=COL.alert; ctx.lineWidth=1.3; ctx.globalAlpha=.85;
+    ctx.strokeRect(threat.x-24,threat.y-17,48,34);
+    ctx.restore();
+    label(threat.x-24, threat.y-26, C.threat.label+' 0.86', COL.alert, true);
+    return;
+  }
+  ctx.setLineDash([3,4]); ctx.strokeStyle='rgba(190,190,190,.34)'; ctx.lineWidth=1;
+  ctx.strokeRect(threat.x-24,threat.y-17,48,34);
+  ctx.restore();
+  label(threat.x-24, threat.y-26, 'UNCLASSIFIED', 'rgba(190,190,190,.5)', true);
+}
+
+function label(x,y,text,color,small,avoid){
+  ctx.save();
+  ctx.font = (small?'9.5px ':'10.5px ')+'"IBM Plex Mono",monospace';
+  const w = ctx.measureText(text).width;
+  if(avoid){
+    const r={x:x-3,y:y-9,w:w+6,h:13};
+    for(const q of labelRects){
+      if(r.x < q.x+q.w+4 && r.x+r.w+4 > q.x && r.y < q.y+q.h+3 && r.y+r.h+3 > q.y){ ctx.restore(); return; }
+    }
+    labelRects.push(r);
+  }
+  ctx.fillStyle='rgba(10,13,15,.72)'; ctx.fillRect(x-3,y-9,w+6,13);
+  ctx.fillStyle=color; ctx.textBaseline='alphabetic'; ctx.fillText(text,x,y+1);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function roundRectAt(x,y,w,h,r){ roundRect(x,y,w,h,r); }
+
+/* ================= trend chart ================= */
+function drawTrend(){
+  const w = trendCv.clientWidth||300, h = 58;
+  tctx.clearRect(0,0,w,h);
+  const span = 150; // seconds shown
+  const t1 = simT, t0 = Math.max(0, t1-span);
+  const X = t => (t-t0)/Math.max(1,(t1-t0))*w;
+  const Y = v => h-11 - (v/100)*(h-16);
+
+  // threshold guides
+  tctx.strokeStyle='rgba(224,169,62,.28)'; tctx.setLineDash([2,4]); tctx.lineWidth=1;
+  tctx.beginPath(); tctx.moveTo(0,Y(C.thresholdWatch)); tctx.lineTo(w,Y(C.thresholdWatch)); tctx.stroke();
+  tctx.strokeStyle='rgba(206,74,44,.32)';
+  tctx.beginPath(); tctx.moveTo(0,Y(C.thresholdAlert)); tctx.lineTo(w,Y(C.thresholdAlert)); tctx.stroke();
+  tctx.setLineDash([]);
+
+  const pts = trend.filter(p=>p.t>=t0);
+  if(pts.length>1){
+    tctx.beginPath(); tctx.moveTo(X(pts[0].t), h);
+    for(const p of pts) tctx.lineTo(X(p.t), Y(p.v));
+    tctx.lineTo(X(pts[pts.length-1].t), h); tctx.closePath();
+    const g=tctx.createLinearGradient(0,0,0,h);
+    const c=phaseColor();
+    g.addColorStop(0, hexA(c,.30)); g.addColorStop(1, hexA(c,.02));
+    tctx.fillStyle=g; tctx.fill();
+    tctx.beginPath(); tctx.moveTo(X(pts[0].t), Y(pts[0].v));
+    for(const p of pts) tctx.lineTo(X(p.t), Y(p.v));
+    tctx.strokeStyle=c; tctx.lineWidth=1.4; tctx.stroke();
+    const last=pts[pts.length-1];
+    tctx.beginPath(); tctx.arc(X(last.t), Y(last.v), 2.6, 0, 7); tctx.fillStyle=c; tctx.fill();
+  }
+  tctx.fillStyle='rgba(109,119,123,.9)';
+  tctx.font='8.5px "IBM Plex Mono",monospace';
+  tctx.fillText('\u2212150 S', 0, h-1); tctx.fillText('NOW', w-21, h-1);
+}
+function hexA(hex,a){
+  const n=parseInt(hex.slice(1),16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+
+/* ================= readouts ================= */
+function buildSigRows(){
+  const host=document.getElementById('sigs');
+  host.innerHTML = C.sigNames.map((n,i)=>
+    '<div class="sigrow"><span class="n">'+n+'</span>'
+    +'<span class="bar"><i id="sb'+i+'"></i></span>'
+    +'<span class="v" id="sv'+i+'">0.00</span></div>').join('');
+}
+
+let uiT = 0;
+function paintUI(dt){
+  uiT += dt; if(uiT < 0.09) return; uiT = 0;
+
+  document.getElementById('clock').textContent = fmtClock(clockT);
+  const c = phaseColor();
+  const num = document.getElementById('hriNum');
+  num.textContent = String(Math.round(hri)).padStart(2,'0');
+  num.style.color = c;
+  const pill = document.getElementById('hriPill');
+  pill.textContent = phase==='ALERT'?'ALERT':phase==='WATCH'?'WATCH':'NORMAL';
+  pill.style.color = c;
+  document.getElementById('hriConf').textContent = 'CONF '+conf.toFixed(2);
+  document.getElementById('hriSub').textContent =
+    phase==='CALM' ? 'BASELINE HELD '+fmtClock(calmHeld).slice(3)
+    : phase==='WATCH' ? 'CONFIRMING — '+dwell.toFixed(1)+' / '+C.dwell.toFixed(1)+' S DWELL'
+    : 'ALERTED '+fmtClock(simT-(alertAt||simT)).slice(3)+' AGO';
+  document.getElementById('dwellBar').style.width = (dwell/C.dwell*100)+'%';
+  document.getElementById('dwellBar').style.background = phase==='ALERT'?COL.alert:COL.watch;
+
+  for(let i=0;i<4;i++){
+    const b=document.getElementById('sb'+i), v=document.getElementById('sv'+i);
+    if(!b) continue;
+    b.style.width = (sigs[i]*100).toFixed(0)+'%';
+    b.style.background = sigs[i]>0.6?COL.alert:sigs[i]>0.3?COL.watch:COL.calm;
+    v.textContent = sigs[i].toFixed(2);
+  }
+
+  const live = animals.filter(a=>!a.out).length;
+  document.getElementById('roCount').innerHTML =
+    (scn==='coop' && securedCount!==null ? securedCount : live)+' <small>/ '+C.n+(scn==='coop'&&securedCount!==null?' SECURED':'')+'</small>';
+  document.getElementById('roCount').style.color = (live<C.n)?COL.alert:COL.bone;
+
+  const be=document.getElementById('roBear');
+  if(C.strategy==='scatter'){ be.innerHTML='<small>SCATTER — N/A</small>'; }
+  else be.textContent = bearing===null ? '—' : String(Math.round(bearing)).padStart(3,'0')+'° '+compass(bearing);
+  document.getElementById('roFence').innerHTML = fenceNear
+    ? fenceNear.d.toFixed(0)+' <small>M · '+fenceNear.tag+'</small>' : '—';
+  const lead = leadFrozen!==null ? leadFrozen : (alertAt!==null && !confirmAt ? simT-alertAt : null);
+  const le=document.getElementById('roLead');
+  le.innerHTML = lead===null ? '—'
+    : lead.toFixed(1)+' <small>S '+(leadNoVisual?'· NEVER SEEN':'AHEAD OF CAM')+'</small>';
+  le.style.color = lead===null?COL.bone:COL.calm;
+}
+
+/* ================= loop ================= */
+function frame(now){
+  const raw = Math.min(0.05,(now-lastFrame)/1000); lastFrame=now;
+  if(running){
+    const dt = raw*speed;
+    const sub = Math.ceil(dt/0.02);
+    for(let i=0;i<sub;i++) step(dt/sub);
+    trend.push({t:simT, v:hri});
+    if(trend.length>4000) trend.shift();
+  }
+  draw(); paintUI(raw);
+  requestAnimationFrame(frame);
+}
+
+/* ================= controls ================= */
+document.getElementById('btnPlay').onclick = e=>{
+  running=!running; e.target.textContent = running?'Pause':'Play';
+};
+document.getElementById('btnThreat').onclick = releaseThreat;
+document.getElementById('btnDeter').onclick = deter;
+document.getElementById('pushDeter').onclick = deter;
+document.getElementById('pushDismiss').onclick = hidePush;
+document.getElementById('btnReset').onclick = ()=>{ buildTerrain(); spawn(); };
+document.getElementById('btnLabels').onclick = e=>{
+  showLabels=!showLabels; e.target.classList.toggle('on',showLabels);
+};
+document.querySelectorAll('#speedSeg button').forEach(b=>b.onclick=()=>{
+  speed=+b.dataset.sp;
+  document.querySelectorAll('#speedSeg button').forEach(x=>x.classList.toggle('on',x===b));
+});
+document.querySelectorAll('#scenarioSeg button').forEach(b=>b.onclick=()=>{
+  if(scn===b.dataset.scn) return;
+  scn=b.dataset.scn; C=SCN[scn];
+  document.querySelectorAll('#scenarioSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  buildTerrain(); spawn(); fitCanvas();
+});
+
+/* ================= ROI ================= */
+const money = n => '$'+Math.round(n).toLocaleString('en-US');
+function roi(){
+  const g=id=>Math.max(0, +document.getElementById(id).value||0);
+  const head=g('i1'), val=g('i2'), lost=g('i3'), pct=Math.min(100,g('i4'))/100, posts=g('i5'), cost=g('i6');
+  const loss = lost*val, save = loss*pct, sys = posts*cost, net = save - sys;
+  document.getElementById('roiLoss').textContent = money(loss);
+  document.getElementById('roiSave').textContent = money(save);
+  document.getElementById('roiCost').textContent = money(sys);
+  const el=document.getElementById('roiNet');
+  el.textContent = (net<0?'−':'')+money(Math.abs(net));
+  el.style.color = net>=0?COL.calm:COL.alert;
+  const months = save>0 ? sys/(save/12) : Infinity;
+  document.getElementById('roiBack').textContent = isFinite(months)&&months<600 ? Math.ceil(months)+' mo' : 'never';
+  document.getElementById('roiNote').textContent = net>=0
+    ? 'Calving and sickness catches are excluded — on most outfits they are the bigger half.'
+    : 'It does not clear on predation alone at these numbers. Say so out loud, then talk about calving.';
+  void head;
+}
+document.querySelectorAll('.f input').forEach(i=>i.addEventListener('input', roi));
+
+/* ================= boot ================= */
+window.addEventListener('resize', fitCanvas);
+fitCanvas(); buildTerrain(); spawn(); roi();
+requestAnimationFrame(frame);
+})();
+</script>
