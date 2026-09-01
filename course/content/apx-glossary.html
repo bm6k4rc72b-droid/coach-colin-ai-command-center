@@ -1,1 +1,77 @@
-<section class="fm"><h1>apx-glossary</h1><p>stub</p></section>
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">E</div>
+    <div class="meta"><div class="kicker">Appendix</div>
+    <div class="lineage">The working vocabulary</div></div>
+  </div>
+  <h1 id="apxE" data-toc="module" data-toc-n="E" data-toc-title="Glossary">Glossary</h1>
+ </div>
+
+ <p class="lede opener">Definitions as this book uses them, with the module where
+ each term is earned.</p>
+
+ <dl class="gloss">
+  <dt>Activation checkpointing</dt><dd>Discarding forward activations and recomputing them in the backward pass; ~33&nbsp;% more compute for a large memory saving. (M09)</dd>
+  <dt>Admissible heuristic</dt><dd>One that never overestimates remaining cost; guarantees A<sup>*</sup> optimality. (M02)</dd>
+  <dt>Alignment</dt><dd>Post-training that makes a model's behaviour match intended use and values. (M10)</dd>
+  <dt>Anisotropy</dt><dd>Embeddings occupying a narrow cone, compressing the range of cosine similarities and degrading ranking. (M05)</dd>
+  <dt>Arithmetic intensity</dt><dd>FLOPs per byte moved; determines whether a kernel is compute- or memory-bound. (M09)</dd>
+  <dt>Attention</dt><dd>A differentiable lookup: softmax-weighted average of values, weighted by query–key similarity. (M08)</dd>
+  <dt>Autodiff, reverse mode</dt><dd>Accumulating derivatives from the scalar output backwards; cost independent of parameter count, memory is the price. (M01)</dd>
+  <dt>Bias–variance</dt><dd>The decomposition of expected error into model inflexibility, sample sensitivity and irreducible noise. (M04)</dd>
+  <dt>BF16</dt><dd>16-bit float with FP32's exponent range; the default training format because range, not precision, is what breaks. (M09)</dd>
+  <dt>Calibration</dt><dd>A predicted probability of 0.7 corresponds to 70&nbsp;% frequency. Independent of accuracy. (M04, M15)</dd>
+  <dt>Catastrophic forgetting</dt><dd>Loss of general capability caused by narrow fine-tuning. (M10)</dd>
+  <dt>Chinchilla-optimal</dt><dd>The compute-optimal parameter/token split; roughly twenty tokens per parameter. (M08)</dd>
+  <dt>Classifier-free guidance</dt><dd>Extrapolating conditional away from unconditional predictions; trades diversity for prompt fidelity. (M11)</dd>
+  <dt>Concept drift</dt><dd><span class="m">P(y\mid x)</span> changes; retraining on old labels cannot fix it. Contrast covariate shift. (M14)</dd>
+  <dt>Condition number</dt><dd>Ratio of largest to smallest singular value; predicts optimisation difficulty. (M01)</dd>
+  <dt>Consistency</dt><dd>A heuristic satisfying the triangle inequality along edges; stronger than admissibility. (M02)</dd>
+  <dt>Continuous batching</dt><dd>Admitting new requests into a running inference batch as slots free. (M13)</dd>
+  <dt>Contrastive learning</dt><dd>Pulling augmented pairs together and pushing others apart; the InfoNCE objective. (M05)</dd>
+  <dt>Covariate shift</dt><dd><span class="m">P(x)</span> changes while <span class="m">P(y\mid x)</span> holds; retraining on fresh data helps. (M14)</dd>
+  <dt>Cross-encoder</dt><dd>A reranker scoring query and passage jointly; accurate, and too slow for corpus-wide search. (M12)</dd>
+  <dt>Decode</dt><dd>Token-by-token generation; memory-bandwidth-bound, and the reason batching matters. (M13)</dd>
+  <dt>d-separation</dt><dd>The graphical criterion for reading conditional independence off a Bayesian network. (M03)</dd>
+  <dt>Differential privacy</dt><dd>A bound, parameterised by <span class="m">\varepsilon</span>, on how much any one individual can influence an output. (M15)</dd>
+  <dt>Diffusion model</dt><dd>A generative model trained to reverse a fixed noising process; equivalent to score estimation. (M11)</dd>
+  <dt>Distillation</dt><dd>Training a small model to match a large one's outputs. (M13)</dd>
+  <dt>Double descent</dt><dd>Test error falling again beyond the interpolation threshold, contradicting the classical U-curve. (M04)</dd>
+  <dt>DPO</dt><dd>Direct preference optimisation: the KL-regularised RLHF objective, solved without a reward model. (M10)</dd>
+  <dt>ELBO</dt><dd>Evidence lower bound; the objective of EM, VAEs and variational inference. (M05, M11)</dd>
+  <dt>Equalised odds</dt><dd>Equal true- and false-positive rates across groups; incompatible with calibration in general. (M15)</dd>
+  <dt>Explaining away</dt><dd>Two independent causes becoming dependent once a common effect is observed. (M03)</dd>
+  <dt>FlashAttention</dt><dd>Exact attention with a tiled memory schedule that never materialises the score matrix. (M09)</dd>
+  <dt>FSDP / ZeRO</dt><dd>Sharding optimiser state, gradients and parameters across data-parallel ranks. (M09)</dd>
+  <dt>Grouped-query attention</dt><dd>Query heads sharing key-value heads; the largest single reduction in KV-cache size. (M08, M13)</dd>
+  <dt>Hybrid retrieval</dt><dd>Fusing dense and sparse rankings; covers each method's failure mode. (M12)</dd>
+  <dt>Indirect prompt injection</dt><dd>Instructions smuggled in through retrieved content or tool output. (M12, M14)</dd>
+  <dt>KV cache</dt><dd>Stored keys and values from prior tokens; usually the binding memory constraint in serving. (M13)</dd>
+  <dt>Latent diffusion</dt><dd>Running diffusion in an autoencoder's latent space; one to two orders of magnitude cheaper. (M11)</dd>
+  <dt>Layer normalisation</dt><dd>Standardising across features within an example; batch-independent, hence used in transformers. (M06)</dd>
+  <dt>LoRA</dt><dd>Adapting a frozen model with a learned low-rank weight update. (M10)</dd>
+  <dt>MDP</dt><dd>States, actions, transitions, rewards and a discount; solved by the Bellman equation. (M03)</dd>
+  <dt>MFU</dt><dd>Model FLOPs utilisation: achieved fraction of peak compute. 35–55&nbsp;% is good. (M09)</dd>
+  <dt>Mixture of experts</dt><dd>Routing each token to a few of many feed-forward experts; more parameters at constant FLOPs. (M08)</dd>
+  <dt>Paged attention</dt><dd>Block-based KV-cache allocation that removes fragmentation and enables prefix sharing. (M13)</dd>
+  <dt>Pipeline bubble</dt><dd>Idle time in pipeline parallelism, about <span class="m">(p-1)/(m+p-1)</span>. (M09)</dd>
+  <dt>Prefill</dt><dd>Parallel processing of the prompt; compute-bound, unlike decode. (M13)</dd>
+  <dt>Pre-norm</dt><dd>Normalising before each sublayer rather than after; what makes deep stacks trainable. (M06, M08)</dd>
+  <dt>Quantisation</dt><dd>Representing weights or activations in fewer bits; damage concentrates in the tail. (M13)</dd>
+  <dt>RAG</dt><dd>Retrieval-augmented generation: retrieve evidence, then generate conditioned on it. (M12)</dd>
+  <dt>Rank</dt><dd>The number of independent directions a linear map can carry; the capacity bound behind LoRA. (M01, M10)</dd>
+  <dt>Recall@k</dt><dd>Fraction of queries whose correct passage appears in the top <span class="m">k</span>; the ceiling on a RAG system. (M12)</dd>
+  <dt>Residual connection</dt><dd>Adding a layer's input to its output; gives gradients an unobstructed path. (M06)</dd>
+  <dt>Reward hacking</dt><dd>Optimising a proxy until it diverges from the intent it stood for. (M10)</dd>
+  <dt>RoPE</dt><dd>Rotary position embedding: rotating Q and K by position so the dot product depends on relative offset. (M08)</dd>
+  <dt>Scaling law</dt><dd>Loss as a power law in parameters, data and compute; used to plan runs before spending. (M08)</dd>
+  <dt>Self-supervision</dt><dd>Constructing a supervised task from unlabelled data — masking, next-token prediction, denoising. (M05)</dd>
+  <dt>Speculative decoding</dt><dd>A draft model proposes, the large model verifies in parallel; lossless by construction. (M13)</dd>
+  <dt>SVD</dt><dd>Factorisation into rotation, scaling and rotation; the source of PCA and of low-rank approximation. (M01)</dd>
+  <dt>Tokenisation</dt><dd>Mapping text to subword units; sets sequence length, cost, and per-language fairness. (M08)</dd>
+  <dt>Training–serving skew</dt><dd>Features computed differently in training and inference; the classic silent production bug. (M14)</dd>
+  <dt>Treewidth</dt><dd>The graph property that determines the cost of exact inference. (M03)</dd>
+  <dt>Warmup</dt><dd>Ramping the learning rate from near zero; prevents early divergence in transformers. (M06)</dd>
+ </dl>
+</section>

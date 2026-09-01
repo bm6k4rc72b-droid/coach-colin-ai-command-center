@@ -1,1 +1,228 @@
-<section class="fm"><h1>m14</h1><p>stub</p></section>
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">14</div>
+    <div class="meta">
+      <div class="kicker">Part Four · The Engineering Discipline</div>
+      <div class="lineage">Stanford MLSys seminar · NVIDIA deployment practice</div>
+    </div>
+  </div>
+  <h1 id="m14" data-toc="module" data-toc-n="14" data-toc-title="AI Systems in Production">AI Systems<br>in Production</h1>
+  <div class="epigraph">The model is a small box in the middle of a large diagram,
+   and every arrow into and out of it is where the system will fail.
+   <span class="attrib">On technical debt</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Design a data and training pipeline that can be re-run and audited.</li>
+         <li>Version data, code, weights and prompts so any output can be reproduced.</li>
+         <li>Detect drift and regression before your users do.</li>
+         <li>Ship a model change safely, and roll it back faster.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 04, 12, 13.</li>
+         <li>Git, containers, CI, and one service you can deploy.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 7 h</li>
+         <li>Problem set: 4 h · Lab: 10 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>23–24</div>
+     <div><b>Total hours</b>21</div>
+     <div><b>Deliverable</b>A deployed, monitored service</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Machine-learning systems accumulate a distinctive kind of
+ technical debt. Ordinary software fails loudly, at a line of code you can point
+ to. A model degrades: the accuracy falls two points a month because the world
+ moved, or a feature pipeline began emitting nulls, or an upstream vendor changed
+ a unit. Nothing throws. The system continues to serve confident answers, and
+ nobody notices until a business metric moves.</p>
+
+ <p>The engineering response is to make the invisible visible — to instrument the
+ system so that degradation is a signal rather than a discovery.</p>
+
+ <h2><span class="num">14.1</span>Four things must be versioned</h2>
+
+ <p class="lede">Reproducibility is not a virtue here; it is the precondition for
+ debugging. To reproduce an output you must be able to pin all four of:</p>
+
+ <table>
+  <caption>Versioning, and the question each answers when something goes wrong.</caption>
+  <thead><tr><th>Artefact</th><th>How</th><th>Answers</th></tr></thead>
+  <tbody>
+   <tr><td>Code</td><td>Git commit</td><td>What logic ran?</td></tr>
+   <tr><td>Data</td><td>Content hash of an immutable snapshot</td><td>What did it learn from?</td></tr>
+   <tr><td>Model</td><td>Registry entry: weights hash, training run id, metrics, lineage</td><td>Which weights answered?</td></tr>
+   <tr><td>Configuration</td><td>Committed config, including prompts and decoding parameters</td><td>How was it asked?</td></tr>
+  </tbody>
+ </table>
+
+ <p>Prompts belong in this list and are the most commonly omitted. A prompt is
+ program logic; edited in a console, unversioned and untested, it is the least
+ reviewed and most frequently changed component of a modern AI system. Put prompts
+ in the repository, review them in pull requests, and test them in CI.</p>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   The unit of deployment is not the model — it is the
+   <em>model plus its preprocessing plus its configuration</em>. Training–serving
+   skew, where a feature is computed one way in training and another way at
+   inference, is the most common and most damaging production bug in machine
+   learning. The structural remedy is to share one implementation between both
+   paths and to assert their equivalence in CI.
+ </div>
+
+ <h2><span class="num">14.2</span>Monitoring what cannot throw</h2>
+
+ <p class="lede">Layer your monitoring, because the fastest signals are the least
+ meaningful and the most meaningful arrive last.</p>
+
+ <ol>
+   <li><strong>Operational.</strong> Latency percentiles, error rate, saturation,
+   cost per request. Fast, unambiguous, and blind to quality.</li>
+   <li><strong>Input distribution.</strong> Track feature and embedding
+   distributions against a training reference using population stability index or
+   a divergence measure. Drift here precedes accuracy loss and is your earliest
+   real warning.</li>
+   <li><strong>Output distribution.</strong> Prediction rates, confidence
+   histograms, refusal rates, response lengths. A sudden change in the shape of
+   outputs is nearly always a change in inputs or in the model.</li>
+   <li><strong>Quality proxies.</strong> Automated judges, retrieval faithfulness,
+   guardrail trigger rates, sampled human review of a fixed number of transactions
+   per day. Slower, noisier, and the only layer that measures the thing you
+   care about.</li>
+   <li><strong>Business outcome.</strong> Acceptance rate, escalation rate,
+   revenue. The ground truth, and always the slowest to arrive.</li>
+ </ol>
+
+ <p>Distinguish the two drifts, because their remedies differ. <em>Covariate
+ shift</em> means the inputs changed while the relationship held —
+ <span class="m">P(x)</span> moved, <span class="m">P(y \mid x)</span> did not — and
+ retraining on fresh data fixes it. <em>Concept drift</em> means the relationship
+ itself changed, and no amount of retraining on old labels will help; you need new
+ labels, and possibly a new problem formulation.</p>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Feedback loops. A recommender that shows an item causes the clicks it later
+   trains on; a fraud model that blocks a transaction never learns whether it was
+   fraudulent. Logged data from a deployed model is not a sample of the world — it
+   is a sample of the world as filtered by the model. Log propensities, hold out a
+   small randomised slice of traffic, and treat that slice as the only unbiased
+   evaluation you have.
+ </div>
+
+ <h2><span class="num">14.3</span>Shipping a change</h2>
+
+ <p class="lede">Every model deployment is an experiment on live users. Structure
+ it like one.</p>
+
+ <ul>
+   <li><strong>Shadow first.</strong> Run the new model on real traffic without
+   serving its output. Compare distributions and latency. This catches integration
+   errors with no user risk.</li>
+   <li><strong>Canary with an automatic gate.</strong> Route 1&nbsp;%, then
+   5&nbsp;%, then 25&nbsp;%, with pre-declared metric thresholds that trigger
+   automatic rollback. The thresholds must be agreed before the numbers arrive.</li>
+   <li><strong>Keep the previous version warm.</strong> Rollback must be a
+   configuration change measured in seconds, not a redeploy measured in an
+   hour.</li>
+   <li><strong>Test in CI what actually breaks.</strong> Schema and range
+   assertions on input data; golden-output tests on a frozen set of examples;
+   evaluation-suite thresholds that fail the build; and a training–serving skew
+   check. Unit tests on the model code are the least valuable tests in the
+   suite.</li>
+ </ul>
+
+ <h2><span class="num">14.4</span>Security and the supply chain</h2>
+
+ <p class="lede">An AI system's attack surface includes several components that
+ conventional application security does not cover.</p>
+
+ <table>
+  <caption>Threats specific to machine-learning systems, and the control that addresses each.</caption>
+  <thead><tr><th>Threat</th><th>Mechanism</th><th>Control</th></tr></thead>
+  <tbody>
+   <tr><td>Prompt injection</td><td>Untrusted content in the context directs behaviour</td><td>Least-privilege tools; confirmation for consequential actions; content labelling (M12)</td></tr>
+   <tr><td>Data poisoning</td><td>Malicious examples in training or retrieval corpora</td><td>Provenance tracking; anomaly screening; signed corpora</td></tr>
+   <tr><td>Model supply chain</td><td>Weights from an untrusted source; unsafe deserialisation</td><td>Checksums, signatures, safe formats, scan before load</td></tr>
+   <tr><td>Extraction</td><td>Querying to reconstruct training data or clone behaviour</td><td>Rate limits, output filtering, watermarking, monitoring</td></tr>
+   <tr><td>Sensitive-data leakage</td><td>Secrets memorised in weights or logged in prompts</td><td>Scrub before training; redact in logs; short retention</td></tr>
+   <tr><td>Denial of wallet</td><td>Expensive requests driving unbounded cost</td><td>Token and spend limits per caller; bounded agent loops</td></tr>
+  </tbody>
+ </table>
+
+ <div class="bench">
+   <h4>The Bench · Lab 14</h4>
+   <div class="title">Deploy your Module 12 system as a service that can survive you</div>
+   <ol>
+     <li>Containerise the service. Pin every dependency. Produce a build that a
+     colleague can reproduce from a clean machine using only the repository.</li>
+     <li>Build a CI pipeline that runs unit tests, schema assertions, golden-output
+     tests, and your Module&nbsp;12 evaluation suite with a threshold that fails
+     the build. Demonstrate the failure by degrading the retriever on purpose.</li>
+     <li>Instrument all five monitoring layers. Emit structured traces per request:
+     retrieved document ids, token counts, latency by stage, cost, model and prompt
+     version.</li>
+     <li>Implement drift detection on input embeddings with a PSI threshold. Prove
+     it works by replaying a deliberately shifted traffic sample and showing the
+     alert fires.</li>
+     <li>Perform a shadow deployment and then a canary with an automatic rollback
+     gate. Trigger the rollback deliberately and record the time to recover.</li>
+     <li>Write a one-page runbook: the four alerts that can fire, what each means,
+     the first three diagnostic steps, and who decides on rollback.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> the repository with CI, a monitoring dashboard,
+   the drift-detection demonstration, the rollback timing, and the runbook.
+   <b>Acceptance:</b> a deliberately regressed model is caught by CI before deploy,
+   and a deliberately shifted traffic pattern fires the drift alert within your
+   stated detection window.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 14 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Reproducibility</td><td>Code in Git</td><td>Code, data, model and config all pinned; any output reproducible</td><td>Full lineage from a served response back to a training example</td></tr>
+   <tr><td>Observability</td><td>Logs errors</td><td>Instruments all five layers with alerts</td><td>Detects degradation before the business metric moves</td></tr>
+   <tr><td>Release</td><td>Deploys and watches</td><td>Shadow, canary, automatic gate, fast rollback</td><td>Rollback rehearsed and timed; thresholds agreed in advance</td></tr>
+   <tr><td>Security</td><td>Aware of the threats</td><td>Implements controls for injection, supply chain and spend</td><td>Threat-models the system and tests the controls adversarially</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Distinguish covariate shift from concept drift, and give the remedy for each.</li>
+  <li>Why is logged production data biased, and what is the minimum intervention that gives you an unbiased evaluation?</li>
+  <li>Name four artefacts you must pin to reproduce a single served response.</li>
+  <li>Your evaluation suite passes and users complain. What did the suite fail to measure, and how would you find out?</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Sculley et al., "Hidden Technical Debt in Machine Learning Systems" (2015). Still the most useful ten pages on this subject.</li>
+   <li><span class="k">Paper</span>Breck et al., "The ML Test Score" (2017) — a concrete production-readiness rubric.</li>
+   <li><span class="k">Core</span>Huyen, <em>Designing Machine Learning Systems</em> — chapters on data, deployment and monitoring.</li>
+   <li><span class="k">Read</span>Google's <em>Rules of Machine Learning</em> — forty-three rules, most of which you will eventually learn the hard way anyway.</li>
+   <li><span class="k">Read</span>NIST AI Risk Management Framework — the vocabulary Module 15 builds on.</li>
+   <li><span class="k">Course</span>Stanford's MLSys seminar series for current practice at scale.</li>
+  </ul>
+ </div>
+</section>

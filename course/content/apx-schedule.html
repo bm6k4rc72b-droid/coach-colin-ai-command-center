@@ -1,1 +1,86 @@
-<section class="fm"><h1>apx-schedule</h1><p>stub</p></section>
+<section class="plate">
+  <div class="roman">Appendices</div>
+  <h1 id="apx" data-toc="part" data-toc-title="Appendices">Reference</h1>
+  <div class="plate-rule"></div>
+  <div class="blurb">The plan you follow, the equations you should be able to
+   reconstruct, the tools you install, the courses this book compresses, and the
+   vocabulary it assumes.</div>
+  <div class="contents">
+    A &nbsp;The Twenty-Six Week Plan<br>
+    B &nbsp;The Reference Card<br>
+    C &nbsp;The Engineer's Toolchain<br>
+    D &nbsp;The Source Curricula<br>
+    E &nbsp;Glossary
+  </div>
+</section>
+
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">A</div>
+    <div class="meta"><div class="kicker">Appendix</div>
+    <div class="lineage">The full programme, week by week</div></div>
+  </div>
+  <h1 id="apxA" data-toc="module" data-toc-n="A" data-toc-title="The Twenty-Six Week Plan">The Twenty-Six<br>Week Plan</h1>
+ </div>
+
+ <p class="lede opener">Twelve to fifteen hours a week, held to. The plan assumes
+ you protect two evenings and one weekend morning; the failure mode is not lack
+ of ability but lack of a calendar. Two catch-up weeks are built in deliberately —
+ use them, and do not use them to get ahead.</p>
+
+ <table class="sched long">
+  <caption>The full programme. Hours are total, including reading, problem sets and labs.</caption>
+  <thead><tr><th>Week</th><th>Module</th><th>Focus</th><th class="num-col">Hours</th><th>Artefact</th></tr></thead>
+  <tbody>
+   <tr><td>1</td><td>01</td><td>Linear algebra, calculus, autodiff</td><td class="num-col">12</td><td>Scalar autodiff engine</td></tr>
+   <tr><td>2</td><td>01</td><td>Probability, information, optimisation</td><td class="num-col">12</td><td>Tensor engine, MLP trained</td></tr>
+   <tr><td>3</td><td>02</td><td>Search, heuristics, adversarial, CSP, logic</td><td class="num-col">14</td><td>Solver with proved heuristic</td></tr>
+   <tr><td>4</td><td>03</td><td>Bayes nets, HMMs, MDPs</td><td class="num-col">14</td><td>Filter and policy</td></tr>
+   <tr><td>5</td><td>04</td><td>GLMs, regularisation, bias–variance</td><td class="num-col">12</td><td>Baseline and learning curves</td></tr>
+   <tr><td>6</td><td>04</td><td>Ensembles, evaluation design, calibration</td><td class="num-col">12</td><td>Honest benchmark</td></tr>
+   <tr><td>7</td><td>05</td><td>Clustering, EM, PCA, contrastive learning</td><td class="num-col">14</td><td>Evaluated embedding space</td></tr>
+   <tr><td>8</td><td>06</td><td>Backprop, initialisation, normalisation</td><td class="num-col">14</td><td>Fault dictionary</td></tr>
+   <tr><td>9</td><td>06</td><td>Optimisers, schedules, tuning campaign</td><td class="num-col">14</td><td>Campaign log, depth ablation</td></tr>
+   <tr><td>10</td><td>07</td><td>CNNs, detection, RNNs, transfer</td><td class="num-col">14</td><td>Fine-tuned detector</td></tr>
+   <tr><td>11</td><td>08</td><td>Attention, the block, tokenisation</td><td class="num-col">14</td><td>BPE tokeniser</td></tr>
+   <tr><td>12</td><td>08</td><td>Training the model, decoding</td><td class="num-col">14</td><td>Working language model</td></tr>
+   <tr><td>13</td><td>08</td><td>Scaling laws, ablations</td><td class="num-col">12</td><td>Fitted scaling law</td></tr>
+   <tr><td>—</td><td>—</td><td><em>Catch-up and consolidation</em></td><td class="num-col">—</td><td>Repository tidy; notes rewritten</td></tr>
+   <tr><td>14</td><td>09</td><td>Roofline, precision, profiling</td><td class="num-col">13</td><td>MFU doubled</td></tr>
+   <tr><td>15</td><td>09</td><td>Parallelism, sharding, planning</td><td class="num-col">13</td><td>Parallel run, pre-flight estimate</td></tr>
+   <tr><td>16</td><td>10</td><td>SFT, LoRA, forgetting</td><td class="num-col">13</td><td>Adapted model, decontamination report</td></tr>
+   <tr><td>17</td><td>10</td><td>Preferences, DPO, evaluation, red-team</td><td class="num-col">13</td><td>Win-rate vs KL curve</td></tr>
+   <tr><td>18</td><td>11</td><td>Diffusion, guidance, multimodality</td><td class="num-col">14</td><td>Conditional diffusion model</td></tr>
+   <tr><td>19</td><td>12</td><td>Chunking, hybrid retrieval, reranking</td><td class="num-col">13</td><td>Labelled query set, ablations</td></tr>
+   <tr><td>20</td><td>12</td><td>Agents, tools, injection defence</td><td class="num-col">13</td><td>Agent cost table, injection write-up</td></tr>
+   <tr><td>21</td><td>13</td><td>Prefill/decode, KV cache, quantisation</td><td class="num-col">13</td><td>Throughput–latency curve</td></tr>
+   <tr><td>22</td><td>13</td><td>Speculative decoding, serving, cost model</td><td class="num-col">13</td><td>Cost per million tokens</td></tr>
+   <tr><td>23</td><td>14</td><td>Versioning, CI, training–serving skew</td><td class="num-col">12</td><td>Reproducible service with CI</td></tr>
+   <tr><td>24</td><td>14</td><td>Monitoring, drift, canary, rollback</td><td class="num-col">12</td><td>Dashboard and runbook</td></tr>
+   <tr><td>25</td><td>15</td><td>Fairness, interpretability, privacy</td><td class="num-col">11</td><td>Fairness audit</td></tr>
+   <tr><td>26</td><td>15</td><td>Governance, documentation, audit</td><td class="num-col">11</td><td>Model card, risk register</td></tr>
+   <tr><td>—</td><td>—</td><td><em>Catch-up, then the capstone begins</em></td><td class="num-col">—</td><td>Capstone brief</td></tr>
+  </tbody>
+ </table>
+
+ <h2>Weekly rhythm</h2>
+ <table>
+  <thead><tr><th>Session</th><th>Length</th><th>Work</th></tr></thead>
+  <tbody>
+   <tr><td>Evening one</td><td>3 h</td><td>Read the module's core sources; take notes in your own words only.</td></tr>
+   <tr><td>Evening two</td><td>3 h</td><td>Problem set and derivations by hand. No editor open.</td></tr>
+   <tr><td>Weekend morning</td><td>5–6 h</td><td>The lab. One uninterrupted block; labs do not survive fragmentation.</td></tr>
+   <tr><td>Any time</td><td>1 h</td><td>Write the week's notebook entry: what you learned, what broke, what you would do differently.</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Two rules that decide whether people finish. First, ship something every week,
+   however small — an unfinished lab that runs beats a perfect one that does not
+   exist. Second, when you fall behind, skip the reading and do the lab; the lab
+   carries the learning, and the reading can be caught up in the consolidation
+   weeks. Reversing that order is how people quietly stop.
+ </div>
+</section>

@@ -1,1 +1,244 @@
-<section class="fm"><h1>m15</h1><p>stub</p></section>
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">15</div>
+    <div class="meta">
+      <div class="kicker">Part Four · The Engineering Discipline</div>
+      <div class="lineage">Harvard embedded EthiCS · Stanford HAI policy work</div>
+    </div>
+  </div>
+  <h1 id="m15" data-toc="module" data-toc-n="15" data-toc-title="Safety, Governance and the Human Question">Safety, Governance and<br>the Human Question</h1>
+  <div class="epigraph">The question is never whether the model is accurate. It is
+   who bears the cost when it is wrong, and whether they agreed to bear it.
+   <span class="attrib">On the obligation</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Measure fairness with the right definition, and explain why you cannot have them all.</li>
+         <li>Apply interpretability methods and state honestly what each does not show.</li>
+         <li>Reason about privacy quantitatively rather than by policy alone.</li>
+         <li>Produce the documentation a regulator, an auditor or a successor will need.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 04, 10, 14.</li>
+         <li>A deployed system of your own to examine.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 8 h</li>
+         <li>Problem set: 4 h · Lab: 8 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>25–26</div>
+     <div><b>Total hours</b>20</div>
+     <div><b>Deliverable</b>A model card and audit</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">This module is not an appendix to the engineering; it is
+ engineering. Every choice made in the preceding fourteen modules — what data to
+ collect, what loss to minimise, what threshold to set, what to log, what to serve
+ — allocates benefit and risk among people who were not in the room. The
+ professional obligation is not to have good intentions but to make those
+ allocations explicit, measured and reviewable.</p>
+
+ <h2><span class="num">15.1</span>Fairness, and the impossibility at its centre</h2>
+
+ <p class="lede">There is no single definition of fairness, and the main ones are
+ mathematically incompatible. This is not a gap in the literature; it is a proved
+ result, and understanding it is what separates competent practice from
+ well-meaning gesture.</p>
+
+ <table>
+  <caption>The principal criteria. Choosing among them is a normative decision, not a technical one.</caption>
+  <thead><tr><th>Criterion</th><th>Requires</th><th>Appropriate when</th></tr></thead>
+  <tbody>
+   <tr><td>Demographic parity</td><td>Equal positive rates across groups</td><td>Allocating an opportunity where base rates are contested or themselves unjust</td></tr>
+   <tr><td>Equalised odds</td><td>Equal true- and false-positive rates</td><td>Errors carry similar costs across groups and labels are trustworthy</td></tr>
+   <tr><td>Equal opportunity</td><td>Equal true-positive rates</td><td>Missing a qualified person is the harm that matters</td></tr>
+   <tr><td>Calibration within groups</td><td>A score of 0.7 means 0.7 in every group</td><td>The score is given to a human decision-maker to act on</td></tr>
+   <tr><td>Individual fairness</td><td>Similar individuals treated similarly</td><td>You can defend a similarity metric — which is the hard part</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   <em>The impossibility result.</em> Except when base rates are equal across
+   groups or the classifier is perfect, calibration and equalised odds cannot both
+   hold. You must therefore choose which fairness property to guarantee, state
+   that choice, and justify it in terms of who is harmed by each kind of error.
+   An engineer who reports "we checked for bias" without naming the criterion has
+   reported nothing.
+ </div>
+
+ <p>Note also that bias enters long before the model. Historical labels encode
+ past decisions; sampling frames omit populations; proxy variables reintroduce
+ protected attributes through correlation; and deployment context determines
+ whether an error is an inconvenience or a catastrophe. Auditing only the model
+ is auditing the smallest part of the pipeline.</p>
+
+ <h2><span class="num">15.2</span>Interpretability, honestly described</h2>
+
+ <p class="lede">Every method here answers a narrower question than its name
+ suggests. Use them, and describe their limits precisely.</p>
+
+ <ul>
+   <li><strong>Feature attribution</strong> (SHAP, integrated gradients) assigns
+   credit for one prediction. It shows association within the model, not causation
+   in the world, and different methods routinely disagree on the same prediction.</li>
+   <li><strong>Counterfactual explanation</strong> — "had income been higher by
+   this much, the decision would have changed" — is the form most useful to an
+   affected person, and the form regulators increasingly expect.</li>
+   <li><strong>Probing</strong> asks whether a property is linearly decodable from
+   a representation. A successful probe shows the information is present; it does
+   not show the model uses it.</li>
+   <li><strong>Mechanistic interpretability</strong> attempts to reverse-engineer
+   circuits — induction heads, sparse autoencoder features — into human-legible
+   algorithms. The most intellectually serious approach and the least mature; do
+   not promise a stakeholder that it will explain your production model this
+   quarter.</li>
+   <li><strong>Chain-of-thought is not an explanation.</strong> A model's stated
+   reasoning is a generated continuation that may or may not correspond to the
+   computation that produced the answer. Treat it as a hypothesis to test, never
+   as an audit trail.</li>
+ </ul>
+
+ <h2><span class="num">15.3</span>Privacy, quantified</h2>
+
+ <p class="lede">Models memorise. Large models memorise more, and verbatim
+ sequences can be extracted from them with targeted prompting. Anonymisation by
+ field removal is not protection, because re-identification from quasi-identifiers
+ is routine.</p>
+
+ <p>Differential privacy gives a formal guarantee instead of a hope: a mechanism
+ is <span class="m">(\varepsilon, \delta)</span>-differentially private if the presence or
+ absence of any single individual changes the distribution of outputs by a bounded
+ factor.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\Pr[\mathcal{M}(D) \in S] \;\le\; e^{\varepsilon}\, \Pr[\mathcal{M}(D') \in S] \;+\; \delta \quad \text{for all adjacent } D, D'</span></div><span class="tag-n"></span></div>
+
+ <p>DP-SGD achieves this by clipping per-example gradients and adding calibrated
+ noise. It costs accuracy and compute, and the cost falls as the dataset grows.
+ The engineering point is that <span class="m">\varepsilon</span> is a dial you must
+ choose and disclose — and that an <span class="m">\varepsilon</span> above roughly ten
+ provides a guarantee that is more rhetorical than real. Federated learning and
+ secure aggregation reduce exposure architecturally; they are complements to a
+ formal guarantee, not substitutes for one.</p>
+
+ <h2><span class="num">15.4</span>Governance you will actually meet</h2>
+
+ <p class="lede">Regulation now shapes engineering requirements directly. The
+ details vary by jurisdiction and change; the structure is stable and worth
+ knowing.</p>
+
+ <ul>
+   <li><strong>Risk tiers.</strong> The EU AI Act classifies systems by risk, with
+   obligations scaling accordingly: some practices prohibited, high-risk systems
+   subject to conformity assessment, data governance, logging, human oversight and
+   accuracy requirements, and general-purpose models carrying transparency and —
+   above a compute threshold — systemic-risk duties.</li>
+   <li><strong>Risk management frameworks.</strong> The NIST AI RMF organises
+   practice around four functions — <em>govern, map, measure, manage</em> — and is
+   the vocabulary most enterprise processes now use.</li>
+   <li><strong>Documentation as a deliverable.</strong> Model cards, datasheets
+   for datasets, and system cards are the standard artefacts. They are not
+   paperwork: they are the interface between the people who build a system and
+   everyone who must decide whether to rely on it.</li>
+   <li><strong>Sectoral rules still apply.</strong> Medical devices, credit
+   decisions, employment screening and safety-critical control each carry
+   established regimes that predate and outrank any AI-specific framework.</li>
+ </ul>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Write the model card before you train, not after you ship. Stating the intended
+   use, the out-of-scope uses, the evaluation populations and the known
+   limitations <em>in advance</em> changes what you build — it forces the
+   evaluation set to match the deployment population, which is the single most
+   common thing teams get wrong.
+ </div>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Treating a safety evaluation as a pass/fail gate run once. Capability changes
+   with prompting, tools, context length and fine-tuning; a model that refuses a
+   request in isolation may comply when the request arrives through a retrieved
+   document or after twenty turns. Evaluate the deployed <em>system</em>,
+   repeatedly, including its tools — and keep every successful attack as a
+   permanent regression test.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 15</h4>
+   <div class="title">Audit your own system as though someone else built it</div>
+   <ol>
+     <li>Take your Module&nbsp;14 service. Write its model card in full: intended
+     use, out-of-scope uses, training and evaluation data, metrics disaggregated
+     by relevant subgroup, known limitations, and the ethical considerations you
+     actually weighed.</li>
+     <li>Conduct a fairness audit. Choose and justify a criterion, measure it
+     across at least three subgroups, and demonstrate the impossibility result
+     numerically on your own data.</li>
+     <li>Produce counterfactual explanations for ten decisions, including two the
+     system got wrong. Assess whether an affected person could act on them.</li>
+     <li>Run a memorisation and extraction probe on any fine-tuned model you
+     produced. Report what came out.</li>
+     <li>Perform a structured red-team of the deployed system — with its tools —
+     over at least thirty adversarial scenarios spanning misuse, injection through
+     retrieval, and harmful-content elicitation. Convert every success into a
+     regression test.</li>
+     <li>Write the risk register: for each identified failure mode, its likelihood,
+     its impact, who bears it, the mitigation, and the residual risk you are
+     accepting. Sign it.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> a complete model card, a disaggregated fairness
+   report with a justified criterion, ten counterfactual explanations, the
+   red-team log with its regression suite, and a signed risk register.
+   <b>Acceptance:</b> the risk register names at least one risk you decided to
+   accept, states who bears it, and explains why acceptance is defensible.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 15 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Fairness</td><td>Reports overall accuracy</td><td>Chooses and justifies a criterion; disaggregates</td><td>Demonstrates the trade-off numerically and defends the choice</td></tr>
+   <tr><td>Interpretability</td><td>Produces a SHAP plot</td><td>Matches method to question and states its limits</td><td>Delivers explanations an affected person can act on</td></tr>
+   <tr><td>Privacy</td><td>Removes obvious identifiers</td><td>Reasons about memorisation and formal guarantees</td><td>Trains under DP and quantifies the accuracy cost</td></tr>
+   <tr><td>Governance</td><td>Aware regulation exists</td><td>Produces a model card and risk register</td><td>Designs the evaluation from the deployment population outward</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Show why calibration and equalised odds conflict when base rates differ.</li>
+  <li>Why is a model's stated chain of thought not an explanation of its computation?</li>
+  <li>What does <span class="m">\varepsilon = 8</span> actually promise a person in the dataset?</li>
+  <li>Your model is fair by your chosen criterion and the deployment still harms a group. Give two mechanisms by which that happens.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Kleinberg, Mullainathan &amp; Raghavan, "Inherent Trade-Offs in the Fair Determination of Risk Scores" (2016) — the impossibility result.</li>
+   <li><span class="k">Paper</span>Mitchell et al., "Model Cards for Model Reporting" (2019); Gebru et al., "Datasheets for Datasets" (2018).</li>
+   <li><span class="k">Core</span>Barocas, Hardt &amp; Narayanan, <em>Fairness and Machine Learning</em> — free online, and the standard text.</li>
+   <li><span class="k">Paper</span>Carlini et al., "Extracting Training Data from Large Language Models" (2021).</li>
+   <li><span class="k">Paper</span>Abadi et al., "Deep Learning with Differential Privacy" (2016).</li>
+   <li><span class="k">Read</span>NIST AI Risk Management Framework 1.0, and the EU AI Act's risk-tier structure.</li>
+   <li><span class="k">Course</span>Harvard's Embedded EthiCS modules — ethics taught inside the technical course rather than beside it, which is the model this book follows.</li>
+  </ul>
+ </div>
+</section>

@@ -90,13 +90,12 @@ console.error('render:', stats.result.value);
 
 const pdf = await send('Page.printToPDF', {
   printBackground: true,
-  preferCSSPageSize: false,
+  preferCSSPageSize: !!opts.preferCSSPageSize,
   paperWidth: opts.paperWidth,
   paperHeight: opts.paperHeight,
-  marginTop: opts.marginTop,
-  marginBottom: opts.marginBottom,
-  marginLeft: opts.marginLeft,
-  marginRight: opts.marginRight,
+  ...(opts.marginTop === undefined ? {} : {
+    marginTop: opts.marginTop, marginBottom: opts.marginBottom,
+    marginLeft: opts.marginLeft, marginRight: opts.marginRight }),
   displayHeaderFooter: !!opts.displayHeaderFooter,
   headerTemplate: opts.headerTemplate ?? '<span></span>',
   footerTemplate: opts.footerTemplate ?? '<span></span>',

@@ -1,1 +1,238 @@
-<section class="fm"><h1>m13</h1><p>stub</p></section>
+<section class="module">
+ <div class="mod-open">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">13</div>
+    <div class="meta">
+      <div class="kicker">Part Four · The Engineering Discipline</div>
+      <div class="lineage">NVIDIA DLI TensorRT &amp; Triton deployment track</div>
+    </div>
+  </div>
+  <h1 id="m13" data-toc="module" data-toc-n="13" data-toc-title="Inference, Serving and Optimisation">Inference, Serving<br>and Optimisation</h1>
+  <div class="epigraph">A model is trained once and served a billion times. Almost
+   all of the money, and almost all of the user's experience, is on the second
+   side of that sentence.
+   <span class="attrib">On where the cost actually is</span></div>
+ </div>
+ <div class="panel">
+   <div class="grid">
+     <div>
+       <h4>What you will be able to do</h4>
+       <ol class="tight">
+         <li>Explain why prefill is compute-bound and decode is memory-bound, and serve each accordingly.</li>
+         <li>Size a KV cache and choose the attention variant that makes it affordable.</li>
+         <li>Apply quantisation, distillation and speculative decoding with measured quality guards.</li>
+         <li>Set latency SLOs and compute cost per million tokens from first principles.</li>
+       </ol>
+     </div>
+     <div>
+       <h4>Assumed on entry</h4>
+       <ul class="tight">
+         <li>Modules 08 and 09.</li>
+         <li>A GPU and a served model endpoint you control.</li>
+       </ul>
+       <h4>Load</h4>
+       <ul class="tight">
+         <li>Reading &amp; lectures: 8 h</li>
+         <li>Problem set: 4 h · Lab: 10 h</li>
+       </ul>
+     </div>
+   </div>
+   <div class="facts">
+     <div><b>Weeks</b>21–22</div>
+     <div><b>Total hours</b>22</div>
+     <div><b>Deliverable</b>A serving benchmark and cost model</div>
+     <div><b>Gate</b>Rubric ≥ 3 on all four rows</div>
+   </div>
+ </div>
+ </div>
+
+ <p class="lede opener">Autoregressive generation has two phases with opposite
+ characters, and conflating them is the root of most serving mistakes.
+ <em>Prefill</em> processes the whole prompt in parallel: a large matrix multiply,
+ compute-bound, efficient. <em>Decode</em> produces one token at a time: for each
+ token the entire weight matrix must be read from memory to perform a
+ vector–matrix product, which is memory-bound and desperately inefficient per
+ unit of arithmetic.</p>
+
+ <p>The consequence is immediate. Decode throughput on one request is limited by
+ memory bandwidth divided by model size, and hardly at all by compute. Batching
+ many requests together amortises that weight read across many tokens, which is
+ why serving throughput scales almost linearly with batch size until memory runs
+ out — and why a single-user deployment wastes almost all of an accelerator.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">t_{\text{decode}} \;\gtrsim\; \frac{2 N_{\text{bytes}}}{\beta_{\text{mem}}} \quad\text{per token, per batch}</span></div><span class="tag-n"></span></div>
+
+ <div class="call deriv">
+   <span class="lbl">A back-of-envelope you should be able to do in your head</span>
+   A 7-billion-parameter model in BF16 occupies about 14&nbsp;GB. On an
+   accelerator with 2&nbsp;TB/s of memory bandwidth, reading those weights once
+   takes 7&nbsp;ms, so single-stream decoding cannot exceed roughly 140 tokens per
+   second, whatever the compute. Batch 32 requests and you read the weights once
+   for all of them: throughput rises toward 4 500 tokens per second in aggregate
+   while each user still sees about 140. That is the whole economics of LLM
+   serving in three sentences.
+ </div>
+
+ <h2><span class="num">13.1</span>The KV cache</h2>
+
+ <p class="lede">Each generated token attends to every previous token, so keys and
+ values are cached rather than recomputed. That cache is the memory that
+ determines how many concurrent requests fit on a device.</p>
+
+ <div class="eq numbered"><div class="body"><span class="md">\text{KV bytes} = 2 \times L \times n_{\text{kv}} \times d_{\text{head}} \times s \times b \times \text{bytes}</span></div><span class="tag-n"></span></div>
+
+ <p>For a 32-layer model with 32 key-value heads of dimension 128, in FP16, at
+ 8 192 tokens of context, one sequence needs about 4&nbsp;GB. Sixteen concurrent
+ users need 64&nbsp;GB — more than the weights, by a wide margin. This single
+ calculation explains most of modern inference engineering:</p>
+
+ <ul>
+   <li><strong>Grouped-query attention</strong> shares key-value heads across
+   query heads, cutting the cache by the grouping factor — typically 4× to 8×
+   with negligible quality loss. It is the highest-leverage architectural choice
+   for a model that will be served.</li>
+   <li><strong>Paged attention</strong> stores the cache in fixed-size blocks
+   rather than one contiguous allocation per sequence, eliminating the internal
+   fragmentation that otherwise wastes the majority of cache memory, and allowing
+   blocks to be shared between requests with a common prefix.</li>
+   <li><strong>Prefix caching</strong> reuses the cache for a shared system
+   prompt across requests, removing its prefill cost entirely.</li>
+   <li><strong>Cache quantisation</strong> stores keys and values in 8 or even 4
+   bits, trading a small quality cost for double or quadruple the concurrency.</li>
+ </ul>
+
+ <h2><span class="num">13.2</span>Making the model smaller</h2>
+
+ <table class="long">
+  <caption>Compression techniques, their typical gain, and what they cost you.</caption>
+  <thead><tr><th>Technique</th><th>Typical gain</th><th>Quality cost</th><th>Note</th></tr></thead>
+  <tbody>
+   <tr><td>INT8 / FP8 weights + activations</td><td>~2× memory, ~2× throughput</td><td>Near zero with calibration</td><td>The default first step</td></tr>
+   <tr><td>4-bit weight-only (GPTQ, AWQ)</td><td>~4× memory</td><td>Small; worse on small models</td><td>Decode is memory-bound, so this is a real speed-up</td></tr>
+   <tr><td>Distillation</td><td>3–10× smaller model</td><td>Task-dependent; can be near zero in-domain</td><td>Needs the teacher and unlabelled data</td></tr>
+   <tr><td>Structured pruning</td><td>1.5–2×</td><td>Requires recovery fine-tuning</td><td>Unstructured sparsity rarely helps without hardware support</td></tr>
+   <tr><td>Speculative decoding</td><td>2–3× latency</td><td><em>None</em> — output distribution preserved</td><td>Needs a draft model and spare compute</td></tr>
+  </tbody>
+ </table>
+
+ <p>Speculative decoding deserves emphasis because it is the rare optimisation
+ with no quality cost. A small draft model proposes several tokens; the large
+ model verifies them all in a single parallel forward pass; a rejection-sampling
+ correction guarantees the output distribution is exactly that of the large model
+ alone. It converts memory-bound decoding into compute-bound verification, which
+ is precisely the resource that was sitting idle.</p>
+
+ <div class="call pitfall">
+   <span class="lbl">Common pitfall</span>
+   Quantising and reporting only perplexity. Quantisation damage is concentrated
+   in the tail: rare tokens, long contexts, code, non-English languages and
+   arithmetic degrade first while average perplexity barely moves. Evaluate on
+   your hardest task-specific set, at your longest context, before and after —
+   and keep the un-quantised model available to compare against in production.
+ </div>
+
+ <h2><span class="num">13.3</span>Serving</h2>
+
+ <p class="lede">A production inference server is a scheduler with a model
+ attached. The techniques that matter are all about keeping the accelerator busy
+ without letting any single request wait too long.</p>
+
+ <ul>
+   <li><strong>Continuous batching.</strong> Rather than waiting for a batch to
+   finish together, admit new requests into the running batch as slots free up.
+   This alone often doubles or triples throughput over static batching, because
+   sequences finish at wildly different times.</li>
+   <li><strong>Chunked prefill.</strong> Break long prompts into pieces and
+   interleave them with decode steps, so one 30 000-token prompt does not stall
+   every other user for a second.</li>
+   <li><strong>Disaggregation.</strong> Run prefill and decode on separate pools
+   sized independently, since they have different bottlenecks.</li>
+   <li><strong>Admission control.</strong> Under overload, reject early with a
+   clear error rather than accepting work that will miss its deadline. Queueing
+   without a bound converts a throughput problem into a latency catastrophe.</li>
+ </ul>
+
+ <table>
+  <caption>The four numbers to quote in any serving discussion. Report percentiles, never means.</caption>
+  <thead><tr><th>Metric</th><th>Definition</th><th>Driven by</th></tr></thead>
+  <tbody>
+   <tr><td>TTFT</td><td>Time to first token</td><td>Prefill length, queueing, prefix cache hits</td></tr>
+   <tr><td>TPOT</td><td>Time per output token</td><td>Memory bandwidth, batch size, model size</td></tr>
+   <tr><td>Throughput</td><td>Tokens per second, all users</td><td>Batching, KV-cache capacity</td></tr>
+   <tr><td>Cost</td><td>Currency per million tokens</td><td>Throughput ÷ hardware cost per hour</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call practice">
+   <span class="lbl">In practice</span>
+   Choose a decoding strategy deliberately. Greedy decoding is reproducible and
+   flat; temperature and nucleus sampling trade determinism for diversity;
+   beam search rarely helps open-ended generation and often hurts it. For
+   anything with a verifiable answer, low temperature with best-of-<span class="m">n</span>
+   plus a verifier beats high-temperature single sampling, and the cost is a
+   multiple you can compute exactly.
+ </div>
+
+ <div class="bench">
+   <h4>The Bench · Lab 13</h4>
+   <div class="title">Serve a model properly, and prove the cost per million tokens</div>
+   <ol>
+     <li>Serve an open model with a production inference engine. Build a load
+     generator with realistic prompt and output length distributions — not fixed
+     lengths, which hide every scheduling problem.</li>
+     <li>Measure TTFT and TPOT at p50, p95 and p99 across concurrency 1, 4, 16,
+     64. Plot throughput against latency and identify the knee. This curve is your
+     capacity plan.</li>
+     <li>Compute the theoretical decode floor from model size and memory
+     bandwidth. Report your achieved fraction of it and explain the gap.</li>
+     <li>Quantise to 8-bit and 4-bit. Measure throughput, memory and quality on a
+     hard task set at long context. Present a table that would let a product owner
+     make the trade.</li>
+     <li>Implement or enable speculative decoding with a small draft model. Report
+     acceptance rate, latency improvement, and verify output distribution
+     equivalence on a fixed seed.</li>
+     <li>Build the cost model: currency per million input and output tokens at
+     your measured throughput and hardware price. Then compute the break-even
+     point against a hosted API, including the idle hours.</li>
+   </ol>
+   <div class="ship"><b>Ship:</b> the throughput–latency curve with its knee, a
+   quantisation quality table at long context, speculative-decoding acceptance
+   statistics, and a one-page cost model with the break-even.
+   <b>Acceptance:</b> you achieve at least 60&nbsp;% of your theoretical decode
+   floor at high concurrency, and your cost model predicts a measured bill within
+   20&nbsp;%.</div>
+ </div>
+
+ <h4>Assessment</h4>
+ <table>
+  <caption>Module 13 rubric.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Mechanism</td><td>Knows inference is slow</td><td>Separates prefill and decode and serves each correctly</td><td>Derives the decode floor and closes the gap to it</td></tr>
+   <tr><td>Memory</td><td>Hits OOM and reduces batch</td><td>Sizes the KV cache and chooses GQA, paging or quantisation</td><td>Plans concurrency from a memory budget before deploying</td></tr>
+   <tr><td>Compression</td><td>Quantises and ships</td><td>Guards quality on hard, long-context sets</td><td>Selects the technique from the bottleneck, not from fashion</td></tr>
+   <tr><td>Economics</td><td>Reports mean latency</td><td>Reports percentiles and cost per million tokens</td><td>Builds a capacity plan with admission control and SLOs</td></tr>
+  </tbody>
+ </table>
+
+ <h4>Self-check</h4>
+ <ol class="tight">
+  <li>Why does batching improve throughput enormously and single-user latency not at all?</li>
+  <li>Size the KV cache for a 70-billion-parameter model with 8 KV heads, 80 layers, head dimension 128, at 32k context. What must change to serve 20 users on 8 devices?</li>
+  <li>Why is speculative decoding lossless? Where does the guarantee come from?</li>
+  <li>Your p50 latency is fine and p99 is ten times worse. Name three causes and the mitigation for each.</li>
+ </ol>
+
+ <div class="reading">
+  <h4>Reading</h4>
+  <ul>
+   <li><span class="k">Paper</span>Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (vLLM, 2023).</li>
+   <li><span class="k">Paper</span>Leviathan, Kalman &amp; Matias, "Fast Inference from Transformers via Speculative Decoding" (2023).</li>
+   <li><span class="k">Paper</span>Frantar et al., "GPTQ" (2023) and Lin et al., "AWQ" (2024).</li>
+   <li><span class="k">Paper</span>Pope et al., "Efficiently Scaling Transformer Inference" (2022) — the arithmetic, done carefully.</li>
+   <li><span class="k">Course</span>NVIDIA DLI's TensorRT and Triton deployment workshops — the practical counterpart to this module.</li>
+   <li><span class="k">Paper</span>Hinton, Vinyals &amp; Dean, "Distilling the Knowledge in a Neural Network" (2015).</li>
+  </ul>
+ </div>
+</section>

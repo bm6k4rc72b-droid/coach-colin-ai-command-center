@@ -1,1 +1,141 @@
-<section class="fm"><h1>capstone</h1><p>stub</p></section>
+<section class="plate">
+  <div class="roman">The Capstone</div>
+  <h1 id="cap" data-toc="part" data-toc-title="The Capstone">A System That<br>Uses Every Part</h1>
+  <div class="plate-rule"></div>
+  <div class="blurb">Six weeks, one system, and a written defence of it. The
+   capstone is not a demonstration that you can call an API; it is the artefact
+   that proves you can formulate, model, scale and operate — and can say honestly
+   where your system fails.</div>
+</section>
+
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">⁂</div>
+    <div class="meta">
+      <div class="kicker">The Capstone</div>
+      <div class="lineage">All fifteen modules</div>
+    </div>
+  </div>
+  <h1 id="cap2" data-toc="module" data-toc-n="" data-toc-title="Brief, tiers and defence">The Brief</h1>
+ </div>
+
+ <p class="lede opener">Build and operate one system that a real person would use,
+ for a task you understand well enough to know when the output is wrong. That last
+ clause is the constraint that matters: choose a domain where you are competent to
+ judge quality, because the capstone is assessed on your ability to evaluate as
+ much as on your ability to build.</p>
+
+ <h2>The four requirements</h2>
+
+ <p class="lede">Whatever you build must satisfy all four. They correspond to the
+ four competences of the introduction.</p>
+
+ <ol>
+   <li><strong>A model you shaped.</strong> Trained from scratch, fine-tuned, or
+   adapted — not merely prompted. You must be able to show the training curve, the
+   data decisions and the ablation that justifies the configuration.</li>
+   <li><strong>A system around it.</strong> Retrieval, tools, or an agent loop,
+   with each stage measured separately (Figure&nbsp;12.1).</li>
+   <li><strong>An evaluation that could embarrass you.</strong> A private held-out
+   set, disaggregated metrics, latency percentiles, and cost per request. If your
+   evaluation has never returned a result you did not want, it is not an
+   evaluation.</li>
+   <li><strong>Operation.</strong> Deployed, versioned, monitored, with a rollback
+   path you have rehearsed and a model card you wrote before you trained.</li>
+ </ol>
+
+ <h2>Three tiers</h2>
+
+ <table class="long">
+  <caption>Pick the tier that matches your access to compute and data, not your ambition. All three are assessed against the same rubric.</caption>
+  <thead><tr><th>Tier</th><th>Shape</th><th>Compute</th><th>Example briefs</th></tr></thead>
+  <tbody>
+   <tr><td><strong>I · Bench</strong></td>
+       <td>Small model trained from scratch; classical system around it</td>
+       <td>One GPU, hours</td>
+       <td>A domain language model over a technical corpus with retrieval and citation; a document-understanding pipeline for a specific form type; a forecasting service with calibrated intervals</td></tr>
+   <tr><td><strong>II · Studio</strong></td>
+       <td>Open model adapted; full retrieval and agent system; served</td>
+       <td>One to eight GPUs, days</td>
+       <td>A codebase assistant fine-tuned on one repository's conventions; a clinical-literature question system with strict faithfulness; a multimodal inspection tool for a physical process</td></tr>
+   <tr><td><strong>III · Frontier</strong></td>
+       <td>Post-training with preferences; distillation and quantisation; measured serving at load</td>
+       <td>Multi-GPU, weeks</td>
+       <td>A domain assistant taken from base weights through SFT and DPO, distilled, quantised and served under an SLO; a reasoning system with a verifier and test-time search</td></tr>
+  </tbody>
+ </table>
+
+ <h2>Six weeks</h2>
+
+ <table class="sched">
+  <thead><tr><th>Week</th><th>Work</th><th>Artefact due</th></tr></thead>
+  <tbody>
+   <tr><td>1</td><td>Scope, data audit, evaluation design, model card draft</td><td>A one-page brief and the evaluation set</td></tr>
+   <tr><td>2</td><td>Baselines — trivial, classical, and prompted</td><td>A baseline table you will have to beat</td></tr>
+   <tr><td>3–4</td><td>The model: training or adaptation, with ablations</td><td>Training curves and an ablation table</td></tr>
+   <tr><td>5</td><td>The system: retrieval, tools, serving, optimisation</td><td>Per-stage metrics and a latency–cost curve</td></tr>
+   <tr><td>6</td><td>Deployment, monitoring, red-team, write-up</td><td>Running service, risk register, defence</td></tr>
+  </tbody>
+ </table>
+
+ <div class="call">
+   <span class="lbl">Key idea</span>
+   Beat three baselines before you build anything clever: the trivial baseline
+   (constant, most-frequent, or retrieval-only), the classical baseline (a linear
+   model or BM25), and the prompted baseline (a capable model with a good prompt
+   and no training). A great many production machine-learning projects are
+   outperformed by one of these three, and discovering it in week two is a
+   success, not a failure.
+ </div>
+
+ <h2>The defence</h2>
+
+ <p class="lede">The written defence is the deliverable that distinguishes an
+ engineer from someone who ran a notebook. Eight pages, no more, answering:</p>
+
+ <ol class="tight">
+  <li>What is the system for, and who is harmed if it is wrong?</li>
+  <li>What did the three baselines score, and by how much did you beat them?</li>
+  <li>What is the evidence that your evaluation reflects deployment reality?</li>
+  <li>Which decision in the build had the largest measured effect, and what is the
+  ablation that shows it?</li>
+  <li>Where does the system fail? Give three concrete failure modes with
+  transcripts.</li>
+  <li>What does it cost per thousand requests, and what dominates that cost?</li>
+  <li>What would you do with ten times the budget, and what would you do with a
+  tenth?</li>
+  <li>What risk are you accepting, and on whose behalf?</li>
+ </ol>
+
+ <h4>Capstone rubric</h4>
+ <table>
+  <caption>Scored 1–4 per row. A capstone passes at 3 across the board; distinction requires a 4 in at least four rows including Evaluation.</caption>
+  <thead><tr><th>Criterion</th><th>1 — Emerging</th><th>3 — Proficient</th><th>4 — Distinguished</th></tr></thead>
+  <tbody>
+   <tr><td>Formulation</td><td>Restates a tutorial problem</td><td>Scopes a real task with a defined user and harm model</td><td>Reformulates to a simpler problem that serves the user better</td></tr>
+   <tr><td>Modelling</td><td>Default configuration</td><td>Justified by ablation against baselines</td><td>Ablations isolate the mechanism, not just the outcome</td></tr>
+   <tr><td>Systems</td><td>End-to-end script</td><td>Per-stage metrics; the binding constraint identified and fixed</td><td>Cost and latency engineered to a stated SLO</td></tr>
+   <tr><td>Evaluation</td><td>One number on one set</td><td>Private set, disaggregated, with intervals</td><td>Evaluation designed to detect its own blind spots</td></tr>
+   <tr><td>Operation</td><td>Runs locally</td><td>Deployed, versioned, monitored, rollback rehearsed</td><td>Degradation detected automatically before users notice</td></tr>
+   <tr><td>Judgement</td><td>Reports successes</td><td>Documents failures and accepted risks</td><td>Changed the design because of what the evaluation showed</td></tr>
+  </tbody>
+ </table>
+
+ <div class="bench">
+   <h4>The Bench · Final</h4>
+   <div class="title">What to hand in</div>
+   <ul>
+     <li>A repository: reproducible from a clean machine, with CI, pinned
+     dependencies, and one command that runs the evaluation suite.</li>
+     <li>A running service, or a recorded demonstration and the deployment
+     configuration that produced it.</li>
+     <li>The eight-page defence.</li>
+     <li>A model card and a signed risk register.</li>
+     <li>The red-team log and its regression suite.</li>
+   </ul>
+   <div class="ship"><b>Acceptance:</b> a competent stranger can clone the
+   repository, run one command, and reproduce your headline number to within
+   noise — and can find, in your own writing, the three ways your system fails.</div>
+ </div>
+</section>

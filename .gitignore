@@ -11,5 +11,7 @@ output/
 .gstack/
 3d-models/
 
-# course build artefacts
+# course build artefacts (the finished book itself is tracked)
 course/.build/
+!course/dist/
+!course/dist/*.pdf

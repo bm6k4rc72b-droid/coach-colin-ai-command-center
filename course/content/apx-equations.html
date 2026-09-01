@@ -1,1 +1,57 @@
-<section class="fm"><h1>apx-equations</h1><p>stub</p></section>
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">B</div>
+    <div class="meta"><div class="kicker">Appendix</div>
+    <div class="lineage">Everything worth having on one card</div></div>
+  </div>
+  <h1 id="apxB" data-toc="module" data-toc-n="B" data-toc-title="The Reference Card">The Reference Card</h1>
+ </div>
+
+ <p class="lede opener">The equations and estimates this course actually uses,
+ collected. If you can reconstruct this page from memory, you have the course.</p>
+
+ <h2>Learning</h2>
+ <div class="eq"><div class="body"><span class="md">\hat{\theta}_{\text{MLE}} = \argmax_\theta \sum_i \log p_\theta(y_i \mid x_i) \qquad \theta_{t+1} = \theta_t - \eta \nabla_\theta L</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\E\big[(y-\hat f)^2\big] = \text{bias}^2 + \text{variance} + \sigma^2</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\KL(p\|q) = \E_{p}\!\left[\log \tfrac{p}{q}\right] \ge 0, \qquad H(p,q) = H(p) + \KL(p\|q)</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\text{perplexity} = e^{\ell_{\text{nats}}}, \qquad \text{bits/token} = \ell_{\text{nats}} / \ln 2</span></div></div>
+
+ <h2>Deep networks</h2>
+ <div class="eq"><div class="body"><span class="md">\delta^{(\ell)} = \big(W^{(\ell+1)}\big)\!\T \delta^{(\ell+1)} \odot \phi'\big(z^{(\ell)}\big), \qquad \nabla_{W^{(\ell)}} L = \delta^{(\ell)}\big(a^{(\ell-1)}\big)\!\T</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\operatorname{Var}(W_{\text{He}}) = \frac{2}{n_{\text{in}}}, \qquad \operatorname{Var}(W_{\text{Xavier}}) = \frac{2}{n_{\text{in}} + n_{\text{out}}}</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\theta_{t+1} = \theta_t - \eta\,\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon} - \eta\lambda\theta_t \quad\text{(AdamW)}</span></div></div>
+
+ <h2>Transformers</h2>
+ <div class="eq"><div class="body"><span class="md">\operatorname{Attention}(Q,K,V) = \softmax\!\left(\frac{QK\T}{\sqrt{d_k}}\right)V</span></div></div>
+ <div class="eq"><div class="body"><span class="md">N \approx 12Ld^2 + Vd, \qquad C_{\text{train}} \approx 6ND, \qquad C_{\text{fwd}} \approx 2N \text{ per token}</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\text{KV bytes} = 2 L\, n_{\text{kv}}\, d_{\text{head}}\, s\, b \times \text{bytes/elt}</span></div></div>
+ <div class="eq"><div class="body"><span class="md">L(N,D) \approx E + A N^{-\alpha} + B D^{-\beta}, \qquad D^{*} \approx 20 N \;\text{(compute-optimal)}</span></div></div>
+
+ <h2>Systems</h2>
+ <div class="eq"><div class="body"><span class="md">I = \frac{\text{FLOPs}}{\text{bytes}}, \qquad \text{perf} = \min\!\big(\pi_{\text{peak}},\, I\beta_{\text{mem}}\big)</span></div></div>
+ <div class="eq"><div class="body"><span class="md">T_{\text{days}} = \frac{6ND}{G\,\pi_{\text{peak}}\,\text{MFU}\cdot 86400}, \qquad \text{bubble} \approx \frac{p-1}{m+p-1}</span></div></div>
+ <div class="eq"><div class="body"><span class="md">t_{\text{decode}} \gtrsim \frac{2N_{\text{bytes}}}{\beta_{\text{mem}}}\ \text{per token}, \qquad P(\text{agent success}) = r^{\,k}</span></div></div>
+
+ <h2>Alignment and generation</h2>
+ <div class="eq"><div class="body"><span class="md">\max_\pi \E\big[r(x,y)\big] - \beta\,\KL\big(\pi \,\|\, \pi_{\text{ref}}\big), \qquad \pi^{*} \propto \pi_{\text{ref}}\, e^{r/\beta}</span></div></div>
+ <div class="eq"><div class="body"><span class="md">\mathcal{L}_{\text{DPO}} = -\E\left[\log\sigma\!\left(\beta\log\tfrac{\pi_\theta(y_w)}{\pi_{\text{ref}}(y_w)} - \beta\log\tfrac{\pi_\theta(y_l)}{\pi_{\text{ref}}(y_l)}\right)\right]</span></div></div>
+ <div class="eq"><div class="body"><span class="md">x_t = \sqrt{\bar\alpha_t}\,x_0 + \sqrt{1-\bar\alpha_t}\,\epsilon, \qquad \mathcal{L} = \E\big\|\epsilon - \epsilon_\theta(x_t,t)\big\|^2</span></div></div>
+
+ <h2>Numbers worth knowing by heart</h2>
+ <table>
+  <thead><tr><th>Quantity</th><th>Rule of thumb</th><th>Used in</th></tr></thead>
+  <tbody>
+   <tr><td>Training compute</td><td><span class="m">6ND</span> FLOPs</td><td>M08, M09</td></tr>
+   <tr><td>Inference compute</td><td><span class="m">2N</span> FLOPs per token</td><td>M13</td></tr>
+   <tr><td>Optimiser memory</td><td>~16 bytes per parameter, mixed precision</td><td>M06, M09</td></tr>
+   <tr><td>Compute-optimal data</td><td>~20 tokens per parameter</td><td>M08</td></tr>
+   <tr><td>Good MFU</td><td>35–55&nbsp;% at scale; below 25&nbsp;% is a bug</td><td>M09</td></tr>
+   <tr><td>Activation checkpointing</td><td>+33&nbsp;% compute for ~10× activation memory</td><td>M09</td></tr>
+   <tr><td>GQA saving</td><td>4–8× smaller KV cache, negligible quality cost</td><td>M08, M13</td></tr>
+   <tr><td>Agent reliability</td><td>0.95 per step over 10 steps ≈ 0.60 overall</td><td>M12</td></tr>
+   <tr><td>Evaluation precision</td><td>4× the data to halve the interval</td><td>M01, M04</td></tr>
+   <tr><td>Effective horizon</td><td><span class="m">1/(1-\gamma)</span> steps</td><td>M03, M10</td></tr>
+  </tbody>
+ </table>
+</section>

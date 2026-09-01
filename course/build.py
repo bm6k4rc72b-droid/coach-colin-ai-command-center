@@ -159,6 +159,26 @@ def build_toc(entries, folios):
     return "\n".join(rows)
 
 
+PAPER_RGB = (0xFB / 255, 0xFA / 255, 0xF7 / 255)
+
+
+def paint_paper(path):
+    """Chromium does not paint the root background into the print margin box,
+    so the sheet is laid onto its paper colour after the fact — underneath
+    every page's existing content, which leaves dark plates untouched."""
+    try:
+        import pymupdf
+    except ImportError:
+        print("  note: pymupdf not installed — page margins will print white")
+        return
+    doc = pymupdf.open(str(path))
+    for page in doc:
+        page.draw_rect(page.rect, color=None, fill=PAPER_RGB,
+                       overlay=False, width=0)
+    doc.save(str(path), incremental=True, encryption=pymupdf.PDF_ENCRYPT_KEEP)
+    doc.close()
+
+
 def main():
     BUILD.mkdir(exist_ok=True); DIST.mkdir(exist_ok=True)
 
@@ -229,6 +249,8 @@ def main():
     w.page_mode = "/UseOutlines"
     with open(OUT, "wb") as fh:
         w.write(fh)
+
+    paint_paper(OUT)
 
     total = sum(counts)
     size = OUT.stat().st_size / 1024 / 1024
