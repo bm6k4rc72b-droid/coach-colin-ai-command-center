@@ -1,0 +1,161 @@
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">H</div>
+    <div class="meta"><div class="kicker">Appendix</div>
+    <div class="lineage">Answers and marking notes</div></div>
+  </div>
+  <h1 id="apxH" data-toc="module" data-toc-n="H" data-toc-title="The Answer Key">The Answer Key</h1>
+ </div>
+
+ <p class="lede opener">Worked answers for Appendices&nbsp;F and&nbsp;G. Mark
+ honestly: on a <span class="sc">short</span> question the mark is for naming the
+ mechanism, not for using the same words as the key, and on a
+ <span class="sc">calc</span> question a correct number without working scores nothing
+ because the working is the thing being examined.</p>
+
+ <div class="key">
+
+ <h3>Appendix F · Module 01</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — reverse mode costs one pass per output; the loss is a single scalar. The price is memory for the stored activations.</p>
+ <p><span class="n">2</span><span class="a">κ = 4.0 / 0.002 = 2 000.</span> Gradient descent's error contracts by about <span class="m">(\kappa-1)/(\kappa+1)</span> per step, so iterations grow roughly linearly in κ — expect very slow progress along the flat directions unless normalisation or an adaptive optimiser reduces the effective conditioning.</p>
+ <p><span class="n">3</span><span class="a">Gaussian noise</span> with fixed variance, independent across examples. Homoscedasticity is the assumption that lets the variance term drop out as a constant.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — width is not rank. Adding output dimensions cannot create independent directions that the layer's input and weights do not carry.</p>
+ <p><span class="n">5</span><span class="a">1 600 examples.</span> The observed gap is 1.5 points, half of 3; halving the resolvable difference costs four times the data, so 4 × 400.</p>
+ <p><span class="n">6</span><span class="a">Perplexity <span class="m">e^{1.94} \approx 6.96</span>; bits per token <span class="m">1.94/\ln 2 \approx 2.80</span>.</span></p>
+
+ <h3>Appendix F · Module 02</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — admissibility alone guarantees optimality for tree search; graph search with a closed set needs consistency, or a state may be closed at a suboptimal cost.</p>
+ <p><span class="n">2</span><span class="a">Depth doubles.</span> Nodes ≈ <span class="m">b_{\text{eff}}^{\,d}</span>, so for a fixed budget <span class="m">d = \log N / \log b_{\text{eff}}</span>; <span class="m">\log 36 / \log 6 = 2</span>.</p>
+ <p><span class="n">3</span><span class="a">Tiles may move to any adjacent square</span> whether or not it is occupied — the blank-square constraint is dropped. Manhattan distance solves that relaxed problem exactly, so it never overestimates.</p>
+ <p><span class="n">4</span><span class="a">(a)</span> — weighting the heuristic breaks admissibility and therefore optimality; IDA<sup>*</sup> and a better heuristic both preserve it.</p>
+ <p><span class="n">5</span><span class="a">It fails early.</span> Choosing the most constrained variable puts the smallest branching factors nearest the root, so the subtrees that must be searched are far smaller than under a fixed order.</p>
+ <p><span class="n">6</span><span class="a">(d)</span> — clause learning turns each conflict into a constraint that prunes an exponential region, which no hand-written loop reproduces.</p>
+
+ <h3>Appendix F · Module 03</h3>
+ <p><span class="n">1</span><span class="a">It falls; explaining away.</span> The earthquake accounts for the observed alarm, so the alternative cause loses posterior mass even though the two are a priori independent.</p>
+ <p><span class="n">2</span><span class="a">(c)</span> — treewidth. A large but chain-like network is cheap; a small densely coupled one is not.</p>
+ <p><span class="n">3</span><span class="a">Particle deprivation.</span> Resampling collapsed the particles onto a wrong mode and none survive near the truth. Fixes: add roughening noise after resampling, resample less aggressively (low-variance or adaptive resampling), widen the sensor noise model, or use more particles.</p>
+ <p><span class="n">4</span><span class="a">≈ 200 steps</span> from <span class="m">1/(1-\gamma)</span>; at 0.999 it becomes ≈ 1 000, a five-fold longer horizon.</p>
+ <p><span class="n">5</span><span class="a">(b)</span> — a <span class="m">\gamma</span>-contraction in the supremum norm, which gives geometric convergence by the Banach fixed-point theorem.</p>
+ <p><span class="n">6</span><span class="a">Urgency disappears.</span> With no step cost, any policy that eventually reaches the goal while avoiding the hazard is optimal, so arbitrarily long detours become free and the agent may wander. The step penalty is what encodes "sooner is better".</p>
+
+ <h3>Appendix F · Module 04</h3>
+ <p><span class="n">1</span><span class="a">(c)</span> — training and validation error are both high and close, which is bias. More data will not help a model that cannot fit the data it has.</p>
+ <p><span class="n">2</span><span class="a"><span class="m">\nabla_\theta \ell = X\T(\sigma(X\theta) - y)</span></span> — prediction minus target, projected back through the inputs. Both are generalised linear models, so both gradients have that form; only the link function differs.</p>
+ <p><span class="n">3</span><span class="a">The <span class="m">L_1</span> constraint region is a polytope with vertices on the axes.</span> A smooth loss's contours generically touch it at a vertex, where some coordinates are exactly zero; the <span class="m">L_2</span> ball has no corners, so tangency is generically off-axis.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — leakage or a broken split. With dropout excluded by the stem, a persistent gap in that direction is a data problem, not a regularisation artefact.</p>
+ <p><span class="n">5</span><span class="a">That the model is worse than the constant baseline</span>, which scores 96&nbsp;%. Report balanced accuracy or average precision, plus recall at a stated precision, and show the confusion matrix.</p>
+ <p><span class="n">6</span><span class="a">Group by patient and split by time.</span> No patient may appear on both sides (the unit of generalisation), and the test period must follow the training period (the deployment condition).</p>
+
+ <h3>Appendix F · Module 05</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — isotropic covariances shrinking toward zero make the responsibilities collapse to hard nearest-centroid assignments.</p>
+ <p><span class="n">2</span><span class="a">It is a bug, always.</span> EM maximises a bound that touches the likelihood, so the likelihood cannot decrease. Look first at the E-step: unnormalised responsibilities, or M-step parameters used inconsistently within the same iteration.</p>
+ <p><span class="n">3</span><span class="a">One feature has a much larger scale</span> and therefore dominates the covariance. Standardise the columns first, or equivalently use the correlation matrix.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — with easy negatives the discrimination task is trivial, so the encoder need learn no structure to solve it.</p>
+ <p><span class="n">5</span><span class="a">(a)</span> — Eckart–Young: the truncated SVD is the optimal rank-<span class="m">k</span> approximation in squared (Frobenius) error.</p>
+ <p><span class="n">6</span><span class="a">Anisotropy.</span> The embeddings occupy a narrow cone, so similarity has almost no dynamic range and ranking is noise. Centre the embeddings and remove the dominant principal component; normalise before indexing; or retrain with harder negatives.</p>
+
+ <h3>Appendix F · Module 06</h3>
+ <p><span class="n">1</span><span class="a">The rectifier zeroes half the distribution</span>, halving the variance of the activations. Doubling the initialisation variance restores unit signal scale layer to layer.</p>
+ <p><span class="n">2</span><span class="a">(b)</span> — batch independence, so a sequence's normalisation does not depend on what else is in the batch and training matches inference exactly.</p>
+ <p><span class="n">3</span><span class="a">112&nbsp;GB.</span> Sixteen bytes per parameter: 2 for BF16 weights, 2 for gradients, 4 for the FP32 master copy, 8 for Adam's two moments. <span class="m">7\times10^{9} \times 16 = 1.12\times10^{11}</span> bytes.</p>
+ <p><span class="n">4</span><span class="a">(a)</span> — larger batches reduce gradient noise, so the same learning rate becomes effectively smaller. Rescale it and re-run the range test before concluding anything about the batch.</p>
+ <p><span class="n">5</span><span class="a">Because Adam divides by <span class="m">\sqrt{\hat v}</span>.</span> An <span class="m">L_2</span> term folded into the gradient is rescaled by that denominator, so parameters with large gradients receive less decay — the regularisation strength becomes an accident of gradient magnitude. AdamW applies the shrinkage directly to the weights instead.</p>
+ <p><span class="n">6</span><span class="a">Two mechanisms:</span> the learning-rate warmup had not yet reached a usable value; or the network sat on a plateau — saturated activations, dead units, a near-uniform softmax — and escaped. Distinguish with per-layer gradient norms during the flat phase: near-zero norms indicate saturation, healthy norms with tiny steps indicate the schedule.</p>
+
+ <h3>Appendix F · Module 07</h3>
+ <p><span class="n">1</span><span class="a">Both have a 5×5 receptive field.</span> Two 3×3 layers cost <span class="m">2\times 9C^2 = 18C^2</span> parameters against <span class="m">25C^2</span> for the single 5×5 — 28&nbsp;% fewer — and add a second nonlinearity.</p>
+ <p><span class="n">2</span><span class="a">(b)</span> — constant path length between any two positions, and no sequential dependency along the sequence during training.</p>
+ <p><span class="n">3</span><span class="a">The residual connection.</span> Both give the gradient an additive path of derivative one that bypasses the transformation.</p>
+ <p><span class="n">4</span><span class="a">(d)</span> — small-batch fine-tuning overwrote the batch-norm running statistics, so evaluation uses corrupted estimates. Freeze the norm layers when batches are small.</p>
+ <p><span class="n">5</span><span class="a">Freeze the backbone and train a linear head.</span> At 300 labels the variance of a full fine-tune dominates. If unfreezing the last block, use discriminative learning rates an order of magnitude lower for earlier layers, freeze the normalisation layers, and match the backbone's preprocessing exactly.</p>
+ <p><span class="n">6</span><span class="a">Because mAP is defined at an IoU threshold</span> that decides when a box counts as correct. A model can look excellent at 0.5 and poor at 0.75, so an unqualified number is not comparable between systems.</p>
+
+ <h3>Appendix F · Module 08</h3>
+ <p><span class="n">1</span><span class="a">(a)</span> — with unit-variance entries <span class="m">q\T k</span> has variance <span class="m">d_k</span> and standard deviation <span class="m">\sqrt{d_k}</span>. Dividing by the standard deviation is what keeps the softmax out of saturation.</p>
+ <p><span class="n">2</span><span class="a"><span class="m">N \approx 7.0\times10^{9}</span>; <span class="m">C \approx 8.4\times10^{22}</span> FLOPs.</span> Blocks: <span class="m">12 \times 32 \times 4096^{2} = 6.44\times10^{9}</span>. Embeddings: <span class="m">128\,000 \times 4096 = 5.2\times10^{8}</span>. Then <span class="m">6ND = 6 \times 7.0\times10^{9}\times 2\times10^{12}</span>.</p>
+ <p><span class="n">3</span><span class="a"><span class="m">n = 6d = 24\,576</span> tokens.</span> Per layer per token the projections and feed-forward cost <span class="m">24d^{2}</span> FLOPs (<span class="m">12d^{2}</span> parameters at two FLOPs each) and attention costs <span class="m">4nd</span>; setting them equal gives <span class="m">n = 6d</span>.</p>
+ <p><span class="n">4</span><span class="a">(b)</span> — quality is nearly unchanged because query heads still differ; cost changes because the KV cache, not the arithmetic, is what limits concurrency in decoding.</p>
+ <p><span class="n">5</span><span class="a">Because the dot product depends only on the offset.</span> Rotating queries and keys by an angle proportional to position makes the learned function one of relative distance, and nearby-token offsets stay in distribution past the trained length; the base frequency can also be interpolated to stretch the range.</p>
+ <p><span class="n">6</span><span class="a">Perplexity is per token, and tokens are not comparable across tokenisers.</span> A larger vocabulary packs more text into each token, mechanically changing per-token loss with no change in modelling quality. Report bits per byte, or compare on downstream tasks.</p>
+
+ <h3>Appendix F · Module 09</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — BF16 keeps FP32's eight exponent bits, so the dynamic range covers small gradients and no loss scaling is required. Range, not precision, is what breaks training.</p>
+ <p><span class="n">2</span><span class="a">30.4&nbsp;%; 134 microbatches.</span> <span class="m">(p-1)/(m+p-1) = 7/23</span>. For under 5&nbsp;%: <span class="m">7/(m+7) < 0.05 \Rightarrow m > 133</span>.</p>
+ <p><span class="n">3</span><span class="a">Dataloader starvation; unfused memory-bound kernels or too small a batch; communication overhead from a bad parallelism configuration.</span> A kernel timeline separates the first two: starvation shows wide gaps with no kernels running at all, whereas memory-bound kernels show continuous but low-throughput work.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — it is exact. The gain is a memory schedule, not an approximation.</p>
+ <p><span class="n">5</span><span class="a">Because their communication volumes differ by orders of magnitude.</span> Tensor parallelism all-reduces large activations twice per layer and needs intra-node bandwidth; pipeline parallelism sends only stage-boundary activations once per microbatch and tolerates slower inter-node links.</p>
+ <p><span class="n">6</span><span class="a">≈ 88 days.</span> <span class="m">C = 6 \times 1.3\times10^{10} \times 1.5\times10^{12} = 1.17\times10^{23}</span>. Delivered <span class="m">= 128 \times 3\times10^{14} \times 0.40 = 1.54\times10^{16}</span> FLOP/s. <span class="m">T = 7.6\times10^{6}</span> s.</p>
+
+ <h3>Appendix F · Module 10</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — <span class="m">Z(x)</span> depends only on the prompt, so it is identical for the chosen and rejected responses and cancels in the Bradley–Terry difference.</p>
+ <p><span class="n">2</span><span class="a">β is the strength of the anchor to the reference policy.</span> As β → 0 the objective becomes unconstrained reward maximisation and the policy drifts into whatever the proxy rewards; as β grows large the policy is pinned to the reference and learns nothing.</p>
+ <p><span class="n">3</span><span class="a">Catastrophic forgetting.</span> Remedies: lower the learning rate and train fewer epochs; constrain the update with a parameter-efficient method at modest rank; mix general-purpose data back into the fine-tuning mixture; and early-stop against a general suite rather than the target task.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — rank bounds the number of independent directions the update can move in, so style needs little and new capability needs more.</p>
+ <p><span class="n">5</span><span class="a">Any three of:</span> position bias in the judge; self-preference when the judge shares a family or prompt style with the candidate; verbosity bias; an unrepresentative comparison set; no confidence interval on 80&nbsp;%; contamination of the prompts; a judge that was never validated against human labels.</p>
+ <p><span class="n">6</span><span class="a">(b)</span> — Goodhart's law is a statement about optimisation pressure on proxies, not a defect of one reward model. Assume it and monitor for it.</p>
+
+ <h3>Appendix F · Module 11</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — the marginal <span class="m">q(x_t \mid x_0)</span> is a single Gaussian in closed form, so any timestep is one draw away.</p>
+ <p><span class="n">2</span><span class="a">Prompt fidelity against diversity</span>, at the cost of a second forward pass per step. <span class="m">w = 1</span> reduces the expression to the plain conditional prediction.</p>
+ <p><span class="n">3</span><span class="a">Autoregressive gives up sampling speed; GANs give up coverage and any tractable likelihood; diffusion gives up sampling speed</span> — though that one is partly recoverable with deterministic samplers, distillation or flow matching.</p>
+ <p><span class="n">4</span><span class="a">Two of:</span> FID measures distance between feature distributions and is biased by sample count and by the feature extractor; a model that memorises training data scores well; low guidance can improve distributional match while producing individually poor samples; the reference statistics may not represent what you care about.</p>
+ <p><span class="n">5</span><span class="a">(d)</span> — the spatial grid shrinks by roughly eight per side before diffusion runs, so the per-step cost falls by one to two orders of magnitude.</p>
+ <p><span class="n">6</span><span class="a">(a)</span> — the score, <span class="m">\nabla_{x_t}\log q(x_t)</span>, up to a factor of <span class="m">-\sqrt{1-\bar\alpha_t}</span>.</p>
+
+ <h3>Appendix F · Module 12</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — if the passage is not in the candidate set, no prompt, model or reranker can recover it. Measure the ceiling before optimising anything beneath it.</p>
+ <p><span class="n">2</span><span class="a">Rare exact strings</span> — identifiers, error codes, part numbers, unusual names. A dense encoder maps them near lexically different but semantically similar text; BM25 matches the literal term and its rarity gives it high weight.</p>
+ <p><span class="n">3</span><span class="a">63&nbsp;%.</span> <span class="m">0.97^{15} = 0.633</span>. Raise it by removing steps — give the agent composite tools — and by making steps verifiable, so a probabilistic action becomes a checkable one. Raising per-step reliability by prompting is the weakest of the three.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — an instruction telling the model to ignore instructions is itself just text in the same context. The other three are architectural and hold regardless of what the document says.</p>
+ <p><span class="n">5</span><span class="a">Distractors and position.</span> Additional passages compete for attention and can be preferred over the correct one; and they push relevant material toward the middle of the context, where models attend least reliably. Cost and latency also rise.</p>
+ <p><span class="n">6</span><span class="a">No — write the workflow.</span> Agency buys flexibility you do not need and pays for it in compounding step failure.</p>
+
+ <h3>Appendix F · Module 13</h3>
+ <p><span class="n">1</span><span class="a">≈ 115 tokens per second.</span> Weights are <span class="m">1.3\times10^{10}\times 2 = 26</span> GB; one full read at 3 TB/s takes 8.7 ms, and decoding must read them once per token.</p>
+ <p><span class="n">2</span><span class="a">(b)</span> — batching amortises the weight read across many sequences, raising aggregate throughput, but each user still waits one step per token.</p>
+ <p><span class="n">3</span><span class="a">≈ 10.7 GB.</span> <span class="m">2 \times 80 \times 8 \times 128 \times 32\,768 \times 2 \text{ bytes} = 1.07\times10^{10}</span>.</p>
+ <p><span class="n">4</span><span class="a">(a)</span> — the rejection-sampling correction makes the accepted distribution exactly the target model's, so the guarantee is by construction rather than by the draft model's quality.</p>
+ <p><span class="n">5</span><span class="a">Because the damage is in the tail.</span> Mean perplexity moves little while rare tokens, long contexts, code, non-English text and arithmetic degrade first. Evaluate on the hardest task-specific set at the longest context you serve.</p>
+ <p><span class="n">6</span><span class="a">Three of:</span> head-of-line blocking by a long prefill — use chunked prefill; unbounded queueing under load — add admission control and shed early; KV-cache exhaustion forcing preemption and recompute — use paged attention, grouped-query attention or cache quantisation, and cap concurrency; a straggler or a noisy neighbour — isolate and monitor per-replica step time.</p>
+
+ <h3>Appendix F · Module 14</h3>
+ <p><span class="n">1</span><span class="a">Covariate shift moves <span class="m">P(x)</span> while <span class="m">P(y\mid x)</span> holds</span> — retraining on fresh data fixes it. <span class="a">Concept drift changes <span class="m">P(y\mid x)</span></span> — old labels no longer describe the world, so you need new labels and possibly a new formulation.</p>
+ <p><span class="n">2</span><span class="a">Code, data, model and configuration</span> — a commit hash, a content hash of an immutable data snapshot, a registry entry for the weights, and the committed configuration including prompts and decoding parameters.</p>
+ <p><span class="n">3</span><span class="a">(b)</span> — the deployed model decided which outcomes were ever observed, so the log is a sample of the world as filtered by the model.</p>
+ <p><span class="n">4</span><span class="a">(d)</span> — a small randomised slice with logged propensities is the only cheap intervention that restores an unbiased estimate.</p>
+ <p><span class="n">5</span><span class="a">Features computed one way in training and another at inference.</span> The structural remedy is a single shared implementation used by both paths, with an equivalence assertion that runs in CI.</p>
+ <p><span class="n">6</span><span class="a">Look at real traffic.</span> Sample and read production transcripts; segment metrics by cohort and query type; compare the production input distribution against the evaluation set; check the randomised holdout; and convert each complaint into a new evaluation case. The suite almost always lacks examples of the failing segment rather than lacking a metric.</p>
+
+ <h3>Appendix F · Module 15</h3>
+ <p><span class="n">1</span><span class="a">(b)</span> — equal base rates, or a perfect classifier. Outside those two cases the criteria cannot both hold.</p>
+ <p><span class="n">2</span><span class="a">Because it is a generated continuation, not a trace.</span> It may be produced post hoc and need not correspond to the computation that produced the answer. Treat it as a hypothesis to test, not as evidence.</p>
+ <p><span class="n">3</span><span class="a">That the presence or absence of that person changes the probability of any output by at most a factor <span class="m">e^{8} \approx 3\,000</span>.</span> As a formal guarantee that is very weak; empirical protection is usually better than the bound implies, but the bound is what you can promise.</p>
+ <p><span class="n">4</span><span class="a">(c)</span> — attribution is association within the model. It is not a causal claim about the world and not a counterfactual about removing the feature.</p>
+ <p><span class="n">5</span><span class="a">Two of:</span> bias upstream of the model in labels, sampling frame or proxy features; the deployment context, where an equal error rate carries unequal cost or where an operator's threshold reintroduces disparity; feedback loops that compound a small initial difference; or simply the wrong criterion for the harm at issue.</p>
+ <p><span class="n">6</span><span class="a">Because it changes what you build.</span> Stating intended use, out-of-scope uses and evaluation populations in advance forces the evaluation set to match the deployment population — the failure teams most often discover too late.</p>
+
+ <h3>Appendix G · Section I</h3>
+ <p><span class="n">1</span><span class="a">(c)</span> stored activations. <span class="n">2</span><span class="a">(c)</span> false — admissibility does not imply consistency. <span class="n">3</span><span class="a">(b)</span> 100 steps. <span class="n">4</span><span class="a">(d)</span> Gaussian.</p>
+ <p><span class="n">5</span><span class="a">(a)</span> the difficulty of the negatives. <span class="n">6</span><span class="a">(c)</span> one. <span class="n">7</span><span class="a">(d)</span> <span class="m">6ND</span>. <span class="n">8</span><span class="a">(b)</span> about twenty.</p>
+ <p><span class="n">9</span><span class="a">(c)</span> ≈ 33&nbsp;%. <span class="n">10</span><span class="a">(a)</span> memory-bandwidth-bound. <span class="n">11</span><span class="a">(d)</span> a hard ceiling. <span class="n">12</span><span class="a">(b)</span> calibration and equalised odds.</p>
+
+ <h3>Appendix G · Section II — three marks each</h3>
+ <p><span class="n">13</span><span class="a"><span class="m">N \approx 2.24\times10^{10}</span>; <span class="m">C \approx 6.0\times10^{22}</span>; ≈ 7.5 days.</span> Blocks <span class="m">12\times48\times6144^{2} = 2.17\times10^{10}</span>, embeddings <span class="m">6.1\times10^{8}</span>. Compute-optimal <span class="m">D \approx 20N = 4.5\times10^{11}</span> tokens, so <span class="m">C = 6ND \approx 6.0\times10^{22}</span>. Delivered <span class="m">512\times4\times10^{14}\times0.45 = 9.2\times10^{16}</span> FLOP/s → <span class="m">6.5\times10^{5}</span> s. <em>One mark each for N, for C, for the time.</em></p>
+ <p><span class="n">14</span><span class="a">Weights ≈ 45 GB; KV ≈ 3.2 GB per sequence; roughly 180 concurrent sequences.</span> Weights <span class="m">2.24\times10^{10}\times2</span>. KV <span class="m">2\times48\times8\times128\times16\,384\times2 = 3.2\times10^{9}</span>. Remaining memory <span class="m">640-45 = 595</span> GB, ignoring activations and fragmentation — say 180, and note that paging is what makes the real number approach it.</p>
+ <p><span class="n">15</span><span class="a">Suppose A<sup>*</sup> is about to expand a suboptimal goal <span class="m">G_2</span>, so <span class="m">f(G_2) = g(G_2) > C^{*}</span>.</span> Some node <span class="m">n</span> on an optimal path is on the frontier, with <span class="m">f(n) = g(n)+h(n) \le g(n)+h^{*}(n) = C^{*}</span> by admissibility. Then <span class="m">f(n) \le C^{*} < f(G_2)</span>, so <span class="m">n</span> would have been chosen first — contradiction.</p>
+ <p><span class="n">16</span><span class="a">Under <span class="m">y \sim \mathcal{N}(\theta\T x, \sigma^{2})</span>, <span class="m">-\log p = \tfrac{1}{2\sigma^{2}}(y-\theta\T x)^{2} + \log\sqrt{2\pi\sigma^{2}}</span>.</span> The second term and the <span class="m">1/2\sigma^{2}</span> factor are constant in <span class="m">\theta</span> when the variance is fixed and shared, so dropping them leaves the argmin unchanged. The legitimacy rests entirely on homoscedasticity — with per-example variances the weighting matters.</p>
+ <p><span class="n">17</span><span class="a">31.9&nbsp;%; 486 microbatches.</span> <span class="m">15/47 = 0.319</span>; <span class="m">15/(m+15) < 0.03 \Rightarrow m > 485</span>. What limits you is memory and efficiency: each microbatch must be large enough for the matmuls to reach good utilisation, and activation memory scales with the number in flight.</p>
+ <p><span class="n">18</span><span class="a">61&nbsp;%; 99.1&nbsp;% per step.</span> <span class="m">0.96^{12} = 0.613</span>; <span class="m">0.90^{1/12} = 0.991</span>. Per-step reliability is the wrong lever — pushing 96&nbsp;% to 99&nbsp;% is far harder than removing half the steps, and <span class="m">0.96^{6} = 0.78</span>.</p>
+ <p><span class="n">19</span><span class="a"><span class="m">\KL(p\|q)</span> takes the expectation under <span class="m">p</span>, so wherever <span class="m">p</span> has mass and <span class="m">q</span> does not the integrand blows up — <span class="m">q</span> must cover every mode.</span> <span class="m">\KL(q\|p)</span> takes it under <span class="m">q</span>, which is only penalised where it itself puts mass, so it can safely ignore modes and concentrates on one. Mode-covering appears in maximum-likelihood training; mode-seeking in variational inference and in the reverse-KL formulations of policy optimisation.</p>
+ <p><span class="n">20</span><span class="a">Memory falls from ~14 GB to ~4 GB; decode speed improves roughly proportionally</span> because decoding is bound by reading the weights, not by arithmetic. Damage shows first at long context and on tail distributions — code, arithmetic, rare tokens and non-English text — so those are the two evaluation conditions to guard.</p>
+
+ <h3>Appendix G · Section III — six marks each</h3>
+ <p><span class="n">21</span><span class="a">Compute-optimal is <span class="m">N \approx 9.1\times10^{9}</span>, <span class="m">D \approx 1.8\times10^{11}</span></span> — from <span class="m">C = 6ND</span> with <span class="m">D = 20N</span>, so <span class="m">N = \sqrt{C/120}</span>. Full marks require the alternative: a smaller model trained on far more tokens. Inference over <span class="m">10^{10}</span> requests at, say, 500 output tokens each costs <span class="m">2ND_{\text{out}} = 9.1\times10^{22}</span> FLOPs — nine times the entire training budget — so halving <span class="m">N</span> saves about <span class="m">4.6\times10^{22}</span> lifetime FLOPs for a training cost that is bounded by <span class="m">10^{22}</span>. Award marks for that comparison and for naming what is given up: the smaller model's capability ceiling, and the risk if the traffic never arrives.</p>
+ <p><span class="n">22</span><span class="a">Recall@k first</span>, because it bounds everything downstream; if it is low, chunking and hybrid retrieval come next, and if it is high the fault is generation. <span class="a">Then faithfulness with a validated judge</span>, to separate "retrieved and ignored" from "never retrieved". <span class="a">Then a context-size sweep.</span> Full marks require stating the decision rule for each outcome <em>before</em> running, not after.</p>
+ <p><span class="n">23</span><span class="a">Catastrophic forgetting.</span> Interventions: reduce the update's capacity (lower rank, lower learning rate, fewer epochs); replay general data in the mixture; or distil from the base model on general prompts while fine-tuning on the target. Decide by running all three at equal budget and plotting target gain against general-suite loss — the choice is a point on that frontier, and which point is a product decision, not a technical one.</p>
+ <p><span class="n">24</span><span class="a">Any defended choice earns the marks.</span> A strong answer picks equal opportunity — the harm that matters is a qualified applicant never reaching a human — states plainly that calibration within groups is therefore given up, and names the two pre-training artefacts: a model card fixing intended use, out-of-scope uses and evaluation populations, and a datasheet for the training data. Award marks for the reasoning about who bears each error, not for the criterion chosen.</p>
+
+ </div>
+</section>

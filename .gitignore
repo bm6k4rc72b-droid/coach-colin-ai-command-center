@@ -15,3 +15,7 @@ output/
 course/.build/
 !course/dist/
 !course/dist/*.pdf
+
+# python bytecode
+__pycache__/
+*.pyc

@@ -1,7 +1,7 @@
 # The AI Engineer
 
 A fifteen-module course in artificial intelligence, typeset as a
-148-page book: **[`dist/The-AI-Engineer.pdf`](dist/The-AI-Engineer.pdf)**.
+178-page book: **[`dist/The-AI-Engineer.pdf`](dist/The-AI-Engineer.pdf)**.
 
 The curriculum is an independent synthesis of the public course materials of
 Harvard, Stanford and NVIDIA. It is not published by, endorsed by, or
@@ -18,9 +18,17 @@ affiliated with any of them — see *A Note on Provenance* in the front matter.
 
 Every module carries learning outcomes, theory with worked derivations, a
 hands-on **Bench** lab with a machine-checkable acceptance criterion, a
-four-row rubric, self-check questions and a reading list. The book closes with
-a six-week capstone brief and five appendices — a twenty-six week plan, an
-equation reference card, a toolchain, the source curricula, and a glossary.
+four-row rubric, self-check questions and a reading list.
+
+Assessment is graded, not decorative: 90 module examination questions
+(Appendix F), a 24-question, 60-mark final (Appendix G), a worked answer key
+with marking notes (Appendix H), and a completion ledger, four published gates
+and a certificate leaf (Appendix I). The certificate is self-issued and
+self-assessed, and says so on its face.
+
+The book closes with a six-week capstone brief and nine appendices — a
+twenty-six week plan, an equation reference card, a toolchain, the source
+curricula, a glossary, the examinations, the key and the record.
 
 ## Building it
 

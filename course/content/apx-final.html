@@ -1,0 +1,125 @@
+<section class="module">
+ <div class="mod-head">
+  <div class="mod-rail">
+    <div class="n">G</div>
+    <div class="meta"><div class="kicker">Appendix</div>
+    <div class="lineage">Three hours · closed book · the whole course</div></div>
+  </div>
+  <h1 id="apxG" data-toc="module" data-toc-n="G" data-toc-title="The Final Examination">The Final<br>Examination</h1>
+ </div>
+
+ <p class="lede opener">Twenty-four questions spanning all fifteen modules, weighted
+ toward the ones that connect two parts of the course rather than the ones that
+ test a single definition. Sit it at least a week after finishing Module&nbsp;15,
+ not the day after — the delay is the point.</p>
+
+ <div class="rules">
+  <div class="grid">
+   <div>
+    <h4>Conditions</h4>
+    <ul class="tight">
+      <li>Three hours, closed book, one sitting.</li>
+      <li>Calculator permitted; no model, no search, no notes.</li>
+      <li>One page of your own hand-written formulae is allowed — writing it is half the revision.</li>
+    </ul>
+   </div>
+   <div>
+    <h4>Marking</h4>
+    <ul class="tight">
+      <li>Section I: 12 questions × 1 mark = 12.</li>
+      <li>Section II: 8 questions × 3 marks = 24.</li>
+      <li>Section III: 4 questions × 6 marks = 24.</li>
+      <li><strong>Total 60. Pass 36; distinction 48.</strong></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+
+ <div class="quiz">
+
+ <div class="exam-mod">
+  <h3>Section I · Recall and recognition — one mark each</h3>
+  <div class="q">Reverse-mode autodiff trades a cost proportional to the number of outputs for a cost in: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>numerical precision.</li><li><span class="l">b</span>parameter count.</li>
+    <li><span class="l">c</span>stored activations.</li><li><span class="l">d</span>convergence rate.</li>
+   </ul></div>
+  <div class="q">Consistency of a heuristic implies admissibility. The converse is: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>also true.</li><li><span class="l">b</span>true only on trees.</li>
+    <li><span class="l">c</span>false.</li><li><span class="l">d</span>undecidable.</li>
+   </ul></div>
+  <div class="q">The effective horizon of an MDP with <span class="m">\gamma = 0.99</span> is nearest: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>10 steps.</li><li><span class="l">b</span>100 steps.</li>
+    <li><span class="l">c</span>1 000 steps.</li><li><span class="l">d</span>unbounded.</li>
+   </ul></div>
+  <div class="q">Adding <span class="m">\lambda\|\theta\|_2^2</span> to a likelihood corresponds to which prior on the weights? <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>Laplace.</li><li><span class="l">b</span>Uniform.</li>
+    <li><span class="l">c</span>Cauchy.</li><li><span class="l">d</span>Gaussian.</li>
+   </ul></div>
+  <div class="q">The quality of a contrastively learned representation is bounded most tightly by: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>the difficulty of the negatives.</li><li><span class="l">b</span>the encoder depth.</li>
+    <li><span class="l">c</span>the optimiser.</li><li><span class="l">d</span>the embedding dimension.</li>
+   </ul></div>
+  <div class="q">A residual connection helps gradients because the identity branch has derivative: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>zero.</li><li><span class="l">b</span>equal to the activation's slope.</li>
+    <li><span class="l">c</span>one.</li><li><span class="l">d</span>proportional to depth.</li>
+   </ul></div>
+  <div class="q">Training compute for <span class="m">N</span> parameters over <span class="m">D</span> tokens is approximated by: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span><span class="m">2ND</span>.</li><li><span class="l">b</span><span class="m">12ND</span>.</li>
+    <li><span class="l">c</span><span class="m">N D^2</span>.</li><li><span class="l">d</span><span class="m">6ND</span>.</li>
+   </ul></div>
+  <div class="q">Chinchilla-optimal training uses roughly how many tokens per parameter? <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>2.</li><li><span class="l">b</span>20.</li>
+    <li><span class="l">c</span>200.</li><li><span class="l">d</span>2 000.</li>
+   </ul></div>
+  <div class="q">Activation checkpointing costs approximately: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>no extra compute.</li><li><span class="l">b</span>10&nbsp;% more compute.</li>
+    <li><span class="l">c</span>33&nbsp;% more compute.</li><li><span class="l">d</span>100&nbsp;% more compute.</li>
+   </ul></div>
+  <div class="q">Prefill is compute-bound and decode is: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>memory-bandwidth-bound.</li><li><span class="l">b</span>also compute-bound.</li>
+    <li><span class="l">c</span>network-bound.</li><li><span class="l">d</span>bound by the tokeniser.</li>
+   </ul></div>
+  <div class="q">Recall@k in a retrieval pipeline functions as: <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>a lower bound on faithfulness.</li><li><span class="l">b</span>a proxy for latency.</li>
+    <li><span class="l">c</span>an unbiased estimate of nDCG.</li><li><span class="l">d</span>a hard ceiling on end-to-end accuracy.</li>
+   </ul></div>
+  <div class="q">Which pair is mathematically incompatible when base rates differ across groups? <span class="mk">MCQ</span>
+   <ul class="opts">
+    <li><span class="l">a</span>Equal opportunity and accuracy.</li><li><span class="l">b</span>Calibration and equalised odds.</li>
+    <li><span class="l">c</span>Demographic parity and individual fairness.</li><li><span class="l">d</span>Precision and recall.</li>
+   </ul></div>
+ </div>
+
+ <div class="exam-mod">
+  <h3>Section II · Calculation and mechanism — three marks each</h3>
+  <div class="q">A model has <span class="m">L = 48</span>, <span class="m">d = 6144</span> and a 100&nbsp;000-token vocabulary. Give the parameter count, then the compute needed to train it compute-optimally, and the wall-clock days on 512 accelerators of <span class="m">4\times10^{14}</span> FLOP/s at 45&nbsp;% MFU. <span class="mk">CALC</span></div>
+  <div class="q">The same model is served in BF16 with 8 KV heads of dimension 128 at 16k context. Give the weight memory and the KV cache per sequence, and state how many concurrent sequences fit in 640&nbsp;GB. <span class="mk">CALC</span></div>
+  <div class="q">Derive, in three lines, why <span class="m">A^{*}</span> with an admissible heuristic never returns a suboptimal goal. <span class="mk">SHORT</span></div>
+  <div class="q">Show that squared-error loss is the negative log-likelihood of a Gaussian with fixed variance, and state exactly which term you discarded and why that is legitimate. <span class="mk">CALC</span></div>
+  <div class="q">A pipeline of 16 stages runs 32 microbatches. Give the bubble fraction, then the number of microbatches needed for a bubble below 3&nbsp;%, and say what limits you from simply using that number. <span class="mk">CALC</span></div>
+  <div class="q">An agent has 12 steps at 96&nbsp;% per-step reliability. Give the task success rate. Then give the per-step reliability that would be required for 90&nbsp;% task success at the same step count, and comment on whether that is the right lever. <span class="mk">CALC</span></div>
+  <div class="q">Explain why <span class="m">\KL(p\|q)</span> is mode-covering and <span class="m">\KL(q\|p)</span> is mode-seeking, and name one place in this course where each direction is used. <span class="mk">SHORT</span></div>
+  <div class="q">A 7-billion-parameter model is quantised to 4-bit weights. State the memory saving, whether decode speed improves and why, and the two evaluation conditions under which you would expect the damage to show first. <span class="mk">SHORT</span></div>
+ </div>
+
+ <div class="exam-mod">
+  <h3>Section III · Judgement — six marks each</h3>
+  <div class="q">You are given a fixed budget of <span class="m">10^{22}</span> training FLOPs for a model that will serve roughly ten billion requests. Give the compute-optimal configuration, then the configuration you would actually train, and defend the difference with explicit arithmetic on training versus lifetime inference cost. <span class="mk">SHORT</span></div>
+  <div class="q">A retrieval system answers 61&nbsp;% of questions correctly. You may run three experiments. Name them, in order, say what each would measure, and state in advance what each possible result would tell you to do next. <span class="mk">SHORT</span></div>
+  <div class="q">A fine-tune improves your target task by 9 points and drops a general capability suite by 4. Diagnose the mechanism, propose three interventions, and say how you would decide between them on evidence rather than preference. <span class="mk">SHORT</span></div>
+  <div class="q">You must deploy a model that decides which loan applications reach a human reviewer. Choose a fairness criterion and justify it in terms of who is harmed by each kind of error; state one property you are therefore giving up; and name the two artefacts you would produce before training begins. <span class="mk">SHORT</span></div>
+ </div>
+
+ </div>
+</section>

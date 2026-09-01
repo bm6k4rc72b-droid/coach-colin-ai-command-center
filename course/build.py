@@ -3,6 +3,7 @@
 Chromium, resolves the table of contents against real page numbers, and
 merges cover + body into a single bookmarked PDF."""
 
+import html as _html
 import json, os, re, subprocess, sys, tempfile, pathlib
 
 ROOT   = pathlib.Path(__file__).resolve().parent
@@ -30,7 +31,8 @@ BODY_FILES  = [
     "part4.html", "m12.html", "m13.html", "m14.html", "m15.html",
     "capstone.html",
     "apx-schedule.html", "apx-equations.html", "apx-toolchain.html",
-    "apx-sources.html", "apx-glossary.html", "finis.html",
+    "apx-sources.html", "apx-glossary.html", "apx-exams.html",
+    "apx-final.html", "apx-answers.html", "record.html", "finis.html",
 ]
 
 # ---------------------------------------------------------------- html shell
@@ -97,7 +99,8 @@ def collect(files):
                 return tag
             entries.append(dict(kind=a["data-toc"], id=aid,
                                 n=a.get("data-toc-n", ""),
-                                title=a.get("data-toc-title", "")))
+                                title=a.get("data-toc-title", ""),
+                                label=_html.unescape(a.get("data-toc-title", ""))))
             cls = "mark dark" if a["data-toc"] == "part" else "mark"
             return tag + f'<span class="{cls}">@@{aid}@@</span>'
         html.append(TOC_RE.sub(inject, src))
@@ -229,8 +232,9 @@ def main():
         if e["id"] not in folios:
             continue
         pg = offset + folios[e["id"]] - 1
-        label = e["title"] if e["kind"] == "part" else (
-            f'{e["n"]} · {e["title"]}' if e["n"] else e["title"])
+        text = e.get("label") or e["title"]
+        label = text if e["kind"] == "part" else (
+            f'{e["n"]} · {text}' if e["n"] else text)
         if e["kind"] == "part":
             top = w.add_outline_item(label, pg)
         else:

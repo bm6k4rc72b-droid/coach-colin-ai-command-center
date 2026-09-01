@@ -100,10 +100,19 @@ const pdf = await send('Page.printToPDF', {
   headerTemplate: opts.headerTemplate ?? '<span></span>',
   footerTemplate: opts.footerTemplate ?? '<span></span>',
   scale: 1,
-  transferMode: 'ReturnAsBase64',
+  // Returning a multi-megabyte PDF as one base64 blob stalls the DevTools
+  // WebSocket: past roughly 160 pages the reply never arrives. Stream it.
+  transferMode: 'ReturnAsStream',
 }, sessionId);
 
-writeFileSync(output, Buffer.from(pdf.data, 'base64'));
+const chunks = [];
+for (;;) {
+  const r = await send('IO.read', { handle: pdf.stream, size: 1 << 20 }, sessionId);
+  if (r.data) chunks.push(Buffer.from(r.data, r.base64Encoded ? 'base64' : 'utf8'));
+  if (r.eof) break;
+}
+await send('IO.close', { handle: pdf.stream }, sessionId);
+writeFileSync(output, Buffer.concat(chunks));
 ws.close(); child.kill('SIGKILL');
 try { rmSync(profile, { recursive: true, force: true }); } catch {}
 console.error('wrote', output);

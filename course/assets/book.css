@@ -128,21 +128,21 @@ a{ color: inherit; text-decoration:none; }
 }
 
 /* Module opener */
-.module{ counter-reset: eq fig; }
-.mod-open{ break-before: page; break-after: page; }
-/* Appendices and the afterword open a module without the title-page
-   wrapper, so they take the page break directly. */
-.module > .mod-head:first-child{ break-before: page; }
+.module{ break-before: page; counter-reset: eq fig; }
+.mod-open{ break-after: page; }
 .mod-head{ break-inside: avoid; margin-bottom: 8mm; }
+/* Deliberately not flex: Chromium leaves a painted fragment of a flex line on
+   the preceding page when the block that follows takes a forced page break. */
 .mod-rail{
-  display:flex; align-items:baseline; gap:5mm;
   border-bottom:.5pt solid var(--rule); padding-bottom:2.4mm; margin-bottom:7mm;
+  overflow:hidden;
 }
 .mod-rail .n{
+  float:left; width:24mm;
   font-family:"Fraunces",serif; font-weight:700; font-size:38pt; line-height:.82;
   color:var(--brass); font-variant-numeric:lining-num;
 }
-.mod-rail .meta{ flex:1; }
+.mod-rail .meta{ margin-left:24mm; padding-top:1.5mm; }
 .mod-rail .meta .kicker{
   font-family:"Inter",sans-serif; font-size:6.6pt; font-weight:600;
   letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint);
@@ -404,11 +404,11 @@ figcaption b{
 /* Table of contents */
 .toc{ font-size:8.7pt; line-height:1.32; text-align:left; hyphens:none; }
 .toc .part-row{
-  margin:3.9mm 0 1.5mm; font-family:"Inter",sans-serif; font-size:6.8pt;
+  margin:3.2mm 0 1.3mm; font-family:"Inter",sans-serif; font-size:6.8pt;
   font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--brass);
   border-bottom:.5pt solid var(--rule); padding-bottom:1.4mm;
 }
-.toc .row{ display:flex; align-items:baseline; gap:2mm; margin:1.1mm 0; }
+.toc .row{ display:flex; align-items:baseline; gap:2mm; margin:.55mm 0; }
 .toc .row .n{
   font-family:"Inter",sans-serif; font-size:7pt; font-weight:600; color:var(--ink-faint);
   width:7mm; flex:none; font-variant-numeric:lining-num;
@@ -451,4 +451,126 @@ figcaption b{
 .finis .imprint{
   font-family:"Inter",sans-serif; font-size:6.8pt; letter-spacing:.26em;
   text-transform:uppercase; color:var(--ink-faint); line-height:2.4;
+}
+
+/* ---------- examinations --------------------------------------------------- */
+.exam-mod{ counter-reset: qn; break-inside: auto; margin-bottom: 7mm; }
+.exam-mod > h3{
+  font-family:"Inter",sans-serif; font-size:7.4pt; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass);
+  border-bottom:.5pt solid var(--rule); padding-bottom:1.6mm;
+  margin:0 0 3.2mm; break-after:avoid;
+}
+.q{
+  break-inside: avoid; margin:0 0 3.4mm; padding-left:7mm; text-indent:-7mm;
+  text-align:left; hyphens:none; font-size:9.4pt; line-height:1.5;
+}
+.q::before{
+  counter-increment: qn; content: counter(qn) ".";
+  display:inline-block; width:7mm; text-indent:0;
+  font-family:"Inter",sans-serif; font-size:7.4pt; font-weight:700;
+  color:var(--ink-faint); font-variant-numeric:lining-num;
+}
+.q .mk{
+  font-family:"Inter",sans-serif; font-size:6.4pt; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--brass);
+  margin-left:1.6mm;
+}
+.opts{ list-style:none; margin:1.8mm 0 0; padding:0 0 0 7mm; text-indent:0; }
+.opts li{
+  margin:0 0 .9mm; padding-left:5.5mm; text-indent:-5.5mm; font-size:9.1pt;
+}
+.opts li .l{
+  font-family:"Inter",sans-serif; font-size:7pt; font-weight:700;
+  color:var(--brass); margin-right:2.2mm;
+}
+.rules{
+  background:var(--paper-deep); border-top:1.6pt solid var(--brass);
+  padding:5mm 6mm; margin:0 0 7mm; font-size:8.6pt; line-height:1.5;
+  text-align:left; hyphens:none; break-inside:avoid;
+}
+.rules h4{ margin-top:0; color:var(--ink); }
+.rules .grid{ display:grid; grid-template-columns:1fr 1fr; gap:3mm 7mm; }
+.rules ul,.rules ol{ margin:0; padding-left:4.6mm; }
+.rules li{ margin-bottom:1.1mm; }
+
+/* answer key */
+.key{ font-size:8.5pt; line-height:1.45; text-align:left; hyphens:none; }
+.key h3{
+  font-family:"Inter",sans-serif; font-size:7.2pt; font-weight:700;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass);
+  border-bottom:.5pt solid var(--rule); padding-bottom:1.4mm;
+  margin:6mm 0 2.6mm; break-after:avoid;
+}
+.key p{
+  margin:0 0 1.9mm; padding-left:8mm; text-indent:-8mm; break-inside:avoid;
+}
+.key p .n{
+  display:inline-block; width:8mm; text-indent:0;
+  font-family:"Inter",sans-serif; font-size:7pt; font-weight:700;
+  color:var(--ink-faint); font-variant-numeric:lining-num;
+}
+.key p .a{ font-weight:600; color:var(--brass); }
+
+/* ---------- the record of completion -------------------------------------- */
+.ledger td:first-child{
+  font-family:"Inter",sans-serif; font-size:7pt; font-weight:600;
+  color:var(--brass); white-space:nowrap;
+}
+.ledger .box{
+  display:inline-block; width:3.4mm; height:3.4mm;
+  border:.6pt solid var(--ink-faint); vertical-align:-.4mm;
+}
+
+/* Block layout, not flex: Chromium fragments flex containers unreliably in
+   print, and this leaf must never split across two pages. */
+.cert{
+  break-before: page; break-inside: avoid;
+  box-sizing:border-box; position:relative;
+  height:194mm; padding:13mm 14mm;
+  border:1.2pt solid var(--brass); background:var(--paper);
+  text-align:center; hyphens:none;
+}
+.cert::before{
+  content:""; position:absolute; inset:2.6mm; border:.4pt solid var(--brass-lt);
+  pointer-events:none;
+}
+.cert .inner{ position:relative; z-index:1; }
+.cert .house{
+  font-family:"Inter",sans-serif; font-size:6.4pt; letter-spacing:.32em;
+  text-transform:uppercase; color:var(--brass); margin-bottom:6mm;
+}
+.cert .seal{
+  width:14mm; height:14mm; margin:0 auto 4mm; border:.6pt solid var(--brass);
+  border-radius:50%; line-height:14mm; text-align:center;
+  font-family:"Fraunces",serif; font-size:9pt; color:var(--brass);
+  letter-spacing:.06em;
+}
+.cert .kind{
+  font-family:"Inter",sans-serif; font-size:6.8pt; letter-spacing:.28em;
+  text-transform:uppercase; color:var(--ink-faint); margin-bottom:4mm;
+}
+.cert h1{
+  font-family:"Fraunces",serif; font-weight:400; font-size:22pt;
+  line-height:1.15; text-align:center; margin:0 0 4mm; color:var(--ink);
+}
+.cert .hair{ width:24mm; border-top:.8pt solid var(--brass); margin:0 auto 4.5mm; }
+.cert .body{
+  font-size:8.8pt; line-height:1.6; color:var(--ink-soft);
+  max-width:118mm; margin:0 auto 2mm;
+}
+.cert .row{ display:flex; gap:8mm; max-width:112mm; margin:0 auto; }
+.cert .row > div{ flex:1; }
+.cert .field{
+  border-bottom:.6pt solid var(--ink-faint); height:7mm; margin-top:4mm;
+}
+.cert .field-label{
+  font-family:"Inter",sans-serif; font-size:6pt; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-faint); margin-top:1.4mm;
+  text-align:left; white-space:nowrap;
+}
+.cert .disclaim{
+  margin:6mm auto 0; padding-top:3mm; max-width:118mm;
+  border-top:.4pt solid var(--rule);
+  font-size:6.6pt; line-height:1.55; color:var(--ink-faint);
 }
