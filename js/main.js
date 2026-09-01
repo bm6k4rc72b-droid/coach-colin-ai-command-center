@@ -38,7 +38,22 @@ async function boot(){
   const total = state.s.totals.reps;
   if(total > 0) $('#gate-panel').querySelector('.gate-copy').textContent =
     `Welcome back. ${total.toLocaleString()} reps on file. Re-link the sensors you want live for this session.`;
+
+  /* Embedded previews run in a sandboxed frame that usually withholds the
+     motion and camera permissions, and iOS will not hand them out over
+     plain http either. Say so up front rather than letting the sensor
+     tiles just fail. */
+  if(framed() || !secure()){
+    $('#gate-panel').querySelector('.gate-copy').insertAdjacentElement('afterend',
+      el('p', { class:'gate-warn' },
+        framed()
+          ? 'Running inside an embedded frame — the motion and optic cores are usually blocked here, so this is thumb mode. Open it in its own tab, over HTTPS, for the sensors.'
+          : 'Served over plain http — iOS will not grant motion or camera access. Use HTTPS or localhost for the sensors.'));
+  }
 }
+
+const framed = () => { try{ return window.self !== window.top; }catch(_){ return true; } };
+const secure = () => location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname);
 
 /* ---------------- position gate ---------------- */
 function wirePositions(){
@@ -299,7 +314,7 @@ function init(){
   boot();
   applyMirror();
 
-  if('serviceWorker' in navigator && location.protocol === 'https:'){
+  if('serviceWorker' in navigator && location.protocol === 'https:' && !framed()){
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 

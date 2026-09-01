@@ -35,7 +35,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
+html,body{height:100%;min-height:100dvh}
 body{
   margin:0;background:var(--void);color:var(--ink);
   font-family:var(--f-body);font-size:16px;line-height:1.45;
@@ -96,7 +96,7 @@ body.mirror-on .bg-aurora{opacity:.35}
 }
 
 /* ============ APP SHELL ============ */
-.app{position:relative;z-index:10;height:100%;width:100%}
+.app{position:relative;z-index:10;height:100%;min-height:100dvh;width:100%}
 
 .screen{
   position:absolute;inset:0;

@@ -38,7 +38,29 @@ python3 -m http.server 8080
 # then open http://localhost:8080 on the phone (same Wi-Fi: use the machine's LAN IP)
 ```
 
-**Two requirements for the sensor features:**
+### Hosting it on GitHub Pages
+
+The repo root *is* the site, so no build or workflow is needed:
+
+**Settings → Pages → Source: “Deploy from a branch” → branch `claude/neuroscience-ooda-quarterback-app-0z2afk`, folder `/ (root)` → Save.**
+
+A minute later it is live at `https://<owner>.github.io/coach-colin-ai-command-center/`, over HTTPS,
+which is what the motion and camera permissions require. Add to Home Screen from there and it
+installs as a PWA.
+
+### Single-file build
+
+For embedding somewhere that can only take one document:
+
+```bash
+node tools/build-single.mjs        # → dist/loopbreak-standalone.html
+```
+
+The multi-file version in the repo root is the real one; `dist/` is a build artifact. A single file
+opened from `file://`, or embedded in a sandboxed frame, runs in **thumb mode** — the app detects
+both cases and says so on its boot screen instead of letting the sensor tiles fail silently.
+
+**Two requirements for the sensor features** (the app checks both and tells you on the boot screen):
 
 1. **HTTPS or localhost.** iOS will not hand out motion or camera permission over plain `http://` to a
    LAN IP. Use a tunnel (`cloudflared tunnel --url http://localhost:8080`, `ngrok http 8080`) or host it
@@ -229,6 +251,7 @@ js/render/     holographic field (per-position camera), loop dial, neural map
 js/drills/     the blocks + shared live-drill stage
 js/ui/         DOM helpers, router, and the non-live screens
 sw.js          offline shell
+tools/         single-file bundler
 ```
 
 All audio is synthesised in WebAudio at runtime — the crowd bed is filtered pink noise with a slow

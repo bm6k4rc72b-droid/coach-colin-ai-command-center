@@ -421,3 +421,9 @@
   font-family:var(--f-mono);font-size:9px;letter-spacing:.16em;
   border:1px solid currentColor;opacity:.9;
 }
+
+.gate-warn{
+  margin:-6px 0 14px;padding:9px 11px;border-radius:9px;
+  font-size:12.5px;line-height:1.45;color:var(--am);
+  border:1px solid rgba(255,196,77,.32);background:rgba(255,196,77,.07);
+}
