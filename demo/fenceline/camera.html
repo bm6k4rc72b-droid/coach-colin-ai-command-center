@@ -1,0 +1,1020 @@
+<title>Fenceline Camera Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#15181b; --ground-2:#101315; --panel:#1e2226; --panel-2:#242a2f;
+  --line:#2f373d; --line-soft:#262d32; --bone:#e7e3da; --muted:#98a1a4; --dim:#6d777b;
+  --accent:#4fa3a0; --accent-dim:#2f6a68; --calm:#9bae8a; --watch:#e0a93e; --alert:#ce4a2c;
+  --font-d:"Oswald","Arial Narrow",sans-serif;
+  --font-b:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-m:"IBM Plex Mono",Consolas,monospace;
+  --r:3px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--font-b);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-d);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin:0;text-wrap:balance}
+a{color:var(--accent)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+.lbl{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+.topbar{border-bottom:1px solid var(--line);background:var(--ground-2);position:sticky;top:0;z-index:40}
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:54px}
+.mark{display:flex;align-items:baseline;gap:9px}
+.mark b{font-family:var(--font-d);font-size:21px;font-weight:600;letter-spacing:.1em}
+.mark span{font-family:var(--font-m);font-size:10px;letter-spacing:.18em;color:var(--accent)}
+.spacer{flex:1}
+.simbadge{font-family:var(--font-m);font-size:10px;letter-spacing:.13em;border:1px solid var(--watch);color:var(--watch);padding:3px 8px;border-radius:2px}
+.perf{font-family:var(--font-m);font-size:11px;color:var(--muted);letter-spacing:.06em}
+
+.console{padding:22px 0 8px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 322px;gap:14px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.card-h{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+.card-h h3{font-size:12px;letter-spacing:.14em;color:var(--muted);font-weight:500}
+.card-h .right{margin-left:auto;font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:.1em}
+
+.stage{position:relative;background:#0b0e10;border-radius:var(--r) var(--r) 0 0;overflow:hidden;min-height:220px}
+canvas#view{display:block;width:100%;height:auto}
+canvas#maskv{position:absolute;right:10px;bottom:10px;width:172px;height:auto;border:1px solid var(--line);
+  background:#000;image-rendering:pixelated;border-radius:2px}
+.stage-tag.masklbl{left:auto;right:10px;top:auto;bottom:114px}
+.stage-tag{position:absolute;left:10px;top:10px;font-family:var(--font-m);font-size:10px;letter-spacing:.11em;
+  color:var(--muted);background:rgba(16,19,21,.74);border:1px solid var(--line);padding:3px 7px;border-radius:2px}
+.startpad{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:13px;text-align:center;padding:26px;background:rgba(11,14,16,.94)}
+.startpad p{margin:0;max-width:46ch;color:var(--muted);font-size:13.5px}
+.startpad .why{font-size:12px;color:var(--dim);max-width:52ch}
+
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line-soft)}
+button,label.filebtn{font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--panel-2);color:var(--bone);border:1px solid var(--line);padding:7px 11px;border-radius:2px;
+  cursor:pointer;transition:border-color .12s,color .12s,background .12s;display:inline-block}
+button:hover,label.filebtn:hover{border-color:var(--accent);color:#fff}
+button:focus-visible,label.filebtn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{border-color:var(--accent-dim);color:var(--accent)}
+button.primary:hover{background:var(--accent-dim);color:#fff}
+button.on{background:var(--accent-dim);border-color:var(--accent);color:#fff}
+button[disabled]{opacity:.38;cursor:not-allowed}
+.seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent-dim);color:#fff}
+.tsep{width:1px;align-self:stretch;background:var(--line);margin:0 3px}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+
+.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.risk{padding:13px 14px 12px}
+.risk-top{display:flex;align-items:flex-end;gap:12px}
+.risk-num{font-family:var(--font-d);font-size:56px;line-height:.82;font-weight:600;font-variant-numeric:tabular-nums;transition:color .3s}
+.pill{display:inline-block;font-family:var(--font-m);font-size:10px;letter-spacing:.15em;padding:3px 8px;border-radius:2px;border:1px solid currentColor}
+.risk-sub{font-family:var(--font-m);font-size:10px;color:var(--dim);letter-spacing:.07em;margin-top:6px}
+.dwell{height:3px;background:var(--line-soft);margin-top:11px;border-radius:2px;overflow:hidden}
+.dwell i{display:block;height:100%;width:0;background:var(--watch);transition:width .15s linear}
+
+.sig{padding:11px 14px 14px;display:flex;flex-direction:column;gap:9px}
+.sigrow{display:grid;grid-template-columns:104px 1fr 40px;align-items:center;gap:9px}
+.sigrow .n{font-family:var(--font-m);font-size:10.5px;color:var(--muted)}
+.bar{height:6px;background:var(--line-soft);border-radius:1px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--calm);transition:width .2s,background .3s}
+.sigrow .v{font-family:var(--font-m);font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+
+.kv{padding:10px 14px 13px;display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.kv .k{font-family:var(--font-m);font-size:9.5px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.kv .v{font-family:var(--font-m);font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
+.kv .v small{font-size:10px;color:var(--muted)}
+
+.rej{padding:8px 14px 13px}
+.rejrow{display:grid;grid-template-columns:1fr 54px;gap:8px;font-family:var(--font-m);font-size:11px;
+  padding:5px 0;border-bottom:1px solid var(--line-soft);color:var(--muted)}
+.rejrow:last-child{border-bottom:0}
+.rejrow span:last-child{text-align:right;color:var(--bone);font-variant-numeric:tabular-nums}
+.rejrow.hit span:last-child{color:var(--watch)}
+
+.slid{padding:10px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.slid .row label{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:9.5px;
+  letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+.slid .row label b{color:var(--bone);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent);background:transparent}
+
+.log{max-height:150px;overflow-y:auto;padding:6px 0}
+.log ul{margin:0;padding:0}
+.log li{list-style:none;display:grid;grid-template-columns:50px 1fr;gap:9px;padding:5px 13px;
+  border-left:2px solid transparent;font-size:12.5px;line-height:1.42}
+.log li .t{font-family:var(--font-m);font-size:10.5px;color:var(--dim);padding-top:1px}
+.log li.calm{border-left-color:var(--calm)}
+.log li.watch{border-left-color:var(--watch)}
+.log li.alert{border-left-color:var(--alert);background:rgba(206,74,44,.07)}
+.log li.act{border-left-color:var(--accent)}
+
+section{padding:44px 0;border-top:1px solid var(--line-soft);scroll-margin-top:72px}
+.eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+h2{font-size:26px;margin:9px 0 0;letter-spacing:.03em}
+.lede{color:var(--muted);max-width:66ch;margin:11px 0 0;font-size:15.5px}
+
+.stages{margin-top:26px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stg{display:grid;grid-template-columns:40px 178px 1fr 150px;gap:16px;padding:14px 18px;
+  background:var(--panel);border-bottom:1px solid var(--line-soft);align-items:start}
+.stg:last-child{border-bottom:0}
+.stg .i{font-family:var(--font-m);font-size:11px;color:var(--accent);letter-spacing:.1em;padding-top:2px}
+.stg h4{font-size:13px;letter-spacing:.07em}
+.stg p{margin:0;font-size:13px;color:var(--muted);line-height:1.55}
+.stg .prod{font-family:var(--font-m);font-size:10.5px;color:var(--dim);line-height:1.5}
+.stg .prod b{color:var(--calm);font-weight:500;display:block;letter-spacing:.1em;font-size:9px;margin-bottom:3px}
+
+.cols{display:grid;gap:16px;margin-top:26px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c2{grid-template-columns:repeat(2,1fr)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px}
+.box h4{font-size:13.5px;letter-spacing:.09em;margin-bottom:7px}
+.box p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.58}
+.box p+p{margin-top:9px}
+.box .num{font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:.14em;display:block;margin-bottom:9px}
+
+table.plat{width:100%;border-collapse:collapse;margin-top:24px;font-size:13.5px}
+table.plat th,table.plat td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+table.plat th{font-family:var(--font-m);font-size:9.5px;letter-spacing:.13em;color:var(--dim);text-transform:uppercase;font-weight:500}
+table.plat td:first-child{font-family:var(--font-m);font-size:12px;color:var(--bone);white-space:nowrap}
+table.plat td{color:var(--muted)}
+table.plat tr:last-child td{border-bottom:0}
+.tblwrap{overflow-x:auto}
+
+ul.plain{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:11px;max-width:74ch}
+ul.plain li{padding-left:19px;position:relative;color:var(--muted);font-size:14px;line-height:1.55}
+ul.plain li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:1px;background:var(--accent)}
+ul.plain li b{color:var(--bone);font-weight:600}
+
+footer{padding:30px 0 46px;border-top:1px solid var(--line-soft);color:var(--dim);font-size:12.5px}
+footer p{margin:0 0 7px;max-width:76ch}
+
+@media (max-width:1000px){
+  .grid{grid-template-columns:1fr}
+  .c3,.c2{grid-template-columns:1fr}
+  .stg{grid-template-columns:32px 1fr;gap:10px}
+  .stg .prod{grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="mark"><b>FENCELINE</b><span>CAMERA BENCH</span></div>
+    <div class="spacer"></div>
+    <div class="simbadge" id="srcBadge">NO SOURCE</div>
+    <div class="perf mono" id="perf">— FPS · — MS</div>
+  </div>
+</div>
+
+<div class="wrap console">
+  <div class="grid">
+    <div class="card">
+      <div class="stage">
+        <canvas id="view" width="960" height="540"></canvas>
+        <canvas id="maskv" width="256" height="144"></canvas>
+        <div class="stage-tag masklbl" id="maskLbl">FOREGROUND MASK · POST-MORPHOLOGY</div>
+        <div class="stage-tag" id="stageTag">MOTION SEGMENTATION → SORT TRACKER · NOT A SPECIES CLASSIFIER</div>
+        <div class="startpad" id="startpad">
+          <h3 style="font-size:15px;letter-spacing:.08em">Pick a source</h3>
+          <p>This runs a real vision pipeline in your browser — background subtraction, blob extraction, and a Kalman multi-object tracker with the alarm gating on top. Nothing leaves the device.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+            <button class="primary" id="padCam">Use camera</button>
+            <label class="filebtn" tabindex="0">Open a video file<input type="file" id="padFile" accept="video/*"></label>
+            <button id="padSynth">Synthetic pasture</button>
+          </div>
+          <p class="why" id="padWhy">On a phone, "Use camera" asks for the rear lens. If the camera is blocked — an embedded frame, or you said no — the synthetic source runs the identical pipeline.</p>
+        </div>
+      </div>
+      <div class="transport">
+        <div class="seg" id="srcSeg">
+          <button data-src="cam">Camera</button>
+          <button data-src="synth">Synthetic</button>
+        </div>
+        <label class="filebtn" tabindex="0">Video file<input type="file" id="fileIn" accept="video/*"></label>
+        <button id="btnFlip">Flip lens</button>
+        <div class="tsep"></div>
+        <button id="btnMask" class="on">Mask</button>
+        <button id="btnTrails" class="on">Trails</button>
+        <button id="btnBoxes" class="on">Boxes</button>
+        <div class="tsep"></div>
+        <button id="btnRelearn">Relearn background</button>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="card">
+        <div class="card-h"><h3>Group risk index</h3><span class="right" id="riskConf">CONF 0.00</span></div>
+        <div class="risk">
+          <div class="risk-top">
+            <div class="risk-num mono" id="riskNum">00</div>
+            <div>
+              <span class="pill" id="riskPill" style="color:var(--calm)">NORMAL</span>
+              <div class="risk-sub" id="riskSub">NO TRACKS</div>
+            </div>
+          </div>
+          <div class="dwell"><i id="dwellBar"></i></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Signals</h3><span class="right">VS ROLLING BASELINE</span></div>
+        <div class="sig" id="sigs"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Tracker</h3><span class="right">SORT · CV KALMAN</span></div>
+        <div class="kv">
+          <div><div class="k">Confirmed</div><div class="v" id="kConf">0</div></div>
+          <div><div class="k">Tentative</div><div class="v" id="kTent">0</div></div>
+          <div><div class="k">Next track id</div><div class="v" id="kId">1</div></div>
+          <div><div class="k">Mean track age</div><div class="v" id="kAge">0 <small>S</small></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Rejected this second</h3><span class="right" id="rejTot">0</span></div>
+        <div class="rej" id="rej"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Tuning</h3></div>
+        <div class="slid">
+          <div class="row"><label for="sSens">Motion sensitivity <b id="vSens">3.5 σ</b></label>
+            <input type="range" id="sSens" min="1.5" max="8" step="0.1" value="3.5"></div>
+          <div class="row"><label for="sMin">Minimum blob area <b id="vMin">0.06 %</b></label>
+            <input type="range" id="sMin" min="0.01" max="1.2" step="0.01" value="0.06"></div>
+          <div class="row"><label for="sDwell">Dwell before alarm <b id="vDwell">2.5 s</b></label>
+            <input type="range" id="sDwell" min="0" max="8" step="0.1" value="2.5"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Event log</h3><span class="right">ON-DEVICE</span></div>
+        <div class="log"><ul id="log"></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<section>
+  <div class="eyebrow">The pipeline</div>
+  <h2>Eight stages, and what each becomes in production</h2>
+  <p class="lede">Everything in the left column is running right now, on your device, at the frame rate shown in the header. The right column is what each stage is replaced by once there is a labelled dataset and a box on the post — the interfaces between stages do not change, which is the point of building it this way.</p>
+  <div class="stages">
+    <div class="stg"><span class="i">01</span><div><h4>Decode &amp; downscale</h4></div>
+      <p>Frames land on a 256-wide working buffer, greyscaled. Detection does not need pixels; only the drawing does. This one decision is most of the reason it runs on a phone.</p>
+      <div class="prod"><b>PRODUCTION</b>Hardware decode straight to a GPU tensor. Full res retained for the clip, not for inference.</div></div>
+    <div class="stg"><span class="i">02</span><div><h4>Illumination compensation</h4></div>
+      <p>Gain-match the frame to the background model before differencing, and flag any global step. A cloud crossing the sun moves every pixel at once, which is otherwise a whole-frame false detection.</p>
+      <div class="prod"><b>PRODUCTION</b>Unchanged. A learned detector still needs this in front of the motion gate.</div></div>
+    <div class="stg"><span class="i">03</span><div><h4>Background model</h4></div>
+      <p>Per-pixel running average with a slow time constant, and a noise σ estimated from the difference histogram each frame — the threshold is a multiple of that σ, not a fixed number, so it survives grain at night. Foreground pixels update more slowly, or a standing animal dissolves; but any pixel foreground for more than two and a half seconds is absorbed outright, or the model scars and every path anything ever walked stays foreground until the blobs merge into one growing mass.</p>
+      <div class="prod"><b>PRODUCTION</b>MOG2 or a small temporal net. Its job shrinks to gating: decide which frames deserve the detector.</div></div>
+    <div class="stg"><span class="i">04</span><div><h4>Morphology</h4></div>
+      <p>Erode once to kill speckle, dilate twice to close an animal that broke into pieces. Grass moving in wind is high-frequency and dies at the erode; a cow does not.</p>
+      <div class="prod"><b>PRODUCTION</b>Dropped. A detector outputs boxes directly, with no mask to clean up.</div></div>
+    <div class="stg"><span class="i">05</span><div><h4>Connected components</h4></div>
+      <p>Flood fill over the mask into blobs with a bounding box, area and centroid. This is the stage that produces detections — the thing the tracker consumes.</p>
+      <div class="prod"><b>PRODUCTION</b><span>Swap in YOLO or RT-DETR fine-tuned on livestock. Same output shape: boxes plus scores.</span></div></div>
+    <div class="stg"><span class="i">06</span><div><h4>Detection filter</h4></div>
+      <p>Reject on area, aspect ratio and fill ratio, and count every rejection by reason — the panel on the right is that counter. A swaying branch fails fill; a bug on the lens fails area; a shadow edge fails aspect. Then merge boxes that all but touch, because a moving animal arrives as two detections — itself, and the ghost of where it just was.</p>
+      <div class="prod"><b>PRODUCTION</b>Becomes a confidence threshold plus class gating, and the same per-reason counters stay.</div></div>
+    <div class="stg"><span class="i">07</span><div><h4>Multi-object tracker</h4></div>
+      <p>SORT: predict every track forward with a constant-velocity Kalman filter, match to this frame's detections greedily inside a distance gate, then birth, update or kill. A track earns an ID after three hits and a quarter second, and survives a full second of misses before it dies — lifetimes in <em>seconds</em>, not frames, or the tracker behaves differently on every device.</p>
+      <div class="prod"><b>PRODUCTION</b>ByteTrack or OC-SORT, plus an appearance embedding so an animal keeps its ID through an occlusion.</div></div>
+    <div class="stg"><span class="i">08</span><div><h4>Behaviour &amp; alarm</h4></div>
+      <p>Nearest-neighbour spacing, heading polarisation and speed over the confirmed tracks, against a rolling baseline — then the dwell timer and the re-alert lockout decide whether a phone buzzes.</p>
+      <div class="prod"><b>PRODUCTION</b>Same maths, plus head-pose keypoints and per-pasture thresholds learned from that property's own footage.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The hard part</div>
+  <h2>Six layers between a moving pixel and a phone buzzing</h2>
+  <p class="lede">Detection is a solved problem you can buy. False alarms are the whole product, because a system that cries wolf twice a week trains the one person who matters to ignore it — and an ignored alarm is worse than no alarm, since it was also paid for.</p>
+  <div class="cols c3">
+    <div class="box"><span class="num">LAYER 1</span><h4>Reject at the blob</h4>
+      <p>Area, aspect and fill bounds thrown before anything reaches the tracker. Cheap, and it removes the overwhelming majority: insects on the lens, rain streaks, a single shimmering leaf.</p></div>
+    <div class="box"><span class="num">LAYER 2</span><h4>Reject at the track</h4>
+      <p>A detection must persist across three frames with plausible motion before it becomes a track. Almost nothing spurious survives this — noise does not travel in a straight line at a believable speed.</p></div>
+    <div class="box"><span class="num">LAYER 3</span><h4>Reject at the global frame</h4>
+      <p>If most of the frame changed at once, it was the light, the camera, or a spider walking across the lens. Suppress, relearn the background, and log it rather than alerting.</p></div>
+    <div class="box"><span class="num">LAYER 4</span><h4>Require a group, not an animal</h4>
+      <p>The alarm is a statistic over many tracks measured against that camera's own rolling baseline. One startled animal cannot raise it. This is what makes the herd approach robust rather than clever.</p></div>
+    <div class="box"><span class="num">LAYER 5</span><h4>Dwell, then lock out</h4>
+      <p>Hold above threshold for a sustained window before firing, then refuse to fire again for a cooldown. Try dragging the dwell slider to zero and moving in front of the camera — you can watch the alarm become useless.</p></div>
+    <div class="box"><span class="num">LAYER 6</span><h4>Learn from the dismissals</h4>
+      <p>Every alert ships with its clip and a one-tap "that was nothing". Those become the hard-negative set that retrains the thresholds for that specific camera on that specific fence line.</p></div>
+  </div>
+  <div class="cols c2" style="margin-top:16px">
+    <div class="box"><h4>The metric to hold yourself to</h4>
+      <p>Not accuracy. <b style="color:var(--bone)">False alerts per camera per week</b>, with a target below one, measured against recall on a held-out set of real incidents. Accuracy on a balanced test set is meaningless when the base rate is one event per thousand nights — a model that always says "nothing" scores 99.9%.</p></div>
+    <div class="box"><h4>Where the thresholds actually come from</h4>
+      <p>Not from a config file shipped with the product. Each camera watches its own scene for a couple of weeks and learns what normal looks like there — this paddock at this hour in this wind. A threshold tuned on someone else's ranch is a guess, and it is the single most common way systems like this fail in the field.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Platforms</div>
+  <h2>Where this code can run</h2>
+  <p class="lede">The page you are reading is the browser answer, and it is a real one — it works on iPhone, Android and any laptop with no install and no account. The other rows are what you move to when the camera has to live on a fence post a mile from the house.</p>
+  <div class="tblwrap">
+    <table class="plat">
+      <tr><th>Target</th><th>How</th><th>What you get, and what you give up</th></tr>
+      <tr><td>iPhone / iPad<br>Safari</td><td>This page. <code>getUserMedia</code> with <code>facingMode: environment</code>, canvas processing.</td>
+        <td>Works today, nothing to install, video never leaves the phone. iOS needs a tap to start the camera and <code>playsinline</code> to avoid full-screening it, both handled here. Backgrounding the app stops the pipeline — Safari suspends the tab — so this is a demo and a spot-check tool, not an overnight watch.</td></tr>
+      <tr><td>Android<br>Chrome</td><td>Identical code path.</td>
+        <td>Same as above and generally faster, since Chrome will keep a foreground tab alive with the screen on. Add a wake lock so the screen does not sleep mid-watch.</td></tr>
+      <tr><td>Laptop<br>any browser</td><td>Identical code path, plus the file input for a recorded clip.</td>
+        <td>The best demo surface: a big screen, an old trail-cam clip dragged straight in, and no network. This is the one to bring to the meeting.</td></tr>
+      <tr><td>Native iOS</td><td>Swift + AVFoundation capture → Vision / Core ML.</td>
+        <td>Background execution, the Neural Engine, thermal headroom, and a real push notification instead of a browser tab. This is the step you take once someone wants it overnight.</td></tr>
+      <tr><td>Native Android</td><td>Kotlin + CameraX → TFLite with NNAPI or GPU delegate.</td>
+        <td>Same benefits. Fragmentation is the tax: test the delegate path on cheap hardware, because that is what will be sitting in the barn.</td></tr>
+      <tr><td>The post itself</td><td>Jetson Orin Nano or a Pi 5 with a Hailo accelerator, PoE or solar, IR or thermal.</td>
+        <td>Where it belongs. Runs all night, sees in the dark, sends a LoRa alert with no cell service, and syncs the clip when a link appears. Everything above is how you prove it is worth building this.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Straight answers</div>
+  <h2>What this bench is not</h2>
+  <ul class="plain">
+    <li><b>It is not a species classifier.</b> It detects <em>motion</em> and tracks it. It will track you, your dog, a truck and a ceiling fan with equal enthusiasm, and it is labelled that way on screen. Stage 05 is where a livestock detector drops in; nothing downstream of it changes.</li>
+    <li><b>The tracker, though, is the real thing.</b> Constant-velocity Kalman prediction, greedy assignment inside a distance gate, three-hit confirmation and twelve-miss deletion is SORT, and SORT is what production systems actually run — modern trackers are refinements of it, not replacements.</li>
+    <li><b>Nothing leaves your device.</b> No frame, no clip, no telemetry. There is no network call in this page at all beyond the two font files.</li>
+    <li><b>Camera access can be blocked</b> in an embedded frame or by your own permission choice. That is not a failure to hide — the synthetic source runs the identical pipeline so you can still see the tracker and the alarm gating work.</li>
+    <li><b>A motionless animal is an invisible animal.</b> Background subtraction sees change, so a cow that stands still for long enough is absorbed into the background and its track dies. Watch the confirmed count sag when the synthetic herd settles. No amount of tuning fixes this — it is the structural reason a real deployment puts a learned detector at stage 05, because a detector sees a cow whether or not it moved.</li>
+    <li><b>Daylight tuning is not night tuning.</b> Everything you can adjust here would be learned per camera in a real deployment, and the numbers that work in this room will not be the numbers that work on a pasture at 2 a.m.</li>
+  </ul>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">
+    <p>Fenceline Camera Bench — a real browser vision pipeline, running locally. Companion to the Fenceline Night Watch console.</p>
+    <p>Point it at anything that moves. The tracker does not know what a cow is, and that is exactly the honest starting point.</p>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   A real, small vision pipeline:
+     frame -> grey -> illumination compensation -> background model
+           -> adaptive threshold -> morphology -> connected components
+           -> detection filter -> SORT tracker -> behaviour -> alarm
+   Everything runs on the device. No frame ever leaves the page.
+   ============================================================ */
+
+const view = document.getElementById('view'), vctx = view.getContext('2d');
+const maskv = document.getElementById('maskv'), mctx = maskv.getContext('2d');
+const COL = {bone:'#e7e3da',muted:'#98a1a4',dim:'#6d777b',accent:'#4fa3a0',
+             calm:'#9bae8a',watch:'#e0a93e',alert:'#ce4a2c'};
+
+const WORK_W = 256;
+let WORK_H = 144, N = WORK_W*WORK_H;
+
+// working buffers (reallocated if the source aspect changes)
+let gray, bg, fgAge, mask, tmp, labels, stack;
+const FG_STALE_S = 2.5;   // a pixel foreground this long is absorbed into the background
+const BG_TAU_S   = 1.4;   // background time constant. Longer holds slow animals but
+                          // trails a bigger "ghost" behind each one, which splits it in two.
+function allocate(h){
+  WORK_H = h; N = WORK_W*WORK_H;
+  gray = new Float32Array(N); bg = new Float32Array(N); fgAge = new Float32Array(N);
+  mask = new Uint8Array(N);   tmp = new Uint8Array(N);
+  labels = new Int32Array(N); stack = new Int32Array(N);
+  bgReady = false;
+  maskv.width = WORK_W; maskv.height = WORK_H;
+}
+let bgReady = false, meanPrev = null, bgAge = 0;
+
+// scratch canvas the source is downscaled into
+const work = document.createElement('canvas');
+work.width = WORK_W; work.height = WORK_H;
+const wctx = work.getContext('2d', {willReadFrequently:true});
+
+/* ---------------- source ---------------- */
+const video = document.createElement('video');
+video.playsInline = true; video.muted = true; video.autoplay = true; video.loop = true;
+video.setAttribute('playsinline',''); video.setAttribute('muted','');
+let source = null, sourceKind = null, stream = null, facing = 'environment';
+
+function setBadge(t, warn){
+  const b = document.getElementById('srcBadge');
+  b.textContent = t;
+  b.style.borderColor = warn ? COL.alert : COL.watch;
+  b.style.color = warn ? COL.alert : COL.watch;
+}
+function hidePad(){ document.getElementById('startpad').style.display='none'; }
+function showPad(msg){
+  const pad = document.getElementById('startpad');
+  pad.style.display='flex';
+  if(msg) document.getElementById('padWhy').textContent = msg;
+}
+function segOn(kind){
+  document.querySelectorAll('#srcSeg button').forEach(b=>b.classList.toggle('on', b.dataset.src===kind));
+}
+
+async function useCamera(){
+  stopStream();
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:{ideal:facing}, width:{ideal:1280}, height:{ideal:720} }, audio:false
+    });
+    video.srcObject = stream;
+    await video.play();
+    source = video; sourceKind = 'cam'; segOn('cam');
+    setBadge('CAMERA · '+(facing==='environment'?'REAR':'FRONT')+' · LOCAL ONLY');
+    hidePad(); resetPipeline();
+    log('act','Camera opened at '+video.videoWidth+'×'+video.videoHeight+'. Learning the background.');
+  }catch(err){
+    const why = err && err.name==='NotAllowedError'
+      ? 'Camera permission was refused, or this page is embedded in a frame that does not pass camera access through. The synthetic source runs the identical pipeline.'
+      : 'No camera available here ('+((err&&err.name)||'unknown')+'). The synthetic source runs the identical pipeline.';
+    setBadge('CAMERA BLOCKED', true);
+    showPad(why);
+    log('watch','Camera unavailable — '+((err&&err.name)||'error')+'. Falling back to the synthetic source.');
+    useSynthetic();
+  }
+}
+function stopStream(){ if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } }
+
+function useFile(file){
+  stopStream();
+  video.srcObject = null;
+  video.src = URL.createObjectURL(file);
+  video.loop = true;
+  video.play().catch(()=>{});
+  source = video; sourceKind='file'; segOn(null);
+  setBadge('VIDEO FILE · LOCAL ONLY');
+  hidePad(); resetPipeline();
+  log('act','Loaded "'+file.name+'". Nothing is uploaded — it is decoded in the page.');
+}
+
+/* a synthetic pasture, so the pipeline always has something to chew on */
+const synth = document.createElement('canvas');
+synth.width = 640; synth.height = 360;
+const sctx = synth.getContext('2d');
+let herd = [], synthScare = 0, synthT = 0, synthNext = 14, sdx = -1, sdy = 0;
+function initSynth(){
+  herd = [];
+  for(let i=0;i<12;i++) herd.push({x:110+Math.random()*450, y:70+Math.random()*230,
+    vx:0, vy:0, f:0, dir:Math.random()*6.283});
+}
+function drawSynth(dt){
+  synthT += dt;
+  if(synthT > synthNext){
+    synthScare = 6; synthT = 0; synthNext = 20+Math.random()*12;
+    const ang = Math.random()*6.283; sdx = Math.cos(ang); sdy = Math.sin(ang)*0.55;
+    log('calm','Synthetic scene: a scare event starts now — watch the signals move.'); }
+  if(synthScare>0) synthScare -= dt;
+  const scared = synthScare>0;
+  const g = sctx.createLinearGradient(0,0,0,360);
+  g.addColorStop(0,'#2a3128'); g.addColorStop(1,'#1e241d');
+  sctx.fillStyle=g; sctx.fillRect(0,0,640,360);
+  sctx.fillStyle='rgba(255,255,255,.03)';
+  for(let i=0;i<160;i++) sctx.fillRect((i*97)%640,(i*61)%360,2,1);
+  let cx=0, cy=0; for(const a of herd){ cx+=a.x; cy+=a.y; } cx/=herd.length; cy/=herd.length;
+  for(const a of herd){
+    a.dir += (Math.random()-0.5)*2.2*dt;
+    let dvx, dvy;
+    if(scared){
+      dvx = sdx*98 + (cx-a.x)*0.06; dvy = sdy*98 + (cy-a.y)*0.06;
+      a.f = Math.min(1, a.f+dt*2);
+    } else {
+      dvx = Math.cos(a.dir)*14 + (320-a.x)*0.035; dvy = Math.sin(a.dir)*14 + (185-a.y)*0.035;
+      a.f = Math.max(0, a.f-dt*0.6);
+    }
+    let ax=(dvx-a.vx)*3.2, ay=(dvy-a.vy)*3.2;
+    for(const b of herd){ if(b===a) continue;
+      const dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy)||1;
+      if(d<64){ ax+=dx/d*(64-d)*2.6; ay+=dy/d*(64-d)*2.6; } }
+    a.vx+=ax*dt; a.vy+=ay*dt;
+    a.x+=a.vx*dt; a.y+=a.vy*dt;
+    if(a.x<30){a.x=30;a.vx=Math.abs(a.vx);a.dir=Math.PI-a.dir}
+    if(a.x>610){a.x=610;a.vx=-Math.abs(a.vx);a.dir=Math.PI-a.dir}
+    if(a.y<40){a.y=40;a.vy=Math.abs(a.vy);a.dir=-a.dir}
+    if(a.y>330){a.y=330;a.vy=-Math.abs(a.vy);a.dir=-a.dir}
+    sctx.save(); sctx.translate(a.x,a.y); sctx.rotate(Math.atan2(a.vy,a.vx));
+    sctx.fillStyle='#b9b0a0'; sctx.fillRect(-21,-10,42,20);
+    sctx.beginPath(); sctx.arc(22,0,8,0,7); sctx.fill();
+    sctx.restore();
+  }
+}
+function useSynthetic(){
+  stopStream(); video.srcObject=null; video.removeAttribute('src');
+  initSynth(); source = synth; sourceKind='synth'; segOn('synth');
+  setBadge('SYNTHETIC SOURCE');
+  hidePad(); resetPipeline();
+}
+
+/* ---------------- Kalman (constant velocity, per axis) ---------------- */
+function kf(p){ return {p:p, v:0, P:[[8,0],[0,60]]}; }
+function kfPredict(s, dt, q){
+  s.p += s.v*dt;
+  const P=s.P;
+  const p00 = P[0][0] + dt*(P[1][0]+P[0][1]) + dt*dt*P[1][1];
+  const p01 = P[0][1] + dt*P[1][1];
+  const p10 = P[1][0] + dt*P[1][1];
+  const p11 = P[1][1];
+  P[0][0]=p00 + q*dt; P[0][1]=p01; P[1][0]=p10; P[1][1]=p11 + q*4*dt;
+}
+function kfUpdate(s, z, r){
+  const P=s.P, S=P[0][0]+r, k0=P[0][0]/S, k1=P[1][0]/S, y=z-s.p;
+  s.p += k0*y; s.v += k1*y;
+  const p00=P[0][0], p01=P[0][1];
+  P[0][0]-=k0*p00; P[0][1]-=k0*p01; P[1][0]-=k1*p00; P[1][1]-=k1*p01;
+}
+
+let nextId = 1, tracks = [];
+function Track(b, t){
+  this.id = nextId++;
+  this.kx = kf(b.cx); this.ky = kf(b.cy);
+  this.w = b.w; this.h = b.h;
+  this.hits = 1; this.missT = 0; this.confirmed = false;
+  this.born = t; this.trail = [[b.cx,b.cy]];
+}
+// lifetimes in seconds, not frames, so behaviour does not change with frame rate
+const CONFIRM_HITS = 3, CONFIRM_AGE = 0.25, MAX_MISS_S = 1.0, MAX_MISS_TENT_S = 0.3, GATE = 2.2;
+
+/* ---------------- alarm state ---------------- */
+let risk=0, phase='CALM', dwell=0, conf=0, sigs=[0,0,0,0];
+let nnd0=null, polar0=null, spd0=null, cnt0=null;
+let lastAlertAt=-1e9, alertAt=null, tNow=0, calmHeld=0, learn=0;
+const LEARN_S=6;   // seconds of quiet observation before any signal is trusted
+const WATCH_T=30, ALERT_T=55, LOCKOUT=25;
+let dwellNeed = 2.5, sensK = 3.5, minAreaPct = 0.06;
+
+const rejReasons = {size:0, aspect:0, fill:0, illumination:0, unconfirmed:0};
+let rejWindow = {size:0, aspect:0, fill:0, illumination:0, unconfirmed:0}, rejTimer=0;
+
+function resetPipeline(){
+  bgReady=false; meanPrev=null; tracks=[]; nextId=1;
+  risk=0; phase='CALM'; dwell=0; nnd0=polar0=spd0=cnt0=null; learn=0;
+  alertAt=null; lastAlertAt=-1e9; calmHeld=0;
+  for(const k in rejReasons){ rejReasons[k]=0; rejWindow[k]=0; }
+}
+
+/* ---------------- the frame pipeline ---------------- */
+function ready(){
+  if(sourceKind==='synth') return true;
+  return source && source.readyState >= 2 && source.videoWidth > 0;
+}
+
+function processFrame(dt){
+  const sw = sourceKind==='synth' ? synth.width  : source.videoWidth;
+  const sh = sourceKind==='synth' ? synth.height : source.videoHeight;
+  const wantH = Math.max(72, Math.round(WORK_W * sh / sw / 2) * 2);
+  if(wantH !== WORK_H) allocate(wantH);
+
+  wctx.drawImage(source, 0, 0, WORK_W, WORK_H);
+  const px = wctx.getImageData(0,0,WORK_W,WORK_H).data;
+
+  // 01 greyscale
+  let sum = 0;
+  for(let i=0, j=0; i<N; i++, j+=4){
+    const v = (px[j]*0.299 + px[j+1]*0.587 + px[j+2]*0.114);
+    gray[i] = v; sum += v;
+  }
+  const meanCur = sum/N;
+
+  if(!bgReady){
+    bg.set(gray); bgReady = true; bgAge = 0; meanPrev = meanCur;
+    mask.fill(0); return {blobs:[], illum:false};
+  }
+
+  // 02 illumination compensation + global-step detection
+  let bgSum = 0; for(let i=0;i<N;i++) bgSum += bg[i];
+  const gain = bgSum/N / Math.max(1, meanCur);
+  const step = Math.abs(meanCur - meanPrev);
+  meanPrev = meanCur;
+  const illum = step > 6.5;
+
+  // 03 difference + noise sigma from the histogram (MAD estimator)
+  const hist = new Uint32Array(256);
+  const diff = tmp;                       // reuse as a byte diff buffer
+  for(let i=0;i<N;i++){
+    let d = Math.abs(gray[i]*gain - bg[i]);
+    if(d>255) d=255;
+    const b = d|0; diff[i]=b; hist[b]++;
+  }
+  let acc=0, med=0; const half=N>>1;
+  for(let b=0;b<256;b++){ acc+=hist[b]; if(acc>=half){ med=b; break; } }
+  const sigma = Math.max(1.2, med*1.4826);
+  const thr = Math.max(7, sensK*sigma);
+
+  // 04 threshold + morphology (erode once, dilate twice)
+  for(let i=0;i<N;i++) mask[i] = diff[i] > thr ? 1 : 0;
+  erode(mask, tmp); dilate(tmp, mask); dilate(mask, tmp); mask.set(tmp);
+
+  // background update — slow, and slower still where something is moving
+  // Foreground pixels update their background more slowly, or a stationary animal
+  // dissolves into it. Left unchecked that scars: every pixel anything ever walked
+  // over stays foreground for ever and the blobs merge into one growing mass. So a
+  // pixel that has been foreground continuously for too long is absorbed outright.
+  bgAge += dt;
+  const tau   = bgAge < 2.5 ? 0.15 : BG_TAU_S;      // seconds, not frames
+  const aFree = 1 - Math.exp(-dt/tau);
+  const aFg   = 1 - Math.exp(-dt/(tau*4));
+  for(let i=0;i<N;i++){
+    if(mask[i]){
+      fgAge[i] += dt;
+      if(fgAge[i] > FG_STALE_S){ bg[i] = gray[i]*gain; fgAge[i] = 0; mask[i] = 0; }
+      else bg[i] += (gray[i]*gain - bg[i]) * aFg;
+    } else {
+      fgAge[i] = 0;
+      bg[i] += (gray[i]*gain - bg[i]) * aFree;
+    }
+  }
+  if(illum){ bg.set(gray); bgAge = 0; rejWindow.illumination++; mask.fill(0); return {blobs:[], illum:true}; }
+
+  // 05 connected components
+  const blobs = components();
+
+  // 06 detection filter
+  const minArea = Math.max(6, N * minAreaPct/100);
+  const maxArea = N * 0.30;
+  const keep = [];
+  for(const b of blobs){
+    if(b.area < minArea || b.area > maxArea){ rejWindow.size++; continue; }
+    const ar = b.w/b.h;
+    if(ar < 0.22 || ar > 4.6){ rejWindow.aspect++; continue; }
+    if(b.area/(b.w*b.h) < 0.30){ rejWindow.fill++; continue; }
+    keep.push(b);
+  }
+  if(keep.length > 60){ rejWindow.illumination++; return {blobs:[], illum:true}; }
+  return {blobs:mergeNearby(keep, 4), illum:false};
+}
+
+// A moving animal leaves a "ghost" — the patch of background it has not yet been
+// forgotten from — so it often arrives as two detections, body and trail. Boxes
+// that all but touch are one object; merge them before the tracker ever sees them,
+// or every animal gets two ids and the track count signal is noise.
+function mergeNearby(list, gap){
+  const maxW = WORK_W*0.14, maxH = WORK_H*0.16;   // an animal plus its ghost, no more
+  for(let pass=0; pass<6; pass++){
+    let merged = false;
+    for(let i=0;i<list.length && !merged;i++){
+      for(let j=i+1;j<list.length;j++){
+        const a=list[i], b=list[j];
+        if(a.x-(b.x+b.w) < gap && b.x-(a.x+a.w) < gap &&
+           a.y-(b.y+b.h) < gap && b.y-(a.y+a.h) < gap){
+          const x=Math.min(a.x,b.x), y=Math.min(a.y,b.y);
+          const x2=Math.max(a.x+a.w,b.x+b.w), y2=Math.max(a.y+a.h,b.y+b.h);
+          if(x2-x > maxW || y2-y > maxH) continue;   // that is a group, not a ghost
+          const area=a.area+b.area;
+          list[i]={x:x, y:y, w:x2-x, h:y2-y, area:area,
+                   cx:(a.cx*a.area+b.cx*b.area)/area, cy:(a.cy*a.area+b.cy*b.area)/area};
+          list.splice(j,1); merged = true; break;
+        }
+      }
+    }
+    if(!merged) break;
+  }
+  return list;
+}
+
+function erode(src, dst){
+  dst.fill(0);
+  for(let y=1;y<WORK_H-1;y++){
+    const r=y*WORK_W;
+    for(let x=1;x<WORK_W-1;x++){
+      const i=r+x;
+      if(src[i] && src[i-1] && src[i+1] && src[i-WORK_W] && src[i+WORK_W]) dst[i]=1;
+    }
+  }
+}
+function dilate(src, dst){
+  dst.fill(0);
+  for(let y=1;y<WORK_H-1;y++){
+    const r=y*WORK_W;
+    for(let x=1;x<WORK_W-1;x++){
+      const i=r+x;
+      if(src[i] || src[i-1] || src[i+1] || src[i-WORK_W] || src[i+WORK_W]) dst[i]=1;
+    }
+  }
+}
+function components(){
+  labels.fill(0);
+  const out=[]; let lab=0;
+  for(let i=0;i<N;i++){
+    if(!mask[i] || labels[i]) continue;
+    lab++;
+    let sp=0; stack[sp++]=i; labels[i]=lab;
+    let minX=1e9,minY=1e9,maxX=-1,maxY=-1,area=0,sx=0,sy=0;
+    while(sp>0){
+      const p=stack[--sp];
+      const y=(p/WORK_W)|0, x=p-y*WORK_W;
+      area++; sx+=x; sy+=y;
+      if(x<minX)minX=x; if(x>maxX)maxX=x;
+      if(y<minY)minY=y; if(y>maxY)maxY=y;
+      if(x>0        && mask[p-1]       && !labels[p-1]){       labels[p-1]=lab;       stack[sp++]=p-1; }
+      if(x<WORK_W-1 && mask[p+1]       && !labels[p+1]){       labels[p+1]=lab;       stack[sp++]=p+1; }
+      if(y>0        && mask[p-WORK_W]  && !labels[p-WORK_W]){  labels[p-WORK_W]=lab;  stack[sp++]=p-WORK_W; }
+      if(y<WORK_H-1 && mask[p+WORK_W]  && !labels[p+WORK_W]){  labels[p+WORK_W]=lab;  stack[sp++]=p+WORK_W; }
+    }
+    out.push({cx:sx/area, cy:sy/area, x:minX, y:minY,
+              w:Math.max(1,maxX-minX+1), h:Math.max(1,maxY-minY+1), area:area});
+    if(out.length > 400) break;
+  }
+  return out;
+}
+
+/* ---------------- 07 SORT: predict, match, birth/kill ---------------- */
+function updateTracks(dets, dt){
+  for(const t of tracks){ kfPredict(t.kx, dt, 90); kfPredict(t.ky, dt, 90); }
+
+  const pairs=[];
+  for(let i=0;i<tracks.length;i++){
+    const t=tracks[i], ts=Math.sqrt(t.w*t.h);
+    for(let j=0;j<dets.length;j++){
+      const d=dets[j], ds=Math.sqrt(d.w*d.h);
+      const dist=Math.hypot(t.kx.p-d.cx, t.ky.p-d.cy);
+      const cost=dist/Math.max(4,(ts+ds)*0.5);
+      if(cost < GATE) pairs.push({i,j,cost});
+    }
+  }
+  pairs.sort((a,b)=>a.cost-b.cost);
+  const tUsed=new Set(), dUsed=new Set();
+  for(const p of pairs){
+    if(tUsed.has(p.i)||dUsed.has(p.j)) continue;
+    tUsed.add(p.i); dUsed.add(p.j);
+    const t=tracks[p.i], d=dets[p.j];
+    kfUpdate(t.kx, d.cx, 2); kfUpdate(t.ky, d.cy, 2);
+    t.w += (d.w-t.w)*0.35; t.h += (d.h-t.h)*0.35;
+    t.hits++; t.missT=0;
+    if(!t.confirmed && t.hits>=CONFIRM_HITS && tNow-t.born>=CONFIRM_AGE) t.confirmed=true;
+    t.trail.push([t.kx.p,t.ky.p]); if(t.trail.length>44) t.trail.shift();
+  }
+  for(let i=0;i<tracks.length;i++) if(!tUsed.has(i)) tracks[i].missT += dt;
+  for(let j=0;j<dets.length;j++) if(!dUsed.has(j)) tracks.push(new Track(dets[j], tNow));
+
+  tracks = tracks.filter(t=>{
+    const alive = t.missT <= (t.confirmed ? MAX_MISS_S : MAX_MISS_TENT_S);
+    if(!alive && !t.confirmed) rejWindow.unconfirmed++;   // only count the ones that never earned an id
+    return alive;
+  });
+}
+
+/* ---------------- 08 behaviour + alarm ---------------- */
+function behaviour(dt){
+  const live = tracks.filter(t=>t.confirmed);
+  const n = live.length;
+  const diag = Math.hypot(WORK_W, WORK_H);
+
+  if(n < 2){
+    learn = 0;                               // the baseline means nothing without a group
+    risk = Math.max(0, risk - dt*45);
+    sigs = [0,0,0,0]; conf = 0;
+    dwell = Math.max(0, dwell-dt);
+    if(phase!=='CALM'){ phase='CALM'; calmHeld=0; }
+    return;
+  }
+
+  let nndSum=0, px=0, py=0, spd=0;
+  for(const a of live){
+    let best=1e9;
+    for(const b of live){ if(a===b) continue;
+      const d=(a.kx.p-b.kx.p)**2+(a.ky.p-b.ky.p)**2; if(d<best) best=d; }
+    nndSum += Math.sqrt(best);
+    const s=Math.hypot(a.kx.v,a.ky.v)||1e-6;
+    px += a.kx.v/s; py += a.ky.v/s; spd += s;
+  }
+  const nnd=nndSum/n/diag, polar=Math.hypot(px,py)/n, speed=spd/n/diag;
+
+  learn += dt;
+  if(nnd0===null){ nnd0=nnd; polar0=polar; spd0=speed; cnt0=n; }
+  else if(phase!=='ALERT'){
+    const k=Math.min(1, dt*(learn<LEARN_S ? 1.2 : phase==='CALM' ? 0.06 : 0.02));
+    nnd0+=(nnd-nnd0)*k; polar0+=(polar-polar0)*k; spd0+=(speed-spd0)*k; cnt0+=(n-cnt0)*k;
+  }
+  if(learn < LEARN_S){
+    risk=Math.max(0,risk-dt*40); sigs=[0,0,0,0]; conf=0; dwell=0; phase='CALM';
+    return;
+  }
+
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+  const s0 = clamp(Math.abs(nnd-nnd0)/Math.max(1e-4, nnd0*0.55), 0, 1);
+  const s1 = clamp((polar-polar0)/Math.max(0.20, 1-polar0), 0, 1);
+  const s2 = clamp((speed-spd0)/0.05, 0, 1);
+  const s3 = clamp(Math.abs(n-cnt0)/Math.max(4, cnt0*1.0), 0, 1);
+  sigs=[s0,s1,s2,s3];
+
+  const raw = 100*(s0*0.28 + s1*0.30 + s2*0.30 + s3*0.12);
+  risk += (raw-risk)*Math.min(1, dt*3);
+  conf = clamp(0.18 + 0.19*sigs.filter(s=>s>0.34).length + risk/430, 0, 0.98);
+
+  dwell = risk>=ALERT_T ? Math.min(dwellNeed, dwell+dt) : Math.max(0, dwell-dt*0.75);
+  const prev=phase;
+  if(phase==='ALERT'){
+    if(risk < WATCH_T*0.75){ phase='CALM'; calmHeld=0;
+      log('calm','Back to baseline. Index '+Math.round(risk)+'.'); }
+  } else if(risk>=ALERT_T && dwell>=dwellNeed && tNow-lastAlertAt>LOCKOUT){
+    phase='ALERT';
+  } else if(risk>=ALERT_T && dwell>=dwellNeed){
+    if(phase!=='WATCH'){ phase='WATCH';
+      log('watch','Over threshold inside the '+LOCKOUT+' s lockout — logged, no alert raised.'); }
+  } else if(risk>=WATCH_T){
+    if(phase!=='WATCH'){ phase='WATCH'; log('watch','WATCH — group pattern above baseline. Holding for the dwell window.'); }
+  } else { phase='CALM'; calmHeld+=dt; }
+
+  if(phase==='ALERT' && prev!=='ALERT'){
+    alertAt=tNow; lastAlertAt=tNow;
+    log('alert','ALERT — '+n+' tracks, index '+Math.round(risk)+', confidence '+conf.toFixed(2)
+      +'. Held '+dwellNeed.toFixed(1)+' s before firing.');
+  }
+}
+
+/* ---------------- rendering ---------------- */
+let showMask=true, showTrails=true, showBoxes=true;
+function render(dets){
+  const sw = sourceKind==='synth' ? synth.width  : (source?source.videoWidth :16);
+  const sh = sourceKind==='synth' ? synth.height : (source?source.videoHeight:9);
+  if(view.width!==960 || view.height!==Math.round(960*sh/sw)){
+    view.width=960; view.height=Math.max(200, Math.round(960*sh/sw));
+  }
+  const W=view.width, H=view.height, kx=W/WORK_W, ky=H/WORK_H;
+  vctx.drawImage(source,0,0,W,H);
+  vctx.save();
+  vctx.fillStyle='rgba(10,13,15,.18)'; vctx.fillRect(0,0,W,H);   // sit the overlay above the scene
+
+  if(showBoxes) for(const d of dets){
+    vctx.strokeStyle='rgba(155,174,138,.30)'; vctx.lineWidth=1;
+    vctx.strokeRect(d.x*kx, d.y*ky, d.w*kx, d.h*ky);
+  }
+
+  for(const t of tracks){
+    const x=t.kx.p*kx, y=t.ky.p*ky, w=t.w*kx, h=t.h*ky;
+    const sp=Math.hypot(t.kx.v,t.ky.v)/Math.hypot(WORK_W,WORK_H);
+    const c = !t.confirmed ? 'rgba(150,160,163,.45)'
+            : sp>0.055 ? COL.alert : sp>0.02 ? COL.watch : COL.calm;
+    if(showTrails && t.confirmed && t.trail.length>1){
+      vctx.beginPath(); vctx.moveTo(t.trail[0][0]*kx, t.trail[0][1]*ky);
+      for(const p of t.trail) vctx.lineTo(p[0]*kx, p[1]*ky);
+      vctx.strokeStyle=c; vctx.globalAlpha=.32; vctx.lineWidth=1.4; vctx.stroke(); vctx.globalAlpha=1;
+    }
+    if(!showBoxes) continue;
+    vctx.strokeStyle=c; vctx.lineWidth=t.confirmed?1.6:1;
+    if(!t.confirmed) vctx.setLineDash([3,4]);
+    vctx.strokeRect(x-w/2, y-h/2, w, h);
+    vctx.setLineDash([]);
+    if(t.confirmed){
+      // velocity vector — what the Kalman filter believes, not the raw measurement
+      vctx.beginPath(); vctx.moveTo(x,y);
+      vctx.lineTo(x + t.kx.v*kx*0.55, y + t.ky.v*ky*0.55);
+      vctx.strokeStyle=c; vctx.lineWidth=1.2; vctx.stroke();
+      tag(x-w/2, y-h/2-8, 'T'+String(t.id).padStart(3,'0')+' · '+(tNow-t.born).toFixed(0)+'s', c);
+    }
+  }
+  vctx.restore();
+
+  maskv.style.display = showMask ? 'block' : 'none';
+  document.getElementById('maskLbl').style.display = showMask ? 'block' : 'none';
+  if(showMask){
+    const img = mctx.createImageData(WORK_W, WORK_H);
+    const d = img.data;
+    for(let i=0, j=0; i<N; i++, j+=4){
+      const v = mask[i] ? 226 : 16;
+      d[j]=v; d[j+1]=mask[i]?232:20; d[j+2]=mask[i]?218:24; d[j+3]=255;
+    }
+    mctx.putImageData(img,0,0);
+    mctx.strokeStyle=COL.accent; mctx.lineWidth=1;
+    for(const b of dets) mctx.strokeRect(b.x+.5, b.y+.5, b.w, b.h);
+  }
+}
+function tag(x,y,text,color){
+  vctx.font='10.5px "IBM Plex Mono",monospace';
+  const w=vctx.measureText(text).width;
+  vctx.fillStyle='rgba(10,13,15,.74)'; vctx.fillRect(x-3,y-9,w+6,13);
+  vctx.fillStyle=color; vctx.fillText(text,x,y+1);
+}
+
+/* ---------------- UI ---------------- */
+const SIGNAMES=['Spacing shift','Polarisation','Activity','Track count'];
+document.getElementById('sigs').innerHTML = SIGNAMES.map((n,i)=>
+  '<div class="sigrow"><span class="n">'+n+'</span><span class="bar"><i id="sb'+i+'"></i></span>'
+  +'<span class="v" id="sv'+i+'">0.00</span></div>').join('');
+const REJNAMES=[['size','Blob too small or too large'],['aspect','Aspect ratio out of bounds'],
+  ['fill','Fill ratio too low'],['illumination','Global illumination step'],['unconfirmed','Track died unconfirmed']];
+document.getElementById('rej').innerHTML = REJNAMES.map(r=>
+  '<div class="rejrow" id="rr-'+r[0]+'"><span>'+r[1]+'</span><span id="rv-'+r[0]+'">0</span></div>').join('');
+
+let logRows=[];
+function log(kind,text){
+  const d=new Date();
+  logRows.unshift({t:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),kind,text});
+  if(logRows.length>30) logRows.pop();
+  document.getElementById('log').innerHTML = logRows.map(r=>
+    '<li class="'+r.kind+'"><span class="t">'+r.t+'</span><span>'+r.text+'</span></li>').join('');
+}
+
+let uiAcc=0, fpsAcc=0, fpsN=0, msAcc=0;
+function paintUI(dt, ms){
+  fpsAcc+=dt; fpsN++; msAcc+=ms;
+  rejTimer+=dt;
+  if(rejTimer>=1){
+    for(const k in rejWindow){ rejReasons[k]=rejWindow[k]; rejWindow[k]=0; }
+    rejTimer=0;
+  }
+  uiAcc+=dt; if(uiAcc<0.12) return; 
+  const fps = fpsN/Math.max(1e-3,fpsAcc), avgMs = msAcc/Math.max(1,fpsN);
+  fpsAcc=0; fpsN=0; msAcc=0; uiAcc=0;
+
+  document.getElementById('perf').textContent = fps.toFixed(0)+' FPS · '+avgMs.toFixed(1)+' MS · '+WORK_W+'×'+WORK_H;
+  const c = phase==='ALERT'?COL.alert:phase==='WATCH'?COL.watch:COL.calm;
+  const num=document.getElementById('riskNum');
+  num.textContent=String(Math.round(risk)).padStart(2,'0'); num.style.color=c;
+  const pill=document.getElementById('riskPill');
+  pill.textContent = phase; pill.style.color=c;
+  document.getElementById('riskConf').textContent='CONF '+conf.toFixed(2);
+  const nConf = tracks.filter(t=>t.confirmed).length;
+  document.getElementById('riskSub').textContent =
+    nConf<2 ? 'NEEDS 2+ CONFIRMED TRACKS'
+    : learn<LEARN_S ? 'LEARNING BASELINE '+learn.toFixed(0)+' / '+LEARN_S+' S'
+    : phase==='ALERT' ? 'ALERTED · LOCKOUT '+Math.max(0,LOCKOUT-(tNow-lastAlertAt)).toFixed(0)+' S'
+    : phase==='WATCH' ? 'DWELL '+dwell.toFixed(1)+' / '+dwellNeed.toFixed(1)+' S'
+    : 'BASELINE HELD '+calmHeld.toFixed(0)+' S';
+  const db=document.getElementById('dwellBar');
+  db.style.width=(dwellNeed>0?dwell/dwellNeed*100:0)+'%';
+  db.style.background = phase==='ALERT'?COL.alert:COL.watch;
+
+  for(let i=0;i<4;i++){
+    const b=document.getElementById('sb'+i);
+    b.style.width=(sigs[i]*100).toFixed(0)+'%';
+    b.style.background = sigs[i]>0.6?COL.alert:sigs[i]>0.3?COL.watch:COL.calm;
+    document.getElementById('sv'+i).textContent=sigs[i].toFixed(2);
+  }
+  document.getElementById('kConf').textContent=nConf;
+  document.getElementById('kTent').textContent=tracks.length-nConf;
+  document.getElementById('kId').textContent=nextId;
+  const ages=tracks.filter(t=>t.confirmed).map(t=>tNow-t.born);
+  document.getElementById('kAge').innerHTML=(ages.length?(ages.reduce((a,b)=>a+b,0)/ages.length).toFixed(1):'0')+' <small>S</small>';
+
+  let tot=0;
+  for(const r of REJNAMES){
+    const v=rejReasons[r[0]]; tot+=v;
+    document.getElementById('rv-'+r[0]).textContent=v;
+    document.getElementById('rr-'+r[0]).classList.toggle('hit', v>0);
+  }
+  document.getElementById('rejTot').textContent=tot+' /S';
+}
+
+/* ---------------- loop ---------------- */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.1,(now-last)/1000); last=now; tNow+=dt;
+  if(sourceKind==='synth') drawSynth(dt);
+  let ms=0;
+  if(source && ready()){
+    const t0=performance.now();
+    const {blobs} = processFrame(dt);
+    updateTracks(blobs, dt);
+    behaviour(dt);
+    ms=performance.now()-t0;
+    render(blobs);
+  }
+  paintUI(dt, ms);
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- controls ---------------- */
+document.getElementById('padCam').onclick=useCamera;
+document.getElementById('padSynth').onclick=()=>{ useSynthetic(); log('act','Synthetic source running — same pipeline, no camera needed.'); };
+document.getElementById('padFile').onchange=e=>{ if(e.target.files[0]) useFile(e.target.files[0]); };
+document.getElementById('fileIn').onchange=e=>{ if(e.target.files[0]) useFile(e.target.files[0]); };
+document.querySelectorAll('#srcSeg button').forEach(b=>b.onclick=()=>{
+  if(b.dataset.src==='cam') useCamera(); else useSynthetic();
+});
+document.getElementById('btnFlip').onclick=()=>{
+  facing = facing==='environment' ? 'user' : 'environment';
+  if(sourceKind==='cam') useCamera(); else log('watch','Lens flip applies to the camera source.');
+};
+document.getElementById('btnRelearn').onclick=()=>{ bgReady=false; tracks=[]; log('act','Background model cleared and relearning.'); };
+const tog=(id,set)=>document.getElementById(id).onclick=e=>{ const v=set(); e.target.classList.toggle('on',v); };
+tog('btnMask',()=>showMask=!showMask);
+tog('btnTrails',()=>showTrails=!showTrails);
+tog('btnBoxes',()=>showBoxes=!showBoxes);
+document.getElementById('sSens').oninput=e=>{
+  sensK=+e.target.value; document.getElementById('vSens').textContent=sensK.toFixed(1)+' σ'; };
+document.getElementById('sMin').oninput=e=>{
+  minAreaPct=+e.target.value; document.getElementById('vMin').textContent=minAreaPct.toFixed(2)+' %'; };
+document.getElementById('sDwell').oninput=e=>{
+  dwellNeed=+e.target.value; document.getElementById('vDwell').textContent=dwellNeed.toFixed(1)+' s'; };
+
+allocate(144);
+if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+  document.getElementById('padCam').disabled = true;
+  showPad('This browser exposes no camera API, so the camera button is off. The synthetic source runs the identical pipeline.');
+}
+log('act','Pipeline ready. Pick a source above — camera, a video file, or the synthetic pasture.');
+requestAnimationFrame(frame);
+})();
+</script>
