@@ -6,9 +6,13 @@ makes the forecast better every time you use it. It runs entirely in the
 browser: no upload, no API key, no account, and — after the first visit — no
 signal.
 
-Open it at **`/harvest-eye/`** (`http://localhost:4173/harvest-eye/` under
-`./start.sh`). Add it to the home screen and it launches full-screen like a
-native app.
+**Live at <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/harvest-eye/>.** Open that on a phone and add it to the home
+screen — it launches full-screen like a native app and keeps working offline.
+Locally it is `/harvest-eye/` (`http://localhost:4173/harvest-eye/` under
+`./start.sh`).
+
+The camera needs a secure context, so HTTPS or `localhost` only — opening the
+files straight off disk (`file://`) will not get a camera.
 
 ---
 
@@ -156,6 +160,11 @@ writes a screenshot and exits non-zero on any failed check.
 ## Deploying it
 
 The camera API requires HTTPS (or localhost). Unlike the globe app, HarvestEye
-has no backend at all, so the repository's existing GitHub Pages workflow
-publishes a **fully functional** copy: enable Pages, run the workflow, and the
-app is live at `<pages-url>/harvest-eye/` ready to install on a phone.
+has no backend at all, so the repository's GitHub Pages workflow publishes a
+**fully functional** copy — that is what serves the live link above.
+
+Two notes if you redeploy it yourself: GitHub restricts the `github-pages`
+environment to the default branch, so a deploy has to run from `main` (a
+`workflow_dispatch` on a feature branch is rejected before the deploy job
+starts), and `scripts/build-static.sh` derives the base path from the
+repository name, so a fork or a rename keeps working without edits.

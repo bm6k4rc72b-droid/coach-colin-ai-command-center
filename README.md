@@ -24,8 +24,10 @@ Android. It shares nothing with the globe app but the repository and the dark
 instrument aesthetic: no backend, no API key, no upload, and it keeps working
 with the signal off.
 
-Open `/harvest-eye/` (`http://localhost:4173/harvest-eye/` under `./start.sh`)
-and add it to the home screen. What it does beyond drawing boxes on fruit:
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/harvest-eye/>** — open it on a phone and add it to the home screen. Locally
+it is `/harvest-eye/` (`http://localhost:4173/harvest-eye/` under `./start.sh`).
+
+What it does beyond drawing boxes on fruit:
 
 - **Measures each block's own ripening rate** from repeat scans and forecasts
   the harvest window from that, instead of from a generic crop table.
