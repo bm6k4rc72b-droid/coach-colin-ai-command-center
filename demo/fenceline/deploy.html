@@ -1,0 +1,379 @@
+<title>Laptop to Fence Post</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#15181b; --ground-2:#101315; --panel:#1e2226; --panel-2:#242a2f;
+  --line:#2f373d; --line-soft:#262d32; --bone:#e7e3da; --muted:#98a1a4; --dim:#6d777b;
+  --accent:#4fa3a0; --accent-dim:#2f6a68; --calm:#9bae8a; --watch:#e0a93e; --alert:#ce4a2c;
+  --font-d:"Oswald","Arial Narrow",sans-serif;
+  --font-b:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-m:"IBM Plex Mono",Consolas,monospace;
+  --r:3px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--font-b);
+  font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--font-d);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin:0;text-wrap:balance}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+code{font-family:var(--font-m);font-size:.9em;color:var(--calm)}
+
+.topbar{border-bottom:1px solid var(--line);background:var(--ground-2);position:sticky;top:0;z-index:40}
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:54px}
+.mark{display:flex;align-items:baseline;gap:9px}
+.mark b{font-family:var(--font-d);font-size:21px;font-weight:600;letter-spacing:.1em}
+.mark span{font-family:var(--font-m);font-size:10px;letter-spacing:.18em;color:var(--accent)}
+.spacer{flex:1}
+.topnote{font-family:var(--font-m);font-size:10px;letter-spacing:.13em;color:var(--dim)}
+
+.hero{padding:52px 0 40px}
+.hero .kicker{font-family:var(--font-m);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+.hero h1{font-size:40px;margin:12px 0 0;letter-spacing:.02em;line-height:1.08}
+.hero p{color:var(--muted);max-width:64ch;margin:16px 0 0;font-size:16px}
+
+.verdict{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:30px}
+.vcard{border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;background:var(--panel)}
+.vcard.no{border-left:3px solid var(--alert)}
+.vcard.yes{border-left:3px solid var(--calm)}
+.vcard h3{font-size:13px;letter-spacing:.12em;margin-bottom:10px}
+.vcard.no h3{color:var(--alert)} .vcard.yes h3{color:var(--calm)}
+.vcard ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.vcard li{font-size:13.5px;color:var(--muted);padding-left:16px;position:relative;line-height:1.5}
+.vcard li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:1px;background:currentColor;opacity:.6}
+
+section{padding:46px 0;border-top:1px solid var(--line-soft);scroll-margin-top:70px}
+.eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+h2{font-size:27px;margin:9px 0 0;letter-spacing:.03em}
+.lede{color:var(--muted);max-width:66ch;margin:12px 0 0;font-size:15.5px}
+
+/* phase timeline */
+.phases{margin-top:30px;display:grid;gap:0}
+.ph{display:grid;grid-template-columns:132px 1fr;gap:22px;padding:22px 0;border-top:1px solid var(--line-soft)}
+.ph:first-child{border-top:0}
+.ph .when{font-family:var(--font-m);font-size:10.5px;letter-spacing:.1em;color:var(--dim);line-height:1.6}
+.ph .when b{display:block;color:var(--accent);font-size:11px;letter-spacing:.16em;font-weight:500;margin-bottom:5px}
+.ph .when em{display:block;font-style:normal;color:var(--watch);margin-top:8px;font-size:10px}
+.ph h3{font-size:16px;letter-spacing:.05em;margin-bottom:8px}
+.ph p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+.ph p+p{margin-top:10px}
+.ph .gate{margin-top:13px;padding:10px 13px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  font-size:13px;color:var(--muted)}
+.ph .gate b{color:var(--bone);font-family:var(--font-m);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;display:block;margin-bottom:4px;color:var(--watch)}
+
+/* tables */
+.tblwrap{overflow-x:auto;margin-top:24px;border:1px solid var(--line);border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--font-m);font-size:9.5px;letter-spacing:.13em;color:var(--dim);
+  text-transform:uppercase;font-weight:500;background:var(--ground-2)}
+td{color:var(--muted)}
+td:first-child{color:var(--bone)}
+td.n{font-family:var(--font-m);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--bone)}
+tbody tr:last-child td{border-bottom:0}
+tr.sum td{background:var(--panel-2);color:var(--bone);font-family:var(--font-m);font-size:12.5px}
+.tnote{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5;max-width:72ch}
+
+/* power calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;margin-top:26px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.box h4{font-size:13.5px;letter-spacing:.09em;margin-bottom:8px}
+.box p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.58}
+.box p+p{margin-top:9px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px}
+.f label{display:block;font-family:var(--font-m);font-size:9.5px;letter-spacing:.12em;color:var(--dim);
+  text-transform:uppercase;margin-bottom:5px}
+.f input{width:100%;background:var(--ground-2);border:1px solid var(--line);border-radius:2px;color:var(--bone);
+  font-family:var(--font-m);font-size:14px;padding:8px 10px;font-variant-numeric:tabular-nums}
+.f input:focus{outline:none;border-color:var(--accent)}
+.f .hint{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.35}
+.out{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.out .big{font-family:var(--font-d);font-size:34px;font-weight:600;color:var(--calm);
+  font-variant-numeric:tabular-nums;line-height:1.05}
+.oline{display:flex;justify-content:space-between;gap:10px;font-family:var(--font-m);font-size:12px;
+  padding:7px 0;border-bottom:1px solid var(--line-soft)}
+.oline:last-of-type{border-bottom:0}
+.oline span:last-child{font-variant-numeric:tabular-nums;color:var(--bone)}
+.lbl{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+.cols{display:grid;gap:16px;margin-top:26px}
+.c2{grid-template-columns:repeat(2,1fr)}
+.c3{grid-template-columns:repeat(3,1fr)}
+.num{font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:.14em;display:block;margin-bottom:9px}
+
+ul.plain{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:12px;max-width:74ch}
+ul.plain li{padding-left:19px;position:relative;color:var(--muted);font-size:14px;line-height:1.55}
+ul.plain li::before{content:"";position:absolute;left:0;top:10px;width:8px;height:1px;background:var(--accent)}
+ul.plain li b{color:var(--bone);font-weight:600}
+
+.split{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
+.split .box h4{color:var(--bone)}
+.split .box.me{border-left:3px solid var(--accent)}
+.split .box.you{border-left:3px solid var(--watch)}
+
+footer{padding:32px 0 48px;border-top:1px solid var(--line-soft);color:var(--dim);font-size:12.5px}
+footer p{margin:0 0 7px;max-width:78ch}
+
+@media (max-width:900px){
+  .verdict,.c2,.c3,.split,.calc,.fields{grid-template-columns:1fr}
+  .ph{grid-template-columns:1fr;gap:10px}
+  .hero h1{font-size:31px}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="mark"><b>FENCELINE</b><span>DEPLOYMENT</span></div>
+    <div class="spacer"></div>
+    <div class="topnote">COSTS ARE BALLPARK — PRICE THEM LOCALLY</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="hero">
+  <div class="kicker">The honest status</div>
+  <h1>The laptop demo is not a system.<br>Here is what closing that gap costs.</h1>
+  <p>What exists today runs a real tracker on real pixels and proves the idea in a meeting. It is not something a rancher can rely on overnight, and pretending otherwise is how this kind of project loses the only customer it had. The gap is mostly not code — it is hardware, power, connectivity, and a season of footage nobody has collected yet.</p>
+
+  <div class="verdict">
+    <div class="vcard yes">
+      <h3>What the browser version is genuinely good for</h3>
+      <ul>
+        <li>Showing a ranch owner the idea in eight minutes, offline, with no install and no account.</li>
+        <li>Spot-checking a recorded trail-cam clip on a laptop — drag the file in and watch the tracker run.</li>
+        <li>Proving the alarm logic to yourself: drag the dwell slider to zero and watch the alarm become useless.</li>
+        <li>A development bench — every stage is visible, so you can see which one is failing.</li>
+      </ul>
+    </div>
+    <div class="vcard no">
+      <h3>Why it is not operational</h3>
+      <ul>
+        <li>It detects motion, not livestock. No species classifier, so a truck and a cow are the same thing to it.</li>
+        <li>It runs only while a browser tab is open, awake and in the foreground. Nothing watches at 2 a.m.</li>
+        <li>No alerting. Nothing leaves the page — which is a privacy feature and an operational dead end.</li>
+        <li>No night vision, no weather sealing, no power at the post, no clip retention, no camera-offline check.</li>
+        <li>Every threshold is hand-set. A real install learns them from that camera, on that fence line.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="eyebrow">The route</div>
+  <h2>Four phases, and what you are actually waiting for</h2>
+  <p class="lede">The timeline is not set by how fast anyone writes code. It is set by how long it takes for enough real nights to happen on that property — including the ones with an incident, which are rare on purpose. Plan around that and the project is calm; ignore it and you will ship a detector tuned on somebody else's ranch.</p>
+
+  <div class="phases">
+    <div class="ph">
+      <div class="when"><b>PHASE 0</b>WEEKS 0–8<em>NO AI AT ALL</em></div>
+      <div>
+        <h3>Put cameras up and record</h3>
+        <p>Pick the one paddock where the losses actually are — usually the calving pasture or whichever draw the coyotes work. Two to four cameras, recording continuously, keeping every night. This phase builds nothing clever and it is the phase most projects skip, which is why they fail in month five.</p>
+        <p>Continuous video matters more than resolution here. Herd behaviour is a time series; a PIR-triggered trail cam that fires a three-second burst gives you evidence photos but not the behaviour signal. If budget forces a choice, fewer continuous cameras beat more triggered ones.</p>
+        <div class="gate"><b>Gate to the next phase</b>Several weeks of night footage in hand, including at least one incident the rancher can point at and say "that one — that is what I want to know about."</div>
+      </div>
+    </div>
+
+    <div class="ph">
+      <div class="when"><b>PHASE 1</b>WEEKS 4–18<em>OVERLAPS PHASE 0</em></div>
+      <div>
+        <h3>Label the footage and train the detector</h3>
+        <p>Sample diversely rather than densely — consecutive frames are near-duplicates and teach the model almost nothing. Aim for a few thousand labelled frames spread across day and night, near and far, standing and lying and running, rain and fog and hard sun, and every season you have.</p>
+        <p>The shortcut worth taking: run an off-the-shelf COCO-pretrained YOLO over the footage first. <code>cow</code>, <code>horse</code>, <code>sheep</code>, <code>bird</code> and <code>dog</code> are already COCO classes, so it will pre-label most of your frames and a person only corrects them. That turns weeks of labelling into days.</p>
+        <p>Then fine-tune YOLO or RT-DETR from those weights. A few hours on a rented GPU is genuinely all the training compute this needs — this is not a problem that wants a cluster.</p>
+        <div class="gate"><b>Gate to the next phase</b>On held-out nights from this property: recall on the incidents you care about, and false alerts per camera per week under one. Not mAP, and not accuracy.</div>
+      </div>
+    </div>
+
+    <div class="ph">
+      <div class="when"><b>PHASE 2</b>WEEKS 14–28<em>THE FIRST REAL INSTALL</em></div>
+      <div>
+        <h3>Move it onto the post</h3>
+        <p>Edge compute in a sealed box, camera on a mast well above what cattle can reach, power that survives December, and an alert path that works when the network does not. This is the phase where the software stops being the hard part and mounting hardware in weather becomes the hard part.</p>
+        <p>Design rule for the whole build: <b style="color:var(--bone)">the local response must not depend on the network.</b> The siren, the strobe and the coop door fire from the box on the post. The phone notification is a bonus that arrives when there is a link.</p>
+        <div class="gate"><b>Gate to the next phase</b>Thirty consecutive nights unattended with no manual intervention, no missed camera-offline event, and the rancher's own verdict that the alerts were worth waking up for.</div>
+      </div>
+    </div>
+
+    <div class="ph">
+      <div class="when"><b>PHASE 3</b>MONTH 7 ONWARD<em>A SEASON, MINIMUM</em></div>
+      <div>
+        <h3>Make it a system rather than a camera</h3>
+        <p>More paddocks, per-camera learned thresholds, the dismissal loop feeding retraining, and the features that earn their keep on the 364 nights nothing tries to eat a calf: calving watch, head-count reconciliation, off-water flags, the season hotspot map.</p>
+        <p>You need a full year before you know what normal looks like. Vegetation grows and dies, the sun angle swings, calving changes the herd's behaviour completely, and a threshold tuned in August will be wrong in January.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Hardware</div>
+  <h2>Three build tiers</h2>
+  <p class="lede">Prices are ballpark for planning conversations, not quotes — hardware costs move, and you should price the exact parts before repeating any number here to a customer. What matters more than the totals is the shape: the cheap build puts compute where the power already is, and the expensive build is expensive because of thermal.</p>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Tier A — near the barn</th><th>Why</th><th class="n">Est.</th></tr></thead>
+      <tbody>
+        <tr><td>2 × PoE IP camera, 4 MP</td><td>Continuous RTSP, mains-adjacent, wired. Boring and reliable.</td><td class="n">$120–360</td></tr>
+        <tr><td>PoE switch + cable</td><td>One cable carries power and video up to ~100 m.</td><td class="n">$50–120</td></tr>
+        <tr><td>Mini PC or Jetson Orin Nano</td><td>Runs the detector on both streams. Sits inside where it is warm.</td><td class="n">$250–500</td></tr>
+        <tr><td>4–8 TB drive</td><td>Roughly a month of continuous 1080p H.265 on two cameras.</td><td class="n">$90–180</td></tr>
+        <tr class="sum"><td>Pilot total</td><td>Enough to run Phase 0 and Phase 2 on one paddock</td><td class="n">$510–1,160</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Tier B — a solar post in the pasture</th><th>Why</th><th class="n">Est.</th></tr></thead>
+      <tbody>
+        <tr><td>12 V IP camera with IR</td><td>IR reaches perhaps 30–60 m. Beyond that at night you are guessing.</td><td class="n">$80–200</td></tr>
+        <tr><td>Jetson Orin Nano or Pi 5 + Hailo</td><td>Inference on the post so an alert does not need a link.</td><td class="n">$150–300</td></tr>
+        <tr><td>Solar panel, charge controller, LiFePO4 battery</td><td>Sized below. This is where the budget actually goes.</td><td class="n">$350–650</td></tr>
+        <tr><td>Sealed enclosure, mast, mounts</td><td>Higher than you think. Cattle rub on everything.</td><td class="n">$120–260</td></tr>
+        <tr><td>Point-to-point WiFi bridge or LoRa node</td><td>Bridge for video, LoRa for alerts where there is no link at all.</td><td class="n">$30–110</td></tr>
+        <tr class="sum"><td>Per remote post</td><td>Repeat per paddock you want covered</td><td class="n">$730–1,520</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Tier C — the night problem, solved properly</th><th>Why</th><th class="n">Est.</th></tr></thead>
+      <tbody>
+        <tr><td>Thermal camera, add to Tier B</td><td>Sees warm bodies through dark, fog, dust and light brush. This is the single biggest capability jump in the whole build, and the single biggest line item.</td><td class="n">$800–2,000</td></tr>
+        <tr><td>Deterrent stack — strobe, siren, speaker, relay</td><td>Local response inside two seconds. Rotate the sound so nothing habituates.</td><td class="n">$80–250</td></tr>
+        <tr class="sum"><td>Uplift per post</td><td>Justify it with the calving pasture, not the whole ranch</td><td class="n">$880–2,250</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tnote">Recurring: roughly $10–25 per month per LTE SIM where you use one, plus whatever the ranch already pays for its own link. A point-to-point WiFi bridge has no monthly cost at all and is badly under-used on properties with line of sight between buildings — often the right answer instead of a cellular plan per camera.</p>
+</section>
+
+<section>
+  <div class="eyebrow">The thing people size wrong</div>
+  <h2>Power budget for a solar post</h2>
+  <p class="lede">Almost every failed off-grid install failed in December. Size the array for your worst month of sun, not your average, and derate for a panel that is dusty, cold, badly angled and behind a charge controller that is not perfect. Put your own numbers in.</p>
+
+  <div class="calc">
+    <div class="box">
+      <div class="fields">
+        <div class="f"><label for="p1">Compute draw (W)</label><input id="p1" type="number" value="10" min="0" step="0.5">
+          <div class="hint">Jetson Orin Nano ~7–15 W under load. Pi 5 + Hailo ~8 W.</div></div>
+        <div class="f"><label for="p2">Camera draw (W)</label><input id="p2" type="number" value="5" min="0" step="0.5">
+          <div class="hint">More with IR illuminators running all night.</div></div>
+        <div class="f"><label for="p3">Radio draw (W)</label><input id="p3" type="number" value="3" min="0" step="0.5">
+          <div class="hint">LTE modem or WiFi bridge. LoRa is negligible.</div></div>
+        <div class="f"><label for="p4">Worst-month sun hours</label><input id="p4" type="number" value="2.2" min="0.5" step="0.1">
+          <div class="hint">December, at your latitude. Not the annual average.</div></div>
+        <div class="f"><label for="p5">Days of autonomy</label><input id="p5" type="number" value="3" min="1" step="1">
+          <div class="hint">How many overcast days in a row it must survive.</div></div>
+        <div class="f"><label for="p6">System derate (%)</label><input id="p6" type="number" value="65" min="20" max="100" step="1">
+          <div class="hint">Dust, angle, temperature, controller losses.</div></div>
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:var(--dim);line-height:1.55">Duty-cycling is the cheapest watt you will ever save. A detector that runs at 5 fps between dusk and dawn and idles by day cuts the compute draw by more than half, and daylight predation is not the problem you are solving.</p>
+    </div>
+    <div class="out">
+      <div class="lbl">Solar panel needed</div>
+      <div class="big mono" id="oPanel">310 W</div>
+      <div style="margin-top:14px">
+        <div class="oline"><span>Continuous load</span><span id="oLoad">18 W</span></div>
+        <div class="oline"><span>Daily energy</span><span id="oWh">432 Wh</span></div>
+        <div class="oline"><span>Battery, LiFePO4</span><span id="oLfp">135 Ah</span></div>
+        <div class="oline"><span>Battery, lead-acid</span><span id="oPb">220 Ah</span></div>
+      </div>
+      <p style="margin:14px 0 0;font-size:12px;color:var(--dim);line-height:1.45" id="oNote">Lead-acid is cheaper up front and roughly twice the size and weight for the same usable energy, because you can only take it down to about half.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Connectivity</div>
+  <h2>Getting an alert off the property</h2>
+  <p class="lede">Work down this list in order and stop at the first row that is true. Most ranches land on the second or third, and most people reach straight for the fourth and pay a monthly bill they did not need.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>If the post has…</th><th>Use</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>A cable run under ~100 m</td><td>PoE ethernet</td><td>One cable, power and data, no radio to debug. Always prefer this.</td></tr>
+        <tr><td>Line of sight to a building</td><td>Point-to-point WiFi bridge</td><td>Kilometres of range, full video bandwidth, no monthly fee. The most under-used option on a ranch.</td></tr>
+        <tr><td>No line of sight, no cell</td><td>LoRa for alerts only</td><td>Kilometres through terrain, but tiny messages. "Paddock 3, index 74, bearing 041" fits. Video does not, and syncs later when something reaches a link.</td></tr>
+        <tr><td>Usable cell coverage</td><td>LTE modem</td><td>Simplest, and a bill per post. Cap the data or a chatty camera will eat the plan in a week.</td></tr>
+        <tr><td>None of the above</td><td>Store and forward</td><td>Everything local — inference, deterrent, recording — and the box hands over its clips when someone drives past with a phone. Unglamorous, and it works.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tnote">At the house, Starlink or whatever fixed link exists carries the clips and the app. The alert path and the local response must both survive that link being down, because it will be down exactly when the weather is bad, which is exactly when livestock get into trouble.</p>
+</section>
+
+<section>
+  <div class="eyebrow">Field reality</div>
+  <h2>What actually breaks</h2>
+  <p class="lede">None of these are software problems, and all of them will happen before month six. They are listed roughly in order of how often they take a camera out.</p>
+  <ul class="plain">
+    <li><b>Spiders.</b> Webs across the lens, every warm night, drawn by the IR illuminator. This is the number one cause of a camera going useless in the field and it is almost never in anyone's plan. Budget a physical cleaning schedule, and detect it in software — a frame whose sharpness collapses is a maintenance alert, not a predator.</li>
+    <li><b>Condensation and frost.</b> Sealed enclosures still breathe through temperature swings. Desiccant packs, a vent with a membrane, and a lens hood.</li>
+    <li><b>Cattle.</b> They rub on anything at rubbing height, and they will take out a mast that a person thought was solid. Mount high, brace properly, and assume it gets tested.</li>
+    <li><b>Rodents.</b> They eat cable insulation, particularly in a warm enclosure in winter. Conduit everything.</li>
+    <li><b>Batteries in the cold.</b> LiFePO4 must not be charged below freezing without a heater or a low-temperature cutoff — a detail that quietly kills a battery bank over one winter.</li>
+    <li><b>Sun angle.</b> A camera pointed anywhere near where the sun will be at some hour of some month gets a washed-out frame and a burst of false detections. Walk the site at the times that matter, not just at noon in summer.</li>
+    <li><b>The human end.</b> An alert with nobody to answer it is worth nothing. Decide before installation who gets woken, and what they are supposed to do at 2 a.m. That conversation is part of the deployment, not an afterthought.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">Division of labour</div>
+  <h2>What I can build, and what needs boots on the ground</h2>
+  <div class="split">
+    <div class="box me">
+      <h4>Software I can write end to end</h4>
+      <p>The edge service — capture, inference, tracker, behaviour signals, alarm gating, deterrent relay, clip ring-buffer, health heartbeat, watchdog and remote update. The training pipeline, from the COCO pre-label bootstrap through fine-tuning to the evaluation harness that reports false alerts per camera-week. The alert path — push, SMS fallback, LoRa message format. The phone and web app, the review-and-dismiss loop that feeds retraining, the head-count and calving logic, and the evidence-pack export. Plus the install runbook and the diagnostics a rancher can run themselves.</p>
+    </div>
+    <div class="box you">
+      <h4>What no amount of code substitutes for</h4>
+      <p>Somebody has to walk the property and choose the camera positions, dig the cable, set the masts, aim the lenses, and come back when a spider has a different opinion. Somebody has to run Phase 0 long enough that the footage exists — that is calendar time, and it cannot be bought or parallelised. Somebody has to sit with the rancher and decide what an alert means at 2 a.m. And crucially: the dataset. A model trained on someone else's pasture is a guess dressed up as a product.</p>
+    </div>
+  </div>
+  <p class="tnote">If you want the shortest honest path to something real: Tier A on one paddock, recording tonight. Everything else in this document is downstream of having the footage, and nothing downstream can start until it exists.</p>
+</section>
+
+<footer>
+  <div class="wrap" style="padding:0">
+    <p>Fenceline deployment plan — the route from the browser demo to a system somebody depends on overnight.</p>
+    <p>Every cost here is a planning estimate to be priced locally, and every timeline assumes the footage collection starts first. Nothing on this page describes a system that has been built and run on a real ranch.</p>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const g = id => Math.max(0, +document.getElementById(id).value || 0);
+function calc(){
+  const load = g('p1')+g('p2')+g('p3');
+  const wh = load*24;
+  const sun = Math.max(0.5, g('p4'));
+  const days = Math.max(1, g('p5'));
+  const derate = Math.min(1, Math.max(0.2, g('p6')/100));
+  const panel = wh/(sun*derate);
+  // usable depth of discharge: LiFePO4 ~80%, lead-acid ~50%
+  const lfp = wh*days/0.8/12;
+  const pb  = wh*days/0.5/12;
+  document.getElementById('oPanel').textContent = Math.ceil(panel/10)*10 + ' W';
+  document.getElementById('oLoad').textContent  = load.toFixed(1) + ' W';
+  document.getElementById('oWh').textContent    = Math.round(wh) + ' Wh';
+  document.getElementById('oLfp').textContent   = Math.ceil(lfp/5)*5 + ' Ah';
+  document.getElementById('oPb').textContent    = Math.ceil(pb/5)*5 + ' Ah';
+  document.getElementById('oNote').textContent = panel > 400
+    ? 'Over about 400 W of panel on one post, stop and cut the load instead — duty-cycle the detector, drop the frame rate, or move the compute somewhere with mains power.'
+    : 'Lead-acid is cheaper up front and roughly twice the size and weight for the same usable energy, because you can only take it down to about half.';
+}
+document.querySelectorAll('.f input').forEach(i=>i.addEventListener('input', calc));
+calc();
+})();
+</script>
