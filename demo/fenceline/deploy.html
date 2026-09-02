@@ -144,7 +144,8 @@ footer p{margin:0 0 7px;max-width:78ch}
       <h3>What the browser version is genuinely good for</h3>
       <ul>
         <li>Showing a ranch owner the idea in eight minutes, offline, with no install and no account.</li>
-        <li>Spot-checking a recorded trail-cam clip on a laptop — drag the file in and watch the tracker run.</li>
+        <li>Scrubbing a recorded trail-cam clip — drag the file in and get the timestamps where anything moved, instead of watching four hours of empty field.</li>
+        <li>Watching a calving pen overnight from a laptop on a bucket: zone watch, alarm sound on, thumbnail at each trigger. Narrow, but real, and free.</li>
         <li>Proving the alarm logic to yourself: drag the dwell slider to zero and watch the alarm become useless.</li>
         <li>A development bench — every stage is visible, so you can see which one is failing.</li>
       </ul>
@@ -153,8 +154,8 @@ footer p{margin:0 0 7px;max-width:78ch}
       <h3>Why it is not operational</h3>
       <ul>
         <li>It detects motion, not livestock. No species classifier, so a truck and a cow are the same thing to it.</li>
-        <li>It runs only while a browser tab is open, awake and in the foreground. Nothing watches at 2 a.m.</li>
-        <li>No alerting. Nothing leaves the page — which is a privacy feature and an operational dead end.</li>
+        <li>It runs only while a browser tab is open and visible. A screen wake lock keeps the machine awake, but background the tab and the watch stops.</li>
+        <li>The alarm is a beep on that laptop, in that room, plus three thumbnails. Nothing reaches a phone, nothing is recorded, nobody else is told.</li>
         <li>No night vision, no weather sealing, no power at the post, no clip retention, no camera-offline check.</li>
         <li>Every threshold is hand-set. A real install learns them from that camera, on that fence line.</li>
       </ul>

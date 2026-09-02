@@ -99,6 +99,12 @@ input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
 .slid .row label b{color:var(--bone);font-weight:500}
 input[type=range]{width:100%;accent-color:var(--accent);background:transparent}
 
+.snaps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 12px}
+.snaps figure{margin:0}
+.snaps canvas{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:2px;background:#000}
+.snaps figcaption{font-family:var(--font-m);font-size:9px;letter-spacing:.08em;color:var(--dim);margin-top:4px}
+.snaps .empty{grid-column:1/-1;font-family:var(--font-m);font-size:10.5px;color:var(--dim);letter-spacing:.06em}
+#view.drawing{cursor:crosshair}
 .log{max-height:150px;overflow-y:auto;padding:6px 0}
 .log ul{margin:0;padding:0}
 .log li{list-style:none;display:grid;grid-template-columns:50px 1fr;gap:9px;padding:5px 13px;
@@ -199,12 +205,19 @@ footer p{margin:0 0 7px;max-width:76ch}
         <button id="btnBoxes" class="on">Boxes</button>
         <div class="tsep"></div>
         <button id="btnRelearn">Relearn background</button>
+        <div class="tsep"></div>
+        <div class="seg" id="modeSeg">
+          <button data-mode="herd" class="on">Herd behaviour</button>
+          <button data-mode="zone">Zone watch</button>
+        </div>
+        <button id="btnSound" class="on">Alarm sound</button>
+        <button id="btnZone">Draw zone</button>
       </div>
     </div>
 
     <div class="rail">
       <div class="card">
-        <div class="card-h"><h3>Group risk index</h3><span class="right" id="riskConf">CONF 0.00</span></div>
+        <div class="card-h"><h3 id="riskTitle">Group risk index</h3><span class="right" id="riskConf">CONF 0.00</span></div>
         <div class="risk">
           <div class="risk-top">
             <div class="risk-num mono" id="riskNum">00</div>
@@ -218,7 +231,7 @@ footer p{margin:0 0 7px;max-width:76ch}
       </div>
 
       <div class="card">
-        <div class="card-h"><h3>Signals</h3><span class="right">VS ROLLING BASELINE</span></div>
+        <div class="card-h"><h3>Signals</h3><span class="right" id="sigBasis">VS ROLLING BASELINE</span></div>
         <div class="sig" id="sigs"></div>
       </div>
 
@@ -230,6 +243,11 @@ footer p{margin:0 0 7px;max-width:76ch}
           <div><div class="k">Next track id</div><div class="v" id="kId">1</div></div>
           <div><div class="k">Mean track age</div><div class="v" id="kAge">0 <small>S</small></div></div>
         </div>
+      </div>
+
+      <div class="card" id="snapCard" hidden>
+        <div class="card-h"><h3>Last alerts</h3><span class="right">FRAME AT TRIGGER</span></div>
+        <div class="snaps" id="snaps"></div>
       </div>
 
       <div class="card">
@@ -292,6 +310,32 @@ footer p{margin:0 0 7px;max-width:76ch}
 </section>
 
 <section>
+  <div class="eyebrow">Today, with no hardware</div>
+  <h2>Three things a rancher can genuinely do with this now</h2>
+  <p class="lede">Not a watch system — that needs the hardware in the deployment plan. But the page is not a toy either, and these three uses are real work that a spare laptop and ten minutes will do. Switch the mode control to <em>Zone watch</em> for the first two: the herd statistic needs a group, while a gate or a pen just needs "did something come in here and stay".</p>
+  <div class="cols c3">
+    <div class="box">
+      <span class="num">USE 1</span><h4>Watch a calving pen</h4>
+      <p>Laptop on a bucket, camera on the pen, draw the zone around it, alarm sound on. It beeps when something moves in there and holds a thumbnail of the frame that triggered it. For the couple of nights you are already sleeping badly, that is worth having — and it costs nothing.</p>
+    </div>
+    <div class="box">
+      <span class="num">USE 2</span><h4>Scrub a trail-cam card</h4>
+      <p>Open a video file and let the tracker run at speed. You get the timestamps where anything moved, instead of scrubbing four hours of an empty field by hand. This is the one that saves real time, today, with footage the rancher already has.</p>
+    </div>
+    <div class="box">
+      <span class="num">USE 3</span><h4>Test a camera position before you mount it</h4>
+      <p>Hold a phone where the camera would go and see what the pipeline actually picks up from that angle — how much of the paddock, what the sun does, whether the far end is too far. Twenty minutes here saves a mast in the wrong place.</p>
+    </div>
+  </div>
+  <div class="cols c2" style="margin-top:16px">
+    <div class="box"><h4>What was added to make those possible</h4>
+      <p>An audible alarm, because a silent one needs somebody already staring at the screen. A screen wake lock so the laptop does not sleep mid-watch. A thumbnail of the frame at each trigger, so you can tell a cow from a barn cat without having been there. And zone watch, because the herd statistic cannot fire on a single animal by design.</p></div>
+    <div class="box"><h4>What it still is not</h4>
+      <p>The alarm is a beep on that machine, in that room. Nothing reaches a phone, nothing is recorded beyond three thumbnails, a laptop webcam sees nothing in a dark barn without light, and the tab must stay open and visible. It detects motion, not livestock. Overnight, unattended, in weather, at range, is the hardware build — not this.</p></div>
+  </div>
+</section>
+
+<section>
   <div class="eyebrow">The hard part</div>
   <h2>Six layers between a moving pixel and a phone buzzing</h2>
   <p class="lede">Detection is a solved problem you can buy. False alarms are the whole product, because a system that cries wolf twice a week trains the one person who matters to ignore it — and an ignored alarm is worse than no alarm, since it was also paid for.</p>
@@ -347,6 +391,7 @@ footer p{margin:0 0 7px;max-width:76ch}
     <li><b>It is not a species classifier.</b> It detects <em>motion</em> and tracks it. It will track you, your dog, a truck and a ceiling fan with equal enthusiasm, and it is labelled that way on screen. Stage 05 is where a livestock detector drops in; nothing downstream of it changes.</li>
     <li><b>The tracker, though, is the real thing.</b> Constant-velocity Kalman prediction, greedy assignment inside a distance gate, three-hit confirmation and twelve-miss deletion is SORT, and SORT is what production systems actually run — modern trackers are refinements of it, not replacements.</li>
     <li><b>Nothing leaves your device.</b> No frame, no clip, no telemetry. There is no network call in this page at all beyond the two font files.</li>
+    <li><b>The alarm is local, and only local.</b> It beeps on the machine running the page and holds three thumbnails. There is no push notification, no SMS, no recording, and no second person told. That is a deliberate consequence of nothing leaving the device, and it is the first thing the hardware build changes.</li>
     <li><b>Camera access can be blocked</b> in an embedded frame or by your own permission choice. That is not a failure to hide — the synthetic source runs the identical pipeline so you can still see the tracker and the alarm gating work.</li>
     <li><b>A motionless animal is an invisible animal.</b> Background subtraction sees change, so a cow that stands still for long enough is absorbed into the background and its track dies. Watch the confirmed count sag when the synthetic herd settles. No amount of tuning fixes this — it is the structural reason a real deployment puts a learned detector at stage 05, because a detector sees a cow whether or not it moved.</li>
     <li><b>Daylight tuning is not night tuning.</b> Everything you can adjust here would be learned per camera in a real deployment, and the numbers that work in this room will not be the numbers that work on a pasture at 2 a.m.</li>
@@ -764,8 +809,66 @@ function updateTracks(dets, dt){
   });
 }
 
+/* ---------------- 08a zone watch ----------------
+   The herd statistic needs a group. For a gate, a calving pen or a driveway a
+   rancher wants something far simpler: did anything of roughly this size stay
+   inside this rectangle long enough to be real? Same detections, same tracker,
+   same dwell gate — only the score changes. */
+function zoneOf(){ return {x:zone.x*WORK_W, y:zone.y*WORK_H, w:zone.w*WORK_W, h:zone.h*WORK_H}; }
+function inZone(t){
+  const z=zoneOf();
+  return t.kx.p>=z.x && t.kx.p<=z.x+z.w && t.ky.p>=z.y && t.ky.p<=z.y+z.h;
+}
+function behaviourZone(dt){
+  const diag=Math.hypot(WORK_W,WORK_H);
+  const here=tracks.filter(t=>t.confirmed && inZone(t));
+  for(const t of tracks){
+    if(t.confirmed && inZone(t)) t.zoneT=(t.zoneT||0)+dt; else t.zoneT=0;
+  }
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+  const present = here.length ? 1 : 0;
+  const biggest = here.reduce((m,t)=>Math.max(m, t.w*t.h), 0);
+  const fastest = here.reduce((m,t)=>Math.max(m, Math.hypot(t.kx.v,t.ky.v)/diag), 0);
+  const longest = here.reduce((m,t)=>Math.max(m, t.zoneT||0), 0);
+  sigs = [present,
+          clamp(biggest/(N*0.015),0,1),
+          clamp(fastest/0.05,0,1),
+          clamp(longest/3,0,1)];
+  const raw = 100*(sigs[0]*0.55 + sigs[1]*0.10 + sigs[2]*0.15 + sigs[3]*0.20);
+  risk += (raw-risk)*Math.min(1, dt*3);
+  conf = present ? clamp(0.45 + sigs[1]*0.25 + sigs[3]*0.28, 0, 0.98) : 0;
+  learn = LEARN_S;                      // nothing to learn: the rule is the zone
+  gate(dt, here.length ? here.length+' track'+(here.length>1?'s':'')+' in the zone' : 'zone clear');
+}
+
+/* the threshold / dwell / lockout machine, shared by both modes */
+function gate(dt, what){
+  dwell = risk>=ALERT_T ? Math.min(dwellNeed, dwell+dt) : Math.max(0, dwell-dt*0.75);
+  const prev=phase;
+  if(phase==='ALERT'){
+    if(risk < WATCH_T*0.75){ phase='CALM'; calmHeld=0;
+      log('calm','Back to baseline. Index '+Math.round(risk)+'.'); }
+  } else if(risk>=ALERT_T && dwell>=dwellNeed && tNow-lastAlertAt>LOCKOUT){
+    phase='ALERT';
+  } else if(risk>=ALERT_T && dwell>=dwellNeed){
+    if(phase!=='WATCH'){ phase='WATCH';
+      log('watch','Over threshold inside the '+LOCKOUT+' s lockout — logged, no alert raised.'); }
+  } else if(risk>=WATCH_T){
+    if(phase!=='WATCH'){ phase='WATCH'; log('watch','WATCH — '+what+'. Holding for the dwell window.'); }
+  } else { phase='CALM'; calmHeld+=dt; }
+
+  if(phase==='ALERT' && prev!=='ALERT'){
+    alertAt=tNow; lastAlertAt=tNow;
+    log('alert','ALERT — '+what+', index '+Math.round(risk)+', confidence '+conf.toFixed(2)
+      +'. Held '+dwellNeed.toFixed(1)+' s before firing.');
+    grabSnapshot();
+    startAlarm();
+  }
+}
+
 /* ---------------- 08 behaviour + alarm ---------------- */
 function behaviour(dt){
+  if(mode==='zone'){ behaviourZone(dt); return; }
   const live = tracks.filter(t=>t.confirmed);
   const n = live.length;
   const diag = Math.hypot(WORK_W, WORK_H);
@@ -812,29 +915,74 @@ function behaviour(dt){
   risk += (raw-risk)*Math.min(1, dt*3);
   conf = clamp(0.18 + 0.19*sigs.filter(s=>s>0.34).length + risk/430, 0, 0.98);
 
-  dwell = risk>=ALERT_T ? Math.min(dwellNeed, dwell+dt) : Math.max(0, dwell-dt*0.75);
-  const prev=phase;
-  if(phase==='ALERT'){
-    if(risk < WATCH_T*0.75){ phase='CALM'; calmHeld=0;
-      log('calm','Back to baseline. Index '+Math.round(risk)+'.'); }
-  } else if(risk>=ALERT_T && dwell>=dwellNeed && tNow-lastAlertAt>LOCKOUT){
-    phase='ALERT';
-  } else if(risk>=ALERT_T && dwell>=dwellNeed){
-    if(phase!=='WATCH'){ phase='WATCH';
-      log('watch','Over threshold inside the '+LOCKOUT+' s lockout — logged, no alert raised.'); }
-  } else if(risk>=WATCH_T){
-    if(phase!=='WATCH'){ phase='WATCH'; log('watch','WATCH — group pattern above baseline. Holding for the dwell window.'); }
-  } else { phase='CALM'; calmHeld+=dt; }
+  gate(dt, n+' tracks, group pattern above baseline');
+}
 
-  if(phase==='ALERT' && prev!=='ALERT'){
-    alertAt=tNow; lastAlertAt=tNow;
-    log('alert','ALERT — '+n+' tracks, index '+Math.round(risk)+', confidence '+conf.toFixed(2)
-      +'. Held '+dwellNeed.toFixed(1)+' s before firing.');
+/* ---------------- alarm: sound, screen, evidence ----------------
+   A silent alarm needs somebody already looking at the screen, which defeats
+   the point. Web Audio needs a user gesture to start, so the context is unlocked
+   on the first control the person touches. */
+let actx=null, alarmUntil=0, lastBeep=0;
+function unlockAudio(){
+  if(actx) return;
+  try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ actx=null; }
+  if(actx && actx.state==='suspended') actx.resume().catch(()=>{});
+}
+function startAlarm(){ if(soundOn) alarmUntil = tNow + 12; }
+function stopAlarm(){ alarmUntil = 0; }
+function serviceAlarm(){
+  if(!soundOn || !actx || tNow > alarmUntil) return;
+  if(tNow - lastBeep < 0.9) return;
+  lastBeep = tNow;
+  const t0 = actx.currentTime;
+  for(let i=0;i<2;i++){
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type='square'; o.frequency.value = i ? 660 : 880;
+    g.gain.setValueAtTime(0.0001, t0+i*0.22);
+    g.gain.exponentialRampToValueAtTime(0.18, t0+i*0.22+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+i*0.22+0.19);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t0+i*0.22); o.stop(t0+i*0.22+0.2);
+  }
+}
+
+let wakeLock=null;
+async function keepScreenOn(){
+  try{
+    if('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', ()=>{ wakeLock=null; });
+    }
+  }catch(e){ /* denied or unsupported — the pipeline still runs while visible */ }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible'){ keepScreenOn(); }
+});
+
+function grabSnapshot(){
+  const c = document.createElement('canvas');
+  c.width = 240; c.height = Math.round(240*view.height/Math.max(1,view.width));
+  c.getContext('2d').drawImage(view, 0, 0, c.width, c.height);
+  const d = new Date();
+  snaps.unshift({c:c, t:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')
+    +':'+String(d.getSeconds()).padStart(2,'0')});
+  if(snaps.length>3) snaps.pop();
+  const host = document.getElementById('snaps');
+  host.innerHTML = '';
+  document.getElementById('snapCard').hidden = false;
+  for(const sn of snaps){
+    const fig = document.createElement('figure');
+    fig.appendChild(sn.c);
+    const cap = document.createElement('figcaption'); cap.textContent = sn.t;
+    fig.appendChild(cap); host.appendChild(fig);
   }
 }
 
 /* ---------------- rendering ---------------- */
 let showMask=true, showTrails=true, showBoxes=true;
+let mode='herd', soundOn=true, drawingZone=false, zoneDrag=null;
+let zone={x:0.20,y:0.20,w:0.60,h:0.60};   // fractions of the frame
+let snaps=[];
 function render(dets){
   const sw = sourceKind==='synth' ? synth.width  : (source?source.videoWidth :16);
   const sh = sourceKind==='synth' ? synth.height : (source?source.videoHeight:9);
@@ -876,6 +1024,18 @@ function render(dets){
   }
   vctx.restore();
 
+  if(mode==='zone'){
+    const z=zoneOf();
+    const c = phase==='ALERT'?COL.alert:phase==='WATCH'?COL.watch:COL.accent;
+    vctx.save();
+    vctx.strokeStyle=c; vctx.lineWidth=1.8; vctx.setLineDash(drawingZone?[5,5]:[]);
+    vctx.strokeRect(z.x*kx, z.y*ky, z.w*kx, z.h*ky);
+    vctx.globalAlpha=.07; vctx.fillStyle=c;
+    vctx.fillRect(z.x*kx, z.y*ky, z.w*kx, z.h*ky);
+    vctx.restore();
+    tag(z.x*kx, z.y*ky-8, drawingZone?'DRAG TO SET THE WATCH ZONE':'WATCH ZONE', c);
+  }
+
   maskv.style.display = showMask ? 'block' : 'none';
   document.getElementById('maskLbl').style.display = showMask ? 'block' : 'none';
   if(showMask){
@@ -898,10 +1058,18 @@ function tag(x,y,text,color){
 }
 
 /* ---------------- UI ---------------- */
-const SIGNAMES=['Spacing shift','Polarisation','Activity','Track count'];
-document.getElementById('sigs').innerHTML = SIGNAMES.map((n,i)=>
-  '<div class="sigrow"><span class="n">'+n+'</span><span class="bar"><i id="sb'+i+'"></i></span>'
-  +'<span class="v" id="sv'+i+'">0.00</span></div>').join('');
+const SIGNAMES={
+  herd:['Spacing shift','Polarisation','Activity','Track count'],
+  zone:['In the zone','Track size','Speed','Time in zone']
+};
+function setSigNames(){
+  document.getElementById('riskTitle').textContent = mode==='zone' ? 'Zone watch index' : 'Group risk index';
+  document.getElementById('sigBasis').textContent  = mode==='zone' ? 'INSIDE THE ZONE' : 'VS ROLLING BASELINE';
+  document.getElementById('sigs').innerHTML = SIGNAMES[mode].map((n,i)=>
+    '<div class="sigrow"><span class="n">'+n+'</span><span class="bar"><i id="sb'+i+'"></i></span>'
+    +'<span class="v" id="sv'+i+'">0.00</span></div>').join('');
+}
+setSigNames();
 const REJNAMES=[['size','Blob too small or too large'],['aspect','Aspect ratio out of bounds'],
   ['fill','Fill ratio too low'],['illumination','Global illumination step'],['unconfirmed','Track died unconfirmed']];
 document.getElementById('rej').innerHTML = REJNAMES.map(r=>
@@ -937,10 +1105,11 @@ function paintUI(dt, ms){
   document.getElementById('riskConf').textContent='CONF '+conf.toFixed(2);
   const nConf = tracks.filter(t=>t.confirmed).length;
   document.getElementById('riskSub').textContent =
-    nConf<2 ? 'NEEDS 2+ CONFIRMED TRACKS'
+    (mode==='herd' && nConf<2) ? 'NEEDS 2+ CONFIRMED TRACKS'
     : learn<LEARN_S ? 'LEARNING BASELINE '+learn.toFixed(0)+' / '+LEARN_S+' S'
     : phase==='ALERT' ? 'ALERTED · LOCKOUT '+Math.max(0,LOCKOUT-(tNow-lastAlertAt)).toFixed(0)+' S'
     : phase==='WATCH' ? 'DWELL '+dwell.toFixed(1)+' / '+dwellNeed.toFixed(1)+' S'
+    : mode==='zone' ? 'ZONE CLEAR '+calmHeld.toFixed(0)+' S'
     : 'BASELINE HELD '+calmHeld.toFixed(0)+' S';
   const db=document.getElementById('dwellBar');
   db.style.width=(dwellNeed>0?dwell/dwellNeed*100:0)+'%';
@@ -981,16 +1150,18 @@ function frame(now){
     ms=performance.now()-t0;
     render(blobs);
   }
+  serviceAlarm();
   paintUI(dt, ms);
   requestAnimationFrame(frame);
 }
 
 /* ---------------- controls ---------------- */
-document.getElementById('padCam').onclick=useCamera;
-document.getElementById('padSynth').onclick=()=>{ useSynthetic(); log('act','Synthetic source running — same pipeline, no camera needed.'); };
-document.getElementById('padFile').onchange=e=>{ if(e.target.files[0]) useFile(e.target.files[0]); };
-document.getElementById('fileIn').onchange=e=>{ if(e.target.files[0]) useFile(e.target.files[0]); };
+document.getElementById('padCam').onclick=()=>{ unlockAudio(); keepScreenOn(); useCamera(); };
+document.getElementById('padSynth').onclick=()=>{ unlockAudio(); keepScreenOn(); useSynthetic(); log('act','Synthetic source running — same pipeline, no camera needed.'); };
+document.getElementById('padFile').onchange=e=>{ unlockAudio(); keepScreenOn(); if(e.target.files[0]) useFile(e.target.files[0]); };
+document.getElementById('fileIn').onchange=e=>{ unlockAudio(); keepScreenOn(); if(e.target.files[0]) useFile(e.target.files[0]); };
 document.querySelectorAll('#srcSeg button').forEach(b=>b.onclick=()=>{
+  unlockAudio(); keepScreenOn();
   if(b.dataset.src==='cam') useCamera(); else useSynthetic();
 });
 document.getElementById('btnFlip').onclick=()=>{
@@ -998,6 +1169,60 @@ document.getElementById('btnFlip').onclick=()=>{
   if(sourceKind==='cam') useCamera(); else log('watch','Lens flip applies to the camera source.');
 };
 document.getElementById('btnRelearn').onclick=()=>{ bgReady=false; tracks=[]; log('act','Background model cleared and relearning.'); };
+document.querySelectorAll('#modeSeg button').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll('#modeSeg button').forEach(x=>x.classList.toggle('on',x===b));
+  setSigNames(); risk=0; phase='CALM'; dwell=0; learn=0; stopAlarm();
+  log('act', mode==='zone'
+    ? 'Zone watch — alarms on anything that stays inside the rectangle. Press "Draw zone" to place it.'
+    : 'Herd behaviour — alarms on a group pattern shift. Needs two or more tracks.');
+});
+document.getElementById('btnSound').onclick=e=>{
+  soundOn=!soundOn; e.target.classList.toggle('on',soundOn);
+  if(soundOn){ unlockAudio(); } else stopAlarm();
+  log('act', soundOn?'Alarm sound on.':'Alarm sound muted.');
+};
+document.getElementById('btnZone').onclick=e=>{
+  if(mode!=='zone'){ document.querySelector('#modeSeg button[data-mode="zone"]').click(); }
+  drawingZone=!drawingZone; e.target.classList.toggle('on',drawingZone);
+  view.classList.toggle('drawing',drawingZone);
+};
+
+/* drag a rectangle on the frame to set the watch zone */
+function evtToWork(ev){
+  const r = view.getBoundingClientRect();
+  const pt = ev.touches ? ev.touches[0] : ev;
+  return { x: clampf((pt.clientX-r.left)/r.width, 0, 1), y: clampf((pt.clientY-r.top)/r.height, 0, 1) };
+}
+function clampf(v,a,b){ return v<a?a:v>b?b:v; }
+function zoneStart(ev){
+  if(!drawingZone) return;
+  ev.preventDefault();
+  zoneDrag = evtToWork(ev);
+  zone = {x:zoneDrag.x, y:zoneDrag.y, w:0, h:0};
+}
+function zoneMove(ev){
+  if(!drawingZone || !zoneDrag) return;
+  ev.preventDefault();
+  const p = evtToWork(ev);
+  zone = { x:Math.min(p.x,zoneDrag.x), y:Math.min(p.y,zoneDrag.y),
+           w:Math.abs(p.x-zoneDrag.x), h:Math.abs(p.y-zoneDrag.y) };
+}
+function zoneEnd(){
+  if(!drawingZone || !zoneDrag) return;
+  zoneDrag = null;
+  if(zone.w < 0.04 || zone.h < 0.04) zone = {x:0.20,y:0.20,w:0.60,h:0.60};
+  drawingZone = false;
+  document.getElementById('btnZone').classList.remove('on');
+  view.classList.remove('drawing');
+  log('act','Watch zone set — '+Math.round(zone.w*100)+'% × '+Math.round(zone.h*100)+'% of the frame.');
+}
+view.addEventListener('mousedown', zoneStart);
+window.addEventListener('mousemove', zoneMove);
+window.addEventListener('mouseup', zoneEnd);
+view.addEventListener('touchstart', zoneStart, {passive:false});
+window.addEventListener('touchmove', zoneMove, {passive:false});
+window.addEventListener('touchend', zoneEnd);
 const tog=(id,set)=>document.getElementById(id).onclick=e=>{ const v=set(); e.target.classList.toggle('on',v); };
 tog('btnMask',()=>showMask=!showMask);
 tog('btnTrails',()=>showTrails=!showTrails);
