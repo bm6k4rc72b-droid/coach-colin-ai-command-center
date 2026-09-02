@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HarvestEye">
+  <defs>
+    <linearGradient id="fruit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0c419"/>
+      <stop offset="0.55" stop-color="#f28c28"/>
+      <stop offset="1" stop-color="#e8443a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#05080b"/>
+  <circle cx="256" cy="278" r="104" fill="url(#fruit)"/>
+  <path d="M256 174c-10-34-38-52-74-52 6 34 30 56 74 52z" fill="#7bd93b"/>
+  <g fill="none" stroke="#7bd93b" stroke-width="14" stroke-linecap="round">
+    <path d="M108 150v-32a20 20 0 0 1 20-20h32"/>
+    <path d="M404 150v-32a20 20 0 0 0-20-20h-32"/>
+    <path d="M108 380v32a20 20 0 0 0 20 20h32"/>
+    <path d="M404 380v32a20 20 0 0 1-20 20h-32"/>
+  </g>
+  <circle cx="256" cy="278" r="104" fill="none" stroke="#05080b" stroke-width="10" stroke-opacity="0.35"/>
+</svg>

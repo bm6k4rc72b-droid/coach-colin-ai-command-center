@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HarvestEye">
+  <defs>
+    <linearGradient id="fruitMask" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0c419"/>
+      <stop offset="0.55" stop-color="#f28c28"/>
+      <stop offset="1" stop-color="#e8443a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#05080b"/>
+  <circle cx="256" cy="272" r="86" fill="url(#fruitMask)"/>
+  <path d="M256 186c-8-28-31-43-61-43 5 28 25 46 61 43z" fill="#7bd93b"/>
+  <g fill="none" stroke="#7bd93b" stroke-width="12" stroke-linecap="round">
+    <path d="M146 196v-26a16 16 0 0 1 16-16h26"/>
+    <path d="M366 196v-26a16 16 0 0 0-16-16h-26"/>
+    <path d="M146 348v26a16 16 0 0 0 16 16h26"/>
+    <path d="M366 348v26a16 16 0 0 1-16 16h-26"/>
+  </g>
+</svg>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#05080b" />
+<meta name="description" content="HarvestEye — offline, on-device crop maturity detection and harvest-window forecasting through your phone camera." />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="HarvestEye" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="stylesheet" href="./styles.css" />
+<title>HarvestEye — Crop Maturity Detection</title>
+</head>
+<body>
+
+<div id="stage">
+  <video id="preview" playsinline muted autoplay disablepictureinpicture></video>
+  <canvas id="overlay"></canvas>
+  <div id="reticle" hidden><div class="reticle-box"></div><p id="reticleHint"></p></div>
+
+  <header id="topbar">
+    <button class="chip" id="cropChip" type="button" aria-haspopup="dialog">
+      <span id="cropEmoji">🍅</span><span id="cropName">Tomato</span>
+    </button>
+    <button class="chip" id="plotChip" type="button">◈ <span id="plotName">Block A</span></button>
+    <div class="spacer"></div>
+    <button class="icon" id="torchBtn" type="button" title="Torch" aria-label="Torch">☀</button>
+    <button class="icon" id="lensBtn" type="button" title="Switch lens" aria-label="Switch lens">⇄</button>
+    <button class="icon" id="menuBtn" type="button" title="Menu" aria-label="Menu">☰</button>
+  </header>
+
+  <div id="engineTag"><span id="fpsText">—</span> · <span id="engineText">on-device</span></div>
+
+  <section id="readout" aria-live="polite">
+    <div class="verdict">
+      <div class="verdict-main">
+        <p id="verdictLabel">Point at the crop</p>
+        <p id="verdictSub">No fruit detected yet</p>
+      </div>
+      <div class="verdict-days">
+        <strong id="daysValue">—</strong>
+        <span id="daysCaption">to harvest</span>
+      </div>
+    </div>
+
+    <div class="maturity">
+      <div class="maturity-track"><div class="maturity-marker" id="maturityMarker"></div>
+        <div class="maturity-window" id="maturityWindow"></div>
+      </div>
+      <div class="maturity-axis"><span>immature</span><span>turning</span><span>ripe</span><span>full</span></div>
+    </div>
+
+    <dl class="stats">
+      <div><dt>Ripe</dt><dd id="statReady">—</dd></div>
+      <div><dt>Fruit</dt><dd id="statFruit">—</dd></div>
+      <div><dt>Maturity</dt><dd id="statMaturity">—</dd></div>
+      <div><dt>Conf.</dt><dd id="statConfidence">—</dd></div>
+      <div><dt>Decay</dt><dd id="statDecay">—</dd></div>
+    </dl>
+
+    <div id="stageMix" class="stage-mix"></div>
+
+    <div class="actions">
+      <button class="btn primary" id="saveBtn" type="button">Log scan</button>
+      <button class="btn" id="walkBtn" type="button">Row walk</button>
+      <button class="btn" id="calibrateBtn" type="button">Calibrate</button>
+      <button class="btn" id="teachBtn" type="button">Teach</button>
+    </div>
+  </section>
+
+  <div id="startGate">
+    <div class="gate-card">
+      <h1>HarvestEye</h1>
+      <p class="tagline">Crop maturity detection that runs entirely on this phone.</p>
+      <ul class="gate-points">
+        <li>No upload, no account, no signal needed — the detector is the device.</li>
+        <li>Every reading is logged, geotagged, and trended per block.</li>
+        <li>Repeat scans measure how fast <em>your</em> block ripens, then forecast from that.</li>
+      </ul>
+      <button class="btn primary big" id="startBtn" type="button">Start camera</button>
+      <p class="gate-note" id="gateNote">Camera access is requested only when you tap. Frames never leave the device.</p>
+      <button class="linklike" id="helpLink" type="button">How it works &amp; limits</button>
+    </div>
+  </div>
+</div>
+
+<!-- Crop picker -->
+<div class="sheet" id="cropSheet" hidden role="dialog" aria-label="Crop picker">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Crop</h2><button class="icon" data-close type="button">✕</button></div>
+    <div id="cropList" class="crop-grid"></div>
+    <p class="sheet-note" id="cropNote"></p>
+  </div>
+</div>
+
+<!-- Menu / settings -->
+<div class="sheet" id="menuSheet" hidden role="dialog" aria-label="Menu">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Settings</h2><button class="icon" data-close type="button">✕</button></div>
+
+    <label class="field">
+      <span>Plot / block name</span>
+      <input type="text" id="plotInput" maxlength="40" placeholder="Block A" />
+    </label>
+
+    <label class="field">
+      <span>Field temperature <output id="tempOut">22 °C</output></span>
+      <input type="range" id="tempInput" min="4" max="38" step="1" value="22" />
+      <small>Warps the nominal ripening rate (Q₁₀ ≈ 2). Ignored once a block has enough history to measure its own rate.</small>
+    </label>
+
+    <label class="field">
+      <span>Detection threshold <output id="confOut">0.42</output></span>
+      <input type="range" id="confInput" min="0.2" max="0.8" step="0.02" value="0.42" />
+      <small>Lower finds more fruit and more false positives.</small>
+    </label>
+
+    <label class="field">
+      <span>Analysis resolution <output id="resOut">224 px</output></span>
+      <input type="range" id="resInput" min="160" max="352" step="32" value="224" />
+      <small>Higher sees smaller fruit and costs frame rate and battery.</small>
+    </label>
+
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="gpsToggle" /><span>Geotag scans</span></label>
+      <label class="toggle"><input type="checkbox" id="soundToggle" /><span>Chirp on ripe fruit</span></label>
+      <label class="toggle"><input type="checkbox" id="hapticToggle" checked /><span>Haptics</span></label>
+      <label class="toggle"><input type="checkbox" id="boxToggle" checked /><span>Show boxes</span></label>
+      <label class="toggle"><input type="checkbox" id="maskToggle" /><span>Maturity heat tint</span></label>
+    </div>
+
+    <div class="sheet-head"><h2>Ledger</h2></div>
+    <div class="ledger-actions">
+      <button class="btn" id="ledgerBtn" type="button">Open field ledger</button>
+      <button class="btn" id="exportCsvBtn" type="button">Export CSV</button>
+      <button class="btn" id="exportGeoBtn" type="button">Export GeoJSON</button>
+    </div>
+
+    <div class="sheet-head"><h2>Calibration</h2></div>
+    <p class="sheet-note" id="wbNote">White balance: not calibrated.</p>
+    <div class="ledger-actions">
+      <button class="btn" id="resetWbBtn" type="button">Clear white balance</button>
+      <button class="btn" id="resetProfilesBtn" type="button">Forget taught colours</button>
+    </div>
+
+    <button class="linklike" id="helpLink2" type="button">How it works &amp; limits</button>
+  </div>
+</div>
+
+<!-- Field ledger -->
+<div class="sheet" id="ledgerSheet" hidden role="dialog" aria-label="Field ledger">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Field ledger</h2><button class="icon" data-close type="button">✕</button></div>
+    <div id="ledgerBody"></div>
+  </div>
+</div>
+
+<!-- Row walk -->
+<div class="sheet" id="walkSheet" hidden role="dialog" aria-label="Row walk">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Row walk</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">Hold the phone at the fruiting wall and walk the row at a steady pace. Readings are binned every 5 m so you can see where the ripe fruit actually is.</p>
+    <div id="walkStrip" class="walk-strip"></div>
+    <dl class="stats wide">
+      <div><dt>Distance</dt><dd id="walkDistance">0 m</dd></div>
+      <div><dt>Samples</dt><dd id="walkSamples">0</dd></div>
+      <div><dt>Ripe</dt><dd id="walkReady">—</dd></div>
+      <div><dt>Fruit / m</dt><dd id="walkDensity">—</dd></div>
+    </dl>
+    <div id="walkHotspots" class="hotspots"></div>
+    <div class="actions">
+      <button class="btn primary" id="walkToggleBtn" type="button">Start walking</button>
+      <button class="btn" id="walkSaveBtn" type="button">Log transect</button>
+      <button class="btn" id="walkResetBtn" type="button">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teach mode -->
+<div class="sheet" id="teachSheet" hidden role="dialog" aria-label="Teach mode">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Teach this cultivar</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">Tap a fruit in the viewfinder, then tell the app what stage it is. The crop's colour path bends toward what you actually grow — a pale beefsteak and a deep San Marzano stop being scored the same way.</p>
+    <p class="teach-sample">Sampled hue: <strong id="teachHue">—</strong></p>
+    <div class="teach-stages" id="teachStages"></div>
+    <p class="sheet-note" id="teachStatus">Tap the viewfinder to sample.</p>
+  </div>
+</div>
+
+<!-- Help -->
+<div class="sheet" id="helpSheet" hidden role="dialog" aria-label="How it works">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>How it works</h2><button class="icon" data-close type="button">✕</button></div>
+    <h3>The detector</h3>
+    <p>Each frame is white-balanced, then every pixel is projected onto the crop's ripening colour path — the ordered hue anchors that a fruit of that species passes through from immature to ripe. Pixels close to the path become a fruit mask; the mask is de-speckled, split into connected blobs, and each blob is scored on shape, colour purity, smoothness and size. Green fruit has to clear a stricter bar, because unripe fruit and foliage share a hue and only texture and roundness tell them apart.</p>
+    <h3>The forecast</h3>
+    <p>With no history, days-to-harvest comes from the crop's nominal cycle length, warped for temperature. Once a block has been scanned at least twice more than half a day apart, a regression through <em>its own</em> readings replaces the guess, and the readout says <strong>measured</strong> instead of <strong>nominal</strong>. That is the whole reason to log scans.</p>
+    <h3>Honest limits</h3>
+    <ul>
+      <li>This is a colour and shape estimator, not a trained neural network. It does not know what a tomato is; it knows what ripening looks like in hue space.</li>
+      <li>It cannot see fruit hidden behind leaves, so counts are what is <em>visible</em>, not what is on the plant.</li>
+      <li>Internal quality — sugar, acidity, firmness — is not visible to a camera. Colour leads and correlates; it does not replace a refractometer.</li>
+      <li>Mixed or harsh lighting shifts hue. Calibrate on something neutral before trusting numbers across a whole day.</li>
+      <li>Anthocyanin crops (aubergine, dark grapes) and blushed cultivars benefit most from teach mode.</li>
+    </ul>
+    <h3>Privacy</h3>
+    <p>Frames are analysed in memory and discarded. Nothing is uploaded — there is no server to upload to. Scans, settings and taught colours live in this browser's local storage and leave only when you export them.</p>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -16,6 +16,35 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: HarvestEye
+
+A second, self-contained app lives at [`public/harvest-eye/`](public/harvest-eye)
+— **on-device crop maturity detection** through a phone camera, for iPhone and
+Android. It shares nothing with the globe app but the repository and the dark
+instrument aesthetic: no backend, no API key, no upload, and it keeps working
+with the signal off.
+
+Open `/harvest-eye/` (`http://localhost:4173/harvest-eye/` under `./start.sh`)
+and add it to the home screen. What it does beyond drawing boxes on fruit:
+
+- **Measures each block's own ripening rate** from repeat scans and forecasts
+  the harvest window from that, instead of from a generic crop table.
+- **Calibrates to the light** off any neutral surface, so readings taken at dawn
+  and at noon are comparable.
+- **Learns your cultivar** — tap a fruit, name its stage, and the crop's colour
+  path bends toward what you actually grow.
+- **Walks a row** with GPS, producing a ripeness strip and hotspot list for a
+  picking crew.
+- **Keeps a field ledger** — dated, geotagged, sorted by urgency, exportable as
+  CSV or GeoJSON.
+
+Full write-up, including how the detector works and where it can be wrong:
+[`docs/harvest-eye.md`](docs/harvest-eye.md). Tests: `npm run test:harvest-eye`
+and `npm run qa:harvest-eye` (drives the real app in Chromium against a
+synthetic camera feed).
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream
