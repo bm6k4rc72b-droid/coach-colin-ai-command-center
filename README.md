@@ -123,6 +123,40 @@ Keys are brokered server-side by the dev server, never exposed to the browser.
 It binds to localhost by default — putting it on a LAN exposes your keys with
 it, so set budget caps provider-side too.
 
+## PULSE — contactless vitals (iPhone, Android, laptop)
+
+A second, self-contained app lives at **`/pulse/`**: a camera-based pulse-rate
+monitor built from the same skin. It measures the few-parts-per-thousand colour
+change your heartbeat makes in the skin of your forehead — or in a fingertip
+held over the rear camera — and reports a rate, a live waveform, and a
+confidence figure.
+
+```bash
+./start.sh          # then open http://localhost:4173/pulse/
+npm run pulse       # dev server, opens /pulse/ directly
+```
+
+One codebase covers all three platforms, because it is a web app: Safari on
+iOS, Chrome on Android, any modern desktop browser. It is installable — *Add to
+Home Screen* on iOS, *Install app* elsewhere — after which it launches
+full-screen with its own icon and works offline.
+
+**To use it on a phone you must serve it over HTTPS.** Browsers only grant
+camera access in a secure context, so a phone pointed at your laptop's LAN
+address is refused before the page runs. Unlike the globe, PULSE is completely
+static — nothing about it degrades on a static host — so the Pages workflow
+below publishes a fully working copy at `https://<user>.github.io/<repo>/pulse/`.
+
+Everything runs on-device: no server, no upload, no analytics. The
+signal-processing core (`public/pulse/vitals-core.js`) is pure functions
+covered by 35 unit tests in `src/vitals/vitalsCore.test.mjs`.
+
+**Not a medical device** — a wellness and engineering demo, never for
+diagnosis, monitoring or emergencies.
+
+Full write-up, including the algorithm and its accuracy limits:
+[`docs/PULSE.md`](docs/PULSE.md).
+
 ## Publishing a link (and its limits)
 
 `.github/workflows/pages.yml` publishes a static copy to GitHub Pages. Enable
@@ -135,7 +169,9 @@ proxy and key-broker every live feed. Deployed statically you get the globe,
 the interface and the skin — but aircraft, ships, CCTV, traffic, fires and
 voice have nothing to call and report unavailable.
 
-The link is a shop window. `./start.sh` is the app.
+The link is a shop window. `./start.sh` is the app. (The one exception is
+`/pulse/`, which has no backend to lose — a static deploy is the *recommended*
+way to run it, since phone cameras need HTTPS.)
 
 There is also no way to publish this as a Claude Artifact: Artifact pages are
 sandboxed with a CSP that blocks all outbound fetch/XHR/WebSocket, which is

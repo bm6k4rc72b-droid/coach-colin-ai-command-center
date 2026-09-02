@@ -34,6 +34,8 @@
   "scripts": {
     "dev": "vite",
     "dev:secure": "./scripts/dev-secure.sh",
+    "pulse": "vite --open /pulse/",
+    "pulse:icons": "node scripts/build-pulse-icons.mjs",
     "opensky:import": "./scripts/opensky-import-client.sh",
     "build": "vite build",
     "preview": "vite preview",

@@ -1,0 +1,33 @@
+{
+  "name": "PULSE — Contactless Vitals",
+  "short_name": "PULSE",
+  "description": "Contactless pulse-rate monitoring from any camera. Runs entirely on your device.",
+  "id": "/pulse/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#03060b",
+  "theme_color": "#03060b",
+  "categories": ["health", "utilities"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

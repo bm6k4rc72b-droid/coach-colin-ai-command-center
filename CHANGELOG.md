@@ -7,6 +7,15 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added PULSE, a self-contained contactless pulse-rate monitor at `/pulse/`
+  that runs on iPhone, Android and laptop browsers from one codebase: camera
+  capture, POS chrominance projection, band-limited spectral estimation with an
+  SNR-derived confidence score, live waveform and spectrum, and a local session
+  log with CSV export. Installable and offline-capable; every frame is
+  processed on-device. Documented in [`docs/PULSE.md`](docs/PULSE.md), covered
+  by 35 unit tests in `src/vitals/vitalsCore.test.mjs`. It is explicitly not a
+  medical device.
+
 - Added honest aircraft identity narration: callsign, operator, registration,
   type, and route come only from selected-contact context, and missing operator,
   route, or type enrichment is named explicitly.

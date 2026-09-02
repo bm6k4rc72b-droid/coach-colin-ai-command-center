@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>PULSE — Contactless Vitals</title>
+  <meta name="description" content="Contactless pulse-rate monitoring from any camera. Runs entirely on your device — iPhone, Android, laptop." />
+  <meta name="theme-color" content="#03060b" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PULSE" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <link rel="stylesheet" href="./pulse.css" />
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="bar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12h4l2-5 3 10 2.5-7 1.5 2h7" />
+        </svg>
+      </span>
+      <span class="brand-text">PULSE<span class="brand-sub">CONTACTLESS VITALS</span></span>
+    </div>
+    <div class="bar-right">
+      <span class="chip chip-quiet" title="No video, frames or readings ever leave this device.">
+        <span class="dot dot-good" aria-hidden="true"></span>ON-DEVICE
+      </span>
+      <button id="install" class="btn btn-ghost" hidden>Install</button>
+      <button id="help-open" class="btn btn-ghost" aria-haspopup="dialog">How it works</button>
+    </div>
+  </header>
+
+  <p class="disclaimer" role="note">
+    <strong>Not a medical device.</strong> This is a wellness and engineering demo. It cannot diagnose,
+    treat or monitor any condition. Never use it in an emergency — call your local emergency number.
+  </p>
+
+  <main class="layout">
+    <!-- ---------------------------------------------------------------- -->
+    <section class="stage panel" aria-label="Camera">
+      <div class="stage-video">
+        <video id="video" playsinline autoplay muted></video>
+        <div id="guide" class="guide" aria-hidden="true">
+          <div class="guide-oval"></div>
+          <div class="guide-corners"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div id="roi-box" class="roi-box" aria-hidden="true"></div>
+
+        <div id="stage-idle" class="stage-idle">
+          <p class="stage-idle-title">Camera off</p>
+          <p class="stage-idle-body" id="stage-idle-body">Press <strong>Start</strong> and allow camera access. Everything is processed locally.</p>
+        </div>
+
+        <div class="stage-status">
+          <span id="quality-chip" class="chip"><span class="dot" aria-hidden="true"></span><span id="quality-text">Idle</span></span>
+          <span id="fps-chip" class="chip chip-quiet" hidden>-- fps</span>
+        </div>
+
+        <div id="countdown" class="countdown" hidden>
+          <svg viewBox="0 0 36 36" aria-hidden="true">
+            <circle class="countdown-track" cx="18" cy="18" r="16" />
+            <circle id="countdown-arc" class="countdown-arc" cx="18" cy="18" r="16" />
+          </svg>
+          <span id="countdown-text">0%</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="start" class="btn btn-primary">Start reading</button>
+        <div class="control-group" role="group" aria-label="Capture mode">
+          <button class="seg is-active" data-mode="face" id="mode-face">Face</button>
+          <button class="seg" data-mode="finger" id="mode-finger">Fingertip</button>
+        </div>
+        <button id="flip" class="btn btn-ghost" title="Switch camera">Flip</button>
+        <button id="torch" class="btn btn-ghost" hidden title="Toggle the rear torch">Torch</button>
+      </div>
+      <p class="mode-hint" id="mode-hint">
+        Face mode: sit still in even, indirect light and keep your forehead inside the guide.
+      </p>
+    </section>
+
+    <!-- ---------------------------------------------------------------- -->
+    <section class="readout" aria-label="Reading">
+      <div class="panel bpm-panel">
+        <div class="panel-label">Pulse rate</div>
+        <div class="bpm-row">
+          <span id="bpm" class="bpm-value" aria-live="polite">--</span>
+          <span class="bpm-unit">BPM</span>
+          <span id="heart" class="heart" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-8-4.9-8-10.4A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 3.6C20 16.1 12 21 12 21z"/></svg>
+          </span>
+        </div>
+        <div id="bpm-band" class="bpm-band">Waiting for signal</div>
+
+        <div class="meters">
+          <div class="meter">
+            <div class="meter-head"><span>Confidence</span><span id="confidence-value">--</span></div>
+            <div class="meter-track"><div id="confidence-bar" class="meter-fill"></div></div>
+          </div>
+          <div class="meter">
+            <div class="meter-head"><span>Stability</span><span id="stability-value">--</span></div>
+            <div class="meter-track"><div id="stability-bar" class="meter-fill"></div></div>
+          </div>
+        </div>
+
+        <dl class="stats">
+          <div><dt>Signal SNR</dt><dd id="stat-snr">--</dd></div>
+          <div><dt>Beat interval</dt><dd id="stat-ibi">--</dd></div>
+          <div><dt>Variability (RMSSD)</dt><dd id="stat-rmssd">--</dd></div>
+          <div><dt>Elapsed</dt><dd id="stat-elapsed">0.0 s</dd></div>
+        </dl>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Pulse waveform</div>
+        <canvas id="waveform" class="trace" height="130"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Frequency spectrum</div>
+        <canvas id="spectrum" class="trace" height="110"></canvas>
+        <p class="panel-foot">A single sharp peak means a clean reading. A flat or scattered spectrum means the estimate is guessing.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-label">Session log</div>
+          <div class="panel-actions">
+            <button id="save" class="btn btn-ghost" disabled>Save reading</button>
+            <button id="export" class="btn btn-ghost" disabled>Export CSV</button>
+            <button id="clear-log" class="btn btn-ghost" disabled>Clear</button>
+          </div>
+        </div>
+        <ul id="log" class="log"><li class="log-empty">No saved readings yet.</li></ul>
+      </div>
+    </section>
+  </main>
+
+  <div id="banner" class="banner" hidden role="alert"></div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <dialog id="help" class="help">
+    <article>
+      <h2>How it works</h2>
+      <p>
+        Every heartbeat pushes a pulse of blood through the capillaries just under your skin.
+        That extra blood absorbs slightly more light, so the colour of your skin flickers a few
+        parts per thousand in time with your pulse — far too faint to see, but not too faint
+        for a camera sensor to measure.
+      </p>
+      <ol>
+        <li><strong>Sample.</strong> Each frame is reduced to the average colour of one small region — your forehead, or your fingertip.</li>
+        <li><strong>Project.</strong> Those red, green and blue traces are combined with the POS chrominance method, which cancels the colour changes caused by movement and shifting light.</li>
+        <li><strong>Analyse.</strong> The result is band-limited to 42–240&nbsp;BPM and transformed into a spectrum; the strongest peak is your pulse rate.</li>
+        <li><strong>Score.</strong> Confidence comes from how much of the band's energy sits in that peak and its first harmonic. A weak peak reports low confidence rather than a made-up number.</li>
+      </ol>
+
+      <h3>Getting a good reading</h3>
+      <ul>
+        <li>Hold still. Motion is the single biggest source of error.</li>
+        <li>Use soft, even lighting on your face. Avoid backlighting and flicker from some LED bulbs.</li>
+        <li>Give it at least 10–15 seconds; the estimate settles as the window fills.</li>
+        <li>If face mode struggles, try fingertip mode: cover the rear camera <em>and</em> its torch with one fingertip, resting lightly.</li>
+      </ul>
+
+      <h3>Privacy</h3>
+      <p>
+        Video never leaves your device. There is no server, no upload and no analytics —
+        frames are read into memory, reduced to a handful of numbers, and discarded. Saved
+        readings live in this browser's local storage until you clear them.
+      </p>
+
+      <h3>Limits</h3>
+      <p>
+        Accuracy degrades with movement, low light, heavy makeup, and rapid rate changes.
+        The variability figures are indicative only: camera timing is far coarser than an ECG.
+        This tool cannot measure blood pressure, oxygen saturation or any other vital sign,
+        and it is <strong>not a medical device</strong>.
+      </p>
+      <button id="help-close" class="btn btn-primary">Close</button>
+    </article>
+  </dialog>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
