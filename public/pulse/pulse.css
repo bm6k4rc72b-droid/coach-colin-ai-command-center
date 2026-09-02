@@ -552,3 +552,20 @@ body {
 .help li { margin-bottom: 6px; }
 .help strong { color: var(--text); }
 .help button { margin-top: 18px; }
+
+.csv-text {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}

@@ -80,6 +80,9 @@ const els = {
   help: $('help'),
   helpOpen: $('help-open'),
   helpClose: $('help-close'),
+  csv: $('csv'),
+  csvText: $('csv-text'),
+  csvClose: $('csv-close'),
 };
 
 const state = {
@@ -200,7 +203,12 @@ function stopCapture() {
 /** Turn a getUserMedia rejection into something a person can act on. */
 function reportCameraError(error) {
   const name = error?.name ?? '';
-  if (name === 'NotAllowedError' || name === 'SecurityError') {
+  const embedded = window.self !== window.top;
+  if ((name === 'NotAllowedError' || name === 'SecurityError') && embedded) {
+    // An embedding page has to opt in with allow="camera"; most previews do
+    // not, and the refusal looks identical to a denied permission prompt.
+    showBanner('The page embedding this one is blocking the camera. Open this link in its own browser tab or window, then press Start.', 12000);
+  } else if (name === 'NotAllowedError' || name === 'SecurityError') {
     showBanner('Camera permission was denied. Allow camera access for this site in your browser settings, then press Start again.', 9000);
   } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
     showBanner('No camera matched that request. Try the Flip button, or switch capture mode.', 8000);
@@ -684,22 +692,49 @@ function renderLog() {
   els.clearLog.disabled = false;
 }
 
-/** Export the log as CSV via an object URL. */
-function exportCsv() {
-  if (!state.readings.length) return;
+/** Render the session log as CSV text. */
+function readingsToCsv() {
   const header = 'timestamp,bpm,mode,confidence,stability,snr_db,mean_ibi_ms,rmssd_ms';
   const rows = state.readings.map((r) => [
     r.at, r.bpm, r.mode, r.confidence, r.stability, r.snrDb, r.meanIbiMs ?? '', r.rmssdMs ?? '',
   ].join(','));
-  const blob = new Blob([`${[header, ...rows].join('\n')}\n`], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `pulse-readings-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return `${[header, ...rows].join('\n')}\n`;
+}
+
+/**
+ * Hand the readings over as CSV.
+ *
+ * A page embedded in another site cannot deliver a file — the host blocks
+ * downloads, and the click just silently does nothing — so an embedded copy
+ * falls back to the clipboard, and then to showing the text for manual
+ * copying. Whichever path runs, the button always visibly does something.
+ */
+async function exportCsv() {
+  if (!state.readings.length) return;
+  const csv = readingsToCsv();
+  const filename = `pulse-readings-${new Date().toISOString().slice(0, 10)}.csv`;
+
+  if (window.self === window.top) {
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showBanner(`Saved ${filename} to your downloads.`, 4000);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(csv);
+    showBanner(`${state.readings.length} readings copied to the clipboard as CSV.`, 5000);
+  } catch {
+    els.csvText.value = csv;
+    els.csv.showModal();
+    els.csvText.select();
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -790,6 +825,7 @@ function wireEvents() {
   });
   els.helpOpen.addEventListener('click', () => els.help.showModal());
   els.helpClose.addEventListener('click', () => els.help.close());
+  els.csvClose.addEventListener('click', () => els.csv.close());
 
   window.addEventListener('resize', redrawTraces);
   window.addEventListener('orientationchange', redrawTraces);
