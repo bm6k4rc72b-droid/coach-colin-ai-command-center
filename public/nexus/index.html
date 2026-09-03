@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>AETHER NEXUS — AI &amp; Cyber Command Center</title>
+<meta name="description" content="A holographic command centre that teaches AI agents, AI app building and cyber defence. Voice receptionist, phone camera tools, and live aircraft, launch, satellite and earthquake feeds. Runs in the browser, works offline.">
+<meta name="theme-color" content="#04060a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aether Nexus">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<canvas id="hall" aria-hidden="true"></canvas>
+<div id="grain" aria-hidden="true"></div>
+<div id="scanlines" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- Entry gate. Browsers require a gesture before audio and speech, and the
+     hologram deserves a curtain anyway. -->
+<div id="gate" role="dialog" aria-label="Enter the Nexus">
+  <div class="gate-inner">
+    <div class="gate-mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <h1>AETHER NEXUS</h1>
+    <p class="gate-sub">AI &amp; Cyber Command Center</p>
+    <p class="gate-copy">
+      A holographic instructor, six training ranges, your phone's camera, and a live
+      picture of the sky. Everything runs on this device — no account, no upload,
+      and it keeps working with the signal off.
+    </p>
+    <button id="enter" class="btn primary xl" type="button">Enter the Nexus</button>
+    <p class="gate-fine">Uses speech, camera and location only when you ask, and only on this device.</p>
+  </div>
+</div>
+
+<header id="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-text">AETHER<b>NEXUS</b></span>
+  </div>
+  <div id="statusbar" class="status-strip" aria-live="polite"></div>
+  <div class="top-actions">
+    <button id="btn-view" class="icon-btn" type="button" title="Switch between the receptionist and the globe" aria-label="Switch view">◍</button>
+    <button id="btn-sound" class="icon-btn" type="button" title="Mute" aria-label="Mute">♪</button>
+    <button id="btn-install" class="icon-btn hidden" type="button" title="Install to home screen" aria-label="Install">⤓</button>
+  </div>
+</header>
+
+<nav id="decks" aria-label="Console decks">
+  <button class="deck-btn active" data-deck="atrium" type="button"><span>◈</span>Atrium</button>
+  <button class="deck-btn" data-deck="academy" type="button"><span>❖</span>Academy</button>
+  <button class="deck-btn" data-deck="labs" type="button"><span>⌬</span>Ranges</button>
+  <button class="deck-btn" data-deck="ops" type="button"><span>◉</span>Ops</button>
+  <button class="deck-btn" data-deck="lens" type="button"><span>⊙</span>Lens</button>
+  <button class="deck-btn" data-deck="swarm" type="button"><span>⁂</span>Swarm</button>
+  <button class="deck-btn" data-deck="settings" type="button"><span>⚙</span>Settings</button>
+</nav>
+
+<main id="panel" aria-live="polite">
+  <div class="panel-head">
+    <h2 id="panel-title">Atrium</h2>
+    <button id="panel-toggle" class="icon-btn" type="button" aria-label="Collapse panel">▾</button>
+  </div>
+  <div id="panel-body"></div>
+</main>
+
+<section id="console" aria-label="Receptionist">
+  <div id="transcript" aria-live="polite"></div>
+  <form id="ask-form" autocomplete="off">
+    <button id="btn-mic" class="mic-btn" type="button" aria-label="Tap to speak, tap again to stop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M18 11a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.9V22h2v-3.1A8 8 0 0 0 20 11z"/></svg>
+    </button>
+    <input id="ask" type="text" placeholder="Ask Aether, or say “open the phishing range”" aria-label="Ask the receptionist">
+    <button class="btn send" type="submit" aria-label="Send">↵</button>
+  </form>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
