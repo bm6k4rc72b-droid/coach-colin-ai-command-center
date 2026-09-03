@@ -43,7 +43,8 @@
     "test:blast-radius": "node --test tests/blast-radius/*.test.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
     "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
-    "qa:blast-radius": "node scripts/qa-blast-radius.mjs"
+    "qa:blast-radius": "node scripts/qa-blast-radius.mjs",
+    "build:blast-radius": "node scripts/build-blast-radius-standalone.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

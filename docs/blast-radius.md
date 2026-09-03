@@ -188,6 +188,7 @@ Things worth doing:
 ```sh
 npm run test:blast-radius   # 42 unit tests over the six engines
 npm run qa:blast-radius     # drives the real app in Chromium, 21 assertions
+npm run build:blast-radius  # flatten to one self-contained HTML file
 ```
 
 The unit tests assert the published numbers rather than restating them: the
@@ -200,6 +201,24 @@ console is making.
 The browser suite checks that the numbers actually move: enabling controls must
 remove escalation edges, deny a call that was previously allowed, and reduce
 residual loss. Screenshots of every view are written to `qa-shots/blast-radius/`.
+
+---
+
+## Handing it to somebody
+
+The app is plain ES modules with no build step, which is right for the
+repository and wrong for sharing: opening `index.html` off disk cannot resolve
+`./js/iam.js`, because module imports need a server.
+
+`npm run build:blast-radius` flattens the thirteen modules and the stylesheet
+into one ~270 kB HTML file at `qa-shots/blast-radius.html` that runs from
+anywhere — a `file://` open, an email attachment, any static host. It is a
+concatenator rather than a bundler, which is all an app with no dependencies
+needs. `--artifact` emits the same page without the document wrapper, for a
+host that supplies its own `<head>`.
+
+The GitHub Pages workflow publishes from `main` only, so the hosted copy at
+`/blast-radius/` appears once this work is merged there.
 
 ---
 
@@ -225,5 +244,6 @@ public/blast-radius/
     views.js              the six views
     app.js                state, derivation, rendering
 tests/blast-radius/       unit tests
-scripts/qa-blast-radius.mjs   browser suite
+scripts/qa-blast-radius.mjs            browser suite
+scripts/build-blast-radius-standalone.mjs   single-file build
 ```

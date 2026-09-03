@@ -90,6 +90,10 @@ Ten controls sit in a rail that is visible on every view. Toggling one rewrites
 the estate, the agent specification, or both, and everything on screen
 recomputes.
 
+`npm run build:blast-radius` flattens the whole app into one ~270 kB HTML file
+that runs from anywhere — a `file://` open, an attachment, any static host —
+since module imports cannot resolve off disk.
+
 Full write-up: [`docs/blast-radius.md`](docs/blast-radius.md). Tests:
 `npm run test:blast-radius` and `npm run qa:blast-radius` (drives the real app
 in Chromium and asserts that the numbers move when a control is enabled).
