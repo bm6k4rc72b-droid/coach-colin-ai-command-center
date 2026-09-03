@@ -58,11 +58,15 @@ Locally it is `/nexus/` (`http://localhost:4173/nexus/` under `./start.sh`).
 Like HarvestEye it is self-contained: no build step, no dependencies, no
 backend, no account, and it keeps working with the signal off.
 
-- **A hand-written WebGL2 hall** — rotunda, dais, curved video wall, and a
-  holographic receptionist built as a point cloud from a parametric body
-  profile. No model files, no 3D library. Drag to orbit, tilt the phone for
-  gyroscope parallax, press **◍** to swap her for a wireframe Earth carrying
-  the live feeds.
+- **A hand-written WebGL2 hall** — rotunda, dais, chandelier, fourteen
+  operator stations and a curved nine-screen video wall, with a holographic
+  receptionist built as a point cloud from a parametric body profile. No model
+  files, no 3D library. Drag to orbit, tilt the phone for gyroscope parallax,
+  press **◍** to swap her for a wireframe Earth carrying the live feeds.
+- **The video wall is live** — threat board, histograms, a dot-matrix world
+  map dead centre behind her, a sweeping radar, telemetry logs and gauges, all
+  drawn from the same feed snapshot the Ops deck lists and reflected in the
+  marble floor.
 - **A receptionist who answers offline** — platform speech synthesis and
   recognition, plus a BM25 index over the syllabus so every answer arrives
   with the lesson it came from. Connect a Claude or OpenAI-compatible key and

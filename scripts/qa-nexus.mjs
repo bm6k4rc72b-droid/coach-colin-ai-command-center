@@ -162,6 +162,41 @@ async function main() {
 
     check('gate dismissed', await page.$eval('#gate', (n) => n.classList.contains('gone')));
 
+    // The video wall: nine textured dashboards, the hero map dead centre,
+    // and desk screens on every station.
+    const wall = await page.evaluate(() => {
+      const hall = window.__nexus.hall;
+      return {
+        screens: hall.screens?.length ?? 0,
+        desks: hall.deskScreens?.length ?? 0,
+        hero: hall.screens?.[4]?.spec?.id,
+        wide: (hall.screens?.[4]?.canvas.width ?? 0) > (hall.screens?.[0]?.canvas.width ?? 0),
+      };
+    });
+    check('video wall is built', wall.screens === 9 && wall.desks >= 12,
+      `${wall.screens} wall panels, ${wall.desks} desk screens`);
+    check('hero panel is the world map, and it is the wide one',
+      wall.hero === 'world' && wall.wide);
+
+    // Each dashboard must actually have pixels on it — an unpainted canvas
+    // would still texture cleanly and show nothing.
+    const painted = await page.evaluate(() => {
+      const hall = window.__nexus.hall;
+      return hall.screens.map((screen) => {
+        const g = screen.ctx;
+        const { width, height } = screen.canvas;
+        const data = g.getImageData(0, 0, width, height).data;
+        let lit = 0;
+        for (let i = 0; i < data.length; i += 40) {
+          if (data[i] + data[i + 1] + data[i + 2] > 150) lit += 1;
+        }
+        return { id: screen.spec.id, lit };
+      });
+    });
+    const dark = painted.filter((p) => p.lit < 40);
+    check('every wall dashboard has drawn content', dark.length === 0,
+      dark.length ? `blank: ${dark.map((d) => d.id).join(', ')}` : `${painted.length} panels painted`);
+
     // Every deck must open and put something in the panel.
     for (const deck of ['academy', 'labs', 'ops', 'lens', 'swarm', 'settings', 'atrium']) {
       await page.click(`.deck-btn[data-deck="${deck}"]`);
@@ -240,6 +275,21 @@ async function main() {
     });
     check('globe takes live markers', markers.count > 0 && markers.mode === 'globe',
       `${markers.count} markers; ${markers.health.live} live / ${markers.health.cached} cached / ${markers.health.sim} simulated sources`);
+
+    // The wall has to track the feeds rather than sit on its boot snapshot.
+    const wallData = await page.evaluate(async () => {
+      const app = window.__nexus;
+      await app.feeds.refreshAll();
+      const data = app.hall.panelData;
+      return {
+        markers: data.markers.length,
+        log: data.log.length,
+        gauges: data.gauges.length,
+        status: data.status,
+      };
+    });
+    check('the wall renders live feed data', wallData.markers > 0 && wallData.log > 0 && wallData.gauges === 3,
+      `${wallData.markers} markers, ${wallData.log} log lines, status ${wallData.status}`);
 
     // Feeds must degrade rather than throw when the network is gone.
     await page.setOfflineMode(true);

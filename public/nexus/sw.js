@@ -12,7 +12,7 @@
  * handles itself with its own last-good store.
  */
 
-const CACHE = 'aether-nexus-v1';
+const CACHE = 'aether-nexus-v2';
 
 const SHELL = [
   './',
@@ -32,6 +32,7 @@ const SHELL = [
   './js/hall.js',
   './js/mathkit.js',
   './js/mentor.js',
+  './js/panels.js',
   './js/progress.js',
   './js/security.js',
   './js/swarm.js',

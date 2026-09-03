@@ -22,6 +22,7 @@ import {
 } from './decks.js';
 import { TRACKS } from './curriculum.js';
 import { findLab } from './labs/index.js';
+import { AGENTS } from './swarm.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -221,11 +222,11 @@ function updateStatus() {
       'FEEDS ', el('b', { text: `${health.live}/${health.total}` }),
     ]),
     el('span.chip-status', {}, ['CLEARANCE ', el('b', { text: snap.rank.clearance })]),
-    el('span.chip-status', {}, ['XP ', el('b', { text: String(snap.xp) })]),
+    el('span.chip-status', { 'data-optional': '' }, ['XP ', el('b', { text: String(snap.xp) })]),
     el('span.chip-status', { class: connected ? 'live' : '' }, [
       'BRAIN ', el('b', { text: connected ? readSettings().provider.toUpperCase() : 'LOCAL' }),
     ]),
-    el('span.chip-status', {}, ['VOICE ', el('b', { text: voice.voice?.name?.split(' ')[0] || 'default' })]),
+    el('span.chip-status', { 'data-optional': '' }, ['VOICE ', el('b', { text: voice.voice?.name?.split(' ')[0] || 'default' })]),
   ]);
 }
 
@@ -374,8 +375,32 @@ document.addEventListener('keydown', (event) => {
   if (index >= 0 && index < decks.length) go(decks[index]);
 });
 
+/**
+ * Push the current feed picture onto the video wall.
+ *
+ * The wall shows the same data the Ops deck lists — including the gauges,
+ * which read feed health, space weather and the learner's own progress
+ * rather than being decorative dials.
+ */
+function refreshWall() {
+  const health = feeds.health();
+  const snap = progress.snapshot();
+  const kp = feeds.state.get('space-weather')?.items?.[0];
+  const kpValue = Number((kp?.title || '').match(/([\d.]+)/)?.[1] || 0);
+  hall.setPanelData(feeds.allItems(), {
+    status: health.live ? `${health.live}/${health.total} LIVE` : health.cached ? 'CACHED' : 'SIMULATED',
+    gauges: [
+      { label: 'feed integrity', value: health.live / health.total, display: `${Math.round((health.live / health.total) * 100)}%` },
+      { label: 'geomagnetic Kp', value: kpValue / 9, display: kpValue ? kpValue.toFixed(1) : '—' },
+      { label: 'clearance', value: snap.rank.progress, display: snap.rank.clearance.replace('LEVEL ', 'L') },
+    ],
+    agents: AGENTS.map((agent) => ({ name: agent.name, colour: agent.colour })),
+  });
+}
+
 feeds.subscribe(() => {
   updateStatus();
+  refreshWall();
   if (hall.state.mode === 'globe') hall.setMarkers(feeds.markers());
   if (state.deck === 'ops') render();
   // A severe event flashes the room, once.
@@ -399,6 +424,7 @@ $('enter').addEventListener('click', async () => {
   tone.cue('arrive');
   $('btn-sound').classList.add('on');
   render();
+  refreshWall();
   feeds.start();
   const greeting = 'Welcome to the Nexus. I am Aether. I teach AI agents, AI app craft and cyber defence — and I can put the live sky on the globe while we talk. Ask me anything, or say “open the phishing range”.';
   setTimeout(() => {

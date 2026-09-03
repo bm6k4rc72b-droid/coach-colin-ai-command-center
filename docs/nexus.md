@@ -23,18 +23,52 @@ npm run qa:nexus -- --out shot.png   # …and a screenshot
 
 ### The hall
 
-A hand-written WebGL2 scene: a rotunda of curved display panels, a marble
-inlay floor, a tiered dais and a chandelier, with a holographic receptionist
-standing in a projected light. Every vertex is generated from maths in
+A hand-written WebGL2 scene: a rotunda of nine curved displays, fourteen
+operator stations on a ring, a marble inlay floor, a tiered dais and a lit
+chandelier, with a holographic receptionist standing in a projected light.
+Every vertex is generated from maths in
 [`js/geometry.js`](../public/nexus/js/geometry.js) — the figure is a point
-cloud sampled from a parametric body profile, the room is a line list — which
-is why the whole app is a few hundred kilobytes and needs no model files.
+cloud sampled from a parametric body profile, the room and the furniture are
+line lists — which is why the whole app is a few hundred kilobytes and needs
+no model files.
 
-Two shader programs draw all of it: additive point sprites and lines. Bloom is
-faked by drawing the figure twice, once wide and soft, once tight and bright,
-which costs one extra draw call instead of a second framebuffer. The renderer
-watches its own frame rate and drops resolution rather than frames, so a
-mid-range phone stays smooth.
+Three shader programs draw all of it: additive point sprites, lines, and
+textured quads for the screens. Bloom is faked by drawing the figure twice,
+once wide and soft, once tight and bright, which costs one extra draw call
+instead of a second framebuffer. The polished floor is a second pass of the
+wall and the figure mirrored through `y = 0` at low alpha — a reflection for
+the price of a draw call, no render target. The renderer watches its own frame
+rate and drops resolution rather than frames, and a portrait viewport gets a
+wider lens plus a vertical lens shift so the receptionist sits in the band
+above the bottom sheet rather than behind it.
+
+### The video wall is real
+
+The nine dashboards are not wallpaper. Each is a 2D canvas drawn by
+[`js/panels.js`](../public/nexus/js/panels.js) from the same feed snapshot the
+Ops deck lists, uploaded as a texture and mapped onto the panel geometry:
+
+- **Live threats** — the severe items and the CVE feed, as the red board.
+- **Seismic energy** and **flight levels** — histograms binned across the
+  range the data actually occupies, so a tightly-clustered feed still shows a
+  shape instead of two lonely spikes.
+- **Global track picture** — the hero panel, dead centre behind her: a
+  dot-matrix world map carrying every marker the feeds hold, with arcs
+  between them.
+- **Threat map** — the same map in hostile red.
+- **Sector radar** — a real sweep, with contacts placed from aircraft
+  bearings and fading behind the beam.
+- **Telemetry** and **feed ingest** — the actual feed log, timestamped.
+- **Endpoint security** — dials reading feed integrity, the geomagnetic
+  K-index and your own clearance.
+
+Every operator desk shows the agent swarm's topology on its screen.
+
+Repainting a dashboard costs a canvas draw plus a texture upload, so it is
+paced on wall-clock rather than per frame — one screen every 110 ms, backing
+off to 420 ms when the device is struggling, with screens holding stale data
+jumping the queue. All nine are painted once at build, so the wall is never
+lit one panel at a time.
 
 Drag to orbit, pinch or scroll to dolly, and on a phone **Tilt to look around**
 (Lens deck) turns on gyroscope parallax. Press **◍** or `G` to swap the
@@ -180,6 +214,12 @@ below 900 px.
 step, stay small enough to precache, and survive being opened on a five-year-
 old phone. Fourteen ES modules and one CSS file do that; a bundle would not
 have made it better.
+
+**Why the wall is canvas textures rather than DOM or geometry.** HTML over a
+3D scene cannot sit *inside* it — no perspective, no reflection, no occlusion
+by the hologram. Drawing each dashboard to a 2D canvas and uploading it as a
+texture gets all three, and reuses the same renderer for a 1,600 px hero panel
+and a 256 px desk screen.
 
 **Why the hologram is a point cloud.** A mesh would need a model file, a
 loader, a material system and a light rig. A point cloud sampled from a

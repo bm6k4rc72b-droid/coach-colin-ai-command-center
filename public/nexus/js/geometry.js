@@ -182,6 +182,57 @@ export function buildFigure(count = 14000) {
 }
 
 /**
+ * The video wall's layout.
+ *
+ * Exported because two things have to agree on it exactly: the line frames
+ * drawn by {@link buildHall}, and the textured dashboards the renderer maps
+ * onto them.
+ */
+export const WALL = {
+  radius: 10.8,
+  arc: Math.PI * 0.80,
+  yBottom: 1.35,
+  gap: 0.010,
+  // Relative widths along the arc. The centre panel is the hero display —
+  // the world map the receptionist stands in front of — so it takes the
+  // space of two and a half of its neighbours.
+  weights: [1, 1, 1, 1, 2.6, 1, 1, 1, 1],
+};
+
+/**
+ * Corner positions for every wall panel, bottom-left first, counter-clockwise.
+ *
+ * @returns {Array<{ index: number, corners: number[][], centre: number[] }>} Panels.
+ */
+export function wallPanelQuads() {
+  const out = [];
+  const total = WALL.weights.reduce((sum, w) => sum + w, 0);
+  const start = -Math.PI / 2 - WALL.arc / 2;
+  let cursor = 0;
+  for (let p = 0; p < WALL.weights.length; p += 1) {
+    const a0 = start + (WALL.arc * cursor) / total + WALL.gap;
+    cursor += WALL.weights[p];
+    const a1 = start + (WALL.arc * cursor) / total - WALL.gap;
+    // The wall steps down toward the ends, and the hero panel is tallest.
+    const fromCentre = Math.abs(p - (WALL.weights.length - 1) / 2);
+    const yTop = (WALL.weights[p] > 1.5 ? 6.5 : 6.0) - fromCentre * 0.26;
+    const r = WALL.radius;
+    out.push({
+      index: p,
+      wide: WALL.weights[p] > 1.5,
+      corners: [
+        [Math.cos(a0) * r, WALL.yBottom, Math.sin(a0) * r],
+        [Math.cos(a1) * r, WALL.yBottom, Math.sin(a1) * r],
+        [Math.cos(a1) * r, yTop, Math.sin(a1) * r],
+        [Math.cos(a0) * r, yTop, Math.sin(a0) * r],
+      ],
+      centre: [Math.cos((a0 + a1) / 2) * r, (WALL.yBottom + yTop) / 2, Math.sin((a0 + a1) / 2) * r],
+    });
+  }
+  return out;
+}
+
+/**
  * Append a line segment to arrays.
  *
  * @param {number[]} out Destination position array.
@@ -211,7 +262,7 @@ export function buildHall() {
   for (let ring = 1; ring <= 14; ring += 1) {
     const r = ring * 1.15;
     const steps = 96;
-    const bright = ring % 4 === 0 ? 0.5 : 0.16;
+    const bright = ring % 4 === 0 ? 0.85 : 0.26;
     for (let i = 0; i < steps; i += 1) {
       const a0 = (i / steps) * Math.PI * 2;
       const a1 = ((i + 1) / steps) * Math.PI * 2;
@@ -224,7 +275,7 @@ export function buildHall() {
     const a = (spoke / 24) * Math.PI * 2;
     segment(pos, tint,
       [Math.cos(a) * 2.6, 0, Math.sin(a) * 2.6],
-      [Math.cos(a) * 16.1, 0, Math.sin(a) * 16.1], spoke % 6 === 0 ? 0.3 : 0.1);
+      [Math.cos(a) * 16.1, 0, Math.sin(a) * 16.1], spoke % 6 === 0 ? 0.5 : 0.16);
   }
 
   // Dais: three stacked cylinders under the hologram.
@@ -236,7 +287,7 @@ export function buildHall() {
       const a1 = ((i + 1) / steps) * Math.PI * 2;
       segment(pos, tint,
         [Math.cos(a0) * r, y, Math.sin(a0) * r],
-        [Math.cos(a1) * r, y, Math.sin(a1) * r], 0.85);
+        [Math.cos(a1) * r, y, Math.sin(a1) * r], 1.0);
       if (i % 6 === 0) {
         segment(pos, tint,
           [Math.cos(a0) * r, y, Math.sin(a0) * r],
@@ -245,46 +296,225 @@ export function buildHall() {
     }
   }
 
-  // Curved video wall: nine panels on an arc behind the dais.
-  const panels = 9;
-  const wallR = 10.6;
-  const arc = Math.PI * 0.78;
-  for (let p = 0; p < panels; p += 1) {
-    const a0 = -Math.PI / 2 - arc / 2 + (arc * p) / panels + 0.012;
-    const a1 = -Math.PI / 2 - arc / 2 + (arc * (p + 1)) / panels - 0.012;
-    const yTop = p % 2 === 0 ? 5.6 : 4.9;
-    const yBot = 1.35;
-    const corners = [
-      [Math.cos(a0) * wallR, yBot, Math.sin(a0) * wallR],
-      [Math.cos(a1) * wallR, yBot, Math.sin(a1) * wallR],
-      [Math.cos(a1) * wallR, yTop, Math.sin(a1) * wallR],
-      [Math.cos(a0) * wallR, yTop, Math.sin(a0) * wallR],
-    ];
-    for (let c = 0; c < 4; c += 1) segment(pos, tint, corners[c], corners[(c + 1) % 4], 0.9);
-    // Content lines inside each panel read as dashboards at distance.
-    for (let row = 1; row < 9; row += 1) {
-      const k = row / 9;
-      const y = yBot + (yTop - yBot) * k;
-      const shrink = 0.06 + (row % 3) * 0.12;
-      const b0 = a0 + (a1 - a0) * shrink;
-      const b1 = a1 - (a1 - a0) * (shrink * (row % 2 ? 1.6 : 0.6));
+  // Curved video wall. Only the bezels are drawn here — the dashboards
+  // themselves arrive as textures mapped onto the same quads.
+  for (const panel of wallPanelQuads()) {
+    for (let c = 0; c < 4; c += 1) {
+      segment(pos, tint, panel.corners[c], panel.corners[(c + 1) % 4], 0.95);
+    }
+    // A brighter sill along the bottom edge, which is what makes a wall of
+    // screens read as mounted rather than floating.
+    const [bl, br] = panel.corners;
+    segment(pos, tint, [bl[0], bl[1] - 0.06, bl[2]], [br[0], br[1] - 0.06, br[2]], 0.55);
+  }
+
+  // Arched colonnade behind the wall: the rotunda the room is modelled on.
+  for (let bay = 0; bay < 16; bay += 1) {
+    const a = -Math.PI / 2 - Math.PI * 0.62 + (Math.PI * 1.24 * bay) / 15;
+    const r = 13.6;
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    segment(pos, tint, [x, 0, z], [x, 7.4, z], 0.55);
+    // The arch head, swept in the vertical plane through the column.
+    const steps = 8;
+    for (let i = 0; i < steps; i += 1) {
+      const t0 = (i / steps) * Math.PI;
+      const t1 = ((i + 1) / steps) * Math.PI;
+      const spread = 0.9;
       segment(pos, tint,
-        [Math.cos(b0) * wallR, y, Math.sin(b0) * wallR],
-        [Math.cos(b1) * wallR, y, Math.sin(b1) * wallR], row % 3 === 0 ? 0.62 : 0.30);
+        [x - Math.cos(t0) * spread * Math.sin(a), 7.4 + Math.sin(t0) * 1.5, z + Math.cos(t0) * spread * Math.cos(a)],
+        [x - Math.cos(t1) * spread * Math.sin(a), 7.4 + Math.sin(t1) * 1.5, z + Math.cos(t1) * spread * Math.cos(a)],
+        0.44);
     }
   }
 
   // Chandelier: a hanging armature of concentric rings above the dais.
-  for (let ring = 0; ring < 5; ring += 1) {
-    const r = 1.9 - ring * 0.3;
-    const y = 8.6 - ring * 0.34;
+  for (let ring = 0; ring < 6; ring += 1) {
+    const r = 2.15 - ring * 0.30;
+    const y = 7.55 - ring * 0.30;
     const steps = 40;
     for (let i = 0; i < steps; i += 1) {
       const a0 = (i / steps) * Math.PI * 2;
       const a1 = ((i + 1) / steps) * Math.PI * 2;
       segment(pos, tint,
         [Math.cos(a0) * r, y, Math.sin(a0) * r],
-        [Math.cos(a1) * r, y, Math.sin(a1) * r], 0.5 - ring * 0.06);
+        [Math.cos(a1) * r, y, Math.sin(a1) * r], 0.9 - ring * 0.08);
+    }
+  }
+
+  // Crystal drops. Short bright verticals under the armature read as a lit
+  // chandelier from across the room, which the rings alone do not.
+  const drop = rng(9182);
+  for (let i = 0; i < 90; i += 1) {
+    const a = drop() * Math.PI * 2;
+    const r = 0.25 + drop() * 1.95;
+    const y = 7.5 - drop() * 1.5;
+    segment(pos, tint,
+      [Math.cos(a) * r, y, Math.sin(a) * r],
+      [Math.cos(a) * r, y - 0.10 - drop() * 0.22, Math.sin(a) * r], 1.0);
+  }
+
+  return {
+    position: new Float32Array(pos),
+    intensity: new Float32Array(tint),
+    count: tint.length,
+  };
+}
+
+/** Where the operator desks sit, and how big each one is. */
+export const DESK_RING = { count: 14, radius: 6.4, arc: Math.PI * 1.76, width: 1.30, depth: 0.72, height: 0.76 };
+
+/**
+ * Screen quads for the operator desks, in the same corner order as
+ * {@link wallPanelQuads}, so the renderer can texture them the same way.
+ *
+ * @returns {Array<{ corners: number[][], angle: number }>} Desk screens.
+ */
+export function deskScreenQuads() {
+  const out = [];
+  const { count, radius, arc, width, height } = DESK_RING;
+  for (let i = 0; i < count; i += 1) {
+    const a = -Math.PI / 2 - arc / 2 + (arc * (i + 0.5)) / count;
+    const cx = Math.cos(a) * radius;
+    const cz = Math.sin(a) * radius;
+    // The screen stands on the far edge of the desk, tilted back toward the
+    // operator, facing the dais.
+    const tx = -Math.sin(a);
+    const tz = Math.cos(a);
+    const half = width * 0.34;
+    const lean = 0.10;
+    const base = height + 0.02;
+    const top = base + 0.34;
+    out.push({
+      angle: a,
+      corners: [
+        [cx - tx * half, base, cz - tz * half],
+        [cx + tx * half, base, cz + tz * half],
+        [cx + tx * half - Math.cos(a) * -lean, top, cz + tz * half - Math.sin(a) * -lean],
+        [cx - tx * half - Math.cos(a) * -lean, top, cz - tz * half - Math.sin(a) * -lean],
+      ],
+    });
+  }
+  return out;
+}
+
+/**
+ * Build the operator ring: desks, keyboards and chairs.
+ *
+ * Twelve stations on an arc open toward the viewer, so the camera looks over
+ * the near desks into the dais. Everything is a line list — a chair reads from
+ * its silhouette alone at this scale.
+ *
+ * @returns {{ position: Float32Array, intensity: Float32Array, count: number }} Buffers.
+ */
+export function buildFurniture() {
+  const pos = [];
+  const tint = [];
+  const { count, radius, arc, width, depth, height } = DESK_RING;
+
+  for (let i = 0; i < count; i += 1) {
+    const a = -Math.PI / 2 - arc / 2 + (arc * (i + 0.5)) / count;
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    // Local frame: `r` points outward from the dais, `t` runs along the ring.
+    const r = [ca, 0, sa];
+    const t = [-sa, 0, ca];
+    const at = (out, along, up) => [
+      ca * radius + r[0] * out + t[0] * along,
+      up,
+      sa * radius + r[2] * out + t[2] * along,
+    ];
+
+    const hw = width / 2;
+    const hd = depth / 2;
+    // Desk top.
+    const top = [at(-hd, -hw, height), at(-hd, hw, height), at(hd, hw, height), at(hd, -hw, height)];
+    for (let c = 0; c < 4; c += 1) segment(pos, tint, top[c], top[(c + 1) % 4], 0.62);
+    // Pedestal.
+    for (const corner of top) segment(pos, tint, corner, [corner[0], 0, corner[2]], 0.34);
+    const floor = top.map((c) => [c[0], 0, c[2]]);
+    for (let c = 0; c < 4; c += 1) segment(pos, tint, floor[c], floor[(c + 1) % 4], 0.22);
+    // Front panel line, which catches the dais light in the reference.
+    segment(pos, tint, at(hd, -hw, height * 0.55), at(hd, hw, height * 0.55), 0.30);
+    // Keyboard.
+    segment(pos, tint, at(-hd + 0.16, -hw * 0.52, height + 0.01), at(-hd + 0.16, hw * 0.52, height + 0.01), 0.5);
+    segment(pos, tint, at(-hd + 0.34, -hw * 0.52, height + 0.01), at(-hd + 0.34, hw * 0.52, height + 0.01), 0.5);
+
+    // Chair: seat, back and a five-star base.
+    const seatY = 0.48;
+    const chairOut = -hd - 0.62;
+    const seat = [
+      at(chairOut - 0.26, -0.26, seatY), at(chairOut - 0.26, 0.26, seatY),
+      at(chairOut + 0.26, 0.26, seatY), at(chairOut + 0.26, -0.26, seatY),
+    ];
+    for (let c = 0; c < 4; c += 1) segment(pos, tint, seat[c], seat[(c + 1) % 4], 0.42);
+    const backTop = 1.30;
+    segment(pos, tint, seat[0], [seat[0][0], backTop, seat[0][2]], 0.42);
+    segment(pos, tint, seat[1], [seat[1][0], backTop, seat[1][2]], 0.42);
+    segment(pos, tint,
+      [seat[0][0], backTop, seat[0][2]], [seat[1][0], backTop, seat[1][2]], 0.42);
+    segment(pos, tint,
+      [seat[0][0], backTop * 0.74, seat[0][2]], [seat[1][0], backTop * 0.74, seat[1][2]], 0.24);
+    const hub = at(chairOut, 0, 0.06);
+    segment(pos, tint, at(chairOut, 0, seatY), hub, 0.3);
+    for (let leg = 0; leg < 5; leg += 1) {
+      const la = (leg / 5) * Math.PI * 2;
+      segment(pos, tint, hub, [
+        hub[0] + Math.cos(la) * 0.30,
+        0.04,
+        hub[2] + Math.sin(la) * 0.30,
+      ], 0.26);
+    }
+  }
+
+  return {
+    position: new Float32Array(pos),
+    intensity: new Float32Array(tint),
+    count: tint.length,
+  };
+}
+
+/**
+ * Link nearby figure points into a sparse constellation.
+ *
+ * This is what turns the point cloud into the network-node body the
+ * reference shows: a thin lattice over the silhouette, built once at load
+ * from a spatial hash so it costs nothing per frame.
+ *
+ * @param {{ position: Float32Array, count: number }} figure Output of {@link buildFigure}.
+ * @param {number} [maxLinks] Cap on segments.
+ * @returns {{ position: Float32Array, intensity: Float32Array, count: number }} Buffers.
+ */
+export function buildConstellation(figure, maxLinks = 2600) {
+  const cell = 0.075;
+  const buckets = new Map();
+  const key = (x, y, z) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`;
+  const stride = Math.max(1, Math.floor(figure.count / 4200));
+  const sample = [];
+  for (let i = 0; i < figure.count; i += stride) {
+    const p = [figure.position[i * 3], figure.position[i * 3 + 1], figure.position[i * 3 + 2]];
+    sample.push(p);
+    const k = key(p[0], p[1], p[2]);
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(p);
+  }
+
+  const pos = [];
+  const tint = [];
+  const seen = new Set();
+  for (const p of sample) {
+    if (tint.length / 2 >= maxLinks) break;
+    const neighbours = buckets.get(key(p[0], p[1], p[2])) || [];
+    let made = 0;
+    for (const q of neighbours) {
+      if (made >= 2 || q === p) continue;
+      const d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+      if (d < 0.012 || d > cell) continue;
+      const id = `${p[0].toFixed(3)}${q[0].toFixed(3)}${p[1].toFixed(3)}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      segment(pos, tint, p, q, 0.55);
+      made += 1;
     }
   }
 
@@ -412,7 +642,7 @@ export function buildEmitter(count = 3000) {
       const r = 0.10 + rand() * 0.72;
       const h = rand();
       pos[i * 3] = Math.cos(a) * r;
-      pos[i * 3 + 1] = 0.34 + h * 3.4;
+      pos[i * 3 + 1] = 0.34 + h * 4.2;
       pos[i * 3 + 2] = Math.sin(a) * r;
       seed[i * 2 + 1] = (1 - h) * 0.5;
     } else {

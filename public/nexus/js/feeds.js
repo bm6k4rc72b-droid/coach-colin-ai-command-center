@@ -127,7 +127,7 @@ export const SOURCES = [
         out.push({
           id: `sim-a${i}`,
           title: `SIM${100 + i}`,
-          detail: `${from.name}–${to.name} · FL${340 + (i % 6) * 10} · ${430 + (i % 7) * 12} kt`,
+          detail: `${from.name}–${to.name} · FL${Math.round(60 + Math.abs(Math.sin(i * 2.7)) * 330)} · ${430 + (i % 7) * 12} kt`,
           at: Date.now(),
           lat: from.lat + (to.lat - from.lat) * k,
           lon: from.lon + (to.lon - from.lon) * k,

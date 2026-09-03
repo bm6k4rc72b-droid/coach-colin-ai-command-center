@@ -660,6 +660,17 @@ pre.code {
     z-index: 25;
   }
   .deck-btn { flex: 1; padding: 4px 0; font-size: 8px; }
+
+  /* The strip scrolls, but a chip sliced in half reads as broken chrome, so
+     the least load-bearing ones step aside on a narrow screen. */
+  .chip-status { font-size: 9px; padding: 3px 7px; letter-spacing: 0.1em; }
+  /* Fade the overflow instead of slicing a chip in half under the buttons. */
+  .status-strip {
+    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 82%, transparent 100%);
+  }
+  #topbar { gap: 8px; padding-left: 10px; padding-right: 10px; }
+  .brand-text { font-size: 11px; letter-spacing: 0.20em; }
   .deck-btn span { font-size: 16px; }
 
   #panel {
@@ -685,6 +696,11 @@ pre.code {
   .range-grid { grid-template-columns: 1fr; }
   .readout { grid-template-columns: repeat(2, 1fr); }
   h1 { font-size: 26px; letter-spacing: 0.24em; }
+}
+
+@media (max-width: 560px) {
+  .chip-status[data-optional] { display: none; }
+  .brand-text { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -13,7 +13,11 @@
  * @module nexus/hall
  */
 
-import { buildEmitter, buildFigure, buildGlobe, buildHall, buildMotes } from './geometry.js';
+import {
+  buildConstellation, buildEmitter, buildFigure, buildFurniture, buildGlobe, buildHall,
+  buildMotes, deskScreenQuads, wallPanelQuads,
+} from './geometry.js';
+import { DESK_SPEC, PANEL_SPECS, drawPanel, snapshot } from './panels.js';
 import {
   approach, clamp, identity, latLonToVec3, lookAt, multiply,
   perspective, rotationX, rotationY, scaling, translation,
@@ -69,6 +73,32 @@ void main() {
   if (r > 0.25) discard;
   float core = exp(-r * 14.0);
   outColor = vec4(u_color * (core * 1.35 + 0.12), 1.0) * v_fade * u_alpha * core;
+}`;
+
+
+const QUAD_VERT = `#version 300 es
+precision highp float;
+in vec3 a_pos;
+in vec2 a_uv;
+uniform mat4 u_mvp;
+out vec2 v_uv;
+void main() {
+  gl_Position = u_mvp * vec4(a_pos, 1.0);
+  v_uv = a_uv;
+}`;
+
+const QUAD_FRAG = `#version 300 es
+precision highp float;
+in vec2 v_uv;
+uniform sampler2D u_tex;
+uniform float u_alpha;
+uniform vec3 u_tint;
+out vec4 outColor;
+void main() {
+  vec4 texel = texture(u_tex, v_uv);
+  // Additive: the panel art is dark-on-dark, so the black areas contribute
+  // nothing and the lit pixels glow the way a real emissive display does.
+  outColor = vec4(texel.rgb * u_tint, 1.0) * texel.a * u_alpha;
 }`;
 
 const LINE_VERT = `#version 300 es
@@ -190,8 +220,8 @@ export class Hall {
       pitch: 0.12,
       targetYaw: 0,
       targetPitch: 0.12,
-      dist: 9.2,
-      targetDist: 9.2,
+      dist: 12.2,
+      targetDist: 12.2,
       amp: 0,
       targetAmp: 0,
       mode: 'avatar',
@@ -200,6 +230,7 @@ export class Hall {
       alert: 0,
       quality: 1,
     };
+    this.time = 0;
     this.markers = new Map();
     this.arcs = null;
     this.running = false;
@@ -219,6 +250,7 @@ export class Hall {
 
     this.pointProgram = link(gl, POINT_VERT, POINT_FRAG);
     this.lineProgram = link(gl, LINE_VERT, LINE_FRAG);
+    this.quadProgram = link(gl, QUAD_VERT, QUAD_FRAG);
 
     const figure = buildFigure(figureCount);
     this.figure = {
@@ -226,6 +258,21 @@ export class Hall {
       seed: buffer(gl, figure.seed, gl.STATIC_DRAW),
       count: figure.count,
       height: figure.height,
+    };
+
+    // The lattice that turns the point cloud into a network-node body.
+    const lattice = buildConstellation(figure, mobile ? 1400 : 2600);
+    this.lattice = {
+      pos: buffer(gl, lattice.position, gl.STATIC_DRAW),
+      intensity: buffer(gl, lattice.intensity, gl.STATIC_DRAW),
+      count: lattice.count,
+    };
+
+    const furniture = buildFurniture();
+    this.furniture = {
+      pos: buffer(gl, furniture.position, gl.STATIC_DRAW),
+      intensity: buffer(gl, furniture.intensity, gl.STATIC_DRAW),
+      count: furniture.count,
     };
 
     const motes = buildMotes(mobile ? 900 : 2200);
@@ -256,6 +303,8 @@ export class Hall {
       count: globe.count,
     };
 
+    this.#buildScreens(mobile);
+
     this.dynamicPos = gl.createBuffer();
     this.dynamicSeed = gl.createBuffer();
     this.arcPos = gl.createBuffer();
@@ -266,6 +315,138 @@ export class Hall {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);
     this.#bindInput();
+  }
+
+
+  /**
+   * Build the video wall and the operator desk screens.
+   *
+   * Each screen is a quad with its own 2D canvas behind it. The canvases are
+   * redrawn a few at a time from the live feed snapshot and re-uploaded, so
+   * the wall animates without redrawing nine dashboards every frame.
+   *
+   * @param {boolean} mobile Whether to use the smaller texture budget.
+   */
+  #buildScreens(mobile) {
+    const gl = this.gl;
+    const wallSize = mobile ? [512, 320] : [768, 448];
+    const deskSize = mobile ? [128, 96] : [256, 160];
+
+    /**
+     * Make one screen: canvas, texture, and the quad it is mapped onto.
+     *
+     * @param {number[][]} corners Bottom-left, bottom-right, top-right, top-left.
+     * @param {number[]} size Canvas pixel size.
+     * @param {object} spec Panel spec.
+     * @returns {object} Screen record.
+     */
+    const makeScreen = (corners, size, spec) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size[0];
+      canvas.height = size[1];
+      const ctx = canvas.getContext('2d');
+      const texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const [bl, br, tr, tl] = corners;
+      // Two triangles, with UVs flipped vertically because canvas y runs down.
+      const verts = new Float32Array([
+        bl[0], bl[1], bl[2], 0, 1,
+        br[0], br[1], br[2], 1, 1,
+        tr[0], tr[1], tr[2], 1, 0,
+        bl[0], bl[1], bl[2], 0, 1,
+        tr[0], tr[1], tr[2], 1, 0,
+        tl[0], tl[1], tl[2], 0, 0,
+      ]);
+      return { canvas, ctx, texture, spec, buffer: buffer(gl, verts, gl.STATIC_DRAW), dirty: true };
+    };
+
+    this.screens = wallPanelQuads().map((panel, i) => makeScreen(
+      panel.corners,
+      panel.wide ? [Math.round(wallSize[0] * 2.1), wallSize[1]] : wallSize,
+      PANEL_SPECS[i % PANEL_SPECS.length],
+    ));
+
+    // Every desk shows the same swarm topology, so one canvas serves all
+    // twelve and only the quad differs.
+    const deskTemplate = makeScreen(deskScreenQuads()[0].corners, deskSize, DESK_SPEC);
+    this.deskScreens = deskScreenQuads().map((desk) => {
+      const [bl, br, tr, tl] = desk.corners;
+      const verts = new Float32Array([
+        bl[0], bl[1], bl[2], 0, 1,
+        br[0], br[1], br[2], 1, 1,
+        tr[0], tr[1], tr[2], 1, 0,
+        bl[0], bl[1], bl[2], 0, 1,
+        tr[0], tr[1], tr[2], 1, 0,
+        tl[0], tl[1], tl[2], 0, 0,
+      ]);
+      return buffer(gl, verts, gl.STATIC_DRAW);
+    });
+    this.deskTexture = deskTemplate;
+    this.panelCursor = 0;
+    this.panelData = snapshot([], { time: 0, status: 'STANDBY' });
+    // Paint every screen once up front. Without this the wall lights up one
+    // panel at a time as the rotation reaches it, which reads as broken.
+    for (const screen of this.screens) this.#refreshScreen(screen);
+    this.#refreshScreen(this.deskTexture);
+  }
+
+  /**
+   * Hand the wall a new feed snapshot.
+   *
+   * @param {object[]} items Feed items.
+   * @param {object} extra Status, gauges and agent roster.
+   */
+  setPanelData(items, extra = {}) {
+    if (!this.ok) return;
+    this.panelData = snapshot(items, { ...extra, time: this.time || 0 });
+    for (const screen of this.screens || []) screen.dirty = true;
+    if (this.deskTexture) this.deskTexture.dirty = true;
+  }
+
+  /**
+   * Redraw and re-upload one screen.
+   *
+   * @param {object} screen Screen record.
+   */
+  #refreshScreen(screen) {
+    const gl = this.gl;
+    this.panelData.time = this.time || 0;
+    drawPanel(screen.ctx, screen.spec, this.panelData);
+    gl.bindTexture(gl.TEXTURE_2D, screen.texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, screen.canvas);
+    screen.dirty = false;
+  }
+
+  /**
+   * Draw one textured quad.
+   *
+   * @param {object} screen Screen record.
+   * @param {WebGLBuffer} quadBuffer Vertex buffer to use (defaults to the screen's).
+   * @param {number} alpha Opacity.
+   * @param {number[]} tint RGB multiplier.
+   * @param {Float32Array} mvp Model-view-projection.
+   */
+  #drawQuad(screen, quadBuffer, alpha, tint, mvp) {
+    const gl = this.gl;
+    const { program, u, a } = this.quadProgram;
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+    gl.enableVertexAttribArray(a.a_pos);
+    gl.vertexAttribPointer(a.a_pos, 3, gl.FLOAT, false, 20, 0);
+    gl.enableVertexAttribArray(a.a_uv);
+    gl.vertexAttribPointer(a.a_uv, 2, gl.FLOAT, false, 20, 12);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, screen.texture);
+    gl.uniform1i(u.u_tex, 0);
+    gl.uniformMatrix4fv(u.u_mvp, false, mvp);
+    gl.uniform1f(u.u_alpha, alpha);
+    gl.uniform3fv(u.u_tint, tint);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
   /**
@@ -294,7 +475,7 @@ export class Hall {
     canvas.addEventListener('pointercancel', up);
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-      this.state.targetDist = clamp(this.state.targetDist + e.deltaY * 0.006, 3.2, 15);
+      this.state.targetDist = clamp(this.state.targetDist + e.deltaY * 0.006, 3.6, 20);
     }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
@@ -304,7 +485,7 @@ export class Hall {
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY,
       );
-      if (pinch) this.state.targetDist = clamp(this.state.targetDist - (d - pinch) * 0.012, 3.2, 15);
+      if (pinch) this.state.targetDist = clamp(this.state.targetDist - (d - pinch) * 0.012, 3.6, 20);
       pinch = d;
     }, { passive: false });
     canvas.addEventListener('touchend', () => { pinch = 0; });
@@ -345,7 +526,7 @@ export class Hall {
   setMode(mode) {
     if (mode === this.state.mode) return;
     this.state.mode = mode;
-    this.state.targetDist = mode === 'globe' ? 9.6 : 9.2;
+    this.state.targetDist = mode === 'globe' ? 10.8 : 12.2;
   }
 
   /**
@@ -526,14 +707,21 @@ export class Hall {
     s.targetYaw += dt * 0.012;
 
     const aspect = this.canvas.width / Math.max(1, this.canvas.height);
-    const proj = perspective(0.85, aspect, 0.1, 120);
-    const eyeY = 1.55 + Math.sin(s.pitch) * s.dist;
+    const proj = perspective(aspect < 0.8 ? 1.02 : 0.85, aspect, 0.1, 120);
+    // On a tall phone the bottom sheet covers the lower half of the canvas,
+    // so the scene is lens-shifted upward into the band that is actually
+    // visible rather than being centred behind the panel.
+    if (aspect < 0.8) proj[9] = -0.46;
+    // A portrait viewport sees a narrow slice of the room, so the camera
+    // stands further back to keep the receptionist and the wall in one shot.
+    const dist = aspect < 0.8 ? s.dist * 1.38 : s.dist;
+    const eyeY = 2.15 + Math.sin(s.pitch) * dist;
     const eye = [
-      Math.sin(s.yaw) * Math.cos(s.pitch) * s.dist,
+      Math.sin(s.yaw) * Math.cos(s.pitch) * dist,
       eyeY,
-      Math.cos(s.yaw) * Math.cos(s.pitch) * s.dist,
+      Math.cos(s.yaw) * Math.cos(s.pitch) * dist,
     ];
-    const view = lookAt(eye, [0, 1.85, 0], [0, 1, 0]);
+    const view = lookAt(eye, [0, 2.35, 0], [0, 1, 0]);
     const viewProj = multiply(proj, view, identity());
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -541,6 +729,46 @@ export class Hall {
     const alertTint = s.alert;
     const roomColor = [0.83 * (1 - alertTint) + alertTint, 0.68 * (1 - alertTint) + 0.16 * alertTint, 0.28 * (1 - alertTint) + 0.22 * alertTint];
     this.#drawLines(this.hall.pos, this.hall.intensity, this.hall.count, roomColor, 0.62, viewProj);
+    this.#drawLines(this.furniture.pos, this.furniture.intensity, this.furniture.count,
+      [0.62, 0.72, 0.86], 0.5, viewProj);
+
+    // The wall. One screen is redrawn per frame in rotation, which keeps the
+    // radar sweeping and the markers pulsing for the cost of a single canvas
+    // repaint rather than nine.
+    if (this.screens?.length) {
+      // Repainting a dashboard costs a full 2D canvas draw plus a texture
+      // upload, so it is paced on wall-clock rather than done every frame —
+      // and paced harder when the device is already struggling.
+      const interval = this.fps && this.fps < 30 ? 0.42 : 0.11;
+      if (this.time - (this.lastPanelRefresh || 0) >= interval) {
+        this.lastPanelRefresh = this.time;
+        // A screen holding stale data jumps the queue; otherwise the
+        // rotation just keeps the animated ones moving.
+        const stale = this.screens.find((screen) => screen.dirty);
+        if (stale) {
+          this.#refreshScreen(stale);
+        } else {
+          this.#refreshScreen(this.screens[this.panelCursor % this.screens.length]);
+          this.panelCursor += 1;
+          if (this.panelCursor % 9 === 0 && this.deskTexture) this.#refreshScreen(this.deskTexture);
+        }
+      }
+
+      // Reflection first, so the real panels sit over it: the floor is
+      // polished marble, and mirroring through y = 0 costs one extra draw.
+      const mirror = multiply(scaling(1, -1, 1), identity(), identity());
+      const mirrorVP = multiply(viewProj, mirror, identity());
+      for (const panel of this.screens) {
+        this.#drawQuad(panel, panel.buffer, 0.42, [0.55, 0.7, 0.85], mirrorVP);
+      }
+
+      for (const panel of this.screens) {
+        this.#drawQuad(panel, panel.buffer, 0.95, [1, 1, 1], viewProj);
+      }
+      for (const deskBuffer of this.deskScreens) {
+        this.#drawQuad(this.deskTexture, deskBuffer, 0.85, [0.9, 0.97, 1], viewProj);
+      }
+    }
 
     this.#drawPoints(this.motes.pos, this.motes.seed, this.motes.count,
       [0.55, 0.78, 0.95], 34, 0.30, 0, viewProj);
@@ -557,11 +785,18 @@ export class Hall {
     if (s.blend > 0.01) {
       const model = multiply(
         translation(0, 0.34, 0),
-        multiply(rotationY(Math.sin(this.time * 0.25) * 0.22), scaling(1.5, 1.5, 1.5), identity()),
+        multiply(rotationY(Math.sin(this.time * 0.25) * 0.22), scaling(1.95, 1.95, 1.95), identity()),
         identity(),
       );
       const mvp = multiply(viewProj, model, identity());
       const glow = [0.35, 0.78, 1.0];
+      // Her reflection in the marble, drawn before she is.
+      const mirrorModel = multiply(scaling(1, -1, 1), model, identity());
+      this.#drawPoints(this.figure.pos, this.figure.seed, this.figure.count,
+        glow, 52, 0.07 * s.blend, 1, multiply(viewProj, mirrorModel, identity()));
+
+      this.#drawLines(this.lattice.pos, this.lattice.intensity, this.lattice.count,
+        [0.42, 0.84, 1.0], 0.32 * s.blend * (1 + s.amp * 0.8), mvp);
       this.#drawPoints(this.figure.pos, this.figure.seed, this.figure.count,
         glow, 210, 0.10 * s.blend * (1 + s.amp), 1, mvp);
       this.#drawPoints(this.figure.pos, this.figure.seed, this.figure.count,
