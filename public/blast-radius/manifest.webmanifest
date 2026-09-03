@@ -1,0 +1,15 @@
+{
+  "name": "Blast Radius — cloud identity and AI security",
+  "short_name": "Blast Radius",
+  "description": "Privilege-escalation path analysis, AI agent threat modelling, a measured prompt-injection detector, detection engineering and quantified risk — all in the browser.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#03060b",
+  "theme_color": "#03060b",
+  "orientation": "any",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

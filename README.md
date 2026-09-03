@@ -47,6 +47,59 @@ synthetic camera feed).
 
 ---
 
+## Also in here: Blast Radius
+
+A third self-contained app at [`public/blast-radius/`](public/blast-radius) —
+**cloud identity architecture and AI system security** in one console. It runs
+entirely in the browser: no backend, no API key, no network call. Locally it is
+`/blast-radius/` (`http://localhost:4173/blast-radius/` under `./start.sh`).
+
+Its argument is that an LLM agent is not a new kind of thing to secure — it is a
+new kind of *principal*, one that reads attacker-controlled text all day, holds
+credentials, and calls APIs on behalf of somebody it cannot authenticate. So the
+console analyses one fictional estate from both ends and shows where the leverage
+actually is.
+
+- **Derives privilege-escalation paths** from policy rather than from a diagram.
+  Eight techniques, each an evidence-carrying edge, with cheapest-path search
+  weighted by attacker effort. It finds the route from a customer support ticket
+  to a cardholder data vault — a route nobody designed, because two reasonable
+  grants composed.
+- **Evaluates authorization properly** — deny precedence, permissions
+  boundaries, organizational guardrails, cross-account agreement — and returns
+  the chain of checks that decided the answer, not just a verdict.
+- **Reviews an AI agent architecture** by trust boundary, then composes the
+  end-to-end kill chain from untrusted text through the tool surface into the
+  identity graph.
+- **Measures its own injection detector** on a labelled corpus that keeps the
+  hard cases: precision 0.92, recall 0.86, with a threshold sweep and two
+  documented misses. The most important sample is a genuine operator-written
+  article that the detector flags — nothing in the words separates it from an
+  attack; only provenance does.
+- **Scores detections** against fourteen days of synthetic telemetry with two
+  labelled attacks in it, reporting coverage, precision and time to first signal
+  — including the false positives, because a rule set with none has not met a
+  real estate.
+- **Quantifies risk** with a seeded Monte Carlo loss model and ranks controls by
+  return, which is how a $4k policy change is shown to outrank a $90k approval
+  queue.
+- **Carries the portfolio**: decision records including rejected ones, threat
+  models, and incident write-ups with a "what did not work" section.
+
+Ten controls sit in a rail that is visible on every view. Toggling one rewrites
+the estate, the agent specification, or both, and everything on screen
+recomputes.
+
+`npm run build:blast-radius` flattens the whole app into one ~270 kB HTML file
+that runs from anywhere — a `file://` open, an attachment, any static host —
+since module imports cannot resolve off disk.
+
+Full write-up: [`docs/blast-radius.md`](docs/blast-radius.md). Tests:
+`npm run test:blast-radius` and `npm run qa:blast-radius` (drives the real app
+in Chromium and asserts that the numbers move when a control is enabled).
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream

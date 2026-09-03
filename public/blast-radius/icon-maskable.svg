@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Blast Radius">
+  <rect width="192" height="192" fill="#03060b"/>
+  <g fill="none" stroke="#38f0ff" stroke-linecap="round">
+    <circle cx="96" cy="96" r="16" fill="#38f0ff" fill-opacity="0.9" stroke="none"/>
+    <circle cx="96" cy="96" r="34" stroke-width="4" stroke-opacity="0.75"/>
+    <circle cx="96" cy="96" r="50" stroke-width="3" stroke-opacity="0.4"/>
+  </g>
+  <path d="M96 96 L138 62" stroke="#ffa63d" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="138" cy="62" r="7" fill="#ffa63d"/>
+</svg>
