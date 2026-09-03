@@ -19,6 +19,8 @@ import { LAYER_STATE_REGISTRY } from './data/layerState.js';
 import { registerDataCredits } from './data/dataCredits.js';
 import { SceneDirector } from './scenes/director.js';
 import { initGevVoiceCommands } from './voice/gevRealtime.js';
+import { createGevActionRunner } from './voice/gevActions.js';
+import { installAgentSwarm } from './agents/index.js';
 import { MapStackController } from './mapStackController.js';
 import { initAnnotations } from './annotations/index.js';
 import { initLogoGaze } from './logoGaze.js';
@@ -337,6 +339,15 @@ async function init() {
       requestRender: governorRequestRender,
     };
     window.__godsEyeView.voiceCommands = initGevVoiceCommands({ viewer, styleManager, dataManager, sceneDirector, annotations });
+
+    // Agent swarm. It gets its OWN action runner rather than borrowing the
+    // voice session's: agents run while the mic is closed, and sharing one
+    // runner would tie the swarm's lifetime to a voice session it has nothing
+    // to do with. The runner itself is stateless per call, so a second one is
+    // cheap and keeps the two surfaces independent.
+    window.__godsEyeView.agentSwarm = installAgentSwarm({
+      runGevAction: createGevActionRunner({ viewer, styleManager, dataManager, sceneDirector, annotations }),
+    });
 
   } catch (error) {
     console.error("God's Eye View initialization failed:", error);

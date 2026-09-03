@@ -40,6 +40,8 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
+    "test:agents": "node --test src/agents/*.test.mjs",
+    "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
     "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs"
   },

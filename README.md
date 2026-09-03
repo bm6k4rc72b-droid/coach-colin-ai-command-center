@@ -16,6 +16,37 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: the Agent Swarm
+
+A multi-agent orchestration console built on top of the globe. Press
+**AGENTS** (bottom right) or **Ctrl/Cmd+Shift+A**, type a goal in plain
+language, and it plans the goal into a task graph, assigns each task to a
+specialist agent, runs independent tasks in parallel, and folds the results
+into one answer.
+
+The agents can **drive the globe**, which is what makes it more than a chat
+box. *"Find the biggest active wildfire in California, put it on screen, and
+write me a one-page brief"* becomes a research task, a `geo-analyst` task that
+genuinely enables the fires layer and flies the camera, and a writer task —
+one job, run to completion.
+
+Eight built-in agents (researcher, geo-analyst, recon, writer, engineer,
+critic, summarizer, generalist), plus your own via **+ AGENT**. Globe tools are
+resolved from the same `GEV_REALTIME_TOOLS` array that backs voice control, so
+the two surfaces can never drift on what `fly_to_location` means. Each agent's
+tool list is an enforced allowlist, not a hint.
+
+Needs only `OPENAI_API_KEY` (the same one voice control uses); a Tavily or
+Brave key additionally turns on web search. Full write-up, including the
+failure and safety model, in [`docs/AGENT-SWARM.md`](docs/AGENT-SWARM.md).
+
+```sh
+npm run test:agents      # 46 unit tests, no key or browser needed
+npm run qa:agent-swarm   # headless end-to-end run through the real console
+```
+
+---
+
 ## Also in here: HarvestEye
 
 A second, self-contained app lives at [`public/harvest-eye/`](public/harvest-eye)
