@@ -40,8 +40,10 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
+    "test:blast-radius": "node --test tests/blast-radius/*.test.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
-    "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs"
+    "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
+    "qa:blast-radius": "node scripts/qa-blast-radius.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

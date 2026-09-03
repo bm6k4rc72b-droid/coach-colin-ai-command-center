@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#03060b" />
+<meta name="description" content="Blast Radius — cloud identity architecture and AI system security in one console: privilege-escalation path analysis, agent threat modelling, a measured prompt-injection detector, detection engineering and quantified risk." />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Blast Radius" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="stylesheet" href="./styles.css" />
+<title>Blast Radius — cloud identity and AI security</title>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.2" />
+      <circle cx="12" cy="12" r="7" class="ring" />
+      <circle cx="12" cy="12" r="10.4" class="ring ring--faint" />
+      <path d="M12 4.6 L12 1.4 M12 22.6 L12 19.4 M4.6 12 L1.4 12 M22.6 12 L19.4 12" class="tick" />
+    </svg>
+    <div>
+      <p class="brand-name">Blast Radius</p>
+      <p class="brand-sub">Cloud identity · AI system security</p>
+    </div>
+  </div>
+  <nav id="nav" aria-label="Views"></nav>
+  <button class="rail-toggle" type="button" data-action="toggle-rail" aria-label="Toggle controls">Controls</button>
+</header>
+
+<div id="layout">
+  <main id="view" tabindex="-1"></main>
+  <div id="rail"></div>
+</div>
+
+<footer id="footer">
+  <p>Everything on this page is computed in the browser from the modules in <code>js/</code> — no backend, no API key, no network call. The estate is fictional; the weaknesses in it are the ordinary kind.</p>
+</footer>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
