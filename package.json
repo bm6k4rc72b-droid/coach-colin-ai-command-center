@@ -2,7 +2,7 @@
   "name": "gods-eye-view",
   "private": true,
   "version": "0.1.0",
-  "description": "A real-time intelligence console for planet Earth — photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
+  "description": "A real-time intelligence console for planet Earth \u2014 photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
   "type": "module",
   "license": "MIT",
   "author": "Bilawal Sidhu",
@@ -40,10 +40,12 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
+    "test:nexus": "node --test tests/nexus/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
-    "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs"
+    "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
+    "qa:nexus": "node scripts/qa-nexus.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

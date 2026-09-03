@@ -47,6 +47,47 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: AETHER NEXUS
+
+A holographic command centre at [`public/nexus/`](public/nexus) that teaches
+**AI agents**, **AI app craft** and **cyber defence** — with a voice
+receptionist standing on the dais, six interactive ranges, the phone camera
+wired in, and a live picture of the sky on the globe behind her.
+
+Locally it is `/nexus/` (`http://localhost:4173/nexus/` under `./start.sh`).
+Like HarvestEye it is self-contained: no build step, no dependencies, no
+backend, no account, and it keeps working with the signal off.
+
+- **A hand-written WebGL2 hall** — rotunda, dais, curved video wall, and a
+  holographic receptionist built as a point cloud from a parametric body
+  profile. No model files, no 3D library. Drag to orbit, tilt the phone for
+  gyroscope parallax, press **◍** to swap her for a wireframe Earth carrying
+  the live feeds.
+- **A receptionist who answers offline** — platform speech synthesis and
+  recognition, plus a BM25 index over the syllabus so every answer arrives
+  with the lesson it came from. Connect a Claude or OpenAI-compatible key and
+  she reasons past the lessons; without one she still teaches.
+- **22 lessons across three tracks**, each module ending in a check.
+- **Six ranges with real analysis** — phishing triage graded asymmetrically,
+  a password forge that shows the collapse from naive to effective entropy
+  against four attacker profiles, a crypto bench running actual Web Crypto,
+  an injection range with a defended and an undefended agent, an agent-loop
+  builder, and a QR scanner that pulls a link apart before you follow it.
+- **The phone camera** — front and rear, torch, capture, presence detection
+  and code scanning, all on-device; no frame is uploaded or stored.
+- **Live aircraft, launches, satellites, earthquakes, space weather and
+  vulnerability feeds**, each degrading LIVE → CACHED → SIM and saying on
+  screen which one it is.
+- **An agent swarm** whose specialists hold tool allowlists enforced in code,
+  not in a prompt — and a trace that shows the refusal when one is exceeded.
+
+Full write-up, including the design notes and the known limits:
+[`docs/nexus.md`](docs/nexus.md). Tests: `npm run test:nexus` (27 unit tests)
+and `npm run qa:nexus` (29 end-to-end checks driving the real console in
+Chromium).
+
+---
+
 ## Also in here: HarvestEye
 
 A second, self-contained app lives at [`public/harvest-eye/`](public/harvest-eye)

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Aether Nexus">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#8ff3ff"/>
+      <stop offset="55%" stop-color="#2aa7d8"/>
+      <stop offset="100%" stop-color="#06121c"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6e5a8"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8a6a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#04060a"/>
+  <circle cx="256" cy="214" r="150" fill="url(#g)" opacity="0.35"/>
+  <g fill="none" stroke="url(#gold)" stroke-width="6">
+    <ellipse cx="256" cy="392" rx="176" ry="44"/>
+    <ellipse cx="256" cy="392" rx="122" ry="30" opacity="0.7"/>
+    <ellipse cx="256" cy="392" rx="70" ry="17" opacity="0.5"/>
+  </g>
+  <g fill="#bff2ff">
+    <circle cx="256" cy="150" r="40"/>
+    <path d="M256 200c-46 0-78 30-84 74l-14 96h44l10-74 6 118h76l6-118 10 74h44l-14-96c-6-44-38-74-84-74z"/>
+  </g>
+  <g stroke="#7fe6ff" stroke-width="4" opacity="0.75">
+    <path d="M96 300h60M356 300h60M76 240h40M396 240h40"/>
+  </g>
+</svg>
