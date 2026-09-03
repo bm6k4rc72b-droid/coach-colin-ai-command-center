@@ -32,7 +32,7 @@ export function renderAtrium(body, ctx) {
   fill(body, [
     el('div.card', {}, [
       el('h3', { text: 'Aether — resident instructor' }),
-      el('p.dim', { text: 'Ask me anything in the syllabus, or tell me where to go: “open the phishing range”, “show me the globe”, “teach me about prompt injection”. Hold the microphone to speak.' }),
+      el('p.dim', { text: 'Ask me anything in the syllabus, or tell me where to go: “open the phishing range”, “show me the globe”, “teach me about prompt injection”. Tap the microphone to speak, and again to stop.' }),
     ]),
     el('div.tiles', {}, [
       el('div.tile', {}, [el('b', { text: snap.rank.clearance }), el('span', { text: `${snap.rank.name} · ${snap.xp} XP` }),
@@ -623,7 +623,7 @@ export function renderSettings(body, ctx) {
     ]),
     el('p.dim.small', {
       text: ctx.voice.canListen
-        ? 'Speech recognition is available in this browser. Hold the microphone button to talk.'
+        ? 'Speech recognition is available in this browser. Tap the microphone to talk, and again to stop.'
         : 'This browser has no speech recognition (Firefox, and some in-app browsers). Typing does everything speaking does.',
     }),
 
