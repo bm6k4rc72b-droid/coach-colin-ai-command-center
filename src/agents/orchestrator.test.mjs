@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createOrchestrator, buildTaskPrompt } from './orchestrator.js';
-import { parsePlanJson, normalizeToolCall } from './llmClient.js';
+import { parsePlanJson, normalizeToolCall, describeProxyFailure } from './llmClient.js';
 
 /**
  * A scripted stand-in for the agent proxy.
@@ -326,6 +326,27 @@ test('an empty goal is refused before any model call', async () => {
   const orchestrator = createOrchestrator({ fetchImpl });
   await assert.rejects(() => orchestrator.start('   '), /goal/);
   assert.equal(calls.length, 0);
+});
+
+test('a static deploy explains itself instead of reporting a bare 404', async () => {
+  // GitHub Pages has no /api/agent-chat, so the whole run 404s. The operator
+  // must be told the build has no backend, not handed an HTTP code.
+  const { fetchImpl } = fakeProxy(() => ({ __status: 404 }));
+  const orchestrator = createOrchestrator({ fetchImpl });
+
+  await assert.rejects(() => orchestrator.start('anything'), (error) => {
+    assert.match(error.message, /static build/i);
+    assert.match(error.message, /start\.sh/);
+    return true;
+  });
+});
+
+test('describeProxyFailure distinguishes no-backend from a bad key', () => {
+  assert.match(describeProxyFailure(404), /static build/i);
+  assert.match(describeProxyFailure(405), /static build/i);
+  assert.match(describeProxyFailure(401), /OPENAI_API_KEY/);
+  // Anything else keeps the raw status rather than inventing a cause.
+  assert.equal(describeProxyFailure(502), 'Agent proxy returned 502');
 });
 
 test('parsePlanJson tolerates a fenced JSON block', () => {

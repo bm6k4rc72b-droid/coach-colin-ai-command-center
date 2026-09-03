@@ -66,7 +66,7 @@ export async function agentChat({
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new AgentChatError(body?.error || `Agent proxy returned ${res.status}`, {
+    throw new AgentChatError(body?.error || describeProxyFailure(res.status), {
       status: res.status,
       retryable: RETRYABLE_STATUS.has(res.status),
     });
@@ -78,6 +78,27 @@ export async function agentChat({
     usage: body?.usage || null,
     model: body?.model || '',
   };
+}
+
+/**
+ * Explain a proxy failure that carried no message of its own.
+ *
+ * The 404/405 case is the one worth spelling out: it is what a STATIC deploy
+ * (GitHub Pages and friends) returns, because `/api/agent-chat` only exists on
+ * the Vite dev/preview server. A bare "returned 404" reads as a bug in the
+ * swarm; the real answer is that this build has no backend behind it.
+ *
+ * @param {number} status
+ * @returns {string}
+ */
+export function describeProxyFailure(status) {
+  if (status === 404 || status === 405) {
+    return 'No agent backend here — /api/agent-chat is missing, which means this is a static build (e.g. GitHub Pages). The swarm needs the local server: run ./start.sh and open the app from there.';
+  }
+  if (status === 401 || status === 403) {
+    return 'The agent proxy rejected the request — check that OPENAI_API_KEY is set and valid.';
+  }
+  return `Agent proxy returned ${status}`;
 }
 
 /**
