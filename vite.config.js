@@ -7323,6 +7323,385 @@ function normalizeAisTimestamp(value) {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
+// ---------------------------------------------------------------------------
+// Agent swarm proxies
+// ---------------------------------------------------------------------------
+
+/**
+ * Generic (non-globe) tool schemas offered to swarm agents.
+ *
+ * The globe tools are NOT redefined here — `resolveAgentTools` pulls them
+ * straight out of `GEV_REALTIME_TOOLS`, so voice control and the swarm share
+ * one definition of `fly_to_location` forever. Only tools that have no voice
+ * equivalent live in this array.
+ */
+const AGENT_GENERIC_TOOLS = [
+  {
+    type: 'function',
+    name: 'web_search',
+    description: 'Search the open web. Returns titles, URLs and snippets. Use before answering anything you cannot already verify.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search query.' },
+        limit: { type: 'integer', description: 'Maximum results (1-10, default 5).' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    type: 'function',
+    name: 'web_fetch',
+    description: 'Fetch one http(s) URL and return its readable text content.',
+    parameters: {
+      type: 'object',
+      properties: { url: { type: 'string', description: 'Absolute http(s) URL.' } },
+      required: ['url'],
+    },
+  },
+  {
+    type: 'function',
+    name: 'record_finding',
+    description: 'Record one durable finding for the operator, with its source.',
+    parameters: {
+      type: 'object',
+      properties: {
+        finding: { type: 'string', description: 'The finding, stated plainly.' },
+        source: { type: 'string', description: 'URL or origin backing the finding.' },
+      },
+      required: ['finding'],
+    },
+  },
+  {
+    type: 'function',
+    name: 'write_artifact',
+    description: 'Save a finished deliverable (document, code, report) for the operator to copy out.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Short title.' },
+        format: { type: 'string', description: 'markdown | text | code | json' },
+        content: { type: 'string', description: 'The full finished content.' },
+      },
+      required: ['title', 'content'],
+    },
+  },
+];
+
+/**
+ * Resolve requested tool NAMES into provider tool schemas.
+ *
+ * Unknown names are dropped rather than erroring: the roster is client-side
+ * and may legitimately be ahead of the server during a reload, and a missing
+ * tool degrades one call while a hard error kills the whole run.
+ *
+ * @param {string[]} names
+ * @returns {object[]} Chat Completions-shaped tool definitions.
+ */
+function resolveAgentTools(names) {
+  if (!Array.isArray(names) || !names.length) return [];
+  const wanted = new Set(names.map((n) => String(n)));
+  const catalog = [...AGENT_GENERIC_TOOLS, ...GEV_REALTIME_TOOLS];
+  const seen = new Set();
+  const resolved = [];
+  for (const tool of catalog) {
+    const name = tool?.name;
+    if (!name || !wanted.has(name) || seen.has(name)) continue;
+    seen.add(name);
+    // GEV_REALTIME_TOOLS is in the Realtime flat shape; Chat Completions wants
+    // the nested `function` envelope.
+    resolved.push({
+      type: 'function',
+      function: {
+        name,
+        description: tool.description || '',
+        parameters: tool.parameters || { type: 'object', properties: {} },
+      },
+    });
+  }
+  return resolved;
+}
+
+/** Hostnames and IP forms a server-side fetch must never be pointed at. */
+function isBlockedFetchTarget(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  if (!host) return true;
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) {
+    return true;
+  }
+  if (host === '169.254.169.254' || host === 'metadata.google.internal') return true;
+  // IPv4 literals in private/loopback/link-local space.
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (v4) {
+    const [a, b] = [Number(v4[1]), Number(v4[2])];
+    if (a === 10 || a === 127 || a === 0) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+  }
+  if (host === '::1' || host.startsWith('[::1') || host.startsWith('fd') || host.startsWith('fe80')) return true;
+  return false;
+}
+
+/** Strip markup and scripts from an HTML document, leaving readable text. */
+function htmlToText(html) {
+  return String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<\/(p|div|section|article|li|h[1-6]|tr|br)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t ]+/g, ' ')
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .trim();
+}
+
+const AGENT_MODEL_DEFAULT = 'gpt-5';
+
+/**
+ * Proxies backing the agent swarm: the model turn, web search, and web fetch.
+ *
+ * All three exist so the browser never holds a provider key. `/api/agent-chat`
+ * additionally owns tool-schema resolution, which is what keeps the swarm's
+ * globe tools identical to voice control's.
+ */
+function agentSwarmProxy() {
+  function install(middlewares) {
+    middlewares.use('/api/agent-chat', async (req, res) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Method not allowed' }));
+        return;
+      }
+      if (!enforceOptInRateLimit(openAiRateLimiter(), req, res)) return;
+
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        res.statusCode = 503;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'OPENAI_API_KEY is not set — the agent swarm needs it to think.' }));
+        return;
+      }
+
+      try {
+        const payload = JSON.parse((await readRequestBody(req, 1024 * 1024)) || '{}');
+        const messages = Array.isArray(payload.messages) ? payload.messages : [];
+        if (!messages.length) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'messages[] is required' }));
+          return;
+        }
+
+        const tools = resolveAgentTools(payload.tools);
+        const body = {
+          model: String(payload.model || process.env.OPENAI_AGENTS_MODEL || AGENT_MODEL_DEFAULT),
+          messages,
+        };
+        if (tools.length) {
+          body.tools = tools;
+          body.tool_choice = 'auto';
+          body.parallel_tool_calls = true;
+        }
+        if (payload.response_format) body.response_format = payload.response_format;
+        if (typeof payload.temperature === 'number') body.temperature = payload.temperature;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Safety-Identifier': 'gev-agent-swarm',
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          res.statusCode = response.status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: data?.error?.message || `Provider returned ${response.status}` }));
+          return;
+        }
+
+        const choice = data?.choices?.[0]?.message || {};
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({
+          content: choice.content || '',
+          tool_calls: Array.isArray(choice.tool_calls) ? choice.tool_calls : [],
+          usage: data?.usage || null,
+          model: data?.model || body.model,
+        }));
+      } catch (error) {
+        res.statusCode = 502;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: String(error?.message || error) }));
+      }
+    });
+
+    middlewares.use('/api/agent-web-search', async (req, res) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Method not allowed' }));
+        return;
+      }
+
+      const tavily = process.env.TAVILY_API_KEY;
+      const brave = process.env.BRAVE_SEARCH_API_KEY;
+      if (!tavily && !brave) {
+        // Honest unavailability, in the same spirit as the FIRMS layer's
+        // KEY REQUIRED state: the agent is told plainly that search is off
+        // rather than being handed empty results it would read as "nothing
+        // exists on the web about this".
+        res.statusCode = 503;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({
+          error: 'Web search is unavailable — set TAVILY_API_KEY or BRAVE_SEARCH_API_KEY. Answer from what you already know and say the claim is unverified.',
+        }));
+        return;
+      }
+
+      try {
+        const payload = JSON.parse((await readRequestBody(req, 16 * 1024)) || '{}');
+        const query = String(payload.query || '').trim();
+        const limit = Math.min(10, Math.max(1, Number(payload.limit) || 5));
+        if (!query) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'query is required' }));
+          return;
+        }
+
+        let results = [];
+        if (tavily) {
+          const response = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ api_key: tavily, query, max_results: limit, search_depth: 'basic' }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data?.error || `Tavily returned ${response.status}`);
+          results = (data?.results || []).map((r) => ({
+            title: r.title || '',
+            url: r.url || '',
+            snippet: String(r.content || '').slice(0, 600),
+          }));
+        } else {
+          const url = new URL('https://api.search.brave.com/res/v1/web/search');
+          url.searchParams.set('q', query);
+          url.searchParams.set('count', String(limit));
+          const response = await fetch(url, {
+            headers: { Accept: 'application/json', 'X-Subscription-Token': brave },
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data?.message || `Brave returned ${response.status}`);
+          results = (data?.web?.results || []).slice(0, limit).map((r) => ({
+            title: r.title || '',
+            url: r.url || '',
+            snippet: String(r.description || '').replace(/<[^>]+>/g, '').slice(0, 600),
+          }));
+        }
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({ query, results }));
+      } catch (error) {
+        res.statusCode = 502;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: String(error?.message || error) }));
+      }
+    });
+
+    middlewares.use('/api/agent-web-fetch', async (req, res) => {
+      if (req.method !== 'POST') {
+        res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Method not allowed' }));
+        return;
+      }
+
+      try {
+        const payload = JSON.parse((await readRequestBody(req, 16 * 1024)) || '{}');
+        let target;
+        try {
+          target = new URL(String(payload.url || ''));
+        } catch {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'A valid absolute URL is required' }));
+          return;
+        }
+
+        // The URL here was chosen by a language model, so the guard is not
+        // optional: without it a prompt could aim this dev server at cloud
+        // metadata or anything else on the operator's LAN.
+        if (!/^https?:$/.test(target.protocol) || isBlockedFetchTarget(target.hostname)) {
+          res.statusCode = 403;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'That host is not fetchable (private, loopback or metadata address)' }));
+          return;
+        }
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 15000);
+        let response;
+        try {
+          response = await fetch(target, {
+            redirect: 'follow',
+            signal: controller.signal,
+            headers: { 'User-Agent': 'GodsEyeView-AgentSwarm/1.0', Accept: 'text/html,text/plain,application/json;q=0.9,*/*;q=0.5' },
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (/image|video|audio|octet-stream|pdf/i.test(contentType)) {
+          res.statusCode = 415;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: `Cannot read ${contentType} as text` }));
+          return;
+        }
+
+        const raw = (await response.text()).slice(0, 400 * 1024);
+        const title = (raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').trim().slice(0, 200);
+        const content = /json/i.test(contentType) ? raw.slice(0, 60000) : htmlToText(raw).slice(0, 60000);
+
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({ url: target.href, status: response.status, title, content }));
+      } catch (error) {
+        res.statusCode = 502;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: String(error?.message || error) }));
+      }
+    });
+  }
+
+  return {
+    name: 'agent-swarm-proxy',
+    configureServer(server) {
+      install(server.middlewares);
+    },
+    configurePreviewServer(server) {
+      install(server.middlewares);
+    },
+  };
+}
+
 /**
  * Main Vite configuration factory.
  *
@@ -7360,6 +7739,7 @@ export default defineConfig(({ mode }) => {
       trackBackfillProxies(),
       openAiRealtimeProxy(),
       googlePlacesContextProxy(),
+      agentSwarmProxy(),
     ],
     server: {
       host: env.HOST || 'localhost',
