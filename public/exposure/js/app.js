@@ -77,7 +77,12 @@ export function go(next, nextParams = {}) {
   if (next === 'player' && nextParams.id !== params.id) resetPlayerTab();
   route = next;
   params = nextParams;
-  window.location.hash = buildHash(next, nextParams);
+  try {
+    window.location.hash = buildHash(next, nextParams);
+  } catch {
+    // Some embedded contexts refuse a hash write; the route still changed,
+    // so the desk navigates and only the shareable URL is lost.
+  }
   render();
   view.scrollTo({ top: 0 });
   document.getElementById('view')?.focus?.();
