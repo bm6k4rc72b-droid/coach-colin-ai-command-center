@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EXPOSURE">
+  <rect width="512" height="512" rx="96" fill="#07080a"/>
+  <g fill="none" stroke="#f2b437" stroke-width="18" stroke-linecap="square">
+    <path d="M120 132h180M120 246h150M120 360h180"/>
+    <path d="M348 168v176"/>
+    <circle cx="348" cy="256" r="46" stroke-width="14"/>
+  </g>
+  <rect x="120" y="404" width="272" height="10" fill="#a97c14"/>
+</svg>

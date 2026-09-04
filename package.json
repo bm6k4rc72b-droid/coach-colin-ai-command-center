@@ -41,11 +41,13 @@
     "test:track": "node scripts/track-regression.mjs",
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",
+    "test:exposure": "node --test tests/exposure/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
     "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
-    "qa:nexus": "node scripts/qa-nexus.mjs"
+    "qa:nexus": "node scripts/qa-nexus.mjs",
+    "qa:exposure": "node scripts/qa-exposure.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EXPOSURE">
+  <rect width="512" height="512" fill="#07080a"/>
+  <g fill="none" stroke="#f2b437" stroke-width="16" stroke-linecap="square">
+    <path d="M152 176h150M152 256h124M152 336h150"/>
+    <circle cx="344" cy="256" r="38" stroke-width="12"/>
+  </g>
+</svg>

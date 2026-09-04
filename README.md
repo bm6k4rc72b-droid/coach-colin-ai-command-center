@@ -47,6 +47,51 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: EXPOSURE
+
+An independent **fantasy football and betting-research desk** at
+[`public/exposure/`](public/exposure) — connect the leagues you already play
+in, get a start/sit call you can argue with, see how much of your Sunday rests
+on one player, and compare a number across three books before you leave to act
+on it.
+
+Locally it is `/exposure/` (`http://localhost:4173/exposure/` under
+`./start.sh`). Self-contained like the other two: no build step, no
+dependencies, no backend, no account, and every byte of user data stays in the
+browser.
+
+- **Exposure, which is the point** — one table of every player you own across
+  every league, plus any saved prop leans, banded OK / STACKED / OVERLOADED.
+  Being triple-started on one back is a fact no single league's app can tell
+  you.
+- **Start/Sit with its working shown** — four weighted drivers (projection
+  against the slot, matchup, opportunity, game environment), a 1–5 confidence
+  that an injury designation can cap but not fake, and a reason that is always
+  exactly two sentences.
+- **A Player Card in four tabs** — Overview, Opportunity (snap share, routes,
+  target and rush share, red-zone touches), Market (the same number from three
+  books with the best one marked), and Receipts: written scheme notes, never
+  video.
+- **A Command Center** for Sunday — every starter grouped by game state, stat
+  lines that move, and alerts for droughts, goal-line work, scores and your
+  opponent's players.
+- **A Market Desk** with the week's board and a prop search — and no bet slip,
+  wallet, deposit, cash-out or parlay builder anywhere in it.
+- **A 21+ gate before any odds surface renders**, and "under 21" is a
+  supported answer rather than a wall: the fantasy desk keeps working with
+  every betting surface switched off.
+
+Independent analysis tool. Not affiliated with, endorsed by, or sponsored by
+the National Football League, its member clubs, or NFL Properties. No club
+marks, no photographs, no hosted or embedded video, and it takes no wagers.
+
+Full write-up, including the engines and where the demo data stops:
+[`docs/exposure.md`](docs/exposure.md). Tests: `npm run test:exposure`
+(34 unit tests) and `npm run qa:exposure` (50 end-to-end checks driving the
+real app in Chromium).
+
+---
+
 ## Also in here: AETHER NEXUS
 
 A holographic command centre at [`public/nexus/`](public/nexus) that teaches
