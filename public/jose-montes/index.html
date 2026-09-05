@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>Jose Montes — Central Coast #1 Realtor</title>
+<meta name="description" content="Luxury Central Coast real estate with Jose Montes. A scroll-linked 3D estate, cinematic property plates, live mortgage maths, a voice concierge, and hands-free scrolling by camera. Runs in the browser, works offline.">
+<meta name="theme-color" content="#05070c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jose Montes">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- The curtain. Browsers require a gesture before audio and speech, and an
+     estate deserves a door anyway. -->
+<div id="gate" role="dialog" aria-label="Enter">
+  <div class="gate-inner">
+    <span class="gate-eyebrow">Montes &amp; Co. Coastal Properties</span>
+    <h1 class="gate-title">Jose Montes</h1>
+    <p class="gate-sub">Central Coast <span>#1</span> Realtor</p>
+    <p class="gate-copy">
+      A cinematic tour of the Central Coast portfolio, with a concierge who
+      answers out loud, the real monthly numbers behind every price, and — if
+      you want it — scrolling by hand through your camera.
+    </p>
+    <div class="gate-actions">
+      <button id="enter" class="btn primary xl" type="button">Enter with sound</button>
+      <button id="enter-quiet" class="btn ghost" type="button">Enter silently</button>
+    </div>
+    <p class="gate-fine">Speech, camera and motion are used only when you ask, and only on this device.</p>
+  </div>
+</div>
+
+<!-- Fixed chrome ------------------------------------------------------- -->
+<div id="rail" aria-hidden="true"><span id="rail-fill"></span></div>
+
+<header id="topbar">
+  <a class="brand" href="#hero">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-text">JOSE<b>MONTES</b></span>
+  </a>
+  <nav id="chapters" aria-label="Sections"></nav>
+  <div class="top-actions">
+    <button id="btn-sound" class="icon-btn" type="button" title="Music" aria-label="Toggle music" aria-pressed="false">♪</button>
+    <button id="btn-gesture" class="icon-btn" type="button" title="Scroll with your hand" aria-label="Toggle hand scrolling" aria-pressed="false">✋</button>
+    <a class="btn small" href="#contact">Book a tour</a>
+  </div>
+</header>
+
+<main>
+
+<!-- 1. Hero: a pinned scene where the estate assembles as you scroll ----- -->
+<section id="hero" class="scene" data-pin="hero" data-chapter="Arrival">
+  <div class="scene-stage">
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <div class="stage-fallback" aria-hidden="true"></div>
+    <img class="hero-plate" src="./media/coast-estate-dusk.avif" alt="" aria-hidden="true"
+         data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_0af0151c-1f9c-4b10-bbf8-0882cb58e661.png">
+    <div class="hero-copy">
+      <p class="eyebrow">Pismo · Avila · Shell Beach · San Luis Obispo · Paso Robles</p>
+      <h2 class="display">The coast,<br>brokered properly.</h2>
+      <p class="lede">
+        Fourteen years, 412 closings, and a habit of getting three percent over
+        ask. Scroll — the house builds itself as you go.
+      </p>
+      <div class="hero-metrics">
+        <div><b data-count="412">0</b><span>closings</span></div>
+        <div><b data-count="738" data-count-prefix="$" data-count-suffix="M">0</b><span>volume</span></div>
+        <div><b data-count="11">0</b><span>median days</span></div>
+      </div>
+    </div>
+    <div class="hero-hud" aria-hidden="true">
+      <p class="hud-title">123 Ocean View Dr</p>
+      <p class="hud-sub">structural massing · Pismo Beach</p>
+      <ul class="hud-specs">
+        <li><span>living area</span><b>2,150 sqft</b></li>
+        <li><span>orientation</span><b>due west</b></li>
+        <li><span>glazing</span><b>west elevation</b></li>
+        <li><span>terrace</span><b>infinity edge</b></li>
+      </ul>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"><span></span>scroll</div>
+  </div>
+</section>
+
+<!-- 2. The signature listing, revealed against the hologram ------------- -->
+<section id="signature" class="scene" data-pin="signature" data-chapter="Signature">
+  <div class="scene-stage signature-stage">
+    <figure class="plate" data-plate>
+      <img src="./media/estate-twilight.avif" alt="123 Ocean View Drive at twilight, its west wall glazed to the Pacific"
+           data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_78965773-0aeb-4cdf-bf14-5129bbfe608d.png">
+      <figcaption>123 Ocean View Dr — Pismo Beach</figcaption>
+    </figure>
+    <div class="signature-panel">
+      <p class="eyebrow">Signature listing · active</p>
+      <h2>123 Ocean View Dr</h2>
+      <p class="price">$1,250,000</p>
+      <p class="spec">4 bed · 3 bath · 2,150 sqft · built 2019</p>
+      <p class="lede">
+        Four bedrooms above the swell line, with a great room that opens the
+        whole west wall to the Pacific. Barely lived in.
+      </p>
+      <ul class="feature-list">
+        <li>Ocean views from three levels</li>
+        <li>Chef's kitchen, Calacatta island</li>
+        <li>Infinity-edge pool and fire terrace</li>
+        <li>Owned solar, 14.2 kW</li>
+      </ul>
+      <p class="micro" id="signature-payment">—</p>
+      <div class="panel-actions">
+        <a class="btn primary" href="#contact">Request a private showing</a>
+        <button class="btn ghost" type="button" data-ask="what is the payment on 123 ocean view">Ask the concierge</button>
+      </div>
+    </div>
+    <div class="readout" aria-hidden="true">
+      <div><span>build</span><b id="ro-build">0%</b></div>
+      <div><span>orbit</span><b id="ro-orbit">0°</b></div>
+      <div><span>price / sqft</span><b>$581</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Interiors: a horizontal reel driven by vertical scroll ----------- -->
+<section id="interiors" class="scene" data-pin="interiors" data-chapter="Interiors">
+  <div class="scene-stage reel-stage">
+    <div class="reel">
+      <figure class="reel-card">
+        <img src="./media/great-room-sunset.avif" alt="A great room opening to the Pacific at sunset"
+             data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_e28c43ee-1d73-4287-8316-dc9350112475.png">
+        <figcaption><b>The great room</b><span>Twenty feet of glass, and a fireplace cut from honed travertine.</span></figcaption>
+      </figure>
+      <figure class="reel-card">
+        <img src="./media/pool-terrace-dusk.avif" alt="An infinity-edge pool terrace at dusk above the ocean"
+             data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_2d03340e-0521-4e3a-8953-d2203177bc38.png">
+        <figcaption><b>The terrace</b><span>The pool edge and the horizon line up about twenty minutes before sunset.</span></figcaption>
+      </figure>
+      <figure class="reel-card">
+        <img src="./media/kitchen-marble.avif" alt="A chef's kitchen with a waterfall marble island"
+             data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_f8c15ff8-98c8-4b89-b992-f1b40488e846.png">
+        <figcaption><b>The kitchen</b><span>Where every open house ends up standing, whatever else is in the house.</span></figcaption>
+      </figure>
+      <figure class="reel-card">
+        <img src="./media/primary-suite-dawn.avif" alt="A primary suite with an ocean view at dawn"
+             data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_4ccc830f-f13c-424f-9381-1f7a879a58b6.png">
+        <figcaption><b>The suite</b><span>East-facing, so it catches the sun coming up over the hills first.</span></figcaption>
+      </figure>
+    </div>
+    <p class="reel-hint" aria-hidden="true">keep scrolling</p>
+  </div>
+</section>
+
+<!-- 4. The portfolio --------------------------------------------------- -->
+<section id="portfolio" class="band" data-chapter="Portfolio">
+  <header class="band-head" data-reveal>
+    <p class="eyebrow">The portfolio</p>
+    <h2>Six properties, one coastline.</h2>
+    <p class="lede">Filter them, or ask the concierge to find one for you.</p>
+    <div class="filters" id="filters" role="group" aria-label="Filter listings">
+      <button class="chip is-on" data-filter="all" type="button">All</button>
+      <button class="chip" data-filter="active" type="button">Active</button>
+      <button class="chip" data-filter="pending" type="button">In escrow</button>
+      <button class="chip" data-filter="sold" type="button">Sold</button>
+    </div>
+  </header>
+  <div class="grid" id="listing-grid"></div>
+  <noscript><p class="lede">The portfolio and the concierge need JavaScript. Everything runs on this device — nothing is sent anywhere.</p></noscript>
+</section>
+
+<!-- 5. The numbers ------------------------------------------------------ -->
+<section id="numbers" class="band" data-chapter="Numbers">
+  <header class="band-head" data-reveal>
+    <p class="eyebrow">The numbers</p>
+    <h2>What it actually costs a month.</h2>
+    <p class="lede">
+      Price is the headline. This is the figure people decide on — loan,
+      county tax, insurance, and mortgage insurance while the loan is above
+      eighty percent.
+    </p>
+  </header>
+  <div class="calc" data-reveal>
+    <div class="calc-controls">
+      <label class="field">
+        <span>Property</span>
+        <select id="calc-listing"></select>
+      </label>
+      <label class="field">
+        <span>Price <b id="calc-price-out">$1.25M</b></span>
+        <input id="calc-price" type="range" min="400000" max="5000000" step="25000" value="1250000">
+      </label>
+      <label class="field">
+        <span>Down payment <b id="calc-down-out">20%</b></span>
+        <input id="calc-down" type="range" min="3" max="60" step="1" value="20">
+      </label>
+      <label class="field">
+        <span>Rate <b id="calc-rate-out">6.25%</b></span>
+        <input id="calc-rate" type="range" min="300" max="950" step="5" value="625">
+      </label>
+      <label class="field">
+        <span>Term <b id="calc-term-out">30 yr</b></span>
+        <input id="calc-term" type="range" min="10" max="30" step="5" value="30">
+      </label>
+    </div>
+    <div class="calc-out">
+      <p class="calc-total"><span>Monthly, all in</span><b id="calc-total">—</b></p>
+      <ul class="calc-breakdown" id="calc-breakdown"></ul>
+      <div class="calc-bar" id="calc-bar" aria-hidden="true"></div>
+      <p class="calc-equity" id="calc-equity">—</p>
+      <p class="micro">Estimates at a 1.08% effective county rate. Not a loan quote, and not advice — bring your lender's number and Jose will work to it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6. The market ------------------------------------------------------- -->
+<section id="market" class="band tall" data-chapter="Market">
+  <figure class="wide-plate" data-parallax="0.35" data-parallax-distance="180">
+    <img src="./media/coast-aerial-golden.avif" alt="The Central Coast from the air at golden hour"
+         data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_74a5ca08-cb9b-4ac8-a4c1-fc991e79ae3f.png">
+  </figure>
+  <div class="band-head" data-reveal>
+    <p class="eyebrow">The market</p>
+    <h2>Tight, not hot.</h2>
+    <p class="lede">
+      Inventory is short. Well-prepared homes still clear in under two weeks,
+      and anything with a real ocean view trades on its own terms.
+    </p>
+  </div>
+  <div class="stat-row">
+    <div class="stat" data-reveal><b data-count="103.2" data-count-decimals="1" data-count-suffix="%">0</b><span>of list price, median</span></div>
+    <div class="stat" data-reveal><b data-count="11">0</b><span>days on market, median</span></div>
+    <div class="stat" data-reveal><b data-count="61" data-count-suffix="%">0</b><span>repeat and referral</span></div>
+    <div class="stat" data-reveal><b data-count="6">0</b><span>towns worked properly</span></div>
+  </div>
+  <figure class="split-plate" data-reveal>
+    <img src="./media/vineyard-estate.avif" alt="A Paso Robles vineyard estate at golden hour"
+         data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_9617216b-9952-4de2-8c68-d271fff4d72e.png">
+    <figcaption>
+      <b>Inland, the same rules apply.</b>
+      <span>Paso Robles trades on water, rootstock and slope as much as on square footage. Jose reads the contract on the fruit before he reads the listing.</span>
+    </figcaption>
+  </figure>
+</section>
+
+<!-- 7. Jose -------------------------------------------------------------- -->
+<section id="about" class="band" data-chapter="Jose">
+  <div class="about">
+    <figure class="portrait" data-reveal data-parallax="-0.12">
+      <img src="./media/jose-portrait.jpg" alt="Jose Montes at his desk, a listing open on the laptop beside him">
+    </figure>
+    <div class="about-copy" data-reveal>
+      <p class="eyebrow">The broker</p>
+      <h2>Jose Montes</h2>
+      <p class="lede">
+        Fourteen years on this coastline, most of it spent on the same six
+        towns. He runs his own comparables, prices against what actually
+        closed rather than what is asked, and tells sellers the number they
+        need to hear before the market does it for him.
+      </p>
+      <ul class="feature-list">
+        <li>412 closings, $738M in volume</li>
+        <li>Median 11 days on market</li>
+        <li>61% repeat and referral business</li>
+        <li>DRE #02141908</li>
+      </ul>
+      <a class="btn primary" href="#contact">Talk to Jose</a>
+    </div>
+  </div>
+  <figure class="wide-plate framed" data-parallax="0.18">
+    <img src="./media/jose-consultation.jpg" alt="Jose Montes presenting a listing to clients in a coastal living room">
+    <figcaption>A listing presentation in Shell Beach. Every buyer sees the same analysis the seller does.</figcaption>
+  </figure>
+</section>
+
+<!-- 8. Contact ---------------------------------------------------------- -->
+<section id="contact" class="band" data-chapter="Contact">
+  <div class="contact">
+    <div class="contact-copy" data-reveal>
+      <p class="eyebrow">Book a tour</p>
+      <h2>He shows privately, usually inside forty-eight hours.</h2>
+      <p class="lede">Leave a number and Jose calls you himself — not an assistant, not a queue.</p>
+      <ul class="contact-list">
+        <li><span>Phone</span><a href="tel:+18055550142">(805) 555-0142</a></li>
+        <li><span>Email</span><a href="mailto:jose@montescoastal.com">jose@montescoastal.com</a></li>
+        <li><span>Licence</span>DRE #02141908</li>
+      </ul>
+    </div>
+    <form class="contact-form" id="contact-form" data-reveal novalidate>
+      <label class="field"><span>Your name</span><input name="name" type="text" autocomplete="name" required></label>
+      <label class="field"><span>Phone or email</span><input name="reach" type="text" autocomplete="tel" required></label>
+      <label class="field"><span>Property</span><select name="listing" id="contact-listing"></select></label>
+      <label class="field"><span>Anything he should know</span><textarea name="note" rows="3"></textarea></label>
+      <button class="btn primary" type="submit">Request the showing</button>
+      <p class="micro" id="contact-status">This demo keeps your request on this device — nothing is transmitted.</p>
+    </form>
+  </div>
+  <figure class="wide-plate" data-parallax="0.22">
+    <img src="./media/keys-closing.avif" alt="Keys and champagne on a marble console at a closing"
+         data-hi="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260905_031046_79d1c644-1e3f-4d82-a917-0cc05ff873dc.png">
+  </figure>
+</section>
+
+<footer>
+  <p><b>Montes &amp; Co. Coastal Properties</b> · DRE #02141908 · Pismo Beach, California</p>
+  <p class="micro">
+    A demonstration site. Listings, figures and the track record are
+    illustrative. Everything on this page — the 3D scene, the concierge, the
+    music and the hand tracking — runs on your device.
+  </p>
+</footer>
+
+</main>
+
+<!-- The concierge ------------------------------------------------------- -->
+<section id="concierge" aria-label="Concierge">
+  <div id="transcript" aria-live="polite"></div>
+  <form id="ask-form" autocomplete="off">
+    <button id="btn-mic" class="mic-btn" type="button" aria-label="Tap to speak, tap again to stop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M18 11a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.9V22h2v-3.1A8 8 0 0 0 20 11z"/></svg>
+    </button>
+    <input id="ask" type="text" placeholder="Ask about a property, a payment, or say “book a tour”" aria-label="Ask the concierge">
+    <button class="btn send" type="submit" aria-label="Send">↵</button>
+  </form>
+</section>
+
+<!-- The camera, only ever visible when the visitor turns it on ---------- -->
+<aside id="camera" hidden>
+  <div class="camera-frame">
+    <video id="camera-video" playsinline muted></video>
+    <canvas id="camera-overlay" width="200" height="150"></canvas>
+    <span class="camera-badge" id="camera-badge">looking for a hand</span>
+  </div>
+  <p class="micro">Move a hand up or down to scroll. No frame leaves this device.</p>
+  <button class="btn ghost small" type="button" id="camera-close">Turn off</button>
+</aside>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
