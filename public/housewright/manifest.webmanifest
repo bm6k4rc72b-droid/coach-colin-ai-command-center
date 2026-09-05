@@ -1,0 +1,16 @@
+{
+  "name": "HOUSEWRIGHT — Survey, Plan & Improvement Analysis",
+  "short_name": "Housewright",
+  "description": "Measure a property by pointing at it. Dimensioned floor plans, a 3D massing model, and an ROI-ranked renovation report. Works offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080d12",
+  "theme_color": "#080d12",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

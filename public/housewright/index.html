@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#080d12" />
+<meta name="description" content="HOUSEWRIGHT — measure a property by pointing at it, get a dimensioned floor plan, a 3D massing model, and an ROI-ranked renovation report. Works offline on phone, tablet and laptop." />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Housewright" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="stylesheet" href="./styles.css" />
+<title>HOUSEWRIGHT — Survey, Plan &amp; Improvement Analysis</title>
+</head>
+<body>
+
+<header id="chrome">
+  <div class="brand"><span class="mark">▤</span> <span>HOUSEWRIGHT</span></div>
+  <nav>
+    <button class="tab on" type="button" data-go="setup">Setup</button>
+    <button class="tab" type="button" data-go="walk">Walk</button>
+    <button class="tab" type="button" data-go="plan">Plan</button>
+    <button class="tab" type="button" data-go="model">3D</button>
+    <button class="tab" type="button" data-go="report">Report</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ---------------------------------------------------------------- setup -->
+<section class="panel" data-view="setup">
+  <div class="wrap">
+    <h1>Measure the property by pointing at it.</h1>
+    <p class="lede">
+      Hold the phone at a known height, aim where the wall meets the floor, and
+      hold a fingertip still in the frame. Each dwell drops a corner. Four
+      corners make a room; the rooms make a plan, a massing model, and a
+      ranked list of what is worth spending money on.
+    </p>
+
+    <div class="grid">
+      <label>Property
+        <input id="address" type="text" placeholder="1490 Aspen Court" />
+      </label>
+      <label>Hold height (m)
+        <input id="holdHeight" type="number" step="0.01" min="0.5" max="2.2" value="1.45" inputmode="decimal" />
+        <small>Phone height above the floor. Every distance scales with this, so measure it once properly.</small>
+      </label>
+      <label>Local price / sq ft
+        <input id="pricePerSqft" type="number" step="1" min="0" placeholder="420" inputmode="decimal" />
+      </label>
+      <label>Best on the street / sq ft
+        <input id="ceilingPricePerSqft" type="number" step="1" min="0" placeholder="610" inputmode="decimal" />
+        <small>The ceiling the block will bear. Leave blank and a conservative one is assumed.</small>
+      </label>
+      <label>Listed area (sq ft)
+        <input id="totalSqft" type="number" step="1" min="0" placeholder="2100" inputmode="decimal" />
+        <small>Used for valuation when you only walk part of the house.</small>
+      </label>
+      <label>Finish level
+        <select id="tier">
+          <option value="essential">Essential — make it sound and clean</option>
+          <option value="elevated" selected>Elevated — the safe middle</option>
+          <option value="luxury">Luxury — compete at the top of the street</option>
+        </select>
+      </label>
+      <label>Condition
+        <select id="condition">
+          <option value="tired">Tired — systems and envelope at end of life</option>
+          <option value="dated" selected>Dated — sound, but of its decade</option>
+          <option value="renovated">Recently renovated</option>
+        </select>
+      </label>
+      <label class="check"><input id="hasGarage" type="checkbox" checked /> Garage faces the street</label>
+    </div>
+
+    <details class="cal">
+      <summary>Calibrate the hold height against something you can measure</summary>
+      <p>Shoot the floor at a known distance, then enter both numbers. The height is corrected by the ratio, which removes the error from every shot afterwards.</p>
+      <div class="calrow">
+        <label>App said (m)<input id="calMeasured" type="number" step="0.01" min="0" inputmode="decimal" /></label>
+        <label>Actually (m)<input id="calActual" type="number" step="0.01" min="0" inputmode="decimal" /></label>
+        <button id="calibrateBtn" class="ghost" type="button">Correct</button>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button id="startWalk" class="primary" type="button">Start the walk</button>
+      <button id="newSurveyBtn" class="ghost" type="button">New survey</button>
+      <button id="exportJsonBtn" class="ghost" type="button">Export survey</button>
+    </div>
+
+    <h2>Rooms <span id="surveyTotals" class="muted"></span></h2>
+    <div id="roomList" class="roomlist"></div>
+
+    <p class="fineprint">
+      Everything stays on this device. No account, no upload, no network call —
+      which is also why it keeps working in a basement with no signal.
+    </p>
+  </div>
+</section>
+
+<!-- ----------------------------------------------------------------- walk -->
+<section class="panel" data-view="walk" hidden>
+  <div id="stage">
+    <video id="walkVideo" playsinline muted autoplay disablepictureinpicture></video>
+    <div id="cursor" hidden><i></i></div>
+    <div id="reticle"><div class="cross"></div></div>
+
+    <!-- Everything readable sits in one flex column over the video, so the
+         controls stack from the bottom up without any hard-coded offsets to
+         fall out of step when a panel grows. -->
+    <div id="overlay">
+      <div id="aim">
+        <div><dt>Range</dt><dd id="aimRange">—</dd></div>
+        <div><dt>Angle</dt><dd id="aimAngle">—</dd></div>
+        <div><dt>Finger</dt><dd id="handState">no hand</dd></div>
+        <div><dt>Corners</dt><dd id="cornerCount">0</dd></div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div id="typePad" hidden>
+        <p class="hint">Each run is a wall length and the turn onto the next wall. The loop closes itself.</p>
+        <div id="runList"></div>
+        <button id="addRunBtn" class="ghost" type="button">+ wall run</button>
+      </div>
+
+      <p id="modeHint" class="hint"></p>
+
+      <div id="modes">
+        <button class="mode on" type="button" data-mode="point">Point</button>
+        <button class="mode" type="button" data-mode="trace">Trace</button>
+        <button class="mode" type="button" data-mode="type">Type</button>
+        <button id="torchBtn" class="mode" type="button" title="Torch" aria-label="Torch">☀</button>
+      </div>
+
+      <div id="walkFoot">
+        <canvas id="mini" width="150" height="150"></canvas>
+        <div class="fields">
+          <label>Room<input id="roomName" type="text" value="Living room" /></label>
+          <label>Type<select id="roomType"></select></label>
+          <label>Ceiling (m)<input id="roomCeiling" type="number" step="0.01" min="1.8" max="6" value="2.44" inputmode="decimal" /></label>
+          <p id="liveArea" class="live">—</p>
+        </div>
+        <div class="buttons">
+          <button id="shootBtn" class="primary" type="button">Shoot corner</button>
+          <button id="undoBtn" class="ghost" type="button">Undo</button>
+          <button id="saveRoomBtn" class="ghost" type="button">Save room</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p id="status" class="status" aria-live="polite"></p>
+</section>
+
+<!-- ----------------------------------------------------------------- plan -->
+<section class="panel" data-view="plan" hidden>
+  <div class="wrap">
+    <h2>Floor plan</h2>
+    <div id="planHost" class="planhost"></div>
+    <dl id="planStats" class="stats"></dl>
+    <button id="exportPlanBtn" class="ghost" type="button">Export SVG</button>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------------- 3D -->
+<section class="panel" data-view="model" hidden>
+  <div class="wrap">
+    <h2>Massing model</h2>
+    <p class="muted">Drag to orbit, scroll to zoom. Openings are cut from the walls as surveyed.</p>
+    <canvas id="modelCanvas"></canvas>
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- report -->
+<section class="panel" data-view="report" hidden>
+  <div class="wrap">
+    <h2>Improvement analysis</h2>
+    <div id="reportHost" class="report"></div>
+    <button id="exportReportBtn" class="ghost" type="button">Export report</button>
+  </div>
+</section>
+
+</main>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

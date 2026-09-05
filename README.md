@@ -47,6 +47,56 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: HOUSEWRIGHT — survey, plan and improvement analysis
+
+A property survey tool at [`public/housewright/`](public/housewright) that
+**measures a room by pointing at it** and turns the result into a dimensioned
+floor plan, an orbitable 3D massing model, and a renovation report that ranks
+the work by what it actually returns.
+
+Locally it is `/housewright/` (`http://localhost:4173/housewright/` under
+`./start.sh`). Self-contained like the rest: no build step, no dependencies, no
+backend, no account, and it keeps working in a basement with no signal.
+
+The walk is the point. Hold the phone at a stated height, aim where a wall
+meets the floor, and **hold a fingertip still in the frame for a second** — a
+dwell drops a corner, so nothing is tapped and the phone does not move at the
+moment its orientation is being read. Four corners make a room.
+
+- **The maths is a single identity**, `distance = height / tan(depression)`,
+  plus honest guards around it. Headings are always relative to the first shot
+  of a room, because an indoor compass is dragged around by tens of degrees by
+  steel studs and appliances. Shots too close to level are refused rather than
+  answered confidently, and the reticle grades every shot on what a degree of
+  hand-shake costs as a *share* of the distance being measured.
+- **Nearly-square rooms are squared up**, and genuinely canted ones are not.
+  A surveyed quadrilateral with a few centimetres of aim error becomes a true
+  rectangle; a wall at 40° to the grid is left exactly where it was.
+- **The fingertip tracker is classical** — a skin-chroma mask, connected
+  components, and motion used to qualify a whole component rather than each
+  pixel of it. That distinction is the whole design: a dwelling finger stops
+  moving at exactly the moment the gesture needs it, and a pine door is
+  squarely inside the skin locus.
+- **The report says no.** It computes the ceiling the street imposes, rations
+  uplift against it best-return-first with diminishing returns, and tells a
+  property already at that ceiling — in those words — that further work is a
+  lifestyle spend. Staging outranks a full kitchen rebuild, which is the
+  useful part.
+- **No sensors, no problem.** A laptop falls back to tracing a photograph
+  against a known dimension, or dictating the room as wall runs.
+
+Everything stays on the device; exports carry geometry and market figures, not
+photographs. Estimates are planning-grade bands from published national
+remodelling cost-and-recoup ranges — not an appraisal, and the app says so on
+every surface that prints a number.
+
+[`docs/housewright.md`](docs/housewright.md). Tests: `npm run test:housewright`
+(57 unit tests, no browser needed) and `npm run qa:housewright` (21 end-to-end
+checks driving the real app in headless Chromium against a synthetic camera,
+including the touch-free dwell capture).
+
+---
+
 ## Also in here: Jose Montes — Central Coast
 
 A luxury estate site at [`public/jose-montes/`](public/jose-montes), built as
