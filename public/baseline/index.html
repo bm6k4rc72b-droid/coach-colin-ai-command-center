@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#05080b" />
+<meta name="description" content="Baseline — a camera pulse scan and an offline coach that prescribes today's session against your own resting history. Runs entirely on the device." />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Baseline" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<link rel="stylesheet" href="./styles.css" />
+<title>Baseline — Camera Vitals &amp; AI Coach</title>
+</head>
+<body>
+
+<div id="stage">
+  <video id="preview" playsinline muted autoplay disablepictureinpicture></video>
+  <canvas id="overlay"></canvas>
+
+  <header id="topbar">
+    <button class="chip" id="modeChip" type="button" aria-live="polite">◉ <span id="modeName">Resting scan</span></button>
+    <div class="spacer"></div>
+    <button class="icon" id="lensBtn" type="button" title="Switch camera" aria-label="Switch camera">⇄</button>
+    <button class="icon" id="trendsBtn" type="button" title="Trends" aria-label="Trends">⌁</button>
+    <button class="icon" id="menuBtn" type="button" title="Menu" aria-label="Menu">☰</button>
+  </header>
+
+  <div id="engineTag"><span id="fpsText">—</span> · <span id="engineText">on-device</span></div>
+
+  <section id="scanPanel" aria-live="polite">
+    <div class="scan-head">
+      <div>
+        <p class="scan-phase" id="scanPhase">Hold still</p>
+        <p class="scan-sub" id="scanSub">Fill the oval. Face a window or a lamp.</p>
+      </div>
+      <div class="scan-count"><strong id="scanCountdown">40</strong><span>sec</span></div>
+    </div>
+
+    <div class="live-row">
+      <div class="live-stat"><dt>Pulse</dt><dd id="liveBpm">—</dd></div>
+      <div class="live-stat"><dt>Signal</dt><dd id="liveSnr">—</dd></div>
+      <div class="live-stat"><dt>Beats</dt><dd id="liveBeats">—</dd></div>
+    </div>
+
+    <canvas id="wave" height="90" aria-label="Live pulse waveform"></canvas>
+
+    <div class="quality-row">
+      <span class="qchip" id="qLight">Light</span>
+      <span class="qchip" id="qStill">Stillness</span>
+      <span class="qchip" id="qFace">Face</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="cancelScanBtn" type="button">Cancel</button>
+    </div>
+  </section>
+
+  <section id="breathPanel" hidden aria-live="polite">
+    <div class="breath-orb" id="breathOrb"><span id="breathLabel">In</span></div>
+    <p class="breath-count" id="breathCount">4</p>
+    <p class="breath-sub" id="breathSub">Coherent · 6 per minute — the camera is watching your pulse follow it.</p>
+    <div class="live-row">
+      <div class="live-stat"><dt>Pulse</dt><dd id="breathBpm">—</dd></div>
+      <div class="live-stat"><dt>Swing</dt><dd id="breathSwing">—</dd></div>
+      <div class="live-stat"><dt>Left</dt><dd id="breathLeft">—</dd></div>
+    </div>
+    <canvas id="breathWave" height="70" aria-label="Live pulse rate during breathing"></canvas>
+    <div class="actions">
+      <button class="btn" id="breathStopBtn" type="button">Finish</button>
+    </div>
+  </section>
+
+  <div id="startGate">
+    <div class="gate-card">
+      <h1>Baseline</h1>
+      <p class="tagline">A camera pulse scan and a coach that reads it against <em>your</em> history — not a population chart.</p>
+      <ul class="gate-points">
+        <li><strong>Forty seconds of your face</strong> gives resting pulse, heart-rate variability and breathing rate, from blood flow the camera can see and you cannot.</li>
+        <li><strong>The coach prescribes today's session</strong> from that reading and four questions, with the heart rates to hold and the reason it chose them.</li>
+        <li><strong>Nothing leaves the device.</strong> No account, no upload, no server. Works on iPhone, Android and a laptop webcam.</li>
+      </ul>
+      <button class="btn primary big" id="startBtn" type="button">Start the scan</button>
+      <p class="gate-note" id="gateNote">The camera opens only when you tap, and frames are analysed and thrown away — never stored, never sent.</p>
+      <button class="linklike" id="helpLink" type="button">How it works, and what it cannot do</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result and prescription -->
+<div class="sheet" id="resultSheet" hidden role="dialog" aria-label="Reading and today's session">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2 id="resultTitle">This morning</h2><button class="icon" data-close type="button">✕</button></div>
+
+    <div class="reading-grid">
+      <div class="reading big"><dt>Resting pulse</dt><dd id="outBpm">—</dd><small id="outBpmRef">—</small></div>
+      <div class="reading"><dt>Variability</dt><dd id="outHrv">—</dd><small id="outHrvRef">—</small></div>
+      <div class="reading"><dt>Breathing</dt><dd id="outBreath">—</dd><small id="outBreathRef">—</small></div>
+      <div class="reading wide"><dt>Scan quality</dt><dd id="outGrade">—</dd><small id="outGradeRef">—</small></div>
+    </div>
+
+    <div class="readiness" id="readinessBlock">
+      <div class="readiness-dial">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="dial-track" cx="60" cy="60" r="50"></circle>
+          <circle class="dial-value" id="dialValue" cx="60" cy="60" r="50"></circle>
+        </svg>
+        <div class="dial-centre"><strong id="readinessScore">—</strong><span id="readinessBand">building</span></div>
+      </div>
+      <div class="readiness-drivers" id="readinessDrivers"></div>
+    </div>
+
+    <div class="plan" id="planBlock">
+      <p class="plan-verdict" id="planVerdict">—</p>
+      <p class="plan-headline" id="planHeadline">—</p>
+      <div class="plan-session">
+        <h3 id="planTitle">—</h3>
+        <ol id="planBlocks"></ol>
+      </div>
+      <div class="plan-zones" id="planZones"></div>
+      <div class="plan-cautions" id="planCautions"></div>
+      <details class="plan-why">
+        <summary>Why this session</summary>
+        <ul id="planRationale"></ul>
+      </details>
+    </div>
+
+    <div class="actions wrap">
+      <button class="btn primary" id="askBtn" type="button">Ask the coach</button>
+      <button class="btn" id="breatheBtn" type="button">Breathe &amp; re-measure</button>
+      <button class="btn" id="rescanBtn" type="button">Scan again</button>
+      <button class="btn" id="contextBtn" type="button">Edit today's answers</button>
+    </div>
+    <p class="disclaimer">Baseline is a training tool, not a medical device. It does not diagnose anything. Symptoms belong to a clinician, not an app.</p>
+  </div>
+</div>
+
+<!-- Daily context -->
+<div class="sheet" id="contextSheet" hidden role="dialog" aria-label="Today's answers">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Four questions</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">The camera cannot see these, and they move readiness as much as your pulse does.</p>
+
+    <label class="field">
+      <span>Sleep last night <output id="sleepOut">7.5 h</output></span>
+      <input type="range" id="sleepInput" min="3" max="11" step="0.25" value="7.5" />
+    </label>
+    <label class="field">
+      <span>How that sleep felt <output id="sleepQualityOut">Fine</output></span>
+      <input type="range" id="sleepQualityInput" min="0" max="4" step="1" value="2" />
+    </label>
+    <label class="field">
+      <span>Soreness <output id="sorenessOut">None</output></span>
+      <input type="range" id="sorenessInput" min="0" max="4" step="1" value="0" />
+    </label>
+    <label class="field">
+      <span>Stress <output id="stressOut">Calm</output></span>
+      <input type="range" id="stressInput" min="0" max="4" step="1" value="0" />
+    </label>
+    <label class="field">
+      <span>Drinks last night <output id="alcoholOut">None</output></span>
+      <input type="range" id="alcoholInput" min="0" max="6" step="1" value="0" />
+    </label>
+
+    <div class="sheet-head"><h2>What you planned</h2></div>
+    <div class="segmented" id="plannedSegmented"></div>
+
+    <div class="actions">
+      <button class="btn primary" id="contextSaveBtn" type="button">Use these answers</button>
+    </div>
+  </div>
+</div>
+
+<!-- Coach conversation -->
+<div class="sheet" id="coachSheet" hidden role="dialog" aria-label="Ask the coach">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Ask the coach</h2><button class="icon" data-close type="button">✕</button></div>
+    <div id="coachLog" class="coach-log" aria-live="polite"></div>
+    <div class="coach-suggestions" id="coachSuggestions"></div>
+    <form class="coach-input" id="coachForm">
+      <input type="text" id="coachQuestion" placeholder="Can I still do my intervals tonight?" autocomplete="off" />
+      <button class="icon" id="coachMicBtn" type="button" title="Speak" aria-label="Speak">🎙</button>
+      <button class="btn primary" type="submit">Ask</button>
+    </form>
+    <p class="sheet-note" id="coachEngineNote">Answering on-device. Add a key in Settings for conversational answers.</p>
+  </div>
+</div>
+
+<!-- Breathing setup -->
+<div class="sheet" id="breathSheet" hidden role="dialog" aria-label="Breathing protocol">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Breathe</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">Pick a pace. The camera keeps reading your pulse throughout, so at the end you see whether your heart actually followed — not just that you sat still for three minutes.</p>
+    <div id="protocolList" class="protocol-list"></div>
+    <label class="field">
+      <span>Length <output id="breathMinutesOut">3 min</output></span>
+      <input type="range" id="breathMinutesInput" min="1" max="10" step="1" value="3" />
+    </label>
+    <div class="actions">
+      <button class="btn primary" id="breathStartBtn" type="button">Start</button>
+    </div>
+    <div id="breathResult" class="breath-result" hidden></div>
+  </div>
+</div>
+
+<!-- Trends -->
+<div class="sheet" id="trendsSheet" hidden role="dialog" aria-label="Trends">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Trends</h2><button class="icon" data-close type="button">✕</button></div>
+    <div id="baselineState" class="baseline-state"></div>
+    <div class="trend" id="trendHr"></div>
+    <div class="trend" id="trendHrv"></div>
+    <div class="trend" id="trendReadiness"></div>
+    <div class="sheet-head"><h2>Sessions</h2></div>
+    <div id="sessionList" class="session-list"></div>
+    <div class="actions wrap">
+      <button class="btn" id="exportCsvBtn" type="button">Export CSV</button>
+      <button class="btn" id="exportJsonBtn" type="button">Export JSON</button>
+      <button class="btn danger" id="clearBtn" type="button">Erase everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="sheet" id="menuSheet" hidden role="dialog" aria-label="Settings">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Settings</h2><button class="icon" data-close type="button">✕</button></div>
+
+    <label class="field">
+      <span>Age <output id="ageOut">35</output></span>
+      <input type="range" id="ageInput" min="14" max="90" step="1" value="35" />
+      <small>Sets the estimated maximum heart rate the zones are built from. A measured maximum is better — enter it below if you have one.</small>
+    </label>
+    <label class="field">
+      <span>Measured max heart rate <output id="maxHrOut">not set</output></span>
+      <input type="range" id="maxHrInput" min="0" max="220" step="1" value="0" />
+      <small>Leave at zero to estimate it from age.</small>
+    </label>
+    <div class="sheet-head"><h2>Goal</h2></div>
+    <div class="segmented" id="goalSegmented"></div>
+
+    <label class="field">
+      <span>Scan length <output id="scanLenOut">40 s</output></span>
+      <input type="range" id="scanLenInput" min="20" max="90" step="5" value="40" />
+      <small>Under 30 seconds the rate is still fine but variability stops being trustworthy.</small>
+    </label>
+
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="speakToggle" checked /><span>Coach speaks</span></label>
+      <label class="toggle"><input type="checkbox" id="hapticToggle" checked /><span>Haptics</span></label>
+      <label class="toggle"><input type="checkbox" id="waveToggle" checked /><span>Live waveform</span></label>
+    </div>
+
+    <div class="sheet-head"><h2>Conversational coach (optional)</h2></div>
+    <p class="sheet-note">The prescription is always decided on-device by rules you can read. A key only changes how it is worded and lets you ask follow-ups in your own words. Your numbers — never video — go to the endpoint you choose.</p>
+    <div class="segmented" id="providerSegmented"></div>
+    <label class="field">
+      <span>API key</span>
+      <input type="password" id="apiKeyInput" placeholder="sk-…" autocomplete="off" />
+      <small id="providerHint">An Anthropic API key (starts with sk-ant-).</small>
+    </label>
+    <div class="actions wrap">
+      <button class="btn" id="saveKeyBtn" type="button">Save key</button>
+      <button class="btn" id="forgetKeyBtn" type="button">Forget key</button>
+    </div>
+
+    <button class="linklike" id="helpLink2" type="button">How it works, and what it cannot do</button>
+  </div>
+</div>
+
+<!-- Help -->
+<div class="sheet" id="helpSheet" hidden role="dialog" aria-label="How it works">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>How it works</h2><button class="icon" data-close type="button">✕</button></div>
+
+    <h3>Seeing a pulse with a camera</h3>
+    <p>Every heartbeat pushes blood into the capillaries just under your skin, and haemoglobin absorbs green light. Your face therefore darkens and lightens by roughly half a per cent, sixty-odd times a minute. That is far too small to see and quite large enough to measure: the app averages the skin inside the oval down to one red, one green and one blue number per frame, and looks for a 0.6–3 Hz oscillation in the result.</p>
+    <p>The colour mixing is <em>POS</em> (plane-orthogonal-to-skin), with <em>CHROM</em> as a second opinion. Both project the three channels onto combinations where anything that changes all three together — you leaning toward the lamp, the auto-exposure stepping, a cloud — cancels exactly, while the pulse survives because blood absorbs the three bands differently. That is why a small fidget does not become a heart rate.</p>
+
+    <h3>Why it refuses to score you at first</h3>
+    <p>A resting pulse of 58 is unremarkable in one person and a warning in another; an HRV of 30 ms is poor at twenty and excellent at sixty. Population norms cannot tell you anything useful about a single morning. So the app collects four resting scans before it will produce a readiness score at all, and from then on every number is quoted against <em>your</em> median and your own spread — robust statistics, so one scan taken after running up the stairs cannot redefine normal.</p>
+
+    <h3>What the coach is</h3>
+    <p>A decision engine, not a chat model. Readiness, your answers about sleep and soreness, and how many hard days you have strung together choose an intensity tier; the tier and your goal choose a session; your measured resting rate and age set the heart-rate ceilings by the Karvonen method. Every prescription lists the rule that produced it, and the whole thing works with the phone in aeroplane mode. If you add an API key, a language model rewords the same decision and answers follow-ups — it never overrules the rules.</p>
+
+    <h3>Honest limits</h3>
+    <ul>
+      <li><strong>Rate is good; variability is only fair.</strong> Frequency survives a mediocre scan because it only needs the dominant oscillation. RMSSD needs the position of every individual beat, and a phone camera at 30 frames a second locates each one to a few milliseconds at best. The app withholds the HRV figure rather than print one it cannot stand behind.</li>
+      <li><strong>Light and stillness are the whole game.</strong> Front-lit, indirect, no flicker, elbows supported. Backlight, a dim room, or a phone held in a moving hand will fail the quality gate, and it will tell you which.</li>
+      <li><strong>It measures resting state.</strong> Scan before you get up and moving, at roughly the same time each day. A scan two minutes after exercise is a fine measurement of something, but it is not your baseline, and the app files it separately.</li>
+      <li><strong>It is not a diagnosis and cannot be one.</strong> No camera app can detect illness, arrhythmia, or a heart condition. If a reading is strange for days, or you have symptoms, that is a conversation with a clinician.</li>
+      <li><strong>Skin tone, make-up and facial hair all matter</strong>, because they change how much light comes back. The signal-to-noise figure on every scan is the app's honest report of how well it did on <em>you</em>, today.</li>
+    </ul>
+
+    <h3>Privacy</h3>
+    <p>Frames are analysed in memory and discarded — nothing is recorded, and there is no server to record it to. Scans, settings and any API key live in this browser's local storage and leave only when you export them. Erasing everything in Trends erases everything.</p>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
