@@ -49,7 +49,8 @@
     "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
     "qa:nexus": "node scripts/qa-nexus.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs",
-    "qa:housewright": "node scripts/qa-housewright.mjs"
+    "qa:housewright": "node scripts/qa-housewright.mjs",
+    "bundle:housewright": "node scripts/bundle-housewright.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

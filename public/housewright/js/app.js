@@ -10,6 +10,7 @@
  */
 
 import { CameraFeed, Orientation } from './camera.js';
+import { exampleSurvey } from './demo.js';
 import * as finish from './finish.js';
 import * as hand from './hand.js';
 import * as ledger from './ledger.js';
@@ -592,17 +593,41 @@ function boot() {
     renderRoomList();
     say('New survey started.', 3);
   });
+  $('loadExampleBtn').addEventListener('click', () => {
+    state.survey = exampleSurvey();
+    state.selected = 0;
+    ledger.upsert(state.survey);
+    writeSetup();
+    renderRoomList();
+    show('report');
+    say('Loaded a worked example — five measured rooms, a dated interior, and a market with room above it.', 7);
+  });
+  /**
+   * Run an export and say what happened, since a mediated save can be
+   * declined and a silent button is worse than a refused one.
+   *
+   * @param {string} filename Suggested name.
+   * @param {string} content File body.
+   * @param {string} type MIME type.
+   * @returns {Promise<void>}
+   */
+  const exportFile = async (filename, content, type) => {
+    const saved = await ledger.download(filename, content, type);
+    say(saved ? `${filename} exported.` : 'Export was not saved.', 4);
+  };
+  const slug = () => state.survey.address.replace(/\W+/g, '-');
+
   $('exportJsonBtn').addEventListener('click', () => {
-    ledger.download(`${state.survey.address.replace(/\W+/g, '-')}-survey.json`, ledger.toJson(state.survey));
+    exportFile(`${slug()}-survey.json`, ledger.toJson(state.survey), 'application/json');
   });
   $('exportPlanBtn').addEventListener('click', () => {
     const room = state.survey.rooms[state.selected ?? 0];
     if (!room) return say('No room to export.', 3);
-    ledger.download(`${room.name.replace(/\W+/g, '-')}-plan.svg`, plan.toSvg(room, { title: state.survey.address }), 'image/svg+xml');
+    return exportFile(`${room.name.replace(/\W+/g, '-')}-plan.svg`, plan.toSvg(room, { title: state.survey.address }), 'image/svg+xml');
   });
   $('exportReportBtn').addEventListener('click', () => {
     if (!state.report) return say('Generate the report first.', 3);
-    ledger.download(`${state.survey.address.replace(/\W+/g, '-')}-report.txt`, report.toText(state.report, state.survey.address), 'text/plain');
+    return exportFile(`${slug()}-report.txt`, report.toText(state.report, state.survey.address), 'text/plain');
   });
   $('torchBtn').addEventListener('click', async () => {
     state.torch = await camera.torch(!state.torch);

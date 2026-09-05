@@ -131,14 +131,48 @@ export function toJson(survey) {
 }
 
 /**
+ * The host's mediated save, where the page is running inside one.
+ *
+ * An embedded viewer does not let a frame start its own download — the host
+ * asks the viewer first. Where that path exists the app has to use it, and
+ * where it does not (GitHub Pages, a local file, a phone's browser) the plain
+ * anchor is still the right answer. Probing costs nothing when `claude` is
+ * absent, which is the common case.
+ *
+ * @returns {Promise<object|null>} The save namespace, or `null`.
+ */
+async function hostSave() {
+  const use = globalThis.claude?.use;
+  if (typeof use !== 'function') return null;
+  try {
+    return await use.call(globalThis.claude, 'downloads');
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Offer a file to the operator.
  *
  * @param {string} filename Suggested name.
  * @param {string} content File body.
  * @param {string} [type='application/json'] MIME type.
- * @returns {boolean} Whether the download could be started.
+ * @returns {Promise<boolean>} Whether the file was handed over. False covers
+ *   a viewer declining as well as a failure, because from the app's side
+ *   those are the same outcome: no file, and nothing to apologise for.
  */
-export function download(filename, content, type = 'application/json') {
+export async function download(filename, content, type = 'application/json') {
+  const host = await hostSave();
+  if (host) {
+    try {
+      const result = await host.save({ filename, data: content });
+      return result?.status === 'saved' || result?.status === 'delivered';
+    } catch {
+      // A declined prompt is a normal outcome, not an error to fall through
+      // to a second attempt the viewer already refused.
+      return false;
+    }
+  }
   try {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);

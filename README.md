@@ -90,6 +90,11 @@ photographs. Estimates are planning-grade bands from published national
 remodelling cost-and-recoup ranges — not an appraisal, and the app says so on
 every surface that prints a number.
 
+`npm run bundle:housewright` flattens the whole app — ten modules, stylesheet
+and markup — into one self-contained HTML file you can email or drop on any
+host, with a build that refuses to run if the modules ever stop being
+flattenable.
+
 [`docs/housewright.md`](docs/housewright.md). Tests: `npm run test:housewright`
 (57 unit tests, no browser needed) and `npm run qa:housewright` (21 end-to-end
 checks driving the real app in headless Chromium against a synthetic camera,

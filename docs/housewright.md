@@ -172,6 +172,28 @@ Planning-grade estimates for deciding what to look at first. Not an appraisal,
 not a bid, not a guarantee of value. The caveat is on the screen, in the text
 export, and on the SVG plan.
 
+## A single file, when you need one
+
+`npm run bundle:housewright` flattens the ten modules, the stylesheet and the
+markup into one self-contained HTML file you can email, drop on any host, or
+open from a USB stick. `--body-only` omits the document wrapper for hosts that
+supply their own.
+
+The transform is deliberately dumb — strip the relative imports, concatenate in
+dependency order, emit a namespace object per module — and it is safe only
+because two properties are *checked* rather than assumed: every import is a
+relative sibling, and no two modules declare the same top-level name. A
+violation of either fails the build with the offending identifier and both
+files, rather than producing a bundle that is subtly wrong.
+
+## Exporting
+
+The plan, the report and the raw survey all export. Where the app is served
+normally that is a plain download. Where it is embedded in a viewer that does
+not let a frame start its own download, `ledger.download()` asks the host to
+mediate the save instead, and reports honestly when the viewer declines. A
+button that silently does nothing is worse than one that says it was refused.
+
 ## Privacy
 
 A job walk happens in a house with someone else's name on the deed, often

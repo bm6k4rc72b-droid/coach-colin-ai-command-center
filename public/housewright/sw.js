@@ -18,6 +18,7 @@ const SHELL = [
   './icon-maskable.svg',
   './js/app.js',
   './js/camera.js',
+  './js/demo.js',
   './js/finish.js',
   './js/hand.js',
   './js/ledger.js',
