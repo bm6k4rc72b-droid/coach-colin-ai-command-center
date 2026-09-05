@@ -47,6 +47,52 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: Baseline
+
+A camera-vitals app at [`public/baseline/`](public/baseline) that measures
+**resting pulse, heart-rate variability and breathing rate from forty seconds
+of your face**, then prescribes today's training session from how those compare
+with *your own* recent history. iPhone, Android, or any laptop with a webcam.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/baseline/>** — open it on a phone and add it to the home screen. Locally it is
+`/baseline/` (`http://localhost:4173/baseline/` under `./start.sh`).
+Self-contained like the others: no build step, no dependencies, no backend, no
+account, and it keeps working with the signal off.
+
+- **It really does read your pulse off your skin.** Haemoglobin absorbs green
+  light, so a face darkens by about half a per cent on every beat. The mixing
+  is POS with CHROM as a second opinion — both cancel, exactly, anything that
+  changes all three colour channels together, which is why leaning toward a
+  lamp does not become a heart rate.
+- **It says when it could not read you.** Every scan carries a signal-to-noise
+  figure, and a scan that fails it is reported as unusable with the reason
+  named — too dark, too much movement, face left the oval — rather than
+  printing the largest bump in a spectrum made of noise.
+- **Variability is held to a stricter bar than rate**, because RMSSD needs
+  every individual beat located to a few milliseconds. Peaks are refined below
+  the frame grid, and the figure is withheld entirely when the scan cannot
+  support it.
+- **It refuses to score you for the first four scans.** A resting pulse of 58
+  means nothing without knowing yours; readiness is quoted against your own
+  median and spread, computed robustly so one bad morning cannot redefine
+  normal.
+- **The coach is a decision engine, not a chat model** — tier rules, sixteen
+  session templates, and Karvonen zones from your measured resting rate, each
+  prescription showing the rule that produced it. An optional API key lets a
+  language model reword the same decision; it never overrules it.
+- **Paced breathing that measures whether it worked** — the camera keeps
+  reading your pulse through the round, so it ends with how far your rate swung
+  and whether the swing was locked to the pacing.
+
+Full write-up, including the signal processing and the honest limits:
+[`docs/baseline.md`](docs/baseline.md). Tests: `npm run test:baseline`
+(75 unit tests) and `npm run qa:baseline` (32 end-to-end checks driving the
+real app in Chromium against a synthetic face that pulses at exactly 66 bpm).
+
+Baseline is a training tool, not a medical device, and says so on every result.
+
+---
+
 ## Also in here: Jose Montes — Central Coast
 
 A luxury estate site at [`public/jose-montes/`](public/jose-montes), built as
