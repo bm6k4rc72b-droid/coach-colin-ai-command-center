@@ -97,6 +97,100 @@ real app in Chromium, including a stubbed roster feed and a dead one).
 
 ---
 
+## Also in here: Baseline
+
+A camera-vitals app at [`public/baseline/`](public/baseline) that measures
+**resting pulse, heart-rate variability and breathing rate from forty seconds
+of your face**, then prescribes today's training session from how those compare
+with *your own* recent history. iPhone, Android, or any laptop with a webcam.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/baseline/>** — open it on a phone and add it to the home screen. Locally it is
+`/baseline/` (`http://localhost:4173/baseline/` under `./start.sh`).
+Self-contained like the others: no build step, no dependencies, no backend, no
+account, and it keeps working with the signal off.
+
+- **It really does read your pulse off your skin.** Haemoglobin absorbs green
+  light, so a face darkens by about half a per cent on every beat. The mixing
+  is POS with CHROM as a second opinion — both cancel, exactly, anything that
+  changes all three colour channels together, which is why leaning toward a
+  lamp does not become a heart rate.
+- **It says when it could not read you.** Every scan carries a signal-to-noise
+  figure, and a scan that fails it is reported as unusable with the reason
+  named — too dark, too much movement, face left the oval — rather than
+  printing the largest bump in a spectrum made of noise.
+- **Variability is held to a stricter bar than rate**, because RMSSD needs
+  every individual beat located to a few milliseconds. Peaks are refined below
+  the frame grid, and the figure is withheld entirely when the scan cannot
+  support it.
+- **It refuses to score you for the first four scans.** A resting pulse of 58
+  means nothing without knowing yours; readiness is quoted against your own
+  median and spread, computed robustly so one bad morning cannot redefine
+  normal.
+- **The coach is a decision engine, not a chat model** — tier rules, sixteen
+  session templates, and Karvonen zones from your measured resting rate, each
+  prescription showing the rule that produced it. An optional API key lets a
+  language model reword the same decision; it never overrules it.
+- **Paced breathing that measures whether it worked** — the camera keeps
+  reading your pulse through the round, so it ends with how far your rate swung
+  and whether the swing was locked to the pacing.
+
+Full write-up, including the signal processing and the honest limits:
+[`docs/baseline.md`](docs/baseline.md). Tests: `npm run test:baseline`
+(75 unit tests) and `npm run qa:baseline` (32 end-to-end checks driving the
+real app in Chromium against a synthetic face that pulses at exactly 66 bpm).
+
+Baseline is a training tool, not a medical device, and says so on every result.
+
+---
+
+## Also in here: Jose Montes — Central Coast
+
+A luxury estate site at [`public/jose-montes/`](public/jose-montes), built as
+a scroll-linked film: a holographic house that **assembles itself as you
+scroll**, cinematic property plates, the real monthly numbers behind every
+asking price, a concierge who answers out loud, and — if you want it —
+**scrolling with your hand through the camera**.
+
+Locally it is `/jose-montes/` (`http://localhost:4173/jose-montes/` under
+`./start.sh`). Like the other two it is self-contained: no build step, no
+dependencies, no backend, no account, and it keeps working with the signal
+off.
+
+- **Every motion is a function of the scroll offset** — nothing is on a timer,
+  so scrubbing back up runs each shot backwards exactly. Three scenes are
+  pinned: the hero builds the house, the signature listing opens its plate
+  like a shutter, and the interiors reel travels sideways while the page
+  travels down.
+- **A hand-written WebGL2 hologram** — slab, terrace, two floors, cantilevered
+  roof, infinity pool and olive trees over a wireframe ocean, generated from
+  about a hundred numbers in metres. Each edge carries an assembly order, so
+  the estate draws itself from the foundations up in the vertex shader with no
+  CPU work and no geometry uploads.
+- **A concierge with a mind and a mouth in separate files** — the grammar and
+  the answers are pure functions tested from Node; the voice is the platform's
+  own synthesis, choosing the best installed voice and speaking in clauses so
+  a line has a contour. She answers from the portfolio and the mortgage maths,
+  so the figure she says is the figure on the page.
+- **Hands-free scrolling** — frame differencing on a 160×120 camera feed,
+  tracked by centre of mass, with a latch threshold, a deadzone and a release
+  so a passing shadow does nothing and a still hand does not creep the page.
+  No frame leaves the device.
+- **A generative score** — a four-chord pad, a felt-piano voice and a surf bed
+  synthesised with Web Audio, ducking under the concierge. No file, no
+  licence, no loop seam.
+- **The whole monthly cost, not just the mortgage** — loan, county tax,
+  insurance and PMI, with affordability inverted by bisection and an equity
+  projection that separates appreciation from principal paid down.
+- **Ten cinematic plates at 88 KB total**, each with the full-resolution
+  original as a network-only upgrade that a blocked connection simply skips.
+
+Full write-up, including the design notes and the known limits:
+[`docs/jose-montes.md`](docs/jose-montes.md). Tests: `npm run test:realtor`
+(41 unit tests) and `npm run qa:realtor` (21 end-to-end checks driving the
+real page in Chromium).
+
+---
+
 ## Also in here: AETHER NEXUS
 
 A holographic command centre at [`public/nexus/`](public/nexus) that teaches
