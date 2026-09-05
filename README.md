@@ -54,9 +54,10 @@ A camera-vitals app at [`public/baseline/`](public/baseline) that measures
 of your face**, then prescribes today's training session from how those compare
 with *your own* recent history. iPhone, Android, or any laptop with a webcam.
 
-Locally it is `/baseline/` (`http://localhost:4173/baseline/` under
-`./start.sh`). Self-contained like the others: no build step, no dependencies,
-no backend, no account, and it keeps working with the signal off.
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/baseline/>** — open it on a phone and add it to the home screen. Locally it is
+`/baseline/` (`http://localhost:4173/baseline/` under `./start.sh`).
+Self-contained like the others: no build step, no dependencies, no backend, no
+account, and it keeps working with the signal off.
 
 - **It really does read your pulse off your skin.** Haemoglobin absorbs green
   light, so a face darkens by about half a per cent on every beat. The mixing

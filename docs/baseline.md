@@ -9,9 +9,13 @@ rates to hold and the rule that produced them.
 It runs entirely in the browser: no upload, no API key, no account, and — after
 the first visit — no signal. Frames are analysed in memory and discarded.
 
-Locally it is `/baseline/` (`http://localhost:4173/baseline/` under
-`./start.sh`). The camera needs a secure context, so HTTPS or `localhost` only:
-opening the files straight off disk (`file://`) will not get a camera.
+**Live at <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/baseline/>.**
+Open that on a phone and add it to the home screen — it launches full-screen
+like a native app and keeps working offline. Locally it is `/baseline/`
+(`http://localhost:4173/baseline/` under `./start.sh`).
+
+The camera needs a secure context, so HTTPS or `localhost` only: opening the
+files straight off disk (`file://`) will not get a camera.
 
 > Baseline is a training tool, not a medical device. It does not diagnose
 > anything, and no camera app can. Symptoms belong to a clinician.
