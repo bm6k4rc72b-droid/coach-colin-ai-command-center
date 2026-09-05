@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jose Montes">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0d09a"/>
+      <stop offset="1" stop-color="#b98f45"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#05070c"/>
+  <path d="M96 300 L256 168 L416 300" fill="none" stroke="url(#g)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="150" y="300" width="212" height="112" fill="none" stroke="url(#g)" stroke-width="16"/>
+  <path d="M96 356 h40 M376 356 h40" stroke="#6fd8ff" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="256" cy="252" r="14" fill="#6fd8ff"/>
+</svg>
