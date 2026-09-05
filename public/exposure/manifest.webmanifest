@@ -1,0 +1,16 @@
+{
+  "name": "EXPOSURE — Fantasy & Market Desk",
+  "short_name": "Exposure",
+  "description": "Independent fantasy football and betting-research desk: your leagues, your exposure, and public numbers compared across books. Not a sportsbook.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07080a",
+  "theme_color": "#07080a",
+  "categories": ["sports", "utilities", "productivity"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

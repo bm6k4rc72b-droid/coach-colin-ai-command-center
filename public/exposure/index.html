@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>EXPOSURE — Fantasy &amp; Market Desk</title>
+<meta name="description" content="An independent fantasy football and betting-research desk. Connect your own leagues, see start/sit calls with written reasoning, track how exposed you are to one player, and compare numbers across books. Not affiliated with the National Football League. 21+.">
+<meta name="theme-color" content="#07080a">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exposure">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#view">Skip to content</a>
+
+<!-- First run: both disclosures, then the 21+ question. Nothing behind this
+     renders an odds surface until it is answered. -->
+<div id="gate" class="gate"></div>
+
+<header id="topbar" class="topbar"></header>
+
+<!-- Where the names on screen came from. The desk never leaves this ambiguous. -->
+<div id="feedstrip" class="feedstrip" role="status" aria-live="polite"></div>
+
+<main id="view" class="view" tabindex="-1"></main>
+
+<nav id="tabbar" class="tabbar" aria-label="Primary"></nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
