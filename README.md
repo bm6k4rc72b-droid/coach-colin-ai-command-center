@@ -60,6 +60,11 @@ Locally it is `/exposure/` (`http://localhost:4173/exposure/` under
 dependencies, no backend, no account, and every byte of user data stays in the
 browser.
 
+- **Real names from a live feed** — identity, club, position and injury
+  designations come from a public, key-free league-wide player index; the seed
+  supplies the roles and the desk supplies the numbers. A strip under the top
+  bar says whether rosters are LIVE, CACHED or DEMO, and every figure the desk
+  modelled rather than measured is badged as such.
 - **Exposure, which is the point** — one table of every player you own across
   every league, plus any saved prop leans, banded OK / STACKED / OVERLOADED.
   Being triple-started on one back is a fact no single league's app can tell
@@ -87,8 +92,8 @@ marks, no photographs, no hosted or embedded video, and it takes no wagers.
 
 Full write-up, including the engines and where the demo data stops:
 [`docs/exposure.md`](docs/exposure.md). Tests: `npm run test:exposure`
-(34 unit tests) and `npm run qa:exposure` (50 end-to-end checks driving the
-real app in Chromium).
+(53 unit tests) and `npm run qa:exposure` (61 end-to-end checks driving the
+real app in Chromium, including a stubbed roster feed and a dead one).
 
 ---
 

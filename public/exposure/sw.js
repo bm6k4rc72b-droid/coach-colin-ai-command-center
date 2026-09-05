@@ -26,6 +26,7 @@ const SHELL = [
   './js/data/leagues.js',
   './js/data/market.js',
   './js/data/players.js',
+  './js/data/rosterFeed.js',
   './js/data/teams.js',
   './js/engine/exposure.js',
   './js/engine/live.js',

@@ -469,15 +469,120 @@ const SEED = [
 ];
 
 /**
+ * Depth within a club and position, derived from the seed's own projections
+ * rather than typed by hand: the highest-projected back on a club is that
+ * club's first back, and that is the role the roster feed fills in.
+ *
+ * @param {Array<object>} seed Seed records.
+ * @returns {Map<string, number>} Player id to depth, starting at 1.
+ */
+export function depthChart(seed = SEED) {
+  const groups = new Map();
+  for (const p of seed) {
+    const key = `${p.team}:${p.pos}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+  const depths = new Map();
+  for (const list of groups.values()) {
+    list
+      .slice()
+      .sort((a, b) => b.proj.ppr - a.proj.ppr || a.id.localeCompare(b.id))
+      .forEach((p, index) => depths.set(p.id, index + 1));
+  }
+  return depths;
+}
+
+const DEPTHS = depthChart();
+
+/**
  * Fully hydrated player records, keyed by id.
+ *
+ * Identity — the name, and the injury designation — is the one part of a
+ * record that describes a real person, so it is kept separate from everything
+ * the desk models. `applyRosterIdentities` swaps the placeholder identity for
+ * the real one when the roster feed is reachable; until then `identity` reads
+ * `DEMO` and the interface says so.
  *
  * @type {Record<string, object>}
  */
 export const PLAYERS = Object.fromEntries(SEED.map((p) => [p.id, {
   ...p,
+  depth: DEPTHS.get(p.id) || 1,
   name: `${p.first} ${p.last}`,
   initials: `${p.first[0]}${p.last[0]}`,
+  identity: 'DEMO',
 }]));
+
+/**
+ * Merge a feed entry's identity onto a seed record.
+ *
+ * Only the four fields that describe a real person move across. Usage,
+ * projections, receipts and everything else the desk computes stay exactly as
+ * seeded, and stay badged as demo wherever they are shown.
+ *
+ * @param {object} seedPlayer Seed record.
+ * @param {object|null} entry Roster feed entry.
+ * @returns {object} A record with real identity where one was available.
+ */
+export function mergeIdentity(seedPlayer, entry) {
+  if (!entry || !entry.first || !entry.last) {
+    // Rebuild the placeholder identity rather than leaving whatever was there:
+    // this is also the path that puts the seed back after a feed is dropped.
+    return {
+      ...seedPlayer,
+      name: `${seedPlayer.first} ${seedPlayer.last}`,
+      initials: `${seedPlayer.first[0]}${seedPlayer.last[0]}`,
+      feedId: null,
+      identity: 'DEMO',
+    };
+  }
+  return {
+    ...seedPlayer,
+    first: entry.first,
+    last: entry.last,
+    name: entry.name || `${entry.first} ${entry.last}`,
+    initials: `${entry.first[0]}${entry.last[0]}`,
+    injury: {
+      status: entry.injury?.status || 'ACTIVE',
+      note: entry.injury?.note
+        || (entry.injury?.status && entry.injury.status !== 'ACTIVE' ? 'Listed on the club\u2019s injury report.' : ''),
+    },
+    feedId: entry.id,
+    identity: 'LIVE',
+  };
+}
+
+/**
+ * Fill every seeded role with the real player who holds it.
+ *
+ * The records are shared across every screen, so this rewrites them in place
+ * and the next render picks the new names up — there is no second copy of a
+ * player anywhere in the app to fall out of step.
+ *
+ * @param {Map<string, object>} index Roster index keyed `TEAM:POS:DEPTH`.
+ * @returns {{matched: number, total: number}} How much of the seed was filled.
+ */
+export function applyRosterIdentities(index) {
+  let matched = 0;
+  for (const seedPlayer of SEED) {
+    const target = PLAYERS[seedPlayer.id];
+    const depth = DEPTHS.get(seedPlayer.id) || 1;
+    const entry = index ? index.get(`${seedPlayer.team}:${seedPlayer.pos}:${depth}`) : null;
+    Object.assign(target, mergeIdentity({ ...seedPlayer, depth }, entry));
+    if (entry) matched += 1;
+  }
+  return { matched, total: SEED.length };
+}
+
+/**
+ * Put the placeholder identities back.
+ *
+ * @returns {void}
+ */
+export function resetRosterIdentities() {
+  applyRosterIdentities(null);
+}
 
 /** @returns {object[]} Every player in the pool. */
 export function allPlayers() {

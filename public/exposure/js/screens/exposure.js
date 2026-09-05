@@ -43,7 +43,7 @@ export function renderExposure(ctx) {
   const summary = exposureSummary(rows);
   const shown = overloadedOnly ? rows.filter((row) => row.risk === 'OVERLOADED') : rows;
 
-  view.append(sectionTitle('Exposure', `${summary.players} players`));
+  view.append(sectionTitle('Exposure', `${summary.players} players`, { demo: true }));
 
   view.append(el('div.summary-strip', {}, [
     ['Overloaded', summary.overloaded, 'overloaded'],

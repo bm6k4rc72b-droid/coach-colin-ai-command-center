@@ -52,6 +52,14 @@ const WEEK_ONE_LINES = {
 };
 
 /**
+ * Every club on the demo slate. The roster feed is trimmed to these, so a
+ * multi-megabyte league-wide index never reaches local storage.
+ *
+ * @type {string[]}
+ */
+export const SLATE_TEAMS = [...new Set(Object.values(PAIRINGS).flat(2))].sort();
+
+/**
  * Deterministic 32-bit hash, used as a seed so generated numbers are stable
  * across reloads and identical in the tests.
  *

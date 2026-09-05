@@ -50,7 +50,11 @@ export function renderLineup(ctx) {
   const week = state.week;
   const scoring = league.scoring;
 
-  view.append(sectionTitle(league.teamName, `${league.name} · ${scoring.toUpperCase()}`));
+  view.append(sectionTitle(
+    league.teamName,
+    `${league.name} · ${scoring.toUpperCase()}`,
+    { demo: true },
+  ));
 
   const starters = startersOf(league);
   const bench = benchOf(league);

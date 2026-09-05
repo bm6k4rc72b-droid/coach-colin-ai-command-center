@@ -46,7 +46,7 @@ export function renderMarket(ctx) {
   }
 
   const week = state.week;
-  view.append(sectionTitle(`Market · week ${week}`, oddsProvider.source.name));
+  view.append(sectionTitle(`Market · week ${week}`, oddsProvider.source.name, { demo: true }));
   view.append(el('p.card-note.market-note', {
     text: 'Demo numbers from invented books. We are not a sportsbook, we do not accept wagers, and nothing here can be staked.',
   }));

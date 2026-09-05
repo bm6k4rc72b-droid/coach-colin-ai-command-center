@@ -208,6 +208,67 @@ a { color: var(--gold); }
   padding: 1px 5px;
 }
 
+/* --------------------------------------------------------- provenance */
+
+/* Non-interactive by design: a 24px strip cannot hold a 44px control, and the
+   refresh it would offer lives in Settings where there is room for one. */
+.feedstrip {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  background: #0a0c10;
+  border-bottom: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  max-width: 980px;
+  margin: 0 auto;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.feed-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--dimmer);
+}
+
+.feed-live { background: var(--start); box-shadow: 0 0 6px rgba(116, 211, 145, 0.6); }
+.feed-cached { background: var(--gold); }
+.feed-demo { background: var(--dimmer); }
+
+.feed-text { color: var(--text); flex: none; }
+
+.feed-note {
+  color: var(--dimmer);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold-dim);
+  border: 1px solid var(--gold-soft);
+  border-radius: 3px;
+  padding: 2px 5px;
+  white-space: nowrap;
+  flex: none;
+}
+
+.section-right { display: flex; align-items: center; gap: 8px; flex: none; }
+
+.kv-value .demo-badge { margin-left: 8px; }
+
 /* ---------------------------------------------------------------- view */
 
 .view {
@@ -257,6 +318,8 @@ a { color: var(--gold); }
   font-size: 13px;
   margin: 0 0 10px;
 }
+
+.card-note.dim { color: var(--dimmer); }
 
 .muted-note {
   color: var(--dim);

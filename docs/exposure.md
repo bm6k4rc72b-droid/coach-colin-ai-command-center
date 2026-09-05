@@ -13,8 +13,8 @@ keeps working with the signal off. Locally it is `/exposure/`
 (`http://localhost:4173/exposure/` under `./start.sh`).
 
 ```sh
-npm run test:exposure   # 34 unit tests, no browser needed
-npm run qa:exposure     # 50 end-to-end checks driving the real app in Chromium
+npm run test:exposure   # 53 unit tests, no browser needed
+npm run qa:exposure     # 61 end-to-end checks driving the real app in Chromium
 npm run qa:exposure -- --out shot.png   # …and a screenshot
 ```
 
@@ -116,20 +116,62 @@ always replays the same Sunday — which is what makes the alert logic testable.
 Alerts cover touch droughts, goal-line carries, scores, turnovers and your
 opponent's players.
 
-## Data and the seams to real APIs
+## Where the names come from
 
-Everything under [`js/data/`](../public/exposure/js/data) is demo seed data:
-a Week 1-style slate three weeks deep, 27 skill players, three 12-team leagues
-with deliberate overlap, and a board from three invented books.
+The seed describes **roles**, not people: the workhorse back on one club, the
+slot receiver on another, each with a usage profile, a projection and scheme
+notes. [`js/data/rosterFeed.js`](../public/exposure/js/data/rosterFeed.js)
+fills those roles with the players who actually hold them, from Sleeper's
+public, key-free player index — no account, no token, read-only.
 
-The players are **invented names on real clubs**. Attributing fabricated snap
-counts, injury designations and prop numbers to actual athletes would make
-sample data read as reporting; the books are invented for the same reason —
-printing made-up prices under a real operator's name misrepresents that
-operator's board, and line shopping demonstrates itself perfectly well with
-three fictional ones.
+The split is the point:
 
-Two seams are all a real integration needs, both in
+| From the feed | From the desk |
+| --- | --- |
+| Name, club, position | Projections and the startable line |
+| Injury designation | Opportunity figures (snaps, targets, shares) |
+| Depth on the club | Prop numbers, best-number picks, leans |
+| | Verdicts, confidence and the written reasons |
+
+Identity and injury designations are facts about real people, so the app does
+not invent them. Everything it computes is its own model on sample data, and
+carries a `DEMO` badge wherever it is shown — a badge that is checked by the
+end-to-end suite, not left to discipline.
+
+The desk is always in one of three states, and the strip under the top bar
+names it rather than leaving the user to guess:
+
+- **LIVE** — fetched this session.
+- **CACHED** — the last good fetch, trimmed to the sixteen clubs on the slate
+  and served for up to a day. The raw index is several megabytes of every
+  player in the database; a few hundred records is what reaches storage.
+- **DEMO** — nothing answered, so the seed's placeholder names are showing and
+  the strip says exactly that.
+
+The load never throws and never blocks: the desk renders on the seed
+immediately and the real names arrive when they arrive. A feed that is
+unreachable, slow, blocked by a host's content policy, or serving something
+unexpected changes nothing except that line. **Settings → Rosters** shows the
+source and forces a refresh.
+
+Two consequences worth knowing. A host that blocks cross-origin fetch — a
+sandboxed embed with a strict content-security policy, for instance — leaves
+the desk on `DEMO` names permanently; that is working as designed, and the
+strip says so. And the depth ordering leans on the feed's own relevance rank,
+which is a good proxy for "who is first on this club at this position" but not
+a depth chart from the club.
+
+## The rest of the demo data
+
+Everything else under [`js/data/`](../public/exposure/js/data) is seed data: a
+Week 1-style slate three weeks deep, 27 roles across three 12-team leagues with
+deliberate overlap, and a board from three invented books.
+
+The books are invented deliberately — printing made-up prices under a real
+operator's name misrepresents that operator's board, and line shopping
+demonstrates itself perfectly well with three fictional ones.
+
+Beyond rosters, two seams are all a real integration needs, both in
 [`js/providers.js`](../public/exposure/js/providers.js):
 
 - `connectProvider(id)` runs a mock OAuth handshake — redirect, consent, token
@@ -170,4 +212,11 @@ end-to-end suite measures rather than assumes.
   eligible for. The desk reads leagues; it does not write back to a provider.
 - Defensive ranks, projections and opportunity figures are hand-written sample
   data. They are internally consistent and behave like the real thing, but they
-  are not measurements of anything.
+  are not measurements of anything, which is what the `DEMO` badges say.
+- The roster feed supplies identity for the 27 seeded roles only. It is not a
+  full league-wide roster browser, and the demo's league rosters are still the
+  seed's own construction.
+- Nothing in the app has been run against the live feed from inside this
+  repository's sandbox, which has no route to it; the adapter is covered by
+  unit tests against fixture payloads and by an end-to-end run against a
+  stubbed feed, and it degrades to `DEMO` rather than failing.

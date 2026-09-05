@@ -10,6 +10,7 @@ import { allTeams, teamName } from '../data/teams.js';
 import {
   getState, removeLeague, reset, setAge, setFavoriteTeam, setHideBetting, setLeagueScoring,
 } from '../store.js';
+import { describeSource } from '../data/rosterFeed.js';
 import { footer, kv, openSheet, sectionTitle } from '../ui/components.js';
 
 /**
@@ -44,6 +45,8 @@ export function renderSettings(ctx) {
       })),
     ]),
   ]));
+
+  view.append(rosterCard(ctx));
 
   view.append(el('div.card', {}, [
     sectionTitle('Connected leagues', `${state.leagues.length} connected`),
@@ -146,6 +149,46 @@ export function renderSettings(ctx) {
   // The disclosures live in the footer below, which every screen carries.
   view.append(footer(ctx.onResponsible));
   return view;
+}
+
+/**
+ * Where the names come from, and a way to go and get them again.
+ *
+ * @param {object} ctx Screen context.
+ * @returns {HTMLElement} The card.
+ */
+function rosterCard(ctx) {
+  const roster = ctx.roster ? ctx.roster() : { source: 'DEMO', error: '', matched: 0 };
+  const live = roster.source !== 'DEMO';
+  const status = el('p.card-note', { role: 'status' });
+
+  return el('div.card', {}, [
+    sectionTitle('Rosters'),
+    kv('Source', describeSource(roster)),
+    kv('Roles filled', live ? `${roster.matched} of 27 from the feed` : 'None — showing placeholder names'),
+    el('p.card-note', {
+      text: live
+        ? 'Names, clubs, positions and injury designations come from a public league-wide player index. Projections, opportunity figures, prop numbers and every verdict are the desk\u2019s own model on demo data, and are badged as such wherever they appear.'
+        : 'The roster feed has not answered, so the desk is showing placeholder names. Everything else it does still works; the numbers were always its own model.',
+    }),
+    roster.error ? el('p.card-note.dim', { text: roster.error }) : null,
+    status,
+    el('button.btn.wide', {
+      type: 'button',
+      text: 'Refresh rosters',
+      onclick: async (event) => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        status.textContent = 'Asking the roster feed…';
+        const next = await ctx.refreshRoster({ force: true });
+        // The refresh repaints the screen, so this only matters when it failed.
+        if (next.source === 'DEMO') {
+          status.textContent = next.error || 'The roster feed did not answer.';
+          button.disabled = false;
+        }
+      },
+    }),
+  ].filter(Boolean));
 }
 
 /**

@@ -194,17 +194,39 @@ export function statBar(label, value, options = {}) {
 }
 
 /**
+ * A badge for anything the desk modelled rather than measured.
+ *
+ * Names and injury designations can come from a real feed; projections,
+ * opportunity figures, prop numbers and verdicts are the desk's own work on
+ * sample data, and every surface that shows one says so.
+ *
+ * @param {string} [label] Badge text.
+ * @returns {HTMLElement} The badge.
+ */
+export function demoBadge(label = 'DEMO') {
+  return el('span.demo-badge', {
+    text: label,
+    title: 'Modelled from the demo seed, not measured or reported.',
+  });
+}
+
+/**
  * A section heading with an optional right-hand note.
  *
  * @param {string} title Heading text.
  * @param {string} [note] Right-hand note.
+ * @param {object} [options] Options.
+ * @param {boolean} [options.demo] Mark the section's numbers as modelled.
  * @returns {HTMLElement} The heading.
  */
-export function sectionTitle(title, note = '') {
+export function sectionTitle(title, note = '', options = {}) {
   return el('div.section-head', {}, [
     el('h2.section-title', { text: title }),
-    note ? el('span.section-note', { text: note }) : null,
-  ].filter(Boolean));
+    el('span.section-right', {}, [
+      note ? el('span.section-note', { text: note }) : null,
+      options.demo ? demoBadge() : null,
+    ].filter(Boolean)),
+  ]);
 }
 
 /**

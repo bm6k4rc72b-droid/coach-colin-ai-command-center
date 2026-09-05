@@ -40,7 +40,11 @@ export function renderHome(ctx) {
   }
 
   const alerts = concentrationAlerts(state.leagues, state.leans);
-  view.append(sectionTitle(`Week ${week}`, `${state.leagues.length} league${state.leagues.length === 1 ? '' : 's'}`));
+  view.append(sectionTitle(
+    `Week ${week}`,
+    `${state.leagues.length} league${state.leagues.length === 1 ? '' : 's'}`,
+    { demo: true },
+  ));
 
   if (alerts.length) {
     view.append(el('div.alert-stack', {}, alerts.slice(0, 4).map((alert) => el('button.alert-card', {

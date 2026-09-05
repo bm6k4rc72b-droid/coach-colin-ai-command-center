@@ -66,7 +66,7 @@ export function renderCommand(ctx) {
     deskKey = key;
   }
 
-  view.append(sectionTitle(`Command Center · week ${week}`, 'Demo Sunday'));
+  view.append(sectionTitle(`Command Center · week ${week}`, 'Demo Sunday', { demo: true }));
   view.append(el('p.card-note', {
     text: 'Simulated ticks, not a live feed. The board replays a demo Sunday so the alerts can be seen without waiting for one.',
   }));

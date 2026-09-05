@@ -77,6 +77,42 @@ function serve() {
   });
 }
 
+/**
+ * A stand-in roster feed.
+ *
+ * The suite runs with no route to the internet, so the live path is exercised
+ * against a fixture served from inside the page. The shape is the feed's, not
+ * the desk's, so the normaliser is doing real work.
+ *
+ * @param {string[]} teams Clubs to populate.
+ * @returns {object} A payload keyed by player id.
+ */
+function feedFixture(teams) {
+  const payload = {};
+  const positions = [['QB', 1], ['RB', 3], ['WR', 4], ['TE', 2]];
+  let rank = 1;
+  for (const team of teams) {
+    for (const [position, count] of positions) {
+      for (let i = 1; i <= count; i += 1) {
+        const id = `${team}-${position}-${i}`;
+        payload[id] = {
+          player_id: id,
+          first_name: `Feed${position}${i}`,
+          last_name: team,
+          team,
+          position,
+          active: true,
+          search_rank: rank,
+          injury_status: (team === 'DET' && position === 'RB' && i === 1) ? 'Questionable' : null,
+          injury_body_part: 'Ankle',
+        };
+        rank += 1;
+      }
+    }
+  }
+  return payload;
+}
+
 const checks = [];
 
 /**
@@ -169,6 +205,27 @@ async function main() {
     });
 
     console.log('\nEXPOSURE -- end-to-end\n');
+
+    // The desk asks a public roster feed for names. There is no route to it
+    // from here, so the page gets a fixture and the real fetch stays untouched
+    // for everything else.
+    const SLATE = ['KC', 'LAC', 'BUF', 'NYJ', 'PHI', 'DAL', 'DET', 'GB', 'SF', 'SEA', 'BAL', 'CIN', 'MIA', 'HOU', 'MIN', 'TB'];
+    await page.evaluateOnNewDocument((payload) => {
+      const real = window.fetch.bind(window);
+      window.__feedCalls = 0;
+      window.fetch = (input, init) => {
+        const url = String(typeof input === 'string' ? input : input.url);
+        if (url.includes('api.sleeper.app')) {
+          window.__feedCalls += 1;
+          return Promise.resolve(new Response(JSON.stringify(payload), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }));
+        }
+        return real(input, init);
+      };
+    }, feedFixture(SLATE));
+
     await page.goto(`http://127.0.0.1:${port}/exposure/index.html`, { waitUntil: 'networkidle2', timeout: 30000 });
     await wait(300);
 
@@ -220,15 +277,43 @@ async function main() {
 
     /* --------------------------------------------------------------- home */
 
+    // Names now come from the feed, so the suite asks the app who is filling
+    // each seeded role rather than hard-coding a placeholder name.
+    const nameOf = (id) => page.evaluate(
+      async (playerId) => (await import('./js/data/players.js')).player(playerId).name, id,
+    );
+    const back = await nameOf('rb-kemp');
+    const receiver = await nameOf('wr-lund');
+
     const home = await page.$eval('#view', (n) => n.textContent);
     check('home shows the week and both league cards',
       home.includes('Week 1') && home.includes('Night Shift') && home.includes('Cold Open'));
     check('home flags the triple-exposed back',
-      home.includes('Rashad Kemp') && /OVERLOADED/.test(home));
+      home.includes(back) && /OVERLOADED/.test(home), back);
     check('home shows a projection against an opponent', /Projected/.test(home));
 
     const bell = await page.$eval('.bell', (n) => n.getAttribute('aria-label'));
     check('alerts bell counts unread concentration alerts', /unread/.test(bell), bell);
+
+    // The roster feed supplies who the seeded roles actually are.
+    await wait(600);
+    const feed = await page.evaluate(() => ({
+      calls: window.__feedCalls,
+      state: window.__exposure.roster(),
+      strip: document.getElementById('feedstrip').textContent,
+      names: [...document.querySelectorAll('.flag-name')].map((n) => n.textContent),
+      cached: Boolean(localStorage.getItem('exposure.roster.v1')),
+    }));
+    check('the roster feed is asked once and answers live',
+      feed.calls === 1 && feed.state.source === 'LIVE', `${feed.calls} call(s), ${feed.state.source}`);
+    check('every seeded role is filled from the feed',
+      feed.state.matched === 27, `${feed.state.matched} of 27`);
+    check('the provenance strip names the source',
+      /Rosters LIVE/.test(feed.strip) && /modelled/.test(feed.strip), feed.strip.slice(0, 80));
+    check('real feed names replace the placeholders on screen',
+      feed.names.some((name) => /^Feed/.test(name)) && !feed.names.some((name) => /Rashad Kemp/.test(name)),
+      feed.names.slice(0, 2).join(', '));
+    check('the trimmed roster is cached for the next visit', feed.cached);
 
     /* ------------------------------------------------------------ lineup */
 
@@ -276,6 +361,13 @@ async function main() {
     const tabs = await page.$$eval('.tab', (nodes) => nodes.map((n) => n.textContent));
     check('player card carries all four tabs',
       ['Overview', 'Opportunity', 'Market', 'Receipts'].every((t) => tabs.includes(t)), tabs.join(', '));
+
+    const badges = await page.evaluate(() => ({
+      onCall: Boolean(document.querySelector('.section-head .demo-badge')),
+      count: document.querySelectorAll('.demo-badge').length,
+    }));
+    check('modelled numbers are badged as demo on the player card',
+      badges.onCall && badges.count >= 2, `${badges.count} badges`);
 
     const overview = await page.$eval('#player-tab-panel', (n) => n.textContent);
     check('overview names the city, abbreviation, position and opponent',
@@ -326,11 +418,12 @@ async function main() {
 
     await clickText(page, '.tabbar-btn', 'Exposure');
     await wait(300);
+    await page.evaluate((name) => { window.__qaBack = name; }, back);
     const exposure = await page.evaluate(() => {
       const rows = [...document.querySelectorAll('.exp-block')].map((block) => block.textContent);
       return {
         rows,
-        kemp: rows.find((row) => row.includes('Rashad Kemp')) || '',
+        kemp: rows.find((row) => row.includes(window.__qaBack)) || '',
         summary: document.querySelector('.summary-strip').textContent,
         head: document.querySelector('.exp-head').textContent,
       };
@@ -366,10 +459,11 @@ async function main() {
     check('each game shows a line-move note', desk.moves === 8);
     check('market desk has no bet slip, deposit, cash-out or parlay builder', !desk.slip);
 
-    await page.type('#prop-search', 'lund');
+    await page.type('#prop-search', receiver.split(' ')[0]);
     await wait(300);
     const search = await page.$$eval('.search-row', (rows) => rows.map((r) => r.textContent));
-    check('prop search finds a player', search.length >= 1 && search[0].includes('Xavier Lund'), search[0] || 'no match');
+    check('prop search finds a player',
+      search.length >= 1 && search.some((row) => row.includes(receiver)), search[0] || 'no match');
 
     /* ----------------------------------------------------- command center */
 
@@ -468,6 +562,40 @@ async function main() {
     check('body text is high contrast on the dark ground',
       contrast.color === 'rgb(232, 230, 225)' && contrast.background === 'rgb(7, 8, 10)',
       `${contrast.color} on ${contrast.background}`);
+
+    /* ------------------------------------------------- the feed goes away */
+
+    // With no feed and no cache the desk has to keep working on its own names
+    // and say plainly that is what it is doing.
+    // Its own browser context, so it starts with no stored state and no
+    // cached roster from the run above.
+    const freshContext = await (browser.createBrowserContext
+      ? browser.createBrowserContext()
+      : browser.createIncognitoBrowserContext());
+    const offline = await freshContext.newPage();
+    await offline.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true });
+    await offline.evaluateOnNewDocument(() => {
+      window.fetch = (input) => (String(typeof input === 'string' ? input : input.url).includes('api.sleeper.app')
+        ? Promise.reject(new Error('offline'))
+        : Promise.reject(new Error('blocked')));
+    });
+    await offline.goto(`http://127.0.0.1:${port}/exposure/index.html`, { waitUntil: 'networkidle2' });
+    await wait(400);
+    await offline.evaluate(() => {
+      document.querySelector('#gate button').click();
+    });
+    await wait(1200);
+    const degraded = await offline.evaluate(() => ({
+      source: window.__exposure.roster().source,
+      strip: document.getElementById('feedstrip').textContent,
+      screen: document.getElementById('view').textContent,
+    }));
+    check('a dead feed degrades to the demo names and says so',
+      degraded.source === 'DEMO' && /Rosters DEMO/.test(degraded.strip) && /placeholder/.test(degraded.strip),
+      degraded.strip.slice(0, 70));
+    check('the desk still works with no feed', degraded.screen.includes('Create your account'));
+    await offline.close();
+    await freshContext.close();
 
     /* -------------------------------------------------------- deletion */
 

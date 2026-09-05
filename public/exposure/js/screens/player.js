@@ -21,7 +21,7 @@ import {
   bettingVisible, findLean, getState, removeLean, saveLean,
 } from '../store.js';
 import {
-  avatar, confidenceMeter, emptyState, footer, injuryFlag, kv, riskTag,
+  avatar, confidenceMeter, demoBadge, emptyState, footer, injuryFlag, kv, riskTag,
   sectionTitle, statBar, verdictPill,
 } from '../ui/components.js';
 
@@ -119,7 +119,7 @@ function overviewTab(p, call, exposureRow, week, scoring, ctx) {
   const wrap = el('div.tab-body');
 
   wrap.append(el('div.card', {}, [
-    sectionTitle('The call', `${scoring.toUpperCase()} scoring`),
+    sectionTitle('The call', `${scoring.toUpperCase()} scoring`, { demo: true }),
     el('p.verdict-reason', { text: call.reason }),
     el('div.driver-list', {}, call.drivers.map((driver) => el('div.driver', {}, [
       el('span.driver-label', { text: driver.label }),
@@ -137,8 +137,11 @@ function overviewTab(p, call, exposureRow, week, scoring, ctx) {
     kv('Position', p.pos),
     kv('Opponent', matchupFor(p, week)?.label || 'Bye'),
     kv('Game', game ? `${game.away} at ${game.home} · ${game.kickoff}` : 'Not on the slate'),
-    kv('Status', `${p.injury.status}${p.injury.note ? ` — ${p.injury.note}` : ''}`),
-    kv('Projection', `${num(projFor(p, scoring))} pts`),
+    kv('Status', el('span.kv-value', {}, [
+      `${p.injury.status}${p.injury.note ? ` — ${p.injury.note}` : ''}`,
+      p.identity === 'LIVE' ? null : demoBadge('NO FEED'),
+    ].filter(Boolean))),
+    kv('Projection', el('span.kv-value', {}, [`${num(projFor(p, scoring))} pts`, demoBadge()])),
   ]));
 
   if (p.news.length) {
@@ -202,9 +205,9 @@ function opportunityTab(p, week) {
   stats.push(statBar('Red-zone touches', o.rzTouches ?? 0, { max: 5 }));
 
   wrap.append(el('div.card', {}, [
-    sectionTitle('Opportunity', `Per game · week ${week}`),
+    sectionTitle('Opportunity', `Per game · week ${week}`, { demo: true }),
     el('p.card-note', {
-      text: 'Demo sample data. Volume is what carries from week to week; efficiency is what does not.',
+      text: 'Sample usage figures from the demo seed, not measured snap counts. Volume is what carries from week to week; efficiency is what does not.',
     }),
     el('div.stat-grid', {}, stats),
   ]));
@@ -338,8 +341,10 @@ function receiptsTab(p, week, ctx) {
   const game = gameFor(p.team, week);
   return el('div.tab-body', {}, [
     el('div.card', {}, [
-      sectionTitle('Watch fors', `${p.receipts.length} notes`),
-      el('p.card-note', { text: 'Scheme and usage notes, written out. No video is hosted, embedded or linked here.' }),
+      sectionTitle('Watch fors', `${p.receipts.length} notes`, { demo: true }),
+      el('p.card-note', {
+        text: 'Sample scheme notes written for this role in the demo — not reporting on this player. No video is hosted, embedded or linked here.',
+      }),
       el('ol.receipts', {}, p.receipts.map((note, index) => el('li.receipt', {}, [
         el('span.receipt-index', { 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') }),
         el('span.receipt-text', { text: note }),

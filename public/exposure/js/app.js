@@ -10,7 +10,9 @@
  */
 
 import { el } from './dom.js';
-import { WEEKS } from './data/games.js';
+import { SLATE_TEAMS, WEEKS } from './data/games.js';
+import { applyRosterIdentities, resetRosterIdentities } from './data/players.js';
+import { describeSource, indexRoster, loadRoster } from './data/rosterFeed.js';
 import { concentrationAlerts } from './engine/exposure.js';
 import {
   activeLeague, bettingVisible, getState, markAlertsRead, setActiveLeague, setAge, setWeek, subscribe,
@@ -45,8 +47,22 @@ const NEEDS_SETUP = new Set(['home', 'lineup', 'player', 'exposure', 'market', '
 let route = 'home';
 let params = {};
 
+/**
+ * Where the names on screen came from. `DEMO` until the feed answers, and the
+ * strip under the top bar says so the whole time.
+ *
+ * @type {{source: string, fetchedAt: number|null, error: string, matched: number}}
+ */
+let rosterState = { source: 'DEMO', fetchedAt: null, error: '', matched: 0 };
+
+/** @returns {object} The current roster provenance. */
+export function getRosterState() {
+  return rosterState;
+}
+
 const view = document.getElementById('view');
 const topbar = document.getElementById('topbar');
+const feedstrip = document.getElementById('feedstrip');
 const tabbar = document.getElementById('tabbar');
 const toastNode = document.getElementById('toast');
 
@@ -119,6 +135,8 @@ function context() {
     refresh: render,
     params,
     route,
+    roster: getRosterState,
+    refreshRoster,
     onResponsible: null,
   };
 }
@@ -137,11 +155,54 @@ export function render() {
   if (active === 'market' && !bettingVisible() && route === 'market') active = 'market';
 
   renderTopBar(state);
+  renderFeedStrip();
   renderTabs(state, active);
 
   const screen = ROUTES[active] || renderHome;
   const node = screen(context());
   view.replaceChildren(node);
+}
+
+/**
+ * Pull roster identities and repaint.
+ *
+ * Deliberately fire-and-forget: the desk renders immediately on the seed and
+ * the real names arrive when they arrive. A feed that never answers changes
+ * nothing except the line under the top bar.
+ *
+ * @param {object} [options] Options.
+ * @param {boolean} [options.force] Ignore a fresh cache.
+ * @returns {Promise<object>} The new roster state.
+ */
+export async function refreshRoster(options = {}) {
+  const result = await loadRoster({ teams: SLATE_TEAMS, force: Boolean(options.force) });
+  const applied = result.roster.length
+    ? applyRosterIdentities(indexRoster(result.roster))
+    : (resetRosterIdentities(), { matched: 0 });
+  rosterState = {
+    source: result.roster.length ? result.source : 'DEMO',
+    fetchedAt: result.fetchedAt,
+    error: result.error,
+    matched: applied.matched || 0,
+  };
+  render();
+  return rosterState;
+}
+
+/**
+ * The line under the top bar naming the roster's provenance.
+ */
+function renderFeedStrip() {
+  const live = rosterState.source !== 'DEMO';
+  feedstrip.replaceChildren(
+    el(`span.feed-dot.feed-${rosterState.source.toLowerCase()}`, { 'aria-hidden': 'true' }),
+    el('span.feed-text', { text: describeSource(rosterState) }),
+    el('span.feed-note', {
+      text: live
+        ? `${rosterState.matched} of the demo roles filled from the feed \u00b7 projections and prices stay modelled`
+        : 'Names are placeholders; projections and prices are modelled',
+    }),
+  );
 }
 
 /**
@@ -322,6 +383,10 @@ function boot() {
   firstRun();
   render();
 
+  // Names come from the feed when it is reachable; the desk is already usable
+  // by the time it answers, or does not.
+  refreshRoster().catch(() => {});
+
   window.addEventListener('hashchange', () => {
     const next = readHash();
     if (next && (next.name !== route || JSON.stringify(next.values) !== JSON.stringify(params))) {
@@ -345,7 +410,16 @@ function boot() {
 
   // A small surface for the end-to-end suite, and for anyone who wants to
   // drive the desk from the console.
-  window.__exposure = { go, render, toast, getState, route: () => route, params: () => params };
+  window.__exposure = {
+    go,
+    render,
+    toast,
+    getState,
+    refreshRoster,
+    roster: () => rosterState,
+    route: () => route,
+    params: () => params,
+  };
 }
 
 boot();
