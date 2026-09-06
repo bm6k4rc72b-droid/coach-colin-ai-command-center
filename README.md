@@ -47,6 +47,54 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: Sentry
+
+A security-camera app at [`public/sentry/`](public/sentry) that watches a piece
+of ground and **draws the path of anything that crosses it, in metres** — a
+person, an animal, a vehicle — then writes each subject up from what it
+measured. iPhone, Android, or any laptop with a webcam. Nothing is uploaded,
+nothing is recorded, and there is no face recognition anywhere in it.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/sentry/>** — open it on a phone and add it to the home screen. Locally it is
+`/sentry/` (`http://localhost:4173/sentry/` under `./start.sh`).
+
+- **The metres are real.** Mark the four corners of something you have measured
+  — a patio, a parking bay — and it solves for the camera's height, tilt and
+  field of view, then reports distances, speeds and standing heights from the
+  ground plane. A 4.0 m / 28° / 62° camera comes back as 3.99 / 27.8 / 61.9.
+- **A subject who never moves logs exactly zero metres.** Centroid jitter summed
+  over a night turns a parked car into something that walked a kilometre, and
+  every distance the app reports becomes worthless at the same moment. Three
+  separate guards prevent it, and the test asserts equality, not a tolerance.
+- **It measures gait, not motives.** Step cadence from head bob, path sinuosity,
+  pauses, direction reversals, posture and a fall pattern. The written summary
+  prints the figure beside every sentence and never speculates about intent —
+  there is no threat score, because a threat score is a guess about a person's
+  mind dressed as arithmetic.
+- **Ironbow is labelled as a palette, not as thermal.** It spreads eight bits of
+  murky night luminance across a ramp the eye can read. Bright means bright, not
+  hot; a white shirt reads "hot". Real thermal needs a sensor no phone has, and
+  the app says so where somebody might otherwise conclude a room is empty.
+- **Through-wall WiFi sensing is an adapter, not a pretence.** No browser exposes
+  a radio and no phone exposes channel state data, so the app connects to real
+  RF hardware over a documented WebSocket and, with nothing attached, reports
+  nothing rather than inventing a contact.
+- **Zones live on the ground, in metres**, so they still mean the same thing
+  after the camera is nudged — areas with loiter timers, directional tripwires,
+  hysteresis on every rule so a subject on a boundary does not raise an event a
+  frame.
+
+Full write-up, including what it refuses to do and why:
+[`docs/sentry.md`](docs/sentry.md). Tests: `npm run test:sentry` (59 unit tests)
+and `npm run qa:sentry` (24 end-to-end checks driving the real app in Chromium
+against a clip that walks a 1.75 m subject 6.8 m at 0.8 m/s — the app returns
+6.67 m, 0.85 m/s, 1.75 m and 108 steps a minute).
+
+Point it at ground you are entitled to watch. It is built for a perimeter you
+own, not for following people.
+
+---
+
 ## Also in here: Baseline
 
 A camera-vitals app at [`public/baseline/`](public/baseline) that measures
