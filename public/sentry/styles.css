@@ -1,0 +1,736 @@
+/*
+ * Sentry's interface.
+ *
+ * The picture is the instrument, so it gets the room; everything else is a
+ * margin around it. Two constraints shaped the rest. It has to be legible at
+ * arm's length in a dark room, which is why the type is large, the ground is
+ * near-black and the only saturated colours in the design are the ones that
+ * carry meaning — a track's identity, a zone's boundary, an alert. And it has
+ * to work as a phone held in one hand and as a laptop propped facing a door, so
+ * the layout is one column that becomes two at the width where a panel beside
+ * the picture stops squeezing it.
+ */
+
+:root {
+  color-scheme: dark;
+  --ink: #eef3fa;
+  --ink-dim: #97a6bd;
+  --ink-faint: #64748b;
+  --ground: #07090c;
+  --raise: #0e131a;
+  --raise-2: #141b25;
+  --line: #1f2937;
+  --live: #5eead4;
+  --warn: #fbbf24;
+  --alert: #fb7185;
+  --radius: 14px;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/*
+ * A class that sets `display` outranks the browser's own `[hidden]` rule, so
+ * anything laid out with flex or grid stays on screen after `hidden = true`
+ * unless this is here. It cost an afternoon once: the start panel sat over the
+ * live picture, invisible in code review and obvious in a screenshot.
+ */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--ground);
+  color: var(--ink);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* ------------------------------------------------------------------- header */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #0b1017, #07090c);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  background: radial-gradient(circle at 32% 28%, #5eead4, #0f766e 62%, #0b1017);
+  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.28), 0 0 22px rgba(45, 212, 191, 0.22);
+}
+
+h1 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* On a phone the status chip is the thing worth reading, so the tagline gets
+   out of its way rather than wrapping the header to three lines. */
+@media (max-width: 560px) {
+  .tagline {
+    display: none;
+  }
+
+  .chip {
+    max-width: 40vw;
+  }
+}
+
+.bar-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 46vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-quiet {
+  background: #131a24;
+  color: var(--ink-dim);
+}
+
+.chip-live {
+  background: rgba(94, 234, 212, 0.14);
+  color: var(--live);
+}
+
+.chip-warn {
+  background: rgba(251, 191, 36, 0.16);
+  color: var(--warn);
+}
+
+/* -------------------------------------------------------------------- stage */
+
+.stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 14px;
+  align-content: start;
+}
+
+.viewport {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #05070a;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.viewport video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+
+.viewport canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#overlay {
+  touch-action: none;
+}
+
+.viewport-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 28px 22px;
+  background: radial-gradient(circle at 50% 34%, #101923, #06080b 72%);
+}
+
+.viewport-empty h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.viewport-empty p {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+
+.fineprint {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.view-switch {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  /* One scrolling row, never two. Wrapping puts a second row of chips across
+     the middle of the picture, which is the part being watched. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.view-switch::-webkit-scrollbar {
+  display: none;
+}
+
+.view-chip {
+  flex: none;
+}
+
+.view-chip {
+  border: 1px solid rgba(148, 176, 214, 0.2);
+  background: rgba(7, 10, 15, 0.72);
+  backdrop-filter: blur(8px);
+  color: var(--ink-dim);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-chip-on {
+  color: var(--ground);
+  background: var(--live);
+  border-color: var(--live);
+}
+
+/* Drawing a zone closes the setup panel so the picture is visible, which means
+   the control that ends the drawing cannot live in that panel. It goes here,
+   over the picture, where the taps are happening. */
+.drawing-bar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: rgba(7, 10, 15, 0.86);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 176, 214, 0.22);
+  font-size: 12.5px;
+  color: var(--ink-dim);
+}
+
+.drawing-bar span {
+  flex: 1;
+  min-width: 0;
+}
+
+.primary-small {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.readout {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 2;
+  text-align: right;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(7, 10, 15, 0.68);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 176, 214, 0.16);
+  border-radius: 10px;
+  padding: 6px 9px;
+}
+
+.readout .muted {
+  color: var(--ink-faint);
+}
+
+/* -------------------------------------------------------------------- panel */
+
+.panel {
+  background: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  background: #0b1017;
+}
+
+.tab {
+  flex: 1;
+  padding: 11px 6px;
+  border: 0;
+  background: none;
+  color: var(--ink-faint);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-on {
+  color: var(--ink);
+  border-bottom-color: var(--live);
+}
+
+.tab-body {
+  padding: 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty {
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.subjects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.subject {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--track, var(--live));
+  border-radius: 12px;
+  background: var(--raise-2);
+  padding: 13px 14px;
+}
+
+.subject h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.facts {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  color: var(--ink-dim);
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px 10px;
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.metric {
+  min-width: 0;
+}
+
+.metrics dt {
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.metrics dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink);
+}
+
+.caveats {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.narration {
+  margin: 8px 0 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: rgba(94, 234, 212, 0.07);
+  border: 1px solid rgba(94, 234, 212, 0.16);
+  font-size: 13px;
+  color: #d7fff5;
+}
+
+.subject-actions,
+.plan-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+#plan {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #080b10;
+  display: block;
+}
+
+.events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  gap: 9px;
+  align-items: baseline;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--raise-2);
+  border: 1px solid var(--line);
+}
+
+.event-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--live);
+}
+
+.event-loiter .event-type {
+  color: var(--warn);
+}
+
+.event time {
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-family: ui-monospace, monospace;
+}
+
+.rf-state {
+  padding: 13px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--raise-2);
+  margin-bottom: 12px;
+}
+
+.rf-state strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.rf-state p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.rf-live {
+  border-color: rgba(94, 234, 212, 0.4);
+}
+
+.rf-options {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.rf-options strong {
+  color: var(--ink);
+}
+
+/* ----------------------------------------------------------------- controls */
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 700;
+  background: var(--live);
+  color: #04110e;
+}
+
+.primary:disabled {
+  opacity: 0.55;
+}
+
+.ghost {
+  border: 1px solid var(--line);
+  background: #121924;
+  color: var(--ink-dim);
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ghost:hover {
+  color: var(--ink);
+  border-color: #2b3a4f;
+}
+
+.field {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 11px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.field em {
+  font-style: normal;
+  color: var(--ink);
+  font-family: ui-monospace, monospace;
+}
+
+.field input,
+.field select {
+  font: inherit;
+  font-size: 14px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #0b1017;
+  color: var(--ink);
+  width: 100%;
+}
+
+.field input[type="range"] {
+  padding: 0;
+  accent-color: var(--live);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.switch input {
+  accent-color: var(--live);
+  width: 17px;
+  height: 17px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* ----------------------------------------------------------------- settings */
+
+.settings {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(4, 6, 9, 0.82);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.settings-inner {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 18px 16px 60px;
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  padding: 8px 0 12px;
+  background: linear-gradient(180deg, rgba(4, 6, 9, 0.97), rgba(4, 6, 9, 0.72));
+}
+
+.settings-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.group {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--raise);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.group h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.note {
+  margin: 0 0 11px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  margin: 6px 0 10px;
+}
+
+.zone-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.zone-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--raise-2);
+  border: 1px solid var(--line);
+}
+
+.limits {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 9px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+.limits strong {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ desktop */
+
+@media (min-width: 900px) {
+  .stage {
+    grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr);
+    align-items: start;
+    padding: 16px;
+  }
+
+  .viewport {
+    aspect-ratio: 16 / 10;
+  }
+
+  .panel {
+    max-height: calc(100vh - 118px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sentry — what moved, where it went</title>
+    <meta
+      name="description"
+      content="A camera that draws the path of whatever crosses it, in metres, entirely on your own device."
+    />
+    <meta name="theme-color" content="#07090c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Sentry" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>Sentry</h1>
+            <p class="tagline">What moved, where it went, how fast.</p>
+          </div>
+        </div>
+        <div class="bar-status">
+          <span class="chip chip-quiet" id="status-chip">Camera off</span>
+          <button class="ghost" id="settings-toggle" type="button" aria-expanded="false">Setup</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <section class="viewport" aria-label="Camera view">
+          <video id="video" playsinline muted autoplay></video>
+          <canvas id="view"></canvas>
+          <canvas id="overlay"></canvas>
+
+          <div class="viewport-empty" id="viewport-empty">
+            <h2>Point it at the ground you want watched</h2>
+            <p>
+              Everything runs on this device. Frames are measured and thrown away — nothing is
+              uploaded, recorded or sent anywhere.
+            </p>
+            <button class="primary" id="start" type="button">Open the camera</button>
+            <p class="fineprint" id="support-note"></p>
+          </div>
+
+          <div class="view-switch" role="tablist" aria-label="View" id="view-switch"></div>
+
+          <div class="drawing-bar" id="drawing-bar" hidden>
+            <span id="drawing-hint">Tap the corners of the area.</span>
+            <button class="primary primary-small" id="drawing-done" type="button">Finish</button>
+            <button class="ghost" id="drawing-cancel" type="button">Cancel</button>
+          </div>
+
+          <div class="readout" id="readout" hidden>
+            <div class="readout-row"><span id="readout-tracks">0 tracked</span></div>
+            <div class="readout-row muted" id="readout-scale">no calibration — pixels only</div>
+          </div>
+        </section>
+
+        <section class="panel" aria-label="Analysis">
+          <nav class="tabs" role="tablist" id="tabs">
+            <button role="tab" class="tab tab-on" data-tab="subjects" type="button">Subjects</button>
+            <button role="tab" class="tab" data-tab="plan" type="button">Ground plan</button>
+            <button role="tab" class="tab" data-tab="events" type="button">Events</button>
+            <button role="tab" class="tab" data-tab="rf" type="button">Through walls</button>
+          </nav>
+
+          <div class="tab-body" id="tab-subjects">
+            <div class="empty" id="subjects-empty">
+              Nothing is being tracked yet. A subject appears here once it has been seen for a few
+              consecutive frames.
+            </div>
+            <ul class="subjects" id="subjects"></ul>
+          </div>
+
+          <div class="tab-body" id="tab-plan" hidden>
+            <canvas id="plan" width="640" height="480"></canvas>
+            <p class="fineprint" id="plan-note">
+              A plan needs a calibrated ground plane. Open Setup and mark a rectangle you have
+              measured.
+            </p>
+            <div class="plan-actions">
+              <button class="ghost" id="plan-clear" type="button">Clear paths</button>
+              <button class="ghost" id="export" type="button">Export session</button>
+            </div>
+          </div>
+
+          <div class="tab-body" id="tab-events" hidden>
+            <div class="empty" id="events-empty">
+              No zone events. Draw a zone in Setup to be told when something enters, stops inside, or
+              crosses a line.
+            </div>
+            <ol class="events" id="events"></ol>
+          </div>
+
+          <div class="tab-body" id="tab-rf" hidden>
+            <div class="rf-state" id="rf-state"></div>
+            <label class="field">
+              <span>Sensor bridge</span>
+              <input id="rf-url" type="url" placeholder="ws://192.168.1.40:8787" autocomplete="off" />
+            </label>
+            <div class="plan-actions">
+              <button class="ghost" id="rf-connect" type="button">Connect</button>
+              <button class="ghost" id="rf-disconnect" type="button">Disconnect</button>
+            </div>
+            <ul class="rf-options" id="rf-options"></ul>
+          </div>
+        </section>
+      </main>
+
+      <aside class="settings" id="settings" hidden>
+        <div class="settings-inner">
+          <header class="settings-head">
+            <h2>Setup</h2>
+            <button class="ghost" id="settings-close" type="button">Done</button>
+          </header>
+
+          <section class="group">
+            <h3>Ground calibration</h3>
+            <p class="note">
+              Without this, the app reports pixels. Mark the four corners of something you have
+              measured on the ground — a patio, a parking bay, four paving slabs — then give its
+              size. Everything in metres comes from these numbers, so measure them properly.
+            </p>
+            <div class="grid-2">
+              <label class="field">
+                <span>Width (m)</span>
+                <input id="cal-width" type="number" min="0.3" max="60" step="0.1" value="3" />
+              </label>
+              <label class="field">
+                <span>Depth (m)</span>
+                <input id="cal-depth" type="number" min="0.3" max="60" step="0.1" value="3" />
+              </label>
+            </div>
+            <div class="plan-actions">
+              <button class="ghost" id="cal-start" type="button">Mark corners</button>
+              <button class="ghost" id="cal-clear" type="button">Clear</button>
+            </div>
+            <p class="fineprint" id="cal-status">Not calibrated.</p>
+            <details>
+              <summary>Or enter the camera's position directly</summary>
+              <div class="grid-3">
+                <label class="field">
+                  <span>Height (m)</span>
+                  <input id="pose-height" type="number" min="0.3" max="20" step="0.1" value="2.6" />
+                </label>
+                <label class="field">
+                  <span>Tilt (°)</span>
+                  <input id="pose-tilt" type="number" min="0" max="85" step="1" value="20" />
+                </label>
+                <label class="field">
+                  <span>Lens FOV (°)</span>
+                  <input id="pose-fov" type="number" min="30" max="120" step="1" value="65" />
+                </label>
+              </div>
+              <button class="ghost" id="pose-apply" type="button">Use these</button>
+            </details>
+          </section>
+
+          <section class="group">
+            <h3>Zones</h3>
+            <p class="note">
+              Tap to place the corners of an area, or two points for a tripwire. Zones live on the
+              ground plane, so they mean the same thing after the camera is nudged.
+            </p>
+            <div class="grid-2">
+              <label class="field">
+                <span>Name</span>
+                <input id="zone-name" type="text" placeholder="Back gate" />
+              </label>
+              <label class="field">
+                <span>Loiter alert (s)</span>
+                <input id="zone-loiter" type="number" min="0" max="600" step="5" value="30" />
+              </label>
+            </div>
+            <div class="plan-actions">
+              <button class="ghost" id="zone-area" type="button">Draw area</button>
+              <button class="ghost" id="zone-wire" type="button">Draw tripwire</button>
+            </div>
+            <ul class="zone-list" id="zone-list"></ul>
+          </section>
+
+          <section class="group">
+            <h3>Detection</h3>
+            <label class="field">
+              <span>Sensitivity <em id="sensitivity-value">3.2</em></span>
+              <input id="sensitivity" type="range" min="1.5" max="6" step="0.1" value="3.2" />
+            </label>
+            <label class="switch">
+              <input id="reject-shadows" type="checkbox" checked />
+              <span>Reject shadows by colour</span>
+            </label>
+            <label class="switch">
+              <input id="hold-still" type="checkbox" checked />
+              <span>Keep stationary subjects out of the background</span>
+            </label>
+            <button class="ghost" id="relearn" type="button">Relearn the scene</button>
+          </section>
+
+          <section class="group">
+            <h3>Privacy</h3>
+            <label class="switch">
+              <input id="blur-faces" type="checkbox" checked />
+              <span>Obscure heads on screen</span>
+            </label>
+            <label class="field">
+              <span>Forget tracks after <em id="retention-value">30 min</em></span>
+              <input id="retention" type="range" min="1" max="120" step="1" value="30" />
+            </label>
+            <p class="note">
+              Nothing leaves this device unless you turn on narration below or press Export. There is
+              no face recognition here and no identity of any kind: a subject is a number that is
+              reused the moment they leave.
+            </p>
+          </section>
+
+          <section class="group">
+            <h3>Narration (optional)</h3>
+            <p class="note">
+              Every summary is written on-device from the measurements. A language model can restate
+              one in plainer words and answer questions about it. What is sent is the numbers — no
+              image, no crop, no location.
+            </p>
+            <label class="field">
+              <span>Provider</span>
+              <select id="llm-provider"></select>
+            </label>
+            <label class="field">
+              <span>API key</span>
+              <input id="llm-key" type="password" placeholder="Stored in this browser only" autocomplete="off" />
+            </label>
+            <div class="plan-actions">
+              <button class="ghost" id="llm-save" type="button">Save</button>
+              <button class="ghost" id="llm-forget" type="button">Forget</button>
+            </div>
+            <p class="fineprint" id="llm-status">Narration off.</p>
+          </section>
+
+          <section class="group">
+            <h3>What this cannot do</h3>
+            <ul class="limits">
+              <li>
+                <strong>See through walls.</strong> No browser exposes a radio, and no phone exposes
+                WiFi channel data. The Through walls tab connects a real sensor if you have one; with
+                nothing attached it reports nothing rather than guessing.
+              </li>
+              <li>
+                <strong>Measure temperature.</strong> Ironbow is a palette over ordinary brightness.
+                A white shirt reads hot. Thermal needs a long-wave infrared sensor.
+              </li>
+              <li>
+                <strong>Recognise anyone.</strong> No faces are matched, stored or compared, here or
+                anywhere else.
+              </li>
+              <li>
+                <strong>Read intent.</strong> Cadence, pauses and reversals are movement. They are
+                not motives, and the summaries never claim otherwise.
+              </li>
+              <li>
+                <strong>Take medical measurements.</strong> Pulse and breathing come from a camera,
+                need a still, close, well-lit subject, and are usually unavailable — which is what
+                the app will say.
+              </li>
+            </ul>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
