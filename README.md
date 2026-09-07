@@ -48,6 +48,16 @@ A minute later it is live at `https://<owner>.github.io/coach-colin-ai-command-c
 which is what the motion and camera permissions require. Add to Home Screen from there and it
 installs as a PWA.
 
+### Marketing images
+
+```bash
+node tools/make-ad.mjs <qb-shot.png> <wr-shot.png>   # → dist/ads/
+```
+
+Renders 1080×1350 and 1920×1080 ads from **real screenshots**, using the app's own tokens so the ad
+and the product stay one system. Capture the shots mid-rep with the answer tray up and the loop dial
+still cyan — and answer fast rather than staging the number.
+
 ### Single-file build
 
 For embedding somewhere that can only take one document:
@@ -251,7 +261,7 @@ js/render/     holographic field (per-position camera), loop dial, neural map
 js/drills/     the blocks + shared live-drill stage
 js/ui/         DOM helpers, router, and the non-live screens
 sw.js          offline shell
-tools/         single-file bundler
+tools/         single-file bundler, ad-image generator
 ```
 
 All audio is synthesised in WebAudio at runtime — the crowd bed is filtered pink noise with a slow
