@@ -10,3 +10,6 @@ output/
 .DS_Store
 .gstack/
 3d-models/
+
+# QB IQ is built from apps/qb-iq into the public tree; the bundle is not source.
+public/qb-iq/

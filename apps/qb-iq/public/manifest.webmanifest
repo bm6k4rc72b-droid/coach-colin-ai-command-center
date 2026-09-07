@@ -1,0 +1,15 @@
+{
+  "name": "QB IQ — quarterback performance intelligence",
+  "short_name": "QB IQ",
+  "description": "Throwing biomechanics, cognitive processing and OODA-loop analytics for quarterbacks, measured per rep against the athlete's own baseline.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07090c",
+  "theme_color": "#07090c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

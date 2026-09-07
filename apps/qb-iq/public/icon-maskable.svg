@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="QB IQ">
+  <rect width="192" height="192" fill="#07090c"/>
+  <!-- Maskable: everything important inside the 80% safe zone. -->
+  <path d="M96 48a48 48 0 1 1-34 14" fill="none" stroke="#1e252e" stroke-width="9" stroke-linecap="round"/>
+  <path d="M96 48a48 48 0 0 1 34 82" fill="none" stroke="#4cc9ff" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="130" cy="130" r="8" fill="#4cc9ff"/>
+  <g fill="#f2f5f8">
+    <rect x="72" y="110" width="8" height="14" rx="2.5"/>
+    <rect x="86" y="99" width="8" height="25" rx="2.5"/>
+    <rect x="100" y="83" width="8" height="41" rx="2.5"/>
+    <rect x="114" y="93" width="8" height="31" rx="2.5"/>
+  </g>
+</svg>

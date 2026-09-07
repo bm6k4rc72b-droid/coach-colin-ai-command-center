@@ -44,6 +44,10 @@
     "test:sentry": "node --test tests/sentry/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",
     "test:realtor": "node --test tests/realtor/*.test.mjs",
+    "qbiq:install": "npm --prefix apps/qb-iq install",
+    "qbiq:dev": "npm --prefix apps/qb-iq run dev",
+    "qbiq:build": "npm --prefix apps/qb-iq run build",
+    "test:qbiq": "npm --prefix apps/qb-iq test",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
@@ -51,7 +55,8 @@
     "qa:baseline": "node scripts/qa-baseline.mjs",
     "qa:sentry": "node scripts/qa-sentry.mjs",
     "qa:nexus": "node scripts/qa-nexus.mjs",
-    "qa:realtor": "node scripts/qa-realtor.mjs"
+    "qa:realtor": "node scripts/qa-realtor.mjs",
+    "qa:qbiq": "node scripts/qa-qb-iq.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

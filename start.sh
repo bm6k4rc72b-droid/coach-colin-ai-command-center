@@ -38,6 +38,15 @@ if [ ! -d node_modules ]; then
   npm install --no-audit --no-fund
 fi
 
+# QB IQ (/qb-iq/) is a React + TypeScript app with its own small toolchain, and
+# it compiles into public/qb-iq/ where the dev server picks it up like any other
+# static app in here. Build it once, then leave it alone.
+if [ ! -f public/qb-iq/index.html ]; then
+  echo "==> First run: building QB IQ (about ten seconds)..."
+  npm --prefix apps/qb-iq install --no-audit --no-fund
+  npm --prefix apps/qb-iq run build
+fi
+
 echo
 echo "  Starting up. When it says 'ready', open this in your browser:"
 echo

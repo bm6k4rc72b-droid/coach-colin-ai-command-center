@@ -230,6 +230,64 @@ Chromium).
 
 ---
 
+## Also in here: QB IQ
+
+A quarterback analytics console at [`apps/qb-iq/`](apps/qb-iq) that measures
+**the two halves of playing the position that usually get discussed without
+numbers** — what the body does during the throw, and what the mind does before
+it. Built for a room: a position coach, a biomechanist, a performance scientist,
+an agent.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/qb-iq/>** —
+locally it is `/qb-iq/` (`http://localhost:4173/qb-iq/` under `./start.sh`,
+which builds it on first run). Unlike the other apps in here it has a build step:
+it is React and TypeScript, compiled into `public/qb-iq/`.
+
+- **Every number carries its definition.** A tile takes a metric id, not a label
+  and a unit, so the unit, the measurement definition, the reason a staff would
+  raise it and the published range all come from one dictionary and cannot drift
+  apart from the figure. The "i" beside any label opens it. There are forty-eight
+  metrics and not one of them is a buzzword.
+- **Nothing is compared with a population table.** A quarterback whose lead leg
+  has always braked at 1.85 ×BW is not injured because a textbook says 2.1. The
+  risk flags score a recent window against *the same athlete's* earlier reps with
+  a median and a scaled median absolute deviation, so a handful of off-platform
+  throws cannot redefine what normal is.
+- **The OODA spans partition the release clock exactly** — observe, orient,
+  decide and act sum to snap-to-throw on every rep, which is what makes the
+  decomposition worth having: two passers at 2.6 seconds can be a slow-orient
+  problem and a slow-act problem, and those are opposite coaching weeks.
+- **A rep that cannot answer a question is excluded, not defaulted.** A sack has
+  no release point, no ball flight and no loop time, so those are null rather
+  than fabricated; a throwaway has mechanics but stays out of the accuracy
+  denominator, because counting it as an inaccurate throw would score ball
+  protection as a miss.
+- **Sequencing is scored with a tolerance, because the distal peaks are
+  genuinely near-simultaneous** — peak elbow extension can lead peak shoulder
+  internal rotation by a few milliseconds on a healthy rep, so a distal pair
+  inside 12 ms is compliant rather than a violation.
+- **The performance-science block is held to the same bar as the field data.**
+  Paced breathing is measured with a chest strap and scored against a control
+  block; the recognition drilling carries a transfer check against on-field
+  observe time, with its r²; the situational score is a rule engine that prints
+  its rules beside every rep it scores.
+- **The game report prints.** It generates from the rep records, writes its own
+  findings from rules that must name the figures they compared, and lays out on
+  letter paper as a black-on-white scouting report.
+- **The synthetic season is a model, not noise** — seeded, so the numbers never
+  move between loads, with one compensation pattern planted late in the year that
+  the flag engine has to find on its own. The record model, the source interface
+  and the vendor adapter are the ones a live optical-tracking, markerless-mocap or
+  wearable feed would fill; the adapter converts SI to the units a staff speaks
+  and refuses a bad rep with reasons rather than passing through a
+  plausible-looking one.
+
+Full write-up, including the measurement definitions and the honest limits:
+[`docs/qb-iq.md`](docs/qb-iq.md). Tests: `npm run test:qbiq` (162 unit tests) and
+`npm run qa:qbiq` (32 end-to-end checks driving the real console in Chromium).
+
+---
+
 ## Also in here: HarvestEye
 
 A second, self-contained app lives at [`public/harvest-eye/`](public/harvest-eye)

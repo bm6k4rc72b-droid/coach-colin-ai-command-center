@@ -2,7 +2,8 @@
 # Build a static, server-less copy of the app for GitHub Pages.
 #
 # WHAT YOU GET: the globe (OpenStreetMap imagery), the full interface and the
-# Command Center skin — no API keys needed.
+# Command Center skin — no API keys needed. Plus every self-contained app under
+# public/, including QB IQ, which is compiled from apps/qb-iq first.
 #
 # WHAT YOU DO NOT GET: every live data layer. Aircraft, ships, CCTV, traffic,
 # fires and voice are served by 16 /api/* routes that live in the Vite dev
@@ -12,6 +13,13 @@ set -euo pipefail
 
 REPO_NAME="${1:-coach-colin-ai-command-center}"
 BASE="/${REPO_NAME}/"
+
+# QB IQ is a separate React/TypeScript app with its own toolchain. It builds
+# into public/qb-iq/, so it has to run before the outer build copies public/
+# into dist/. Its assets are emitted relative, so it works at any mount point.
+echo "==> Building QB IQ into public/qb-iq"
+npm --prefix apps/qb-iq ci --no-audit --no-fund
+npm --prefix apps/qb-iq run build
 
 echo "==> Building with base ${BASE}"
 rm -rf dist
