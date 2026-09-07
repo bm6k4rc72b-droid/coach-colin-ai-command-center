@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Aegis — nobody falls alone</title>
+    <meta
+      name="description"
+      content="A fall guardian that fuses a camera, a carried phone and the room's sound, asks before it escalates, and runs entirely on your own device."
+    />
+    <meta name="theme-color" content="#06070b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Aegis" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="crest" aria-hidden="true"></span>
+          <div class="brand-text">
+            <h1>Aegis</h1>
+            <p class="tagline">Nobody falls alone.</p>
+          </div>
+        </div>
+        <div class="bar-right">
+          <div class="watching" id="watching">
+            <span class="label">Watching</span>
+            <strong id="subject-name">—</strong>
+          </div>
+          <span class="state-chip state-calm" id="state-chip">Standing by</span>
+          <button class="ghost" id="mute" type="button" aria-pressed="false" title="Silence Vera">Mute</button>
+          <button class="ghost" id="setup-toggle" type="button" aria-expanded="false">Setup</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <!-- ------------------------------------------------------ Vera -->
+        <section class="vera" aria-label="Vera, the receptionist">
+          <div class="vera-stage">
+            <canvas id="hologram" aria-hidden="true"></canvas>
+            <div class="vera-plate">
+              <span class="label">Resident receptionist</span>
+              <strong>Vera</strong>
+            </div>
+          </div>
+          <p class="vera-line" id="vera-line" aria-live="polite">
+            Good to see you. I keep watch, and if something happens I ask first and escalate second.
+          </p>
+          <form class="ask" id="ask-form">
+            <button class="mic" id="mic" type="button" aria-pressed="false" title="Speak to Vera">
+              <span class="mic-dot" aria-hidden="true"></span>
+              <span class="sr">Speak to Vera</span>
+            </button>
+            <input
+              id="ask-input"
+              type="text"
+              autocomplete="off"
+              placeholder="Ask Vera anything…"
+              aria-label="Ask Vera"
+            />
+            <button class="send" type="submit" aria-label="Send">→</button>
+          </form>
+          <div class="chips" id="vera-chips"></div>
+        </section>
+
+        <!-- ----------------------------------------------------- Stage -->
+        <section class="view" aria-label="What Aegis can see">
+          <div class="viewport" id="viewport">
+            <video id="video" playsinline muted autoplay></video>
+            <canvas id="picture"></canvas>
+            <canvas id="marks"></canvas>
+
+            <div class="viewport-empty" id="viewport-empty">
+              <span class="label">Two ways in</span>
+              <h2>Watch a real room, or watch eight things that can happen in one.</h2>
+              <p>
+                Everything runs on this device. Frames are measured and thrown away — nothing is
+                recorded, nothing is uploaded, and there is no face recognition anywhere in it.
+              </p>
+              <div class="empty-actions">
+                <button class="primary" id="start-camera" type="button">Open the camera</button>
+                <button class="secondary" id="start-demo" type="button">Run the demonstration</button>
+              </div>
+              <p class="fineprint" id="support-note"></p>
+            </div>
+
+            <div class="viewport-badge" id="mode-badge" hidden></div>
+            <div class="viewport-clock" id="clock" hidden></div>
+          </div>
+
+          <div class="scenario-bar" id="scenario-bar" hidden>
+            <div class="scenario-head">
+              <div>
+                <span class="label" id="scenario-kind">Scenario</span>
+                <strong id="scenario-title">—</strong>
+              </div>
+              <div class="scenario-actions">
+                <button class="ghost" id="scenario-replay" type="button">Replay</button>
+                <button class="ghost" id="scenario-next" type="button">Next</button>
+                <button class="ghost" id="scenario-exit" type="button">Live camera</button>
+              </div>
+            </div>
+            <p class="scenario-claim" id="scenario-claim"></p>
+            <div class="scenario-progress"><span id="scenario-progress-fill"></span></div>
+            <div class="scenario-list" id="scenario-list" role="tablist"></div>
+            <p class="scenario-expect" id="scenario-expect"></p>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------- Evidence -->
+        <section class="evidence" aria-label="What Aegis believes and why">
+          <div class="belief">
+            <div class="belief-dial">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="dial-track" cx="60" cy="60" r="52" />
+                <circle class="dial-fill" id="dial-fill" cx="60" cy="60" r="52" />
+              </svg>
+              <div class="belief-number">
+                <strong id="belief-value">0</strong>
+                <span>%</span>
+              </div>
+            </div>
+            <div class="belief-text">
+              <span class="label" id="belief-label">Confidence a fall has happened</span>
+              <p id="headline">Nothing is running yet.</p>
+            </div>
+          </div>
+
+          <div class="ladder" id="ladder" hidden>
+            <div class="ladder-head">
+              <span class="label" id="ladder-stage">Asking</span>
+              <strong id="ladder-count"></strong>
+            </div>
+            <p id="ladder-note"></p>
+            <div class="ladder-actions">
+              <button class="primary" id="im-fine" type="button">I’m fine</button>
+              <button class="danger" id="call-now" type="button">Call for help now</button>
+            </div>
+          </div>
+
+          <div class="panel-block">
+            <h3 class="label">Channels — an alarm needs two</h3>
+            <ul class="channels" id="channels"></ul>
+          </div>
+
+          <div class="panel-block">
+            <h3 class="label">Why</h3>
+            <ul class="reasons" id="reasons">
+              <li class="quiet">Nothing to explain yet.</li>
+            </ul>
+          </div>
+
+          <div class="panel-block">
+            <h3 class="label">Coverage</h3>
+            <p class="coverage" id="coverage">No sensors in service.</p>
+            <ul class="gaps" id="gaps"></ul>
+          </div>
+        </section>
+      </main>
+
+      <!-- ------------------------------------------------------- Setup -->
+      <aside class="setup" id="setup" hidden>
+        <div class="setup-inner">
+          <header class="setup-head">
+            <div>
+              <span class="label">Console</span>
+              <h2>Setup</h2>
+            </div>
+            <button class="ghost" id="setup-close" type="button">Close</button>
+          </header>
+
+          <nav class="setup-tabs" id="setup-tabs" role="tablist">
+            <button role="tab" class="tab tab-on" data-pane="who" type="button">Who</button>
+            <button role="tab" class="tab" data-pane="sensors" type="button">Sensors</button>
+            <button role="tab" class="tab" data-pane="zones" type="button">Room</button>
+            <button role="tab" class="tab" data-pane="contacts" type="button">Contacts</button>
+            <button role="tab" class="tab" data-pane="voice" type="button">Vera’s voice</button>
+            <button role="tab" class="tab" data-pane="ledger" type="button">Ledger</button>
+          </nav>
+
+          <div class="pane" id="pane-who">
+            <label class="field">
+              <span>What should Vera call them?</span>
+              <input id="field-subject" type="text" placeholder="Margaret" autocomplete="off" />
+              <small>Used out loud. A person on the floor answers to their name far faster than to a chime.</small>
+            </label>
+            <label class="field">
+              <span>Where is the camera pointed?</span>
+              <input id="field-where" type="text" placeholder="front room" autocomplete="off" />
+              <small>Goes into the message contacts receive, so they know which room to go to.</small>
+            </label>
+            <label class="field">
+              <span>How long before Vera speaks up</span>
+              <input id="field-dwell" type="range" min="3" max="20" step="1" />
+              <small id="dwell-note"></small>
+            </label>
+          </div>
+
+          <div class="pane" id="pane-sensors" hidden>
+            <p class="pane-lede">
+              Three sensors that fail differently. Aegis will not raise a full alarm on one alone —
+              the only exception is a camera that watched both the descent and the aftermath, which
+              is two observations seven seconds apart.
+            </p>
+            <ul class="sensor-list" id="sensor-list"></ul>
+            <p class="fineprint" id="sensor-note"></p>
+          </div>
+
+          <div class="pane" id="pane-zones" hidden>
+            <p class="pane-lede">
+              Two kinds of rectangle. <strong>Furniture</strong> is anything that cuts a body off at
+              the shins. <strong>Rest zones</strong> are where lying down is expected, and inside
+              them Aegis stays quiet.
+            </p>
+            <div class="zone-tools">
+              <button class="ghost zone-on" id="zone-furniture" type="button">Draw furniture</button>
+              <button class="ghost" id="zone-rest" type="button">Draw rest zone</button>
+              <button class="ghost" id="zone-clear" type="button">Clear</button>
+            </div>
+            <p class="fineprint">
+              Drag a rectangle on the picture. Aegis learns the rest by itself — you never have to
+              measure anything.
+            </p>
+            <ul class="zone-list" id="zone-list"></ul>
+          </div>
+
+          <div class="pane" id="pane-contacts" hidden>
+            <p class="pane-lede">
+              At the top of the ladder Aegis puts the message and the number in front of whoever is
+              holding this device. A browser cannot place a call by itself, and this one does not
+              pretend it can.
+            </p>
+            <ul class="contact-list" id="contact-list"></ul>
+            <form class="contact-form" id="contact-form">
+              <input id="contact-name" type="text" placeholder="Name" autocomplete="off" required />
+              <input id="contact-relation" type="text" placeholder="Daughter" autocomplete="off" />
+              <input id="contact-phone" type="tel" placeholder="Number" autocomplete="off" />
+              <button class="secondary" type="submit">Add</button>
+            </form>
+            <button class="ghost" id="rehearse" type="button">Rehearse the whole ladder</button>
+            <pre class="preview" id="alert-preview" hidden></pre>
+          </div>
+
+          <div class="pane" id="pane-voice" hidden>
+            <p class="pane-lede">
+              A browser cannot clone a voice — it offers whatever the operating system installed. What
+              it can get right is the register and the cadence, and those are most of what anybody
+              hears. For an exact match, point Vera at a speech service below.
+            </p>
+            <label class="field">
+              <span>Voice</span>
+              <select id="voice-pick"></select>
+              <small id="voice-note"></small>
+            </label>
+            <div class="sliders">
+              <label class="field">
+                <span>Pitch <em id="v-pitch-value"></em></span>
+                <input id="v-pitch" type="range" min="0.7" max="1.3" step="0.01" />
+              </label>
+              <label class="field">
+                <span>Pace <em id="v-rate-value"></em></span>
+                <input id="v-rate" type="range" min="0.7" max="1.2" step="0.01" />
+              </label>
+              <label class="field">
+                <span>Warmth <em id="v-warmth-value"></em></span>
+                <input id="v-warmth" type="range" min="0" max="1" step="0.01" />
+                <small>How far her pitch moves across a sentence. Flat is a satnav; too much is a
+                  presenter.</small>
+              </label>
+              <label class="field">
+                <span>Breath <em id="v-pace-value"></em></span>
+                <input id="v-pace" type="range" min="0.4" max="2" step="0.05" />
+                <small>How long she pauses between clauses.</small>
+              </label>
+            </div>
+            <button class="secondary" id="voice-test" type="button">Hear her</button>
+            <details class="cloud">
+              <summary>Exact voice match (leaves this device)</summary>
+              <p class="fineprint">
+                With a key below, Vera’s lines are sent to that service and spoken in the voice you
+                name. That is a real network request containing what she is about to say. Everything
+                else in Aegis stays local whether this is on or not.
+              </p>
+              <label class="field">
+                <span>Service</span>
+                <select id="cloud-provider">
+                  <option value="">Off — use this device’s own voices</option>
+                </select>
+                <small id="cloud-hint"></small>
+              </label>
+              <label class="field">
+                <span>Key</span>
+                <input id="cloud-key" type="password" autocomplete="off" placeholder="Kept in this browser only" />
+              </label>
+              <label class="field">
+                <span>Voice id</span>
+                <input id="cloud-voice" type="text" autocomplete="off" placeholder="e.g. a cloned voice id, or “nova”" />
+              </label>
+              <button class="secondary" id="cloud-test" type="button">Test the bridge</button>
+              <p class="fineprint" id="cloud-status"></p>
+            </details>
+          </div>
+
+          <div class="pane" id="pane-ledger" hidden>
+            <p class="pane-lede" id="ledger-summary">The ledger is empty.</p>
+            <ul class="ledger" id="ledger-list"></ul>
+            <div class="ledger-actions">
+              <button class="ghost" id="ledger-export" type="button">Export as CSV</button>
+              <button class="ghost" id="ledger-clear" type="button">Clear</button>
+            </div>
+            <p class="fineprint">
+              Kept on this device only. Clearing the browser’s data clears this with it — export it
+              if it matters.
+            </p>
+          </div>
+
+          <footer class="setup-foot">
+            <p>
+              <strong>Aegis is not a medical device.</strong> It detects movement, not injury. It
+              cannot tell whether anybody is hurt, it does not measure a pulse, and it must not be
+              used to decide whether somebody needs a doctor.
+            </p>
+          </footer>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

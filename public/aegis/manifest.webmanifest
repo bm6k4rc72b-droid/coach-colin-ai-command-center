@@ -1,0 +1,15 @@
+{
+  "name": "Aegis — fall guardian",
+  "short_name": "Aegis",
+  "description": "A fall guardian that fuses a camera, a carried phone and the room's sound, asks before it escalates, and runs entirely on your own device.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#06070b",
+  "theme_color": "#06070b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

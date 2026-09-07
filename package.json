@@ -42,6 +42,7 @@
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
     "test:baseline": "node --test tests/baseline/*.test.mjs",
     "test:sentry": "node --test tests/sentry/*.test.mjs",
+    "test:aegis": "node --test tests/aegis/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",
     "test:realtor": "node --test tests/realtor/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
@@ -50,6 +51,7 @@
     "qa:harvest-eye": "node scripts/qa-harvest-eye.mjs",
     "qa:baseline": "node scripts/qa-baseline.mjs",
     "qa:sentry": "node scripts/qa-sentry.mjs",
+    "qa:aegis": "node scripts/qa-aegis.mjs",
     "qa:nexus": "node scripts/qa-nexus.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs"
   },

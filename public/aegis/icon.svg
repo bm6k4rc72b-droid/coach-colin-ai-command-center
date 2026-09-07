@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Aegis">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#f2d78c"/>
+      <stop offset="0.55" stop-color="#e8c66a"/>
+      <stop offset="1" stop-color="#a8842f"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="13" fill="#06070b"/>
+  <path d="M32 9 52 17v16c0 12-8.6 19.6-20 23-11.4-3.4-20-11-20-23V17z" fill="url(#g)"/>
+  <path d="M32 15 46 20.6V33c0 8.6-6 14.3-14 17-8-2.7-14-8.4-14-17V20.6z" fill="#06070b"/>
+  <circle cx="32" cy="30" r="4.6" fill="#e8c66a"/>
+  <path d="M32 36.4c-4.4 0-8 3-8 7.4h16c0-4.4-3.6-7.4-8-7.4z" fill="#e8c66a"/>
+</svg>

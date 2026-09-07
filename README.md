@@ -47,6 +47,76 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: Aegis
+
+A fall guardian for a home at [`public/aegis/`](public/aegis) that fuses **a
+camera, a phone carried in a pocket, and the room's own sound**, refuses to
+raise an alarm on any one of them alone, and — when it does think somebody has
+gone down — **asks them first**, out loud, by name, before it escalates to
+anybody else. iPhone, Android, or any laptop with a webcam. Nothing recorded,
+nothing uploaded, no face recognition anywhere in it.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/aegis/>** — open it and press
+**Run the demonstration**; locally it is `/aegis/`.
+
+Detecting a fall is the easy half. The two hard halves are not detecting the
+things that *look* like falls, and responding without treating an adult as an
+incident — roughly half the people who go down at home get themselves up within
+a minute.
+
+- **It measures the head row, not the bounding box**, which is why it still
+  works in a room with furniture in it. A sofa hides shins; almost nothing in a
+  home hides a standing adult's head. The floor reference is coasted while the
+  feet are hidden, drawn **dashed** on the picture when it is, and spent by how
+  far the subject has *moved* rather than by how long it has been — somebody
+  lying motionless behind a sofa has a reference thirty seconds old and
+  perfectly valid.
+- **A fall is a transition, not a posture.** Sitting is a controlled lowering
+  that ends at chair height. A shoelace is over in six seconds. Lying down in
+  bed is lying down in a rest zone. The alarm only ever comes from a body that
+  went down *and stayed there*.
+- **An alarm needs two independent lines of evidence**, and the arithmetic
+  enforces it rather than trusting anyone to remember. One channel is capped
+  below the alarm threshold however confident it is. The single exception is
+  stricter, not looser: a camera that watched the descent *and* the seven
+  seconds afterwards has made two observations.
+- **A still person is not a still object, because a still person breathes.**
+  That one test is what stops a phone sliding onto a rug — free fall, 4.8 g
+  impact, total silence — from reading as a fall, and the demonstration includes
+  a scenario built specifically to fool the accelerometer so you can watch the
+  fusion stage refuse it.
+- **The microphone is a vibration sensor, never a microphone.** Audio becomes
+  four numbers in the tick it arrives and the waveform is never copied out of
+  the analyser's buffer. There is no code path by which a sound can be stored,
+  replayed or sent anywhere.
+- **It never claims to have seen a fall it did not see.** Somebody discovered
+  already on the floor is `found-down`, capped below a watched fall, and the
+  message contacts receive says so in those words.
+- **Vera, the resident receptionist**, is the response layer rather than
+  decoration: a holographic figure who asks by name, gives a generous and
+  clearly stated way to wave her off, counts down out loud before she raises
+  anybody, and goes straight to alerting if somebody says "help". Her voice
+  ranks the installed system voices rather than taking the default, speaks in
+  clauses with a real pitch contour, and gets *slower and lower* when the news
+  is bad. A key in the voice panel bridges her to ElevenLabs or an
+  OpenAI-compatible service for an exact voice match; that path leaves the
+  device and the panel says so in those words.
+
+**The demonstration is the same code path as the live camera** — there is no
+demo branch inside the detector, so a scenario can show it being wrong. Eight of
+them, negatives first, number keys 1–8.
+
+Full write-up, including what it refuses to do and why:
+[`docs/aegis.md`](docs/aegis.md). Tests: `npm run test:aegis` (63 checks,
+including every scenario replayed through the real pipeline) and
+`npm run qa:aegis` (19 end-to-end checks driving the real app in Chromium).
+
+**Aegis is not a medical device.** It detects movement, not injury. It cannot
+tell whether anybody is hurt and must not be used to decide whether somebody
+needs a doctor.
+
+---
+
 ## Also in here: Sentry
 
 A security-camera app at [`public/sentry/`](public/sentry) that watches a piece
