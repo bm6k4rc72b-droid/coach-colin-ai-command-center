@@ -189,6 +189,58 @@ real page in Chromium).
 
 ---
 
+## Also in here: ASTRA — Peptide Intelligence Platform
+
+A research facility for peptide science at [`public/astra/`](public/astra),
+built around one idea: **every claim carries its evidence tier, and every tier
+opens into its sources.** Search, compare, verify, understand.
+
+Locally it is `/astra/` (`http://localhost:4173/astra/` under `./start.sh`).
+Self-contained like the rest: no build step, no dependencies, no backend, no
+account, and it keeps answering with the signal off.
+
+It is deliberately **not** a platform that tells anyone what to take — no
+diagnosis, no dosing, no protocols. That constraint is the product: a platform
+that recommends has to defend each recommendation, while one that teaches
+evidence literacy only has to be honest, and honesty is something you can build
+in code and assert in CI.
+
+- **A confidence meter that cannot be talked upward.** Seven evidence tiers,
+  each a *band* rather than a point: the best available design picks the band,
+  and replication and consistency place you inside it. Every animal reading is
+  capped at 45%; every reading with a relevant randomised human trial starts at
+  62%. "Ten mouse studies never reach one randomised trial" is a property of the
+  arithmetic, with a test asserting it.
+- **Relevance scored separately from design quality** — the way most evidence
+  summaries flatter a compound. TB-500's cited randomised trials used the
+  full-length parent protein, applied topically, to an eye, for dry eye disease;
+  it is counted two tiers down and the study card says why. The result is a
+  library where the approved drugs read 82–86% and the popular repair peptides
+  read 22–39%.
+- **A scroll-linked descent into a hand-written WebGL2 laboratory** — hexagonal
+  vault, peptide helix, vial plinth, and a knowledge graph you fly through. Every
+  vertex generated from maths, no model files. Deck changes fly the camera
+  between waypoints, device tilt parallaxes the volume, and each deck has its own
+  chord in a synthesised score.
+- **Nine decks**: the intelligence engine and its eight-section dossier with
+  "Show me the science" on every claim; the knowledge graph; a paper decoder that
+  tells you what a study *doesn't* prove; a comparison lab, a four-reviewer
+  debate room and a study-design simulator; a myth detector, social fact checker
+  and marketing compliance guardian; a content studio turning one paper into
+  thirty governed assets; a private command centre with a live Europe PMC radar
+  and a campaign generator behind an approval gate.
+- **A progression loop that only rewards research literacy** — points for
+  opening primary sources, decoding papers and finding contradicting evidence;
+  none for time on site. Calm mode switches the streaks and reward drops off,
+  offered plainly rather than buried.
+
+Full write-up, including the evidence model and the known limits:
+[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (89 unit tests)
+and `npm run qa:astra` (66 end-to-end checks driving the real platform in
+Chromium).
+
+---
+
 ## Also in here: AETHER NEXUS
 
 A holographic command centre at [`public/nexus/`](public/nexus) that teaches

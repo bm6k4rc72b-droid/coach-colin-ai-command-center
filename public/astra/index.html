@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>ASTRA — Peptide Intelligence Platform</title>
+<meta name="description" content="A research facility for peptide science. Search, compare, verify and understand: every claim carries its evidence tier, every tier opens into its sources. Educational only — no diagnosis, no dosing, no protocols. Runs in the browser, works offline.">
+<meta name="theme-color" content="#03060c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ASTRA">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<canvas id="lab" aria-hidden="true"></canvas>
+<div id="grain" aria-hidden="true"></div>
+<div id="scanlines" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- The entrance. A scroll-linked descent; the lab behind it flies between
+     waypoints as each chapter arrives. -->
+<div id="intro" class="intro" role="region" aria-label="Introduction"></div>
+
+<header id="topbar">
+  <button id="btn-home" class="brand" type="button" title="Back to the entrance" aria-label="Back to the entrance">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-text">ASTRA</span>
+  </button>
+  <div id="statusbar" class="status-strip" aria-live="polite"></div>
+  <div class="top-actions">
+    <button id="btn-motion" class="icon-btn" type="button" title="Enable tilt parallax" aria-label="Enable tilt parallax">◈</button>
+    <button id="btn-lens" class="icon-btn" type="button" title="Camera lens" aria-label="Camera lens">⊙</button>
+    <button id="btn-sound" class="icon-btn" type="button" title="Mute" aria-label="Mute">♪</button>
+  </div>
+</header>
+
+<nav id="decks" aria-label="Facility decks">
+  <button class="deck-btn active" data-deck="engine" type="button"><span aria-hidden="true">◎</span>Engine</button>
+  <button class="deck-btn" data-deck="graph" type="button"><span aria-hidden="true">⁂</span>Map</button>
+  <button class="deck-btn" data-deck="decoder" type="button"><span aria-hidden="true">▤</span>Decoder</button>
+  <button class="deck-btn" data-deck="compare" type="button"><span aria-hidden="true">⌬</span>Lab</button>
+  <button class="deck-btn" data-deck="verify" type="button"><span aria-hidden="true">✓</span>Verify</button>
+  <button class="deck-btn" data-deck="studio" type="button"><span aria-hidden="true">✧</span>Studio</button>
+  <button class="deck-btn" data-deck="command" type="button"><span aria-hidden="true">◉</span>Command</button>
+  <button class="deck-btn" data-deck="profile" type="button"><span aria-hidden="true">◈</span>Record</button>
+  <button class="deck-btn" data-deck="settings" type="button"><span aria-hidden="true">⚙</span>Settings</button>
+</nav>
+
+<main id="panel" aria-live="polite">
+  <div class="panel-head">
+    <h2 id="panel-title">Intelligence Engine</h2>
+    <button id="panel-toggle" class="icon-btn" type="button" aria-label="Collapse panel">▾</button>
+  </div>
+  <div id="panel-body"></div>
+  <footer class="panel-foot">
+    Educational research platform. Not medical advice. No diagnosis, no dosing, no treatment plans.
+  </footer>
+</main>
+
+<!-- The camera lens. Hidden until asked for; frames never leave the device. -->
+<aside id="lens-panel" class="lens-panel" hidden aria-label="Camera lens">
+  <video id="lens-video" playsinline muted></video>
+  <p class="lens-hint">Point at a label or a QR code. Nothing is recorded or uploaded.</p>
+</aside>
+
+<div id="reward" class="reward" role="status" aria-live="polite"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="noscript">
+    ASTRA is a JavaScript application — the evidence engine, the decoder and the
+    renderer all run on this device. Enable JavaScript to use it.
+  </div>
+</noscript>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

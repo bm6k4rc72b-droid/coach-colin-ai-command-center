@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ASTRA">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#bff2ff"/>
+      <stop offset="52%" stop-color="#2f7fd8"/>
+      <stop offset="100%" stop-color="#04101c"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6e5a8"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8a6a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#03060c"/>
+  <circle cx="256" cy="256" r="150" fill="url(#glow)" opacity="0.3"/>
+  <g stroke="url(#gold)" stroke-width="8" fill="none" stroke-linejoin="round">
+    <path d="M210 166h92v28l-18 22v142a46 46 0 0 1-46 46 46 46 0 0 1-46-46V216l-18-22v-28z"/>
+  </g>
+  <path d="M202 300h108v58a46 46 0 0 1-46 46h-16a46 46 0 0 1-46-46z" fill="#5fd8ff" opacity="0.55"/>
+  <g stroke="#bff2ff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.95">
+    <path d="M232 214c28 18 28 36 0 54s-28 36 0 54"/>
+    <path d="M282 214c-28 18-28 36 0 54s28 36 0 54"/>
+    <path d="M236 228h44M232 254h52M236 280h44"/>
+  </g>
+</svg>
