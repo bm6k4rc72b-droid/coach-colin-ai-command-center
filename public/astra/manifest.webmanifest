@@ -1,0 +1,16 @@
+{
+  "name": "ASTRA — Peptide Intelligence Platform",
+  "short_name": "ASTRA",
+  "description": "A research facility for peptide science. Every claim carries its evidence tier, every tier opens into its sources. Educational only — no diagnosis, no dosing, no protocols.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#03060c",
+  "theme_color": "#03060c",
+  "categories": ["education", "medical", "productivity"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

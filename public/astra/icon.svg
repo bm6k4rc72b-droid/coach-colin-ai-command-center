@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ASTRA">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="44%" r="62%">
+      <stop offset="0%" stop-color="#bff2ff"/>
+      <stop offset="52%" stop-color="#2f7fd8"/>
+      <stop offset="100%" stop-color="#04101c"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6e5a8"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8a6a1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#03060c"/>
+  <circle cx="256" cy="240" r="164" fill="url(#glow)" opacity="0.32"/>
+  <!-- The vial -->
+  <g stroke="url(#gold)" stroke-width="9" fill="none" stroke-linejoin="round">
+    <path d="M196 132h120v34l-22 26v168a58 58 0 0 1-58 58 58 58 0 0 1-58-58V192l-22-26v-34z" opacity="0.9"/>
+  </g>
+  <path d="M186 300h140v60a58 58 0 0 1-58 58h-24a58 58 0 0 1-58-58z" fill="#5fd8ff" opacity="0.55"/>
+  <!-- The helix inside -->
+  <g stroke="#bff2ff" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.95">
+    <path d="M222 190c34 22 34 44 0 66s-34 44 0 66"/>
+    <path d="M290 190c-34 22-34 44 0 66s34 44 0 66"/>
+    <path d="M226 206h60M222 240h68M226 274h60M228 306h56"/>
+  </g>
+</svg>
