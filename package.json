@@ -44,6 +44,7 @@
     "test:sentry": "node --test tests/sentry/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",
     "test:astra": "node --test tests/astra/*.test.mjs",
+    "test:carrier": "node --test tests/carrier/*.test.mjs",
     "test:realtor": "node --test tests/realtor/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
@@ -53,6 +54,7 @@
     "qa:sentry": "node scripts/qa-sentry.mjs",
     "qa:nexus": "node scripts/qa-nexus.mjs",
     "qa:astra": "node scripts/qa-astra.mjs",
+    "qa:carrier": "node scripts/qa-carrier.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs"
   },
   "dependencies": {

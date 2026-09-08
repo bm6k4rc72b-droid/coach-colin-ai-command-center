@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Carrier — vertical briefings, rendered from a script</title>
+    <meta
+      name="description"
+      content="A bench for building vertical security-briefing reels: write the script, watch the frames render, export the video."
+    />
+    <meta name="theme-color" content="#0a0416" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Carrier" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>Carrier</h1>
+            <p class="tagline">Vertical briefings, rendered from a script.</p>
+          </div>
+        </div>
+        <div class="bar-actions">
+          <span class="chip" id="runtime-chip">—</span>
+          <button class="ghost" id="reset" type="button">Reset episode</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <section class="viewer" aria-label="Preview">
+          <div class="screen">
+            <canvas id="frame" width="1080" height="1920" aria-label="Episode preview"></canvas>
+          </div>
+
+          <div class="transport">
+            <button class="primary" id="play" type="button" aria-label="Play">▶</button>
+            <input id="scrub" class="scrub" type="range" min="0" max="1000" value="0" aria-label="Timeline" />
+            <span class="time" id="time">0.0 / 0.0s</span>
+          </div>
+
+          <div class="transport-notes">
+            <label class="toggle">
+              <input type="checkbox" id="guides" checked />
+              <span>Safe-area guides</span>
+            </label>
+            <span class="hint" id="scene-hint">—</span>
+          </div>
+        </section>
+
+        <section class="desk" aria-label="Editor">
+          <nav class="tabs" role="tablist" id="tabs">
+            <button role="tab" class="tab tab-on" data-tab="scenes" type="button">Scenes</button>
+            <button role="tab" class="tab" data-tab="media" type="button">Media</button>
+            <button role="tab" class="tab" data-tab="checks" type="button">Checks</button>
+            <button role="tab" class="tab" data-tab="export" type="button">Export</button>
+          </nav>
+
+          <div class="deck" id="deck-scenes">
+            <ol class="scene-list" id="scene-list"></ol>
+            <form class="editor" id="scene-editor" autocomplete="off">
+              <div class="field">
+                <label for="f-kicker">Kicker</label>
+                <input id="f-kicker" type="text" placeholder="01 · threat advisory" />
+              </div>
+              <div class="field">
+                <label for="f-title">Title</label>
+                <input id="f-title" type="text" placeholder="Contain Your [RF Boundary]" />
+                <p class="note">
+                  <code>[cyan]</code>, <code>!red!</code>, <code>{green}</code> colour a phrase.
+                </p>
+              </div>
+              <div class="field">
+                <label for="f-caption">Caption</label>
+                <textarea id="f-caption" rows="3" placeholder="What the narrator says over this scene."></textarea>
+                <p class="note" id="caption-fit">—</p>
+              </div>
+              <div class="field row">
+                <div>
+                  <label for="f-seconds">Seconds</label>
+                  <input id="f-seconds" type="number" min="1" max="60" step="0.5" />
+                </div>
+                <div>
+                  <label for="f-source">Source</label>
+                  <input id="f-source" type="text" placeholder="Author, venue, year" />
+                </div>
+              </div>
+              <div class="field">
+                <label>Stats</label>
+                <div class="stats-grid" id="stats-grid"></div>
+              </div>
+              <div class="field">
+                <label for="f-panel">Panel</label>
+                <textarea id="f-panel" rows="8" spellcheck="false"></textarea>
+                <p class="note" id="panel-status">
+                  heatmap · floorplan · sniffer · pose · media · grid · blank
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <div class="deck" id="deck-media" hidden>
+            <p class="lede">
+              Footage stays on this device. Files are read into the tab, drawn straight onto the
+              canvas, and forgotten when you close it — nothing is uploaded.
+            </p>
+            <div class="slots" id="slots"></div>
+          </div>
+
+          <div class="deck" id="deck-checks" hidden>
+            <p class="lede">
+              Two questions: will every caption finish before its cut, and does every claim name
+              its source.
+            </p>
+            <ul class="findings" id="findings"></ul>
+            <h3>Citations in this episode</h3>
+            <ul class="sources" id="sources"></ul>
+          </div>
+
+          <div class="deck" id="deck-export" hidden>
+            <p class="lede">
+              Recording runs in real time from the preview canvas: a 60-second episode takes
+              60 seconds, and this tab has to stay in front — a backgrounded tab is throttled to
+              about one frame a second and records a slideshow.
+            </p>
+            <div class="field row">
+              <div>
+                <label for="f-fps">Frame rate</label>
+                <select id="f-fps">
+                  <option value="30" selected>30 fps</option>
+                  <option value="24">24 fps</option>
+                  <option value="60">60 fps</option>
+                </select>
+              </div>
+              <div>
+                <label for="f-format">Container</label>
+                <input id="f-format" type="text" readonly />
+              </div>
+            </div>
+            <div class="export-actions">
+              <button class="primary" id="record" type="button">Record episode</button>
+              <button class="ghost" id="stop-record" type="button" disabled>Stop</button>
+              <button class="ghost" id="save-frame" type="button">Save this frame (PNG)</button>
+            </div>
+            <div class="progress"><span id="record-bar"></span></div>
+            <p class="note" id="record-status">Idle.</p>
+            <h3>Script</h3>
+            <div class="export-actions">
+              <button class="ghost" id="copy-script" type="button">Copy script JSON</button>
+              <button class="ghost" id="paste-script" type="button">Load script JSON…</button>
+            </div>
+            <textarea id="script-json" rows="6" spellcheck="false" hidden></textarea>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
