@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Touchline — what actually happened, in metres</title>
+    <meta
+      name="description"
+      content="Point a phone at a pitch, mark four lines, and read real distances, speeds, possession and passing lanes — measured on your own device, with every caveat shown."
+    />
+    <meta name="theme-color" content="#070b0e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Touchline" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>Touchline</h1>
+            <p class="tagline">What actually happened, in metres.</p>
+          </div>
+        </div>
+        <div class="bar-status">
+          <span class="chip chip-quiet" id="status-chip">No footage</span>
+          <button class="ghost" id="settings-toggle" type="button" aria-expanded="false">Setup</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <section class="viewport" aria-label="Match view">
+          <video id="video" playsinline muted loop></video>
+          <canvas id="view"></canvas>
+          <canvas id="overlay"></canvas>
+
+          <div class="viewport-empty" id="viewport-empty">
+            <h2>Point it at a pitch, or open a clip you already have</h2>
+            <p>
+              Everything runs on this device. Frames are measured and thrown away — no upload, no
+              recording, no account, and no face recognition anywhere in it.
+            </p>
+            <div class="empty-actions">
+              <button class="primary" id="start-camera" type="button">Use the camera</button>
+              <button class="ghost" id="start-file" type="button">Open a video file</button>
+              <button class="ghost" id="start-demo" type="button">Run the built-in demo</button>
+            </div>
+            <input id="file" type="file" accept="video/*" hidden />
+            <p class="fineprint" id="support-note"></p>
+          </div>
+
+          <div class="calibration-bar" id="calibration-bar" hidden>
+            <span id="calibration-hint">Tap where this landmark is.</span>
+            <strong id="calibration-target">Corner — near left</strong>
+            <button class="ghost" id="calibration-skip" type="button">Skip this one</button>
+            <button class="ghost" id="calibration-cancel" type="button">Cancel</button>
+          </div>
+
+          <div class="readout" id="readout" hidden>
+            <div class="readout-row"><span id="readout-tracks">0 tracked</span></div>
+            <div class="readout-row muted" id="readout-fit">no pitch model — pixels only</div>
+          </div>
+        </section>
+
+        <section class="panel" aria-label="Analysis">
+          <nav class="tabs" role="tablist" id="tabs">
+            <button role="tab" class="tab tab-on" data-tab="live" type="button">On the ball</button>
+            <button role="tab" class="tab" data-tab="plan" type="button">Plan</button>
+            <button role="tab" class="tab" data-tab="players" type="button">Players</button>
+            <button role="tab" class="tab" data-tab="report" type="button">Report</button>
+          </nav>
+
+          <div class="tab-body" id="tab-live">
+            <div class="empty" id="live-empty">
+              Nothing is being measured yet. Open some footage, mark the pitch, and this fills with
+              what the app can actually see.
+            </div>
+            <div class="live" id="live" hidden>
+              <div class="possession" id="possession"></div>
+              <div class="carrier" id="carrier"></div>
+              <ul class="lanes" id="lanes"></ul>
+            </div>
+          </div>
+
+          <div class="tab-body" id="tab-plan" hidden>
+            <canvas id="plan" width="640" height="420"></canvas>
+            <p class="fineprint" id="plan-note">
+              The plan needs a pitch model. Open Setup and mark four landmarks you can see.
+            </p>
+            <div class="plan-actions">
+              <label class="switch">
+                <input id="show-territory" type="checkbox" checked />
+                <span>Show who would reach each patch first</span>
+              </label>
+              <label class="switch">
+                <input id="show-trails" type="checkbox" />
+                <span>Show paths</span>
+              </label>
+              <button class="ghost" id="export" type="button">Export session</button>
+            </div>
+          </div>
+
+          <div class="tab-body" id="tab-players" hidden>
+            <div class="empty" id="players-empty">No player has been tracked long enough yet.</div>
+            <table class="players" id="players" hidden>
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Distance</th>
+                  <th>Top</th>
+                  <th>Sprints</th>
+                  <th>Seen</th>
+                </tr>
+              </thead>
+              <tbody id="players-body"></tbody>
+            </table>
+            <p class="fineprint" id="players-note"></p>
+          </div>
+
+          <div class="tab-body" id="tab-report" hidden>
+            <div class="report" id="report">
+              <p class="empty">The report is written from measurements. There are none yet.</p>
+            </div>
+            <div class="analyst" id="analyst" hidden>
+              <label class="field">
+                <span>Ask the analyst about these numbers</span>
+                <input id="analyst-question" type="text" placeholder="Which side ran more after the hour?" />
+              </label>
+              <button class="ghost" id="analyst-ask" type="button">Ask</button>
+              <p class="analyst-answer" id="analyst-answer"></p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="settings" id="settings" hidden>
+        <div class="settings-inner">
+          <header class="settings-head">
+            <h2>Setup</h2>
+            <button class="ghost" id="settings-close" type="button">Done</button>
+          </header>
+
+          <section class="group">
+            <h3>The pitch</h3>
+            <p class="note">
+              Nothing is in metres until this is done. Mark four painted landmarks you can see in the
+              picture and type the real size of the pitch. Corners of the penalty area are the best
+              marks: they are painted intersections, so you can hit them to within a few pixels.
+            </p>
+            <div class="grid-2">
+              <label class="field">
+                <span>Length (m)</span>
+                <input id="pitch-length" type="number" min="20" max="130" step="0.5" value="105" />
+              </label>
+              <label class="field">
+                <span>Width (m)</span>
+                <input id="pitch-width" type="number" min="15" max="100" step="0.5" value="68" />
+              </label>
+            </div>
+            <div class="plan-actions">
+              <button class="ghost" id="calibrate" type="button">Mark landmarks</button>
+              <button class="ghost" id="calibrate-clear" type="button">Clear</button>
+            </div>
+            <ul class="marks" id="marks"></ul>
+            <p class="fineprint" id="calibration-status">No pitch model.</p>
+            <label class="switch">
+              <input id="show-model" type="checkbox" checked />
+              <span>Draw the fitted pitch over the footage</span>
+            </label>
+          </section>
+
+          <section class="group">
+            <h3>Detection</h3>
+            <label class="field">
+              <span>Grass tolerance <em id="tolerance-value">3.5</em></span>
+              <input id="tolerance" type="range" min="1.5" max="6" step="0.1" value="3.5" />
+            </label>
+            <label class="field">
+              <span>Noise filter <em id="noise-value">off</em></span>
+              <input id="noise" type="range" min="0" max="2" step="1" value="0" />
+            </label>
+            <div class="plan-actions">
+              <button class="ghost" id="relearn" type="button">Re-read the grass</button>
+            </div>
+            <p class="fineprint" id="turf-status">No turf model.</p>
+          </section>
+
+          <section class="group">
+            <h3>Teams</h3>
+            <p class="note">
+              Sides are told apart by shirt colour, which is what the referee uses. Nobody is
+              identified: there is no number recognition and no face recognition here, and a player
+              who leaves the frame comes back as a new label.
+            </p>
+            <div class="grid-2">
+              <label class="field">
+                <span>Team A</span>
+                <input id="name-home" type="text" placeholder="Team A" maxlength="18" />
+              </label>
+              <label class="field">
+                <span>Team B</span>
+                <input id="name-away" type="text" placeholder="Team B" maxlength="18" />
+              </label>
+            </div>
+            <p class="fineprint" id="teams-status">Kits not clustered yet.</p>
+          </section>
+
+          <section class="group">
+            <h3>The analyst (optional)</h3>
+            <p class="note">
+              Every figure is computed on this device, and the written report needs no key. A
+              language model can restate it and answer questions about it. What is sent is the
+              numbers — never a frame, a crop or a still.
+            </p>
+            <label class="field">
+              <span>Provider</span>
+              <select id="llm-provider"></select>
+            </label>
+            <label class="field">
+              <span>API key</span>
+              <input id="llm-key" type="password" placeholder="Stored in this browser only" autocomplete="off" />
+            </label>
+            <div class="plan-actions">
+              <button class="ghost" id="llm-save" type="button">Save</button>
+              <button class="ghost" id="llm-forget" type="button">Forget</button>
+            </div>
+            <p class="fineprint" id="llm-status">Analyst off.</p>
+          </section>
+
+          <section class="group">
+            <h3>What this cannot do</h3>
+            <ul class="limits">
+              <li>
+                <strong>Recognise a player.</strong> No shirt numbers are read, no faces are matched.
+                Sides come from kit colour and nothing else, and a player who walks out of frame
+                returns as a different label with an empty history.
+              </li>
+              <li>
+                <strong>Predict whether a pass would be completed.</strong> Lanes are measured —
+                length, the nearest defender's clearance, whether it is closing. There is no
+                completion percentage, because that needs thousands of labelled passes from footage
+                like yours, and a number invented from geometry and printed as a percentage is a
+                guess in a trustworthy typeface.
+              </li>
+              <li>
+                <strong>Reconstruct a match in 3D.</strong> One camera on a plane gives positions on
+                the grass. It cannot give height, so a header, a chipped pass and a shot over the bar
+                are the same to it.
+              </li>
+              <li>
+                <strong>Follow a moving camera.</strong> A homography is fitted to one view. Small
+                nudges are compensated; a pan or a zoom kills it, and the app says the metres are
+                stale rather than reporting a pitch full of players sprinting sideways at once.
+              </li>
+              <li>
+                <strong>See the ball reliably.</strong> A ball is 22 cm, which is one or two pixels
+                at the far end of a pitch, and it spends much of the match under a player. Possession
+                is only counted while it is genuinely visible, and the share of time that could not
+                be attributed is printed next to the result.
+              </li>
+              <li>
+                <strong>Report a full-match total from partial tracking.</strong> Every player row
+                carries the fraction of the session they were tracked for. Nothing is scaled up to
+                ninety minutes.
+              </li>
+            </ul>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

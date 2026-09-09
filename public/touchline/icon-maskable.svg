@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Touchline">
+  <rect width="192" height="192" fill="#070b0e"/>
+  <path d="M40 140 96 66l56 74" fill="none" stroke="#16323f" stroke-width="4"/>
+  <path d="M62 132c14-4 20-22 38-27s27 12 36-7" fill="none" stroke="#6ef2b0" stroke-width="9"
+        stroke-linecap="round"/>
+  <circle cx="62" cy="132" r="8" fill="#6ef2b0"/>
+  <circle cx="136" cy="100" r="6" fill="#ffe14d"/>
+</svg>

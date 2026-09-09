@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Touchline">
+  <rect width="192" height="192" rx="42" fill="#070b0e"/>
+  <path d="M18 150 96 46l78 104" fill="none" stroke="#16323f" stroke-width="3"/>
+  <path d="M40 150 96 76l56 74" fill="none" stroke="#16323f" stroke-width="3"/>
+  <path d="M18 150h156" stroke="#16323f" stroke-width="3"/>
+  <path d="M52 138c18-4 26-26 48-32s34 14 46-8" fill="none" stroke="#6ef2b0" stroke-width="8"
+        stroke-linecap="round"/>
+  <circle cx="52" cy="138" r="9" fill="#6ef2b0"/>
+  <circle cx="146" cy="98" r="7" fill="#ffe14d"/>
+</svg>
