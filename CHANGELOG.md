@@ -7,6 +7,16 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added **Carrier**, a bench for vertical security-briefing reels at
+  `public/carrier/`: a script format, five animated diagram panels (RF
+  containment heatmap, facility floor plan with a timed patrol, passive capture
+  table, pose reconstruction in confidence-map and keypoint forms, media slot),
+  a live 1080×1920 preview, and real-time recording to MP4 or WebM. The layout
+  is computed against the host platform's own chrome bands, so headlines are not
+  delivered underneath somebody else's navigation. Ships with one finished
+  seven-scene episode on passive Wi-Fi sensing, with per-scene citations and a
+  checker that warns when a caption cannot be read before its cut or a claim
+  names no source. `npm run test:carrier`, `npm run qa:carrier`.
 - Added honest aircraft identity narration: callsign, operator, registration,
   type, and route come only from selected-contact context, and missing operator,
   route, or type enrichment is named explicitly.

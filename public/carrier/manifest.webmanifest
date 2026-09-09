@@ -1,0 +1,15 @@
+{
+  "name": "Carrier — vertical briefings",
+  "short_name": "Carrier",
+  "description": "Write a briefing script, watch it render as vertical frames, export the video.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07030f",
+  "theme_color": "#0a0416",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
