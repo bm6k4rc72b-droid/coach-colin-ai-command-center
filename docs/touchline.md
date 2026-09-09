@@ -9,9 +9,13 @@ It runs entirely in the browser: no upload, no account, no API key, no build
 step, and — after the first visit — no signal. Frames are measured and
 discarded. Nothing is recorded and nobody is identified.
 
-Locally it is `/touchline/` (`http://localhost:4173/touchline/` under
-`./start.sh`). The camera needs a secure context, so HTTPS or `localhost` only;
-a video file works either way, including straight off disk.
+**Live at <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/touchline/>.**
+Open it on a phone and add it to the home screen; it launches full-screen and
+keeps working offline. Locally it is `/touchline/`
+(`http://localhost:4173/touchline/` under `./start.sh`).
+
+The camera needs a secure context, so HTTPS or `localhost` only; a video file
+works either way, including straight off disk.
 
 Open it and press **Run the built-in demo** to see the whole thing working
 against a synthetic clip whose answers are known.

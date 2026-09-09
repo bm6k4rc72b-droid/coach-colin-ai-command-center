@@ -55,9 +55,10 @@ footage of a pitch into **real distances, speeds, possession and passing lanes**
 have. Nothing is uploaded, nobody is identified, and every number carries the
 caveat that belongs to it.
 
-Locally it is `/touchline/` (`http://localhost:4173/touchline/` under
-`./start.sh`). Press **Run the built-in demo** to see the whole thing working
-against a synthetic clip whose answers are known before it starts.
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/touchline/>** — open it on a phone and add it to the home screen. Locally it is
+`/touchline/` (`http://localhost:4173/touchline/` under `./start.sh`). Press
+**Run the built-in demo** to see the whole thing working against a synthetic
+clip whose answers are known before it starts.
 
 It was built from an Instagram post claiming a model had "reconstructed
 everything in this match" from one video — every player tagged with a speed,
