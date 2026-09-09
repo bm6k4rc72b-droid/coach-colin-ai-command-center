@@ -7,6 +7,17 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added Touchline at `public/touchline/`: a match-analysis app that turns
+  footage of a pitch into distances, speeds, possession and passing-lane
+  geometry in metres, measured on-device from a homography fitted to marked
+  pitch landmarks. Sides come from kit colour with goalkeepers and officials
+  labelled as neither; possession is reported with the share of the clock that
+  could be attributed; player totals carry their tracking coverage and are never
+  extrapolated; pass lanes are reported as measurements rather than a completion
+  percentage. Ships a synthetic demo clip that the unit and end-to-end suites
+  also run against. `npm run test:touchline` (75 unit tests) and
+  `npm run qa:touchline` (42 end-to-end checks).
+
 - Added honest aircraft identity narration: callsign, operator, registration,
   type, and route come only from selected-contact context, and missing operator,
   route, or type enrichment is named explicitly.

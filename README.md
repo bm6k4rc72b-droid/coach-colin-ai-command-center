@@ -47,6 +47,60 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: Touchline
+
+A match-analysis app at [`public/touchline/`](public/touchline) that turns
+footage of a pitch into **real distances, speeds, possession and passing lanes**
+— from a phone on a fence, a laptop by the touchline, or a clip you already
+have. Nothing is uploaded, nobody is identified, and every number carries the
+caveat that belongs to it.
+
+Locally it is `/touchline/` (`http://localhost:4173/touchline/` under
+`./start.sh`). Press **Run the built-in demo** to see the whole thing working
+against a synthetic clip whose answers are known before it starts.
+
+It was built from an Instagram post claiming a model had "reconstructed
+everything in this match" from one video — every player tagged with a speed,
+pass options marked "~95%", a possession bar reading 81/19. This builds the
+parts that can be measured and states plainly what the rest would take.
+
+- **The metres are real.** Mark four painted landmarks, type the pitch size, and
+  it solves the ground homography and reports speeds, distances, pass lengths
+  and defender clearances from it. The fit's error, in metres, sits on screen
+  the whole time, and the fitted pitch is drawn back over the footage so you can
+  see where it is wrong rather than trust a residual.
+- **A player who never moves logs exactly zero metres.** Foot-point jitter
+  summed over a half turns a goalkeeper into a marathon; the obvious guard — a
+  per-frame threshold — throws away every metre of a real sprint instead,
+  because at 25 fps a sprint advances 28 cm a frame. Distance is banked from an
+  anchor, and the test asserts equality, not a tolerance.
+- **There is no pass-completion percentage, deliberately.** You get the lane's
+  length, the nearest defender's clearance from it, whether anyone is inside the
+  corridor, and how much of that closes while the ball is in the air. A
+  probability needs thousands of labelled passes from footage like yours; one
+  invented from geometry and printed as "95%" is a guess in a trustworthy
+  typeface.
+- **Possession comes with its denominator.** Time is credited only while the
+  ball is visible and one player is clearly nearest to it. Everything else is
+  reported beside the two teams rather than split between them — because a bar
+  reading 81/19 over footage where the ball was visible for eight seconds is an
+  assertion about eight seconds, presented as a fact about ninety minutes.
+- **Nobody is recognised.** No shirt-number reading, no faces. Sides come from
+  kit colour, the way a referee tells them apart, and goalkeepers and officials
+  are labelled as neither instead of being forced onto a team and dragging the
+  possession figures with them.
+- **Nothing is extrapolated.** Every player row carries the fraction of the
+  session they were actually tracked for, as a bar you cannot skim past.
+
+Full write-up, including what it refuses to do and why:
+[`docs/touchline.md`](docs/touchline.md). Tests: `npm run test:touchline`
+(75 unit tests) and `npm run qa:touchline` (42 end-to-end checks driving the
+real app in Chromium against a clip choreographed as a 7 m/s break — the app
+returns 25.9 km/h against a true 25.2, 31.8 m against 32.2, and exactly zero for
+the five players who never move).
+
+---
+
 ## Also in here: Sentry
 
 A security-camera app at [`public/sentry/`](public/sentry) that watches a piece
