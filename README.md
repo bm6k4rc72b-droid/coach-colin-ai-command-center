@@ -368,6 +368,49 @@ synthetic camera feed).
 
 ---
 
+## Also in here: Carrier
+
+A bench for building **vertical security-briefing reels** at
+[`public/carrier/`](public/carrier). You write a script — kicker, headline,
+caption, a diagram and three numbers per scene — and it renders 1080×1920 frames
+you can scrub, then records the episode to a video file. It ships with one
+finished episode: *Your walls are not opaque to your Wi-Fi*, seven scenes on
+passive Wi-Fi sensing and what to do about it.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/carrier/>** — locally it is `/carrier/`
+(`http://localhost:4173/carrier/` under `./start.sh`).
+
+What makes it more than a template:
+
+- **The layout starts from the platform's furniture, not the canvas.** A reel is
+  played inside an app that covers the top ~300 px and the bottom ~470 px with
+  its own navigation and handle. Carrier anchors the caption card above that
+  band and works upward, so the headline is never delivered underneath
+  somebody's UI — the failure you can see in most reels of this kind.
+- **Diagrams are drawn, not drawn on.** Five native panels — an RF containment
+  heatmap with a real path-loss model behind it, a facility floor plan with
+  occupancy and a timed patrol, a passive capture table, a pose reconstruction
+  in both its confidence-map and stick-figure forms, and a media slot for real
+  footage — all animated, all re-themeable, none of them a screenshot.
+- **Captions are timed against reading speed.** The checker says, per scene,
+  whether the narration can finish before the cut, and refuses to be quiet about
+  a scene that states a research claim with no source attached.
+- **It corrects the story it tells.** The shipped episode names what the famous
+  through-wall footage actually used (a custom FMCW radio, not a Wi-Fi sniffer),
+  what the real Wi-Fi result did use (three commodity routers, camera-supervised
+  training), and where both fall apart (a layout they were not trained on).
+- **Nothing leaves the tab.** Footage is read into the page and drawn straight to
+  the canvas; the script lives in `localStorage`; the export is produced by the
+  browser's own recorder.
+
+Full write-up, including the script format and the export's real-time
+constraint: [`docs/carrier.md`](docs/carrier.md). Tests: `npm run test:carrier`
+(49 unit tests, no browser needed) and `npm run qa:carrier`, which drives the
+real app in Chromium and checks on pixels that the host's chrome band is empty
+and the headline below it is not.
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream
