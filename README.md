@@ -47,6 +47,61 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: Emberline
+
+A fire tracker at [`public/emberline/`](public/emberline) that fuses **satellite
+detections, camera cross-bearings and network node loss** into ranked fire
+hypotheses, projects each one forward with **Rothermel's surface spread model**,
+and draws every piece of it at the size its uncertainty actually is.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/emberline/>**
+— open it on a phone and add it to the home screen. Locally it is `/emberline/`
+(`http://localhost:4173/emberline/` under `./start.sh`). It opens on a scenario
+whose answers are known before it starts, so nothing on screen has to be taken
+on trust.
+
+- **A detection is a pixel, not a point.** VIIRS resolves 375 m at nadir and
+  about 800 m at the swath edge; MODIS runs from 1 km to nearly 5 km. FIRMS
+  publishes the real footprint per detection in its `scan` and `track` columns
+  and almost nothing draws them. The demo's three pixels are 14, 36 and 266
+  hectares — as dots they look identical.
+- **The spread projection is a band, not a line.** The whole Rothermel model is
+  run three times, at the expected inputs and at both ends of a stated plausible
+  range for wind and fuel moisture, because neither was measured. Arrival at a
+  place is a window — "21–81 minutes", never "51 minutes" — and past eight hours
+  it says why the number should not be planned against. Fuel model 1 at 2 m/s
+  midflame returns 25.3 m/min against BehavePlus's ~26.
+- **The network dying is a measurement.** A fire destroys the hardware on the
+  ground it crosses, so a mesh of surveyed nodes is a grid of fire sensors that
+  already exists — seconds old, no pixel size, no cloud in the way. It requires
+  spatial *and* temporal progression before it will say "front", because an
+  upstream switch failure takes every node down at once in no spatial order, and
+  simultaneity is the signature of a fault where progression is the signature of
+  a fire.
+- **Corroboration counts independent sources, not observations.** Forty VIIRS
+  pixels off one overpass share a pass, a calibration and a geolocation
+  solution — they are one look, and they score 0.27. A pixel plus a camera
+  bearing plus a destroyed node are three unrelated failure modes, and score
+  0.81.
+- **A camera fix carries the ellipse it earns.** Two bearings crossing at 80°
+  from 5 km give a few hundred metres; at 4° from 30 km they give a sliver 97 km
+  long. Both print as a latitude and a longitude. A grazing fix is marked
+  unusable and told where to put a third observer.
+- **It knows a camera sees smoke, not fire.** A column leans downwind as it
+  rises, so its visible top can be kilometres from the burning ground. The fix
+  is moved upwind and its error widened, rather than two observers on the same
+  side agreeing confidently and both pointing downwind.
+- **It refuses crown fire, spotting, and any single arrival time**, and it will
+  not sense through walls without hardware — no browser has a radio API, so that
+  panel names the four devices that would fill it and otherwise stays empty.
+
+Full write-up, including everything it refuses to do and why:
+[`docs/emberline.md`](docs/emberline.md). Tests: `npm run test:emberline`
+(38 unit tests — the physics against published BehavePlus values and physical
+invariants, the sensors against the cases where each must refuse to answer).
+
+---
+
 ## Also in here: Touchline
 
 A match-analysis app at [`public/touchline/`](public/touchline) that turns

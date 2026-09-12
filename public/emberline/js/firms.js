@@ -206,7 +206,12 @@ export function confidenceScore(detection) {
   if (raw === 'h' || raw === 'high') return { score: 0.9, label: 'high' };
   if (raw === 'n' || raw === 'nominal') return { score: 0.6, label: 'nominal' };
   if (raw === 'l' || raw === 'low') return { score: 0.25, label: 'low' };
-  const numeric = Number(raw);
+  // Guard the empty string before Number() sees it: Number('') is 0, which is
+  // finite, so a blank field would otherwise be reported as a real measurement
+  // of zero confidence rather than as an absent one. A missing value is not a
+  // weak detection, and scoring it as one would push it down a ranked list as
+  // though something had been measured.
+  const numeric = raw === '' ? NaN : Number(raw);
   if (Number.isFinite(numeric)) {
     const score = Math.min(1, Math.max(0, numeric / 100));
     return {
