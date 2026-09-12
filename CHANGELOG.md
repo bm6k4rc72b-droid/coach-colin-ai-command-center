@@ -7,6 +7,21 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added **Emberline**, a fire tracker at `public/emberline/` that fuses
+  satellite detections, camera cross-bearings and network node loss into ranked
+  fire hypotheses and projects them forward with Rothermel's surface spread
+  model. Detections are drawn as their real ground footprint from the FIRMS
+  `scan`/`track` fields rather than as dots; the spread projection is the band
+  between a slow and a fast run of the whole model, so arrival at a place is a
+  window rather than a time; corroboration is weighted by source independence,
+  so forty pixels off one overpass count as one look; camera fixes carry the
+  error ellipse their crossing angle earns and are corrected upwind for plume
+  lean. Node loss is read as a fire front only when it progresses in space and
+  time, which keeps an upstream switch failure from being reported as one.
+  Crown fire, spotting, unaided through-wall sensing and single arrival times
+  are refused explicitly, in the app rather than only in the documentation.
+  Ships a scenario with known answers that the test suite also runs against.
+  `npm run test:emberline` (38 unit tests).
 - Added **Vice Command**, a scroll-driven 1986 crime picture at `public/vice/`
   that carries three real things: the app catalog, an outreach and automation
   swarm, and licensed in-person security including open-house details. Eight
