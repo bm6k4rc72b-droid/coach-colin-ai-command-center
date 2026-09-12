@@ -102,6 +102,69 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: Vice Command
+
+A scroll-driven 1986 crime picture at [`public/vice/`](public/vice) with three
+real things inside it: **the apps, an outreach and automation swarm, and
+licensed in-person security**. Press start and a generated city drifts past over
+eight acts — the police arrive at a quarter of the way down, the army at half, a
+saucer detonates the skyline at three quarters, and a shield stops the front.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vice/>** — locally it is `/vice/`
+(`http://localhost:4173/vice/` under `./start.sh`).
+
+No build step, no framework, no video file, no audio file, no API key, and no
+signal after the first visit. The city is generated from a seed, the cast is
+drawn as vector paths, and the score is synthesised in Web Audio while you
+scroll.
+
+- **The set pieces land on the marks, at every width.** The brief put the chase
+  at 25%, the gunships at 50% and the detonation at 75%, and those are the spec.
+  Section heights are *solved* rather than chosen — every section is measured at
+  its natural height, the document's scroll distance is set to the smallest
+  value at which each one fits its act's share, and each is padded to exactly
+  that share — and progress is then interpolated between the measured section
+  tops rather than computed from the page height. So the gunships arrive when
+  the cavalry section does, on a laptop and on a phone, and the end-to-end
+  harness asserts all three marks at both sizes.
+- **Nothing can get stuck.** The film holds no state: every frame, the explosion
+  included, is a pure function of the scroll position, with the debris on
+  closed-form ballistics rather than an accumulating simulation. Scrub back up
+  and the fireball collapses, the rubble flies home and the five felony stars go
+  out one at a time. The suite asserts that the frame at any position is
+  identical whether you arrived going down or coming back up.
+- **The swarm console does the arithmetic that agency decks leave out.** Ten
+  agents across email, Instagram, Facebook, TikTok, YouTube, LinkedIn, X, SMS,
+  phone and reviews — and a planner that answers how many touches a week that
+  is, how many hours of *your* time approving them costs, and which channels
+  land above the volume that gets accounts restricted. Select everything at full
+  throttle and it refuses to call the plan ready: 3,620 touches a week, 10.9
+  hours of approvals against a five-hour budget, four channels over the line.
+  One button bisects for the highest throttle that clears every line.
+- **Every price says what it assumed.** Six protective services — open house,
+  private event, estate post, executive protection, ranch patrol, vacant listing
+  watch — with a live estimator whose rate card is a single constant, so the
+  page cannot quote two different numbers. When the four-hour minimum raises a
+  booking it says so, and says what you asked for. Licensing and insurance are
+  printed beside every figure.
+- **The fiction is labelled and the music is original.** The chase, the cavalry
+  and the detonation are a parody set piece, stated as such in the footer. The
+  two commercial recordings the brief named are not here — publishing a
+  copyrighted master on a marketing site is the owner's liability, not a
+  technical problem — so there are five original synthesised cues instead, and a
+  one-line hook that plays a licensed file per cue if the rights are ever
+  bought. No real person is depicted destroying the city.
+
+Full write-up, including the act table and what each module owns:
+[`docs/vice.md`](docs/vice.md). Tests: `npm run test:vice` (77 unit tests) and
+`npm run qa:vice` (57 end-to-end checks driving the real page in Chromium at
+1440px and 390px — act boundaries against the table, nothing pinned taller than
+the window, no sideways scroll, the rack laid out rather than stacked, the
+console refusing an over-committed plan, and the on-screen quote matching the
+module).
+
+---
+
 ## Also in here: Touchline
 
 A match-analysis app at [`public/touchline/`](public/touchline) that turns

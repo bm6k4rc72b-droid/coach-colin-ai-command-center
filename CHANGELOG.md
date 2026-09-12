@@ -22,6 +22,25 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
   are refused explicitly, in the app rather than only in the documentation.
   Ships a scenario with known answers that the test suite also runs against.
   `npm run test:emberline` (38 unit tests).
+- Added **Vice Command**, a scroll-driven 1986 crime picture at `public/vice/`
+  that carries three real things: the app catalog, an outreach and automation
+  swarm, and licensed in-person security including open-house details. Eight
+  acts run off one number — the police arrive at 25% of the scroll, the army at
+  50%, a saucer detonates the skyline at 75% and a shield stops the front — with
+  a generated four-band city, a cast drawn as vector paths, five original
+  synthesised music cues, an eleven-app 3D rack, a felony-star HUD, and a
+  detonation built as closed-form ballistics so scrubbing back up runs the whole
+  film backwards. The three marks hold at every width because section heights
+  are solved from measured content rather than chosen, and scroll progress is
+  interpolated between measured section tops rather than page height. The swarm
+  console refuses to call an over-committed plan ready, naming the channels over
+  their caution line and the hours of approval the selection would cost; the
+  security estimator derives every figure from one rate card and prints its
+  assumptions, including when the four-hour minimum raised the booking. The
+  commercial recordings named in the brief are not used — the score is original,
+  with a per-cue hook for licensed files — and the set pieces are labelled as
+  parody, with no real person depicted. `npm run test:vice` (77 unit tests) and
+  `npm run qa:vice` (57 end-to-end checks at 1440px and 390px).
 - Added **Carrier**, a bench for vertical security-briefing reels at
   `public/carrier/`: a script format, five animated diagram panels (RF
   containment heatmap, facility floor plan with a timed patrol, passive capture

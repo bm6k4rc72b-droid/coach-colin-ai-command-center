@@ -48,6 +48,7 @@
     "test:realtor": "node --test tests/realtor/*.test.mjs",
     "test:touchline": "node --test tests/touchline/*.test.mjs",
     "test:emberline": "node --test tests/emberline/*.test.mjs",
+    "test:vice": "node --test tests/vice/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
@@ -58,7 +59,8 @@
     "qa:astra": "node scripts/qa-astra.mjs",
     "qa:carrier": "node scripts/qa-carrier.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs",
-    "qa:touchline": "node scripts/qa-touchline.mjs"
+    "qa:touchline": "node scripts/qa-touchline.mjs",
+    "qa:vice": "node scripts/qa-vice.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

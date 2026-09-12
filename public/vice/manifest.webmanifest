@@ -1,0 +1,16 @@
+{
+  "name": "Vice Command — Coach Colin",
+  "short_name": "Vice Command",
+  "description": "Apps, AI agents and licensed in-person security, delivered through a scroll-driven 1986 crime film: a cop chase, an air-cavalry response, a detonation, and a shield.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07050f",
+  "theme_color": "#0a0614",
+  "categories": ["business", "productivity", "entertainment"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
