@@ -29,6 +29,7 @@ import {
   drawCharger, drawChopper, drawColin, drawGoldTruck, drawRolls, drawSaucer, drawTank, drawTommy,
 } from './actors.js';
 import { drawBlast, flashAmount } from './explosion.js';
+import { Lens, bloomAmount, godRays, grade } from './grade.js';
 import { sceneState } from './sequence.js';
 
 /** Cap the backing store at 2x. Beyond that is invisible and expensive. */
@@ -56,6 +57,7 @@ export class Stage {
     this.frame = null;
     this.grain = null;
     this.running = false;
+    this.lens = new Lens();
   }
 
   /** Size the backing store to the element, and remember the viewport. */
@@ -70,6 +72,7 @@ export class Stage {
     this.canvas.style.height = `${h}px`;
     this.view = { w, h, dpr, horizon: horizonFor(h, this.scene) };
     this.grain = null;
+    this.lens.resize(this.canvas.width, this.canvas.height);
   }
 
   /** Start the loop. */
@@ -80,6 +83,7 @@ export class Stage {
     const step = (now) => {
       if (!this.running) return;
       const dt = clamp((now - this.last) / 1000, 0, 0.05);
+      this.lens.observe(now - this.last);
       this.last = now;
       this.time += dt;
       this.#advance(dt);
@@ -129,6 +133,7 @@ export class Stage {
     ctx.translate(jitterX, jitterY);
 
     drawSky(ctx, view, scene);
+    if (!this.reduced) godRays(ctx, view, scene, this.time);
     drawSkyline(ctx, view, scene, this.camera);
     drawBay(ctx, view, scene);
     drawRoad(ctx, view, scene, this.camera);
@@ -138,6 +143,15 @@ export class Stage {
     drawBlast(ctx, view, scene, this.time);
     this.#drawRescue();
     if (!this.reduced) drawRain(ctx, view, scene, this.time);
+
+    // The lens, last. Bloom is read back off the frame that was just drawn, so
+    // everything above it glows without any of it having to know that bloom
+    // exists.
+    if (!this.reduced) {
+      this.lens.bloom(ctx, this.canvas, view, bloomAmount(scene));
+      this.lens.streak(ctx, view, scene.fireball * 0.7 + progress(scene.p, 0.2, 0.34) * 0.25);
+    }
+    grade(ctx, view, scene);
     this.#post();
     ctx.restore();
   }
@@ -187,7 +201,7 @@ export class Stage {
 
     // Tommy, walking the strip in the opening.
     if (scene.tommyWalking > 0.01) {
-      drawTommy(ctx, view.w * 0.22, y, mix(1.05, 1.5, progress(scene.p, 0, 0.16)), {
+      drawTommy(ctx, view.w * 0.74, y, mix(1.3, 1.8, progress(scene.p, 0, 0.16)), {
         phase: this.camera * 0.045,
         alpha: scene.tommyWalking,
       });

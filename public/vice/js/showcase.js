@@ -31,7 +31,7 @@ function cardMarkup(app, index) {
   // browser reserves the box before the file arrives.
   const media = app.media
     ? `<div class="rack-shot"><img src="${app.media}" alt="${app.mediaAlt || ''}"` +
-      ' width="600" height="1298" loading="lazy" decoding="async"></div>'
+      ' width="1170" height="2532" loading="lazy" decoding="async"></div>'
     : '<div class="rack-shot is-empty" aria-hidden="true"></div>';
   const points = (app.points || []).map((point) => `<li>${point}</li>`).join('');
   const link = app.href

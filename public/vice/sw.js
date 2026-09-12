@@ -29,6 +29,7 @@ const PRECACHE = [
   './js/city.js',
   './js/actors.js',
   './js/explosion.js',
+  './js/grade.js',
   './js/stage.js',
   './js/hud.js',
   './js/score.js',

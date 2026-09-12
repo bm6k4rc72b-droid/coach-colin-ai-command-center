@@ -19,6 +19,7 @@
  */
 
 import { clamp, css, mix, progress, rng, wrap } from './mathkit.js';
+import { haze } from './grade.js';
 
 /** Neon sign colours, in the order the generator cycles them. */
 const NEON = [
@@ -188,8 +189,9 @@ export function drawSkyline(ctx, view, scene, camera) {
     const height = horizon * mix(0.52, 0.94, layer.depth);
     const baseY = horizon + 1;
     // Further back reads as hazier: mix the silhouette towards the sky.
-    const haze = 1 - layer.depth;
-    const body = mix3([10, 6, 26], scene.skyLow, haze * 0.45);
+    // How much of the sky's own colour has soaked into this band's silhouette.
+    const distance = 1 - layer.depth;
+    const body = mix3([10, 6, 26], scene.skyLow, distance * 0.45);
     const ruin = scene.ruin;
 
     ctx.save();
@@ -205,60 +207,163 @@ export function drawSkyline(ctx, view, scene, camera) {
       }
     }
     ctx.restore();
+
+    // The air in front of this band. Each layer is seen through a little more
+    // of it than the one behind, so the haze is painted between the layers
+    // rather than once over the top of everything.
+    // Tuned low on purpose. This runs once per band, so whatever is chosen
+    // here compounds four times: at 0.4 the city ends up three-quarters
+    // replaced by sky colour and the whole frame goes milky.
+    haze(ctx, view, scene.skyLow, mix(0.15, 0.015, layer.depth) * (1 - scene.ruin * 0.4), horizon - height * 1.1);
   }
 }
 
-/** One tower: body, roof, windows, and whatever neon it carries. */
+/**
+ * One tower.
+ *
+ * The single change that does more than anything else for how this reads: a
+ * tower is not one flat rectangle, it is a **lit face and a shadow face**. The
+ * sun (and later the fireball) is off to one side, so the near edge catches it
+ * and the rest falls away. Two tones and a vertical gradient is the whole of
+ * the 3D here, and it is the difference between a skyline and a bar chart.
+ *
+ * On top of that: setbacks on the taller towers so the silhouette is art-deco
+ * rather than extruded, roof furniture, window light that *spills* rather than
+ * being a flat square, and a wash of whatever colour is lighting the scene.
+ */
 function drawTower(ctx, x, baseY, w, h, tower, layer, scene, body) {
   const top = baseY - h;
-  ctx.fillStyle = css(body);
+  const near = layer.depth >= 0.4;
+  const spill = layer.depth >= 0.7;
+  const lightFrom = mix(-1, 1, scene.fireball > 0.1 ? 1 : 0.18);
+  const litWidth = Math.max(2, w * 0.22);
+
+  // Body, shaded top to bottom. Towers are brighter where they meet the sky
+  // and sink into the haze at street level.
+  //
+  // The gradient is only built for the two near bands. Seventy towers each
+  // allocating a gradient object every frame is real cost for something the
+  // back of the city is too small and too hazy to show, so back there a flat
+  // fill does the same job.
+  if (near) {
+    const shade = ctx.createLinearGradient(0, top, 0, baseY);
+    shade.addColorStop(0, css([body[0] * 1.32 + 10, body[1] * 1.3 + 10, body[2] * 1.28 + 14]));
+    shade.addColorStop(0.55, css(body));
+    shade.addColorStop(1, css([body[0] * 0.62, body[1] * 0.6, body[2] * 0.72]));
+    ctx.fillStyle = shade;
+  } else {
+    ctx.fillStyle = css(body);
+  }
   ctx.fillRect(x, top, w, h);
 
-  if (tower.roof === 1) ctx.fillRect(x + w * 0.18, top - h * 0.08, w * 0.64, h * 0.08);
+  // The lit face down one edge, keyed to where the light is.
+  const litX = lightFrom > 0 ? x + w - litWidth : x;
+  const key = scene.fireball > 0.1
+    ? [255, 176, 96]
+    : [mix(scene.skyLow[0], 255, 0.3), mix(scene.skyLow[1], 200, 0.25), mix(scene.skyLow[2], 210, 0.3)];
+  if (near) {
+    const edge = ctx.createLinearGradient(litX, 0, litX + litWidth, 0);
+    const inner = css(key, 0);
+    const outer = css(key, mix(0.12, 0.4, layer.depth) * (0.4 + scene.fireball * 0.9));
+    edge.addColorStop(0, lightFrom > 0 ? inner : outer);
+    edge.addColorStop(1, lightFrom > 0 ? outer : inner);
+    ctx.fillStyle = edge;
+  } else {
+    ctx.fillStyle = css(key, 0.16 * (0.4 + scene.fireball * 0.9));
+  }
+  ctx.fillRect(litX, top, litWidth, h);
+
+  // Setbacks: a stepped shoulder near the top of the taller towers.
+  ctx.fillStyle = css(body);
+  if (tower.roof === 1) {
+    ctx.fillRect(x + w * 0.1, top - h * 0.05, w * 0.8, h * 0.05);
+    ctx.fillRect(x + w * 0.24, top - h * 0.11, w * 0.52, h * 0.06);
+  }
   if (tower.roof === 2) {
+    ctx.fillRect(x + w * 0.3, top - h * 0.07, w * 0.4, h * 0.07);
     ctx.beginPath();
-    ctx.moveTo(x + w * 0.5, top - h * 0.16);
-    ctx.lineTo(x + w * 0.72, top);
-    ctx.lineTo(x + w * 0.28, top);
+    ctx.moveTo(x + w * 0.5, top - h * 0.2);
+    ctx.lineTo(x + w * 0.68, top - h * 0.06);
+    ctx.lineTo(x + w * 0.32, top - h * 0.06);
     ctx.closePath();
     ctx.fill();
   }
   if (tower.roof === 3) {
     ctx.beginPath();
-    ctx.arc(x + w * 0.5, top, w * 0.32, Math.PI, 0);
+    ctx.arc(x + w * 0.5, top, w * 0.3, Math.PI, 0);
     ctx.fill();
   }
+
+  // Roof furniture — tanks and plant. Tiny, and the thing your eye reads as
+  // "this is a real building" without ever looking at it directly.
+  if (near && w > 40) {
+    ctx.fillStyle = css([body[0] * 0.8, body[1] * 0.8, body[2] * 0.86]);
+    ctx.fillRect(x + w * 0.14, top - 6, w * 0.16, 6);
+    ctx.fillRect(x + w * 0.62, top - 4, w * 0.2, 4);
+  }
   if (tower.antenna && layer.depth > 0.3) {
+    ctx.fillStyle = css([body[0] * 0.7, body[1] * 0.7, body[2] * 0.8]);
     ctx.fillRect(x + w * 0.48, top - h * 0.2, 1.6, h * 0.2);
-    ctx.fillStyle = css([255, 70, 70], 0.5 + 0.5 * Math.sin(performance.now() / 420));
-    ctx.fillRect(x + w * 0.44, top - h * 0.22, 4, 3);
+    const beacon = 0.35 + 0.65 * Math.abs(Math.sin(performance.now() / 620 + tower.lit * 6));
+    ctx.fillStyle = css([255, 70, 70], beacon);
+    ctx.beginPath();
+    ctx.arc(x + w * 0.49, top - h * 0.21, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = css([255, 60, 60], beacon);
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
-  // Windows. Only the two near bands get them — at the back they would be a
+  // Windows. Only the two near bands get them — at the back they are a
   // shimmering mess that costs frames and reads as noise.
-  if (layer.depth >= 0.4 && h > 26) {
+  if (near && h > 26) {
     const cols = tower.cols;
     const rows = Math.min(tower.rows, Math.floor(h / 7));
     const cw = w / cols;
     const ch = h / Math.max(rows, 1);
     const warmth = 1 - scene.ruin * (1 - tower.resilience);
-    ctx.fillStyle = css([255, 214, 140], 0.5 * warmth);
+    const glass = [mix(120, 255, warmth), mix(90, 214, warmth), mix(80, 140, warmth)];
     for (let c = 0; c < cols; c += 1) {
       for (let r = 0; r < rows; r += 1) {
         // A deterministic hash, so the same windows are lit every frame.
-        const on = ((c * 73856093) ^ (r * 19349663) ^ Math.floor(tower.lit * 1e6)) % 7;
-        if (on > 2) continue;
-        ctx.fillRect(x + c * cw + cw * 0.24, top + r * ch + ch * 0.22, cw * 0.5, ch * 0.5);
+        const hash = ((c * 73856093) ^ (r * 19349663) ^ Math.floor(tower.lit * 1e6));
+        if (hash % 7 > 2) continue;
+        const wx = x + c * cw + cw * 0.24;
+        const wy = top + r * ch + ch * 0.22;
+        const ww = cw * 0.5;
+        const wh = ch * 0.5;
+        // Some windows are cooler than others; an office floor is not one bulb.
+        const cool = (hash % 11) < 3;
+        ctx.fillStyle = css(cool ? [170, 210, 255] : glass, 0.62 * warmth);
+        ctx.fillRect(wx, wy, ww, wh);
+        // The spill: a soft square of the same light, larger and fainter, so
+        // the glow belongs to the building instead of sitting on top of it.
+        // Nearest band only — it is two fills per window, and the bloom pass
+        // already does this job for everything further back.
+        if (spill) {
+          ctx.fillStyle = css(cool ? [120, 170, 255] : glass, 0.13 * warmth);
+          ctx.fillRect(wx - ww * 0.5, wy - wh * 0.5, ww * 2, wh * 2);
+        }
       }
     }
     if (tower.sign) {
       const glow = clamp(1 - scene.ruin, 0, 1) * (0.7 + 0.3 * Math.sin(performance.now() / 300 + tower.lit * 10));
-      ctx.fillStyle = css(tower.neon, 0.9 * glow);
-      ctx.fillRect(x + w * 0.12, top + h * 0.16, w * 0.76, Math.max(3, h * 0.045));
-      ctx.shadowColor = css(tower.neon, 0.8 * glow);
-      ctx.shadowBlur = 18;
-      ctx.fillRect(x + w * 0.12, top + h * 0.16, w * 0.76, Math.max(3, h * 0.045));
-      ctx.shadowBlur = 0;
+      const sy = top + h * 0.16;
+      const sh = Math.max(3, h * 0.045);
+      ctx.save();
+      ctx.shadowColor = css(tower.neon, 0.9 * glow);
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = css(tower.neon, 0.95 * glow);
+      ctx.fillRect(x + w * 0.12, sy, w * 0.76, sh);
+      ctx.fillRect(x + w * 0.12, sy, w * 0.76, sh);
+      ctx.restore();
+      // A bar of the sign's own colour washed down the facade beneath it.
+      const wash = ctx.createLinearGradient(0, sy, 0, sy + h * 0.3);
+      wash.addColorStop(0, css(tower.neon, 0.22 * glow));
+      wash.addColorStop(1, css(tower.neon, 0));
+      ctx.fillStyle = wash;
+      ctx.fillRect(x, sy, w, h * 0.3);
     }
   }
 
@@ -313,33 +418,67 @@ export function drawBay(ctx, view, scene) {
 export function drawRoad(ctx, view, scene, camera) {
   const { w, h, horizon } = view;
   const roadTop = horizon + (h - horizon) * 0.46;
+  const depth = h - roadTop;
+
   const asphalt = ctx.createLinearGradient(0, roadTop, 0, h);
-  asphalt.addColorStop(0, '#15111f');
-  asphalt.addColorStop(1, '#0a0810');
+  asphalt.addColorStop(0, '#1b1626');
+  asphalt.addColorStop(0.35, '#120e1c');
+  asphalt.addColorStop(1, '#070510');
   ctx.fillStyle = asphalt;
-  ctx.fillRect(0, roadTop, w, h - roadTop);
+  ctx.fillRect(0, roadTop, w, depth);
 
-  // Wet asphalt: a band of the sky's own colour smeared down the surface.
-  if (scene.rain > 0.02) {
-    const sheen = ctx.createLinearGradient(0, roadTop, 0, h);
-    sheen.addColorStop(0, css(scene.skyLow, 0.28 * scene.rain));
-    sheen.addColorStop(1, css(scene.skyLow, 0));
-    ctx.fillStyle = sheen;
-    ctx.fillRect(0, roadTop, w, h - roadTop);
+  // Wet asphalt. A real wet road does not tint uniformly — it mirrors what is
+  // above it, smeared vertically and fading with distance. Three passes:
+  // the sky's colour pooling near the horizon, vertical streaks of the neon
+  // above, and a specular sheen where the light source is.
+  const wet = clamp(scene.rain + 0.28, 0, 1);
+  if (wet > 0.02) {
+    const pool = ctx.createLinearGradient(0, roadTop, 0, h);
+    pool.addColorStop(0, css(scene.skyLow, 0.16 * wet));
+    pool.addColorStop(0.4, css(scene.skyLow, 0.05 * wet));
+    pool.addColorStop(1, css(scene.skyLow, 0));
+    ctx.fillStyle = pool;
+    ctx.fillRect(0, roadTop, w, depth);
+
+    // Streaked reflections of the signs above, placed off the same wrapped
+    // camera offset the buildings use so they track the city rather than
+    // drifting independently.
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const streaks = 16;
+    for (let i = 0; i < streaks; i += 1) {
+      const seed = (i * 2654435761) >>> 0;
+      const hue = NEON[seed % NEON.length];
+      const span = 1400;
+      const x = wrap(i * 210 - camera * 0.46, span) / span * (w + 200) - 100;
+      const len = depth * (0.3 + ((seed >> 8) % 100) / 220);
+      const streak = ctx.createLinearGradient(0, roadTop, 0, roadTop + len);
+      streak.addColorStop(0, css(hue, 0.2 * wet));
+      streak.addColorStop(1, css(hue, 0));
+      ctx.fillStyle = streak;
+      ctx.fillRect(x, roadTop, 10 + (seed % 22), len);
+    }
+    ctx.restore();
   }
 
-  ctx.fillStyle = css([255, 220, 120], 0.55);
-  ctx.fillRect(0, roadTop, w, 2);
+  // The kerb line, lit.
+  ctx.fillStyle = css([255, 220, 120], 0.5);
+  ctx.fillRect(0, roadTop, w, 1.5);
+  const kerb = ctx.createLinearGradient(0, roadTop, 0, roadTop + 26);
+  kerb.addColorStop(0, css([255, 200, 120], 0.16));
+  kerb.addColorStop(1, css([255, 200, 120], 0));
+  ctx.fillStyle = kerb;
+  ctx.fillRect(0, roadTop, w, 26);
 
-  // Centre line. Dash length grows towards the camera so the road reads as
-  // going away from you rather than being a flat strip.
+  // Centre line, fading into the distance rather than stopping dead.
   const dash = 78;
-  const y = roadTop + (h - roadTop) * 0.52;
+  const y = roadTop + depth * 0.52;
   const offset = wrap(camera * 1.6, dash * 2);
-  ctx.fillStyle = css([245, 240, 220], 0.7);
-  for (let x = -offset; x < w + dash; x += dash * 2) {
-    ctx.fillRect(x, y, dash, 4);
-  }
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = css([245, 240, 220]);
+  for (let x = -offset; x < w + dash; x += dash * 2) ctx.fillRect(x, y, dash, 4);
+  ctx.restore();
 }
 
 /**

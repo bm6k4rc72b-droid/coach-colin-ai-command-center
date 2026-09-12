@@ -750,28 +750,33 @@ export function drawShield(ctx, x, y, r, state = {}) {
     ctx.shadowColor = css([255, 208, 64], 0.9 * glow);
     ctx.shadowBlur = r * 0.7 * glow;
   }
-  const rings = [
-    ['#f6c945', 1],
-    ['#0e0e12', 0.84],
-    ['#f6c945', 0.7],
-    ['#0e0e12', 0.54],
-  ];
-  for (const [colour, k] of rings) {
-    ctx.fillStyle = colour;
-    ctx.beginPath();
-    ctx.arc(0, 0, r * k, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-
-  // The C, cut as an arc with squared terminals. Thick enough to read as a
-  // letter at fifty pixels — thinner and it turns into a copyright mark.
-  ctx.strokeStyle = '#f6c945';
-  ctx.lineWidth = r * 0.23;
-  ctx.lineCap = 'butt';
+  // One gold rim, a dark field, and a letter big enough to cross both.
+  //
+  // Three versions of this read as a copyright mark before it worked, and the
+  // reason was structural rather than a matter of weight: *any* glyph centred
+  // inside concentric circles is ©. The fix is to stop containing it — the C
+  // is set larger than the inner field, so its terminals run out over the rim
+  // and the two shapes read as one monogram instead of a mark inside a ring.
+  ctx.fillStyle = '#f6c945';
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.32, Math.PI * 0.36, Math.PI * 1.64);
-  ctx.stroke();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#141019';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.99, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#f6c945';
+  ctx.font = `900 ${(r * 1.92).toFixed(1)}px Impact, "Arial Black", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('C', 0, r * 0.02);
+  ctx.restore();
 
   // A rim highlight, so it reads as metal rather than a target.
   ctx.strokeStyle = css([255, 255, 255], 0.45);

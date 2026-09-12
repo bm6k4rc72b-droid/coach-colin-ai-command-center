@@ -282,16 +282,24 @@ async function main() {
     check(rack.focused === 1, `exactly one card is in focus (${rack.focused})`);
     check(rack.ctas === rack.count, `every card carries a call to action (${rack.ctas})`);
 
+    // The rack eases towards its target over several frames, so this polls for
+    // the change rather than sleeping a fixed time — headless Chrome renders
+    // this page in software and runs it a great deal slower than a real
+    // browser with a GPU does.
     const rackAdvanced = await page.evaluate(async () => {
-      const before = document.querySelector('#rack-label').textContent.trim();
+      const label = () => document.querySelector('#rack-label').textContent.trim();
+      const before = label();
       document.querySelector('#rack').focus();
       for (let i = 0; i < 3; i += 1) {
         document.querySelector('#rack').dispatchEvent(
           new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }),
         );
       }
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      return { before, after: document.querySelector('#rack-label').textContent.trim() };
+      const deadline = performance.now() + 6000;
+      while (label() === before && performance.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      return { before, after: label() };
     });
     check(
       rackAdvanced.before !== rackAdvanced.after,

@@ -198,6 +198,7 @@ public/vice/
     actors.js         Tommy, the Rolls, the Chargers, gunships, armour,
                       the gold truck, the saucer, Colin and the shield
     explosion.js      the detonation, as closed-form ballistics
+    grade.js          the lens: bloom, haze, god rays, colour grade
     hud.js            felony stars, radar, mission line, act cards
     score.js          five synthesised cues and an effects bank
     showcase.js       the 3D rack
@@ -213,12 +214,35 @@ Nothing in `sequence.js`, `scroll.js`, `apps.js`, `agents.js`, `security.js`,
 `mathkit.js` or `explosion.js` touches the DOM, which is why they are tested
 without a browser.
 
+### The look
+
+The scene is drawn, and then the *camera* is drawn on top of it by
+[`grade.js`](../public/vice/js/grade.js): bloom around everything bright, a
+band of haze between each parallax layer, shafts from the low sun, an
+anamorphic smear off the neon, and a colour grade that cools the shadows and
+warms the highlights. Towers carry a lit face and a shadow face with a vertical
+gradient, art-deco setbacks, roof furniture and a mix of warm and cool window
+light; the wet road mirrors the signs above it in vertical streaks.
+
 ### Performance
 
 One canvas, one `requestAnimationFrame` loop, one measurement pass per frame.
-The backing store is capped at 2× device pixel ratio — beyond that is invisible
-here and costs a third of the frame rate on a phone — and the loop stops
+The backing store is capped at 2× device pixel ratio, and the loop stops
 entirely when the page is hidden.
+
+Bloom is the expensive part, and where it is done matters enormously. The
+bright pass lives on its own buffer at a quarter of the linear resolution, and
+**the blur happens inside that buffer** — a small radius on a sixteenth of the
+pixels — before being composited up. The first version of this set
+`ctx.filter` on the main context instead, which applies the blur to every
+primitive drawn through it; a band of forty towers became forty separate
+blurs and the page ran at roughly one frame every two seconds. The version
+here costs about 25% over an unlit frame, measured in software rendering with
+no GPU at all.
+
+On top of that the lens watches its own frame times and switches the bloom off
+after three consecutive frames over 34ms. A phone that cannot afford the glow
+should lose the glow, not the frame rate.
 
 ### Accessibility
 
