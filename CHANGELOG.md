@@ -7,6 +7,18 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Extended **Black Optic 6** with three decks and two device routes. Spectral
+  computes vegetation indices over the live frame — only the ones the connected
+  source has bands for — masks the bare alleys before averaging, ranks the worst
+  cells to walk to, and states on every reading that no camera measures a
+  nutrient. Subsurface builds a sonar occupancy map with the beam drawn as a
+  cone, corrects position by matching each scan against the map already built,
+  and reports the drift rather than hiding it. Bio pairs a Bluetooth heart rate
+  sensor. A DJI Pocket or Action in USB webcam mode now appears in a camera
+  picker and runs the whole detection chain; a pan-tilt loop keeps a contact
+  centred from present error only. An autonomous turret with a firing mechanism
+  was declined and recorded in the ledger as such, with a test asserting the
+  tracking controller contains no lead or intercept maths.
 - Added **Black Optic 6**, a ranch perimeter console at `public/black-optic-6/`.
   Eight decks — optics with a calibrated detection chain reporting metres,
   contacts and events, an acoustic watch, a geofence that refuses to call a

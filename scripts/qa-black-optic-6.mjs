@@ -137,7 +137,7 @@ async function main() {
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 8, `the console builds all its decks (${decks})`);
+    check(decks === 11, `the console builds all its decks (${decks})`);
 
     const title = await page.title();
     check(/Black Optic 6/.test(title), `the console is named Black Optic 6 ("${title}")`);
@@ -149,12 +149,16 @@ async function main() {
     check(ledger >= 30, `every specified capability is answered (${ledger} rows)`);
 
     const unsound = await page.$$eval('.ledger-row .prov[data-tone="alert"]', (nodes) => nodes.length);
-    check(unsound >= 5, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
+    check(unsound >= 8, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
 
     const ledgerText = await page.$eval('#ledger', (node) => node.textContent);
-    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment']) {
+    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment', 'firing mechanism', 'Nutrient deficiency']) {
       check(ledgerText.includes(phrase), `the ledger answers "${phrase}" openly`);
     }
+    check(
+      /autonomous weapon/i.test(ledgerText),
+      'the turret row names what it is rather than listing it as unimplemented',
+    );
 
     // Filtering narrows the list rather than emptying it.
     await page.evaluate(() => {
@@ -249,6 +253,84 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 1400));
     const buffered = await page.$eval('#vault-readouts', (node) => node.textContent);
     check(/\d+ s/.test(buffered), `the evidence buffer is filling (${buffered.slice(0, 40).trim()}…)`);
+
+    // ---------------------------------------------------------- devices
+    await page.click('#rail button[data-deck="optics"]');
+    const cameras = await page.$$eval('#camera-pick option', (nodes) => nodes.length);
+    check(cameras >= 1, `the camera picker lists devices (${cameras})`);
+    const routes = await page.$$eval('#routes .row', (nodes) => nodes.length);
+    check(routes >= 4, `the other routes in are listed (${routes})`);
+    const routeText = await page.$eval('#routes', (node) => node.textContent);
+    check(/RTMP/.test(routeText), 'the drone route names what it actually needs');
+
+    // --------------------------------------------------------- tracking
+    await page.click('#rail button[data-deck="watch"]');
+    await page.click('#track-toggle');
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const trackText = await page.$eval('#track-readouts', (node) => node.textContent);
+    check(/°\/s/.test(trackText), 'the head tracking loop reports pan and tilt rates');
+    const trackPanel = await page.$eval('#deck-watch', (node) => node.textContent);
+    check(
+      /no prediction of where anything is going/i.test(trackPanel),
+      'the tracking panel states what it deliberately does not compute',
+    );
+    await page.click('#track-toggle');
+
+    // --------------------------------------------------------- spectral
+    await page.click('#rail button[data-deck="spectral"]');
+    const offered = await page.$$eval('#spectral-index option', (nodes) => nodes.map((n) => n.value));
+    check(offered.length === 3, `only the visible indices are offered on an RGB camera (${offered.join(', ')})`);
+    check(!offered.includes('ndvi'), 'NDVI is not offered without near-infrared');
+
+    await page.click('#spectral-run');
+    await page.waitForFunction(
+      () => document.querySelectorAll('#spectral-supports .row').length > 0,
+      { timeout: 8000 },
+    );
+    const indexPainted = await page.evaluate(() => {
+      const canvas = document.getElementById('spectral-map');
+      const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      let coloured = 0;
+      for (let i = 0; i < data.length; i += 400) {
+        if (data[i] !== 18 || data[i + 1] !== 22) coloured += 1;
+      }
+      return coloured;
+    });
+    check(indexPainted > 20, `the index map is rendered (${indexPainted} sampled cells)`);
+    const spectralText = await page.$eval('#deck-spectral', (node) => node.textContent);
+    check(/which nutrient/i.test(spectralText), 'the reading refuses to name a nutrient');
+    check(/tissue/i.test(spectralText), 'and says what would actually answer the question');
+
+    // ------------------------------------------------------- subsurface
+    await page.click('#rail button[data-deck="subsurface"]');
+    await page.click('#sonar-rehearse');
+    await page.waitForFunction(
+      () => /%/.test(document.getElementById('sonar-readouts').textContent),
+      { timeout: 15000 },
+    );
+    const sonarText = await page.$eval('#sonar-readouts', (node) => node.textContent);
+    check(/Drift/.test(sonarText), 'the sonar survey reports its drift');
+    const mapped = await page.evaluate(() => {
+      const canvas = document.getElementById('sonar-map');
+      const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      let lit = 0;
+      for (let i = 0; i < data.length; i += 160) {
+        if (data[i] > 20 || data[i + 2] > 60) lit += 1;
+      }
+      return lit;
+    });
+    check(mapped > 100, `the occupancy map is drawn (${mapped} sampled cells)`);
+    const capacityText = await page.$eval('#sonar-capacity', (node) => node.textContent);
+    check(/ML/.test(capacityText), 'stored water is estimated from the soundings');
+    check(/upper bound|soundings/i.test(capacityText), 'and the estimate states its own limit');
+
+    // -------------------------------------------------------------- bio
+    await page.click('#rail button[data-deck="bio"]');
+    const bioText = await page.$eval('#deck-bio', (node) => node.textContent);
+    check(/Apple Watch/.test(bioText), 'the bio deck names the wearable that will never pair');
+    check(/strap/i.test(bioText), 'and the ones that will');
+    const bioRows = await page.$$eval('#bio-works .row, #bio-blocked .row', (nodes) => nodes.length);
+    check(bioRows >= 6, `what pairs and what does not are both listed (${bioRows})`);
 
     await page.click('#rail button[data-deck="optics"]');
     await page.screenshot({ path: shot });

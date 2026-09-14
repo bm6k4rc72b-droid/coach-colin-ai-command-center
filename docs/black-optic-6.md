@@ -69,6 +69,25 @@ caption on every frame. Also a ladder of what sharper imagery costs.
 thirty seconds *before* the event as well as after. Each clip is SHA-256 hashed
 on write and stays on the device until exported.
 
+**Spectral.** Vegetation indices over the live frame or a loaded image. An
+ordinary camera has three bands, so it gets TGI, VARI and Excess Green — enough
+to find *where* a block differs from itself. Near-infrared unlocks NDVI and SAVI;
+red edge unlocks NDRE and CIre, which keep working once the canopy has closed and
+NDVI has flattened. The console only offers the indices the connected source can
+actually feed, masks the bare alleys out before averaging anything, and ranks the
+worst cells so a forty-hectare block becomes three flags to walk to.
+
+**Subsurface.** Occupancy mapping from sonar returns, with the beam drawn as the
+cone it is rather than a ray. Dead reckoning, a drift estimate that grows with
+distance, and scan matching against the map already built to pull the position
+back. Depth soundings turn into stored water, reported as an upper bound. A
+rehearsal sweep maps a synthetic dam so the whole chain can be seen working with
+no sonar attached — badged synthetic throughout.
+
+**Bio.** Heart rate over Bluetooth from any sensor implementing the standard
+heart rate service, with beat-to-beat variability where the sensor sends
+intervals. This is the operator's own sensor, not a subject's.
+
 **Links.** A socket for external sensors — an ESP32 in CSI mode, a 60 GHz
 presence module, a magnetometer node, a thermal camera — using the same link the
 perimeter camera app defined.
@@ -86,6 +105,21 @@ matters.
 
 **Refused as unsound** — these are not build items, and no hardware changes them:
 
+- **An autonomous turret with a firing mechanism.** A loop that detects a target,
+  predicts where it will be and releases a trigger is an autonomous weapon, and
+  the ordinariness of the computer vision is exactly the problem: this console
+  classifies on geometry and confuses a person with a fence post often enough
+  that a human reads the frame and decides. What is built instead is a pan-tilt
+  loop that keeps a subject centred *from the error visible right now* — no
+  extrapolation of where anything is going, and no output that could drive
+  anything but a camera head. The refusal is structural rather than a comment: a
+  test asserts the controller contains no lead, intercept or projectile maths, so
+  there is nothing to repurpose.
+- **Naming a nutrient from a spectrum.** No camera at any price measures
+  nitrogen, phosphorus or potassium. It measures reflected light. The published
+  work that maps spectra to a named deficiency paired every flight with
+  laboratory tissue tests from the same vines on the same day. The map finds the
+  spot; it cannot do the chemistry.
 - **Stress and intent analysis, aggression prediction, threat scoring.** There
   is no validated mapping from posture or micro-movement to intent, and the
   published attempts fail hardest across body types, disability and skin tone.
@@ -132,6 +166,16 @@ Nothing that already existed in this repository was rewritten:
 | `sentry/rf.js` | The external sensor link and its capability statement |
 | `emberline/overpass.js`, `geo.js` | Satellite overpass prediction and geodesy |
 
+Four capabilities the specification asked for turn out to be routing problems
+rather than engineering ones. A DJI Pocket or Action in USB webcam mode is a
+standard UVC device — it appears in the camera picker and the detection chain
+runs on it, no SDK involved. A DJI drone is not: the controller speaks RTMP,
+which no browser plays, so it needs one relay on the ranch network and then it is
+just a URL. A watch cannot stream heart rate to a web page, but a Bluetooth heart
+rate sensor can, and several watches will act as one if broadcast mode is
+switched on. And a true hyperspectral camera is a £15,000–60,000 instrument whose
+results are limited by the tissue testing rather than the sensor.
+
 One implementation of each number, so two panels can never quietly disagree
 about how fast something was moving.
 
@@ -154,7 +198,7 @@ jurisdictions, often sharply.
 ## Tests
 
 ```sh
-npm run test:black-optic-6   # 38 unit tests, no browser or network needed
+npm run test:black-optic-6   # 79 unit tests, no browser or network needed
 npm run qa:black-optic-6     # drives the real console in Chromium
 ```
 
@@ -166,5 +210,7 @@ intrusion, and an impulse description that never names a source.
 The end-to-end check opens the real console with a synthetic camera and
 microphone, confirms every deck renders, that the camera moves the badge to
 `LIVE` and paints frames, that calibration switches the readouts from pixels to
-metres, and that the ledger still shows its seven refusals — a console whose
-honest rows are dropped in a refactor looks identical to one that never had them.
+metres, that an RGB camera is offered only the three visible indices, that the
+sonar rehearsal maps a dam and reports its drift, and that the ledger still shows
+its nine refusals — a console whose honest rows are dropped in a refactor looks
+identical to one that never had them.
