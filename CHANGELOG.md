@@ -7,6 +7,17 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added thermal palettes and the tracking suite to **Black Optic 6**. All
+  thirteen palettes a thermal camera offers, with auto and manual gain, isotherm
+  bands, fusion edges, spot and area measurement, and emissivity correction —
+  every temperature readout withheld unless a radiometric camera is linked, since
+  a palette over a visible camera colours brightness rather than heat. Colour
+  (CAMShift) and appearance (cross-correlation) trackers follow one specific
+  subject even when it stops moving, each refusing to lock onto a region it
+  cannot hold. Harvest tracking turns logged loads into progress, a rate with its
+  spread, and a finish window rather than a promised time. Aerial contacts above
+  a calibrated horizon are measured in angular size and rate, with what they are
+  consistent with rather than an identification one camera cannot support.
 - Extended **Black Optic 6** with three decks and two device routes. Spectral
   computes vegetation indices over the live frame — only the ones the connected
   source has bands for — masks the bare alleys before averaging, ranks the worst

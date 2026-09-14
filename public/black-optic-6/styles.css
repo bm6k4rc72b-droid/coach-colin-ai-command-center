@@ -536,3 +536,36 @@ label.field span { font-size: 8.5px; letter-spacing: 0.16em; text-transform: upp
   .pip { animation: none; }
   .meter i { transition: none; }
 }
+
+/* ------------------------------------------------------------- palettes */
+
+/* Swatches rather than a dropdown: a palette is a picture, and choosing one
+   from a list of names means trying all thirteen to find out what they are. */
+.palettes { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 7px; }
+
+.palettes button {
+  padding: 0;
+  border: 1px solid var(--hair);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+}
+
+.palettes button .swatch { display: block; height: 18px; width: 100%; }
+
+.palettes button span.name {
+  display: block;
+  padding: 5px 7px 6px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.palettes button:hover span.name { color: var(--ink-dim); }
+.palettes button[aria-pressed='true'] { border-color: var(--primary); }
+.palettes button[aria-pressed='true'] span.name { color: var(--primary); }
+
+input[type='range'] { width: 100%; accent-color: var(--primary); }

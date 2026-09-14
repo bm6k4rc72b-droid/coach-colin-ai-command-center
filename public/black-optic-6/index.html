@@ -80,6 +80,25 @@
           </div>
 
           <div class="panel">
+            <div class="panel-head"><h2>Thermal palettes</h2><span class="spacer"></span><span class="prov" id="thermal-prov" data-tone="caution">Brightness</span></div>
+            <p class="note" id="thermal-truth"></p>
+            <div class="palettes" id="palettes" style="margin-top: 11px"></div>
+            <div class="controls" style="margin-top: 12px">
+              <label class="field" style="flex:0 1 150px"><span>Scale</span><select id="thermal-gain"><option value="auto">Auto (AGC)</option><option value="manual">Manual</option></select></label>
+              <label class="field" style="flex:0 1 130px"><span>Level</span><input id="thermal-level" type="number" step="0.05" value="0.5" /></label>
+              <label class="field" style="flex:0 1 130px"><span>Span</span><input id="thermal-span" type="number" step="0.05" min="0.01" value="1" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>Isotherm</span><select id="thermal-iso"></select></label>
+              <label class="field" style="flex:0 1 130px"><span>Low</span><input id="thermal-iso-low" type="number" step="0.05" value="0.75" /></label>
+              <label class="field" style="flex:0 1 130px"><span>High</span><input id="thermal-iso-high" type="number" step="0.05" value="1" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Fusion edges</span><input id="thermal-fusion" type="range" min="0" max="100" value="0" /></label>
+            </div>
+            <div class="readouts" id="thermal-readouts" style="margin-top: 12px"></div>
+            <p class="note" id="thermal-emissivity" style="margin-top: 10px"></p>
+          </div>
+
+          <div class="panel">
             <div class="panel-head"><h2>Camera picker</h2><span class="spacer"></span><span class="prov" id="picker-prov" data-tone="muted">Scan</span></div>
             <p class="note">
               A DJI Pocket or Action in USB webcam mode is a standard UVC device — it turns up here
@@ -133,6 +152,19 @@
               <div class="panel-head"><h2>Event log</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
               <ul class="rows" id="events"></ul>
             </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Target lock</h2><span class="spacer"></span><span class="prov" id="lock-prov" data-tone="muted">Motion</span></div>
+              <p class="note" id="lock-note"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 180px"><span>Tracker</span><select id="lock-mode"></select></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="lock-on" type="button">Lock the largest contact</button>
+                <button class="ghost" id="lock-drop" type="button" disabled>Release</button>
+              </div>
+              <div class="readouts" id="lock-readouts" style="margin-top: 12px"></div>
+            </div>
+
             <div class="panel">
               <div class="panel-head"><h2>Head tracking</h2><span class="spacer"></span><span class="prov" id="track-prov" data-tone="muted">Idle</span></div>
               <p class="note">
@@ -365,6 +397,66 @@
             <div class="panel">
               <div class="panel-head"><h2>What does not</h2><span class="spacer"></span><span class="prov" data-tone="muted">Blocked</span></div>
               <ul class="rows" id="bio-blocked"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------ harvest -->
+        <section class="deck" id="deck-harvest">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Picking today</h2><span class="spacer"></span><span class="prov" id="harvest-prov" data-tone="muted">Nothing logged</span></div>
+              <div class="readouts" id="harvest-day"></div>
+              <h3 style="margin-top:14px">Log a load</h3>
+              <div class="controls" style="margin-top: 9px">
+                <label class="field" style="flex:1 1 180px"><span>Block</span><select id="harvest-block"></select></label>
+                <label class="field" style="flex:0 1 120px"><span>Weight (kg)</span><input id="harvest-kg" type="number" min="0" step="10" value="420" /></label>
+                <label class="field" style="flex:0 1 110px"><span>Rows done</span><input id="harvest-rows" type="number" min="0" step="1" value="9" /></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="harvest-log" type="button">Log it</button>
+                <button class="ghost" id="harvest-undo" type="button" disabled>Undo last</button>
+                <button class="ghost" id="harvest-export" type="button">Export CSV</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Rate and finish</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <div class="readouts" id="harvest-rate"></div>
+              <p class="note" id="harvest-eta" style="margin-top:12px"></p>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Blocks</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <ul class="rows" id="harvest-blocks"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Yield ranking</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="harvest-yield"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------- aerial -->
+        <section class="deck" id="deck-aerial">
+          <div class="panel">
+            <div class="panel-head"><h2>Airborne contacts</h2><span class="spacer"></span><span class="prov" id="aerial-prov" data-tone="muted">No horizon</span></div>
+            <p class="note" id="aerial-note"></p>
+            <div class="readouts" id="aerial-readouts" style="margin-top: 12px"></div>
+            <ul class="rows" id="aerial-contacts" style="margin-top: 12px"></ul>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>What would settle it</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <ul class="rows" id="aerial-settle"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Your own aircraft</h2><span class="spacer"></span><span class="prov" id="aerial-telemetry-prov" data-tone="muted">No telemetry</span></div>
+              <div class="readouts" id="aerial-telemetry"></div>
+              <p class="note" style="margin-top:10px">
+                Telemetry bridged from your own drone is a measurement, not an inference — position
+                and altitude come from the aircraft. Route it in on the links deck.
+              </p>
             </div>
           </div>
         </section>
