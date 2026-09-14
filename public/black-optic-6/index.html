@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Black Optic 6 — ranch perimeter console</title>
+    <meta
+      name="description"
+      content="A perimeter security console that states where every number came from: live optics, acoustic watch, geofence, orbital imagery and an honest capability ledger."
+    />
+    <meta name="theme-color" content="#04060a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Black Optic 6" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="console">
+      <header class="bar">
+        <div class="wordmark"><b>Black Optic</b><span>6</span></div>
+        <div class="armed" id="armed" data-state="standby"><span class="pip"></span><span id="armed-label">Standby</span></div>
+        <div class="bar-spacer"></div>
+        <div class="bar-slot optional">Site <b id="site">not set</b></div>
+        <div class="bar-slot optional">Links <b id="link-count">0</b></div>
+        <div class="bar-slot"><b id="clock">--:--:--</b></div>
+      </header>
+
+      <nav class="rail" id="rail" aria-label="Console sections"></nav>
+
+      <main class="stage">
+        <!-- ------------------------------------------------------- optics -->
+        <section class="deck" id="deck-optics" data-open="true">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Optics</h2>
+                <span class="spacer"></span>
+                <span class="prov" id="optics-prov" data-tone="muted">Offline</span>
+              </div>
+              <div class="viewport" id="viewport">
+                <video id="video" playsinline muted autoplay></video>
+                <canvas id="frame"></canvas>
+                <canvas id="hud"></canvas>
+                <div class="sweep" id="sweep" hidden></div>
+                <div class="viewport-empty" id="viewport-empty">
+                  <p>
+                    Point a camera at the ground you want watched. Everything runs on this device —
+                    frames are measured and discarded, nothing is uploaded, and there is no face
+                    recognition anywhere in this console.
+                  </p>
+                  <div class="controls" style="justify-content: center">
+                    <button class="act" id="optics-start" type="button">Open camera</button>
+                  </div>
+                </div>
+              </div>
+              <div class="views" id="views"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Calibration</h2><span class="spacer"></span><span class="prov" id="calib-prov" data-tone="caution">Pixels</span></div>
+              <p class="note">
+                Until the view is calibrated the console reports pixels and refuses to convert them.
+                Type the camera's mounting and it reports metres — height, ground speed, distance —
+                and the horizon line appears so you can check the answer.
+              </p>
+              <div class="readouts" style="margin-top: 11px">
+                <label class="field"><span>Mount height (m)</span><input id="cal-height" type="number" min="0.5" max="20" step="0.1" value="3" /></label>
+                <label class="field"><span>Down tilt (°)</span><input id="cal-tilt" type="number" min="0" max="80" step="1" value="20" /></label>
+                <label class="field"><span>Field of view (°)</span><input id="cal-fov" type="number" min="30" max="140" step="1" value="70" /></label>
+              </div>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="cal-apply" type="button">Apply</button>
+                <button class="ghost" id="cal-clear" type="button">Back to pixels</button>
+              </div>
+              <p class="note" id="cal-note" style="margin-top: 10px"></p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Camera sources</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+            <p class="note">
+              Any camera that publishes a stream this browser can open — HLS, WebRTC, or an MJPEG
+              URL — becomes another view. Vendor-cloud-only cameras cannot be used, because the
+              stream never reaches this device.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex: 1 1 260px"><span>Stream URL</span><input id="stream-url" type="text" placeholder="https://camera.local/stream.m3u8" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="stream-add" type="button">Add source</button>
+              <button class="ghost" id="camera-flip" type="button">Switch device camera</button>
+            </div>
+            <ul class="rows" id="sources" style="margin-top: 11px"></ul>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- watch -->
+        <section class="deck" id="deck-watch">
+          <div class="panel" id="watch-panel">
+            <div class="panel-head"><h2>Contacts</h2><span class="spacer"></span><span class="prov" id="watch-prov" data-tone="muted">Camera off</span></div>
+            <div class="readouts" id="watch-readouts"></div>
+            <ul class="rows" id="contacts" style="margin-top: 12px"></ul>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Event log</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <ul class="rows" id="events"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Response</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <p class="note">
+                Both of these are this device only, at whatever range this device has. They are
+                crude, and at close range that is enough.
+              </p>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="deter-light" type="button">Flood light</button>
+                <button class="act" id="deter-siren" type="button">Siren</button>
+                <button class="ghost danger" id="blackout" type="button">Blackout</button>
+              </div>
+              <p class="note" id="response-note" style="margin-top: 10px">
+                Blackout kills every emission this console controls — screen, torch, siren, network
+                calls — and keeps the sensors recording.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ----------------------------------------------------- acoustic -->
+        <section class="deck" id="deck-acoustic">
+          <div class="panel">
+            <div class="panel-head"><h2>Acoustic watch</h2><span class="spacer"></span><span class="prov" id="acoustic-prov" data-tone="muted">Offline</span></div>
+            <p class="note">
+              One microphone answers <b>how loud</b> and <b>exactly when</b>. It cannot answer
+              <b>where</b> — bearing needs four or more microphones at known positions sharing a
+              clock. Impulses are logged by shape and level; naming the sound is yours.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="acoustic-start" type="button">Open microphone</button>
+              <button class="ghost" id="acoustic-stop" type="button" disabled>Stop</button>
+            </div>
+            <div class="readouts" id="acoustic-readouts" style="margin-top: 12px"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Impulses</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+            <ul class="rows" id="impulses"></ul>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------- perimeter -->
+        <section class="deck" id="deck-perimeter">
+          <div class="panel">
+            <div class="panel-head"><h2>Geofence</h2><span class="spacer"></span><span class="prov" id="fence-prov" data-tone="muted">No fix</span></div>
+            <p class="note">
+              Walk the boundary and mark each corner. The console only calls a crossing when the
+              fix is sharp enough to resolve which side of the line you are on — a ±30 m fix under
+              the tree line cannot, and it says so instead of alerting.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="fence-track" type="button">Start positioning</button>
+              <button class="act" id="fence-mark" type="button" disabled>Mark corner</button>
+              <button class="ghost" id="fence-undo" type="button" disabled>Undo</button>
+              <button class="ghost danger" id="fence-clear" type="button" disabled>Clear</button>
+            </div>
+            <div class="readouts" id="fence-readouts" style="margin-top: 12px"></div>
+            <canvas id="fence-map" width="600" height="360" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------- satellite -->
+        <section class="deck" id="deck-satellite">
+          <div class="panel">
+            <div class="panel-head"><h2>Orbital imagery</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+            <p class="note" id="sat-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 220px"><span>Layer</span><select id="sat-layer"></select></label>
+              <label class="field" style="flex:0 1 150px"><span>Date</span><input id="sat-date" type="text" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="sat-fetch" type="button">Fetch scene</button>
+              <button class="ghost" id="sat-here" type="button">Use my position</button>
+            </div>
+            <div class="mosaic" id="sat-mosaic" style="margin-top: 12px"></div>
+            <p class="note" id="sat-note" style="margin-top: 10px"></p>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Next looks</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="sat-looks"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Sharper imagery</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <table class="ladder" id="sat-ladder"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- vault -->
+        <section class="deck" id="deck-vault">
+          <div class="panel">
+            <div class="panel-head"><h2>Evidence vault</h2><span class="spacer"></span><span class="prov" id="vault-prov" data-tone="muted">Idle</span></div>
+            <p class="note">
+              The recorder runs into a rolling buffer, so a saved clip contains the thirty seconds
+              <b>before</b> the event as well as after it. Each clip is hashed as it is written and
+              stays on this device until you export it.
+            </p>
+            <div class="readouts" id="vault-readouts" style="margin-top: 12px"></div>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="vault-keep" type="button" disabled>Keep last 60 s</button>
+            </div>
+            <ul class="rows" id="clips" style="margin-top: 12px"></ul>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- links -->
+        <section class="deck" id="deck-links">
+          <div class="panel">
+            <div class="panel-head"><h2>Sensor links</h2><span class="spacer"></span><span class="prov" id="links-prov" data-tone="muted">None</span></div>
+            <p class="note" id="links-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 260px"><span>Sensor bridge socket</span><input id="link-url" type="text" placeholder="ws://192.168.1.50:8080" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="link-connect" type="button">Connect</button>
+              <button class="ghost" id="link-disconnect" type="button" disabled>Disconnect</button>
+            </div>
+            <p class="note" id="link-state" style="margin-top: 10px"></p>
+            <ul class="rows" id="link-options" style="margin-top: 12px"></ul>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------- ledger -->
+        <section class="deck" id="deck-ledger">
+          <div class="panel">
+            <div class="panel-head"><h2>Capability ledger</h2><span class="spacer"></span><span class="prov" data-tone="primary">Specification</span></div>
+            <p class="note">
+              Every capability on the specification, and what is actually true of it on this
+              hardware. Three kinds of no: the platform blocks it, the sensor does not exist here,
+              or the measurement does not support the claim. The last group is not a build queue.
+            </p>
+            <div class="tally" id="ledger-tally" style="margin-top: 12px"></div>
+            <div class="ledger" id="ledger"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

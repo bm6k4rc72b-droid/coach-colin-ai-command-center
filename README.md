@@ -529,6 +529,43 @@ and the headline below it is not.
 
 ---
 
+## Also in here: Black Optic 6
+
+A **ranch perimeter console** at [`public/black-optic-6/`](public/black-optic-6),
+built around one rule: no number appears on screen without a badge saying where
+it came from, and only measured numbers may raise an alarm.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6/>** — locally it is `/black-optic-6/`
+(`http://localhost:4173/black-optic-6/` under `./start.sh`).
+
+Eight decks: optics with five views and a detection chain that reports metres
+once calibrated; contacts and an event log; an acoustic watch; a geofence that
+refuses to call a crossing the satellite fix cannot support; real NASA imagery
+over your coordinates with the next overpass times; an evidence vault that keeps
+the thirty seconds *before* an event and hashes the clip; links for external
+sensors; and a capability ledger.
+
+The ledger is the point. Every capability on the specification is answered with
+one of six states — measured here, measured by a device you link, modelled with
+its error, blocked by the platform, needs hardware, or **unsound**. That last
+group is seven rows the console will not build at any price: intent and
+aggression scoring, threat percentages, concealed-object detection, gait
+identification, mass from a silhouette, heartbeats through walls at perimeter
+range, and magnetic firearm detection. Each says what is actually true and what
+the console does instead.
+
+Nothing was rewritten to build it: the detection chain, the ironbow view and the
+external-sensor link come from Sentry, the overpass prediction and geodesy from
+Emberline. One implementation of each number, so two panels cannot disagree
+about how fast something was moving.
+
+Full write-up, including the refusals in detail:
+[`docs/black-optic-6.md`](docs/black-optic-6.md). Tests:
+`npm run test:black-optic-6` (38 unit tests) and `npm run qa:black-optic-6`,
+which drives the real console in Chromium with a synthetic camera and microphone.
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream
