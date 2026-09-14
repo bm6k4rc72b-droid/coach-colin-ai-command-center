@@ -39,6 +39,14 @@ What it does beyond drawing boxes on fruit:
   picking crew.
 - **Keeps a field ledger** — dated, geotagged, sorted by urgency, exportable as
   CSV or GeoJSON.
+- **Reads the canopy, not just the fruit** — a second mode scores leaves with
+  published visible-band vegetation indices (NGRDI, VARI, GLI, TGI, ExG), paints
+  a false-colour zone map over the live view, and reports canopy cover,
+  yellowing, necrosis and how far the weak zones sit below the best of the same
+  field. Real NDVI unlocks if you attach an IR-converted camera; a stock phone
+  cannot see near-infrared and the app says so rather than faking it.
+- **Turns a drone photo into a zone map** — the same index over a whole aerial
+  shot, with a numbered hotspot list and a CSV of every zone.
 
 Full write-up, including how the detector works and where it can be wrong:
 [`docs/harvest-eye.md`](docs/harvest-eye.md). Tests: `npm run test:harvest-eye`

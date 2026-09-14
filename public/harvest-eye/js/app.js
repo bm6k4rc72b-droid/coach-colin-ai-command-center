@@ -15,6 +15,9 @@ import { STAGES, learnAnchor, resolveProfiles, stageFor } from './crops.js';
 import { forecastHarvest, formatDays, ripeningVelocity, spoilageRisk } from './forecast.js';
 import { Ledger, toCsv, toGeoJson } from './ledger.js';
 import { RowWalk } from './rowwalk.js';
+import {
+  CAMERA_MODES, analyzeCanopy, availableIndices, indexById, interpretCanopy, paintIndexMap, ramp,
+} from './spectral.js';
 import { ClusterTracker } from './tracker.js';
 import { analyzeFrame, sampleHue, samplePatch } from './vision.js';
 
@@ -53,6 +56,15 @@ const state = {
   measured: null,
   rateCache: { key: null, value: null },
   lastWalkRender: 0,
+  canopy: null,
+  canopyVerdict: null,
+  canopyBaselineKey: null,
+  canopyBaselineValue: null,
+  mapCanvas: null,
+  mapCtx: null,
+  canopyPaint: null,
+  field: null,
+  fieldShowsMap: true,
   settings: {
     plot: 'Block A',
     tempC: 22,
@@ -64,6 +76,9 @@ const state = {
     boxes: true,
     heat: false,
     gains: null,
+    mode: 'fruit',
+    indexId: 'ngrdi',
+    cameraMode: 'rgb',
   },
 };
 
@@ -254,6 +269,7 @@ function loop() {
     state.lastAnalysis = now;
     analyse();
     if (elapsed < 2000) state.fps = state.fps * 0.8 + (1000 / elapsed) * 0.2;
+    $('fpsText').textContent = `${state.fps.toFixed(0)} fps`;
   }
   draw();
   requestAnimationFrame(loop);
@@ -264,6 +280,14 @@ function analyse() {
   const frame = camera.grab(state.settings.resolution);
   if (!frame) return;
   state.frame = frame;
+
+  if (state.settings.mode === 'canopy') {
+    // Canopy and fruit are different questions about the same pixels; running
+    // only the active one keeps the phone at a usable frame rate.
+    analyseCanopy(frame);
+    return;
+  }
+
   const profile = crop();
   const analysis = analyzeFrame(frame, profile, {
     gains: state.gains,
@@ -333,6 +357,190 @@ function invalidateRate() {
   state.rateCache = { key: null, value: null };
 }
 
+/* ---------------------------------------------------------------- canopy */
+
+/** @returns {import('./spectral.js').SpectralIndex} The active index. */
+function activeIndex() {
+  return indexById(state.settings.indexId);
+}
+
+/**
+ * Analyse the frame as canopy rather than fruit, and refresh the readout.
+ *
+ * @param {{data:Uint8ClampedArray,width:number,height:number}} frame Source frame.
+ */
+function analyseCanopy(frame) {
+  const analysis = analyzeCanopy(frame, {
+    index: state.settings.indexId,
+    cameraMode: state.settings.cameraMode,
+    gains: state.gains,
+  });
+  state.canopy = analysis;
+  // Repaint the false-colour map on the analysis cadence, not the draw cadence:
+  // the map only changes when the numbers behind it do.
+  state.canopyPaint = analysis.usable ? paintIndexMap(analysis, { alpha: 165 }) : null;
+
+  const baseline = canopyBaseline(state.settings.plot, state.settings.indexId);
+  const verdict = interpretCanopy(analysis, baseline);
+  state.canopyVerdict = verdict;
+
+  const index = analysis.index;
+  const [lo, hi] = index.range;
+  $('legendBar').style.opacity = analysis.usable ? '1' : '0.35';
+  $('legendLow').textContent = lo.toFixed(2);
+  $('legendHigh').textContent = hi.toFixed(2);
+  $('legendName').textContent = index.short;
+
+  $('canopyLabel').textContent = verdict.headline;
+  $('canopySub').textContent = verdict.detail;
+  $('canopyValue').textContent = Number.isFinite(analysis.stats.mean)
+    ? analysis.stats.mean.toFixed(3)
+    : '—';
+  $('canopyCaption').textContent = index.short;
+  $('canopyValue').style.color = {
+    ok: 'var(--accent)',
+    watch: 'var(--warn)',
+    alert: 'var(--danger)',
+  }[verdict.severity];
+
+  const pct = (value) => (Number.isFinite(value) ? `${Math.round(value * 100)}%` : '—');
+  $('statCover').textContent = pct(analysis.canopyCover);
+  $('statStressed').textContent = analysis.usable ? pct(analysis.stats.relativeStressShare) : '—';
+  $('statChlorosis').textContent = pct(analysis.chlorosisShare);
+  $('statNecrosis').textContent = pct(analysis.necrosisShare);
+  $('statPatch').textContent = analysis.usable ? pct(analysis.stats.zoneDeficit) : '—';
+
+  $('engineText').textContent = state.settings.cameraMode === 'rgb'
+    ? 'visible bands'
+    : 'NIR camera';
+}
+
+/**
+ * The most recent canopy reading for a block and index, for drift detection.
+ *
+ * @param {string} plot Plot name.
+ * @param {string} indexId Index id.
+ * @returns {{mean:number, canopyCover:number}|null} Previous reading, if any.
+ */
+function canopyBaseline(plot, indexId) {
+  const key = `${plot}|${indexId}`;
+  if (state.canopyBaselineKey !== key) {
+    const prior = ledger.scans()
+      .filter((scan) => scan.kind === 'canopy' && scan.plot === plot && scan.indexId === indexId)
+      .sort((a, b) => b.ts - a.ts)[0];
+    state.canopyBaselineKey = key;
+    state.canopyBaselineValue = prior
+      ? { mean: prior.indexMean, canopyCover: prior.canopyCover }
+      : null;
+  }
+  return state.canopyBaselineValue;
+}
+
+/** Swap between fruit detection and canopy analysis. */
+function toggleMode() {
+  const next = state.settings.mode === 'fruit' ? 'canopy' : 'fruit';
+  updateSettings({ mode: next });
+  applyMode();
+  toast(next === 'canopy'
+    ? 'Canopy mode — reading leaf colour across the whole frame'
+    : 'Fruit mode — detecting and tracking individual fruit');
+}
+
+/** Show the readout and overlay that belong to the active mode. */
+function applyMode() {
+  const canopy = state.settings.mode === 'canopy';
+  $('fruitReadout').hidden = canopy;
+  $('canopyReadout').hidden = !canopy;
+  $('modeIcon').textContent = canopy ? '🌿' : '🍅';
+  $('modeName').textContent = canopy ? 'Canopy' : 'Fruit';
+  state.canopy = null;
+  state.canopyPaint = null;
+  state.analysis = null;
+  state.tracks = [];
+  tracker.reset();
+  if (!canopy) $('engineText').textContent = 'on-device';
+}
+
+/** Render the index picker and camera-type list. */
+function renderIndexSheet() {
+  const usable = new Set(availableIndices(state.settings.cameraMode).map((index) => index.id));
+  const list = $('indexList');
+  list.textContent = '';
+  for (const index of [...availableIndices('ir-red')]) {
+    const enabled = usable.has(index.id);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'index-card';
+    button.disabled = !enabled;
+    button.setAttribute('aria-pressed', String(state.settings.indexId === index.id));
+    // Several indices are known only by their acronym, so a "NDVI · NDVI"
+    // heading is avoided rather than dutifully rendered.
+    const title = index.name === index.short ? index.name : `${index.name} · ${index.short}`;
+    button.innerHTML = `<strong>${escapeHtml(title)}</strong>`
+      + `<small>${escapeHtml(index.measures)}${enabled ? '' : ' Needs an IR-converted camera.'}</small>`
+      + `<code>${escapeHtml(index.formula)}</code>`;
+    button.addEventListener('click', () => {
+      updateSettings({ indexId: index.id });
+      state.canopyBaselineKey = null;
+      renderIndexSheet();
+      toast(`${index.name} — ${index.measures}`, 3000);
+    });
+    list.appendChild(button);
+  }
+
+  const cameras = $('cameraList');
+  cameras.textContent = '';
+  for (const mode of CAMERA_MODES) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'index-card';
+    button.setAttribute('aria-pressed', String(state.settings.cameraMode === mode.id));
+    button.innerHTML = `<strong>${escapeHtml(mode.name)}</strong><small>${escapeHtml(mode.note)}</small>`;
+    button.addEventListener('click', () => {
+      updateSettings({ cameraMode: mode.id });
+      // Dropping back to a standard camera has to drop NDVI with it, or the
+      // app would keep mapping an index the hardware cannot produce.
+      if (!availableIndices(mode.id).some((index) => index.id === state.settings.indexId)) {
+        updateSettings({ indexId: 'ngrdi' });
+      }
+      state.canopyBaselineKey = null;
+      renderIndexSheet();
+    });
+    cameras.appendChild(button);
+  }
+}
+
+/** Write the current canopy reading into the ledger. */
+function logCanopyScan() {
+  const analysis = state.canopy;
+  if (!analysis || !analysis.usable) {
+    toast('No canopy in frame to log');
+    return;
+  }
+  ledger.add({
+    kind: 'canopy',
+    cropId: crop().id,
+    plot: state.settings.plot,
+    lat: state.position?.lat ?? null,
+    lon: state.position?.lon ?? null,
+    accuracy: state.position?.accuracy ?? null,
+    indexId: analysis.index.id,
+    indexMean: analysis.stats.mean,
+    canopyCover: analysis.canopyCover,
+    stressedShare: analysis.stats.relativeStressShare,
+    chlorosisShare: analysis.chlorosisShare,
+    necrosisShare: analysis.necrosisShare,
+    patchiness: analysis.stats.cv,
+    zoneDeficit: analysis.stats.zoneDeficit,
+    cameraMode: state.settings.cameraMode,
+    tempC: state.settings.tempC,
+    note: state.canopyVerdict?.headline ?? '',
+  });
+  state.canopyBaselineKey = null;
+  buzz([18, 40, 18]);
+  toast(`Logged ${analysis.index.short} ${analysis.stats.mean.toFixed(3)} for ${state.settings.plot}`, 3200);
+}
+
 /**
  * Refresh the verdict, maturity bar, stat tiles and stage mix.
  *
@@ -354,7 +562,6 @@ function updateReadout(analysis) {
     ? analysis.clusters.reduce((sum, c) => sum + c.confidence, 0) / analysis.clusters.length
     : 0;
 
-  $('fpsText').textContent = `${state.fps.toFixed(0)} fps`;
   $('engineText').textContent = forecast.basis === 'measured' ? 'measured rate' : 'on-device';
   $('statReady').textContent = detected ? `${Math.round(analysis.readyShare * 100)}%` : '—';
   $('statFruit').textContent = detected ? String(fruit) : '—';
@@ -424,6 +631,73 @@ function updateReadout(analysis) {
 
 /* -------------------------------------------------------------- overlay */
 
+/**
+ * Map analysis-frame geometry onto the displayed preview.
+ *
+ * The preview is `object-fit: cover`, so the frame is scaled by the larger
+ * ratio and centre-cropped. Every overlay and every tap has to repeat that
+ * transform or it lands somewhere the operator is not looking.
+ *
+ * @param {number} aw Analysis frame width.
+ * @param {number} ah Analysis frame height.
+ * @param {number} width Displayed width in CSS pixels.
+ * @param {number} height Displayed height in CSS pixels.
+ * @returns {{scale:number, offsetX:number, offsetY:number}} The transform.
+ */
+function coverTransform(aw, ah, width, height) {
+  const scale = Math.max(width / aw, height / ah);
+  return {
+    scale,
+    offsetX: (width - aw * scale) / 2,
+    offsetY: (height - ah * scale) / 2,
+  };
+}
+
+/**
+ * Paint the false-colour index map over the canopy.
+ *
+ * @param {CanvasRenderingContext2D} ctx Overlay context.
+ * @param {number} width Displayed width.
+ * @param {number} height Displayed height.
+ */
+function drawCanopyMap(ctx, width, height) {
+  const paint = state.canopyPaint;
+  if (!paint) return;
+  if (!state.mapCanvas || state.mapCanvas.width !== paint.width
+    || state.mapCanvas.height !== paint.height) {
+    state.mapCanvas = document.createElement('canvas');
+    state.mapCanvas.width = paint.width;
+    state.mapCanvas.height = paint.height;
+    state.mapCtx = state.mapCanvas.getContext('2d');
+  }
+  state.mapCtx.putImageData(paint, 0, 0);
+
+  const { scale, offsetX, offsetY } = coverTransform(paint.width, paint.height, width, height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(state.mapCanvas, offsetX, offsetY, paint.width * scale, paint.height * scale);
+
+  // Hotspots get a box each: the map shows the gradient, the boxes say where to
+  // actually walk.
+  const analysis = state.canopy;
+  if (!analysis || !state.settings.boxes) return;
+  ctx.font = '600 11px ui-monospace, Menlo, monospace';
+  ctx.textBaseline = 'top';
+  for (const tile of analysis.hotspots.slice(0, 2)) {
+    const x = offsetX + tile.x * scale;
+    const y = offsetY + tile.y * scale;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x, y, tile.w * scale, tile.h * scale);
+    ctx.setLineDash([]);
+    const label = `${analysis.index.short} ${tile.mean.toFixed(2)}`;
+    ctx.fillStyle = 'rgba(3, 8, 5, 0.78)';
+    ctx.fillRect(x, y, ctx.measureText(label).width + 10, 16);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, x + 5, y + 2);
+  }
+}
+
 /** Draw tracked clusters over the live preview. */
 function draw() {
   const canvas = $('overlay');
@@ -437,15 +711,15 @@ function draw() {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  if (!state.analysis || !state.settings.boxes) return;
 
-  // The preview is `object-fit: cover`, so the analysis frame is scaled up by
-  // the larger ratio and centre-cropped. Overlay geometry has to do the same or
-  // every box drifts toward the edges.
+  if (state.settings.mode === 'canopy') {
+    drawCanopyMap(ctx, width, height);
+    return;
+  }
+
+  if (!state.analysis || !state.settings.boxes) return;
   const { width: aw, height: ah } = state.analysis;
-  const scale = Math.max(width / aw, height / ah);
-  const offsetX = (width - aw * scale) / 2;
-  const offsetY = (height - ah * scale) / 2;
+  const { scale, offsetX, offsetY } = coverTransform(aw, ah, width, height);
   const profile = crop();
 
   ctx.lineWidth = 2;
@@ -560,6 +834,9 @@ function renderLedger() {
 
   const groups = new Map();
   for (const scan of scans) {
+    // Canopy readings have no maturity, so they are never mixed into the fruit
+    // forecast — they get their own cards further down.
+    if (scan.kind === 'canopy') continue;
     // Plot names contain spaces, so the group key is a JSON tuple rather than
     // a delimiter-joined string that could split back apart wrongly.
     const key = JSON.stringify([scan.plot, scan.cropId]);
@@ -629,6 +906,92 @@ function renderLedger() {
     }
     body.appendChild(el);
   });
+
+  renderCanopyLedger(body, scans);
+}
+
+/**
+ * Render canopy history: one card per block and index, newest trend first.
+ *
+ * A single index reading means little on its own — the value of logging canopy
+ * scans is the direction of travel, so the card leads with the change since the
+ * first reading and shows the run of values behind it.
+ *
+ * @param {HTMLElement} body Ledger container to append to.
+ * @param {Array<object>} scans All stored scans.
+ */
+function renderCanopyLedger(body, scans) {
+  const canopyScans = scans.filter((scan) => scan.kind === 'canopy');
+  if (!canopyScans.length) return;
+
+  const groups = new Map();
+  for (const scan of canopyScans) {
+    const key = JSON.stringify([scan.plot, scan.indexId]);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(scan);
+  }
+
+  const heading = document.createElement('div');
+  heading.className = 'sheet-head';
+  heading.innerHTML = '<h2>Canopy</h2>';
+  body.appendChild(heading);
+
+  for (const [key, rows] of groups) {
+    const [plot, indexId] = JSON.parse(key);
+    const index = indexById(indexId);
+    const history = [...rows].sort((a, b) => a.ts - b.ts);
+    const first = history[0];
+    const latest = history[history.length - 1];
+    const drift = latest.indexMean - first.indexMean;
+    const spanDays = (latest.ts - first.ts) / 86_400_000;
+
+    const el = document.createElement('article');
+    el.className = 'plot-block';
+    const trend = history.length > 1 && spanDays > 0.2
+      ? `${drift >= 0 ? '+' : ''}${drift.toFixed(3)} over ${spanDays < 1 ? 'today' : `${Math.round(spanDays)} d`}`
+      : 'first reading';
+    const head = document.createElement('header');
+    head.innerHTML = `<h3>🌿 ${escapeHtml(plot)} · ${escapeHtml(index.short)}</h3>`
+      + `<span class="verdict-line">${escapeHtml(trend)}</span>`;
+    el.appendChild(head);
+
+    const basis = document.createElement('p');
+    basis.className = 'basis';
+    basis.textContent = `${history.length} reading${history.length === 1 ? '' : 's'}`
+      + ` · ${index.name}`
+      + (latest.cameraMode && latest.cameraMode !== 'rgb' ? ' · NIR camera' : '');
+    el.appendChild(basis);
+
+    // The sparkline is scaled to the index's own display range so bars from
+    // different indices are never silently compared on different axes.
+    const [lo, hi] = index.range;
+    const spark = document.createElement('div');
+    spark.className = 'spark';
+    for (const scan of history.slice(-24)) {
+      const bar = document.createElement('i');
+      const t = Math.min(1, Math.max(0, (scan.indexMean - lo) / (hi - lo || 1)));
+      const [r, g, b] = ramp(t);
+      bar.style.height = `${Math.max(4, t * 100)}%`;
+      bar.style.background = `rgb(${r}, ${g}, ${b})`;
+      bar.title = `${new Date(scan.ts).toLocaleDateString()} — ${index.short} ${scan.indexMean.toFixed(3)}`;
+      spark.appendChild(bar);
+    }
+    el.appendChild(spark);
+
+    for (const scan of [...history].reverse().slice(0, 5)) {
+      const row = document.createElement('div');
+      row.className = 'scan-row';
+      const when = new Date(scan.ts).toLocaleString([], {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+      const where = Number.isFinite(scan.lat) ? ' ⌖' : '';
+      row.innerHTML = `<span>${when}${where}</span>`
+        + `<span>${index.short} ${scan.indexMean.toFixed(3)} · ${Math.round(scan.canopyCover * 100)}% cover`
+        + ` · ${Math.round(scan.chlorosisShare * 100)}% yellow</span>`;
+      el.appendChild(row);
+    }
+    body.appendChild(el);
+  }
 }
 
 /**
@@ -669,6 +1032,155 @@ async function exportFile(filename, mime, text) {
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast(`${filename} saved`);
+}
+
+/* ------------------------------------------------------------- field map */
+
+/**
+ * Run the active index over a still photo and render a zone map.
+ *
+ * This is the drone-map workflow without the drone: any photo taken from
+ * height — a mast, a ladder, an actual UAV — becomes a canopy map with zonal
+ * statistics and a hotspot list. The analysis is the same code the live view
+ * uses, at higher resolution and on a denser tile grid, because a still frame
+ * has no frame rate to protect.
+ *
+ * @param {File} file Image chosen by the operator.
+ * @returns {Promise<void>} Resolves once the map is on screen.
+ */
+async function analyseFieldPhoto(file) {
+  toast('Reading photo…');
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) {
+    toast('That file could not be decoded as an image');
+    return;
+  }
+
+  const targetWidth = Math.min(720, bitmap.width);
+  const width = targetWidth;
+  const height = Math.max(1, Math.round((bitmap.height / bitmap.width) * targetWidth));
+  const source = document.createElement('canvas');
+  source.width = width;
+  source.height = height;
+  const sourceCtx = source.getContext('2d', { willReadFrequently: true });
+  sourceCtx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+
+  const frame = sourceCtx.getImageData(0, 0, width, height);
+  const analysis = analyzeCanopy(frame, {
+    index: state.settings.indexId,
+    cameraMode: state.settings.cameraMode,
+    gains: state.gains,
+    tileCols: 24,
+    tileRows: Math.max(6, Math.round((24 * height) / width)),
+  });
+  state.field = { analysis, source, width, height };
+  state.fieldShowsMap = true;
+  renderFieldMap();
+}
+
+/** Draw the field map and its statistics into the field sheet. */
+function renderFieldMap() {
+  const field = state.field;
+  if (!field) return;
+  const { analysis, source, width, height } = field;
+
+  const canvas = $('fieldCanvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(source, 0, 0);
+
+  if (state.fieldShowsMap && analysis.usable) {
+    const paint = paintIndexMap(analysis, { alpha: 205 });
+    const layer = document.createElement('canvas');
+    layer.width = width;
+    layer.height = height;
+    layer.getContext('2d').putImageData(paint, 0, 0);
+    ctx.drawImage(layer, 0, 0);
+
+    ctx.font = '600 12px ui-monospace, Menlo, monospace';
+    ctx.textBaseline = 'top';
+    for (const [rank, tile] of analysis.hotspots.entries()) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tile.x, tile.y, tile.w, tile.h);
+      const label = `${rank + 1}`;
+      ctx.fillStyle = 'rgba(3, 8, 5, 0.8)';
+      ctx.fillRect(tile.x, tile.y, 18, 16);
+      ctx.fillStyle = '#fff';
+      ctx.fillText(label, tile.x + 6, tile.y + 2);
+    }
+  }
+
+  const index = analysis.index;
+  const [lo, hi] = index.range;
+  $('fieldLegendLow').textContent = lo.toFixed(2);
+  $('fieldLegendHigh').textContent = hi.toFixed(2);
+  $('fieldLegendName').textContent = index.short;
+  $('fieldMean').textContent = Number.isFinite(analysis.stats.mean)
+    ? analysis.stats.mean.toFixed(3)
+    : '—';
+  $('fieldCover').textContent = `${Math.round(analysis.canopyCover * 100)}%`;
+  $('fieldStressed').textContent = analysis.usable
+    ? `${Math.round(analysis.stats.relativeStressShare * 100)}%`
+    : '—';
+  $('fieldPatch').textContent = analysis.usable
+    ? `${Math.round(analysis.stats.zoneDeficit * 100)}%`
+    : '—';
+  $('fieldToggleBtn').textContent = state.fieldShowsMap ? 'Show photo' : 'Show map';
+  $('fieldResult').hidden = false;
+
+  const hotspots = $('fieldHotspots');
+  hotspots.textContent = '';
+  if (!analysis.usable) {
+    const note = document.createElement('p');
+    note.className = 'sheet-note';
+    note.textContent = 'No canopy found in that photo — the index is measured on plant pixels only.';
+    hotspots.appendChild(note);
+    return;
+  }
+  for (const [rank, tile] of analysis.hotspots.entries()) {
+    const row = document.createElement('div');
+    row.className = 'hotspot';
+    const col = Math.round(((tile.x + tile.w / 2) / analysis.width) * 100);
+    const line = Math.round(((tile.y + tile.h / 2) / analysis.height) * 100);
+    row.innerHTML = `<span>${rank + 1} · ${col}% across, ${line}% down</span>`
+      + `<span>${index.short} ${tile.mean.toFixed(3)}</span>`;
+    hotspots.appendChild(row);
+  }
+}
+
+/**
+ * Export the field map's tile grid.
+ *
+ * A zone table is what actually reaches a spreader or an irrigation plan, so
+ * the export is the grid, not the picture.
+ *
+ * @returns {Promise<void>} Resolves once the file is handed over.
+ */
+function exportFieldZones() {
+  const field = state.field;
+  if (!field || !field.analysis.usable) return toast('Analyse a photo first');
+  const { analysis } = field;
+  const rows = [['zone_col', 'zone_row', 'x_pct', 'y_pct', 'index', 'value', 'canopy_cover']];
+  for (const tile of analysis.tiles) {
+    if (!Number.isFinite(tile.mean)) continue;
+    rows.push([
+      tile.col,
+      tile.row,
+      (((tile.x + tile.w / 2) / analysis.width) * 100).toFixed(1),
+      (((tile.y + tile.h / 2) / analysis.height) * 100).toFixed(1),
+      analysis.index.id,
+      tile.mean.toFixed(4),
+      tile.cover.toFixed(3),
+    ]);
+  }
+  return exportFile(
+    `harvesteye-zones-${Date.now()}.csv`,
+    'text/csv',
+    `${rows.map((row) => row.join(',')).join('\n')}\n`,
+  );
 }
 
 /* -------------------------------------------------------------- row walk */
@@ -875,6 +1387,28 @@ function wire() {
     renderLedger();
     openSheet('ledgerSheet');
   });
+  $('modeChip').addEventListener('click', toggleMode);
+  $('canopySaveBtn').addEventListener('click', logCanopyScan);
+  $('canopyCalibrateBtn').addEventListener('click', calibrate);
+  $('indexBtn').addEventListener('click', () => {
+    renderIndexSheet();
+    openSheet('indexSheet');
+  });
+  $('fieldBtn').addEventListener('click', () => {
+    if (state.field) renderFieldMap();
+    openSheet('fieldSheet');
+  });
+  $('fieldInput').addEventListener('change', (event) => {
+    const [file] = event.target.files || [];
+    // Clear the input so choosing the same photo twice still fires a change.
+    event.target.value = '';
+    if (file) analyseFieldPhoto(file);
+  });
+  $('fieldExportBtn').addEventListener('click', exportFieldZones);
+  $('fieldToggleBtn').addEventListener('click', () => {
+    state.fieldShowsMap = !state.fieldShowsMap;
+    renderFieldMap();
+  });
   $('walkToggleBtn').addEventListener('click', toggleWalk);
   $('walkSaveBtn').addEventListener('click', logWalk);
   $('walkResetBtn').addEventListener('click', () => {
@@ -930,6 +1464,7 @@ function wire() {
     event.target.value = value;
     updateSettings({ plot: value });
     invalidateRate();
+    state.canopyBaselineKey = null;
     tracker.reset();
   });
   $('tempInput').addEventListener('input', (e) => updateSettings({ tempC: Number(e.target.value) }));
@@ -984,6 +1519,8 @@ function init() {
   $('cropName').textContent = profile.name;
   renderCrops();
   renderTeachStages();
+  renderIndexSheet();
+  applyMode();
   wire();
   registerServiceWorker();
   if (!CameraFeed.supported()) {
