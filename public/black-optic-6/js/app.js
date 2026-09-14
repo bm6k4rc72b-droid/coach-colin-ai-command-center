@@ -23,6 +23,15 @@ import { Vault } from './vault.js';
 import { areaHectares, crossing, fenceState } from './perimeter.js';
 import { LAYERS, TASKING_LADDER, latestDate, mosaic, resolutionNote, upcomingLooks } from './satellite.js';
 import * as hud from './hud.js';
+import { listCameras, openCamera, ROUTES, streamSettings } from './devices.js';
+import { capability as bioCapability, HeartLink } from './biolink.js';
+import {
+  availableIndices, indexColour, indexMap, interpret, TIERS, worstZones,
+} from './spectral.js';
+import {
+  capacity, coverage, createGrid, deadReckon, integrateScan, matchScan, occupancy,
+} from './sonar.js';
+import { aimError, chooseSubject, PanTilt } from './track.js';
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
 import { pose } from '../../sentry/js/ground.js';
 import { capability as rfCapability, RfLink } from '../../sentry/js/rf.js';
@@ -57,6 +66,19 @@ const state = {
   ledgerFilter: 'all',
   blackout: false,
   siren: null,
+  cameras: [],
+  cameraId: null,
+  lastFrame: null,
+  spectral: null,
+  panTilt: new PanTilt(),
+  tracking: false,
+  trackSubject: null,
+  trackedAtMs: 0,
+  heart: null,
+  grid: null,
+  rovPose: { x: 0, y: 0, headingDeg: 0, elapsedSec: 0, driftM: 0 },
+  soundings: [],
+  match: null,
 };
 
 /* ------------------------------------------------------------------ shell */
@@ -69,6 +91,9 @@ const DECKS = [
   ['perimeter', 'Fence', 'M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z M12 6v6'],
   ['satellite', 'Orbital', 'M12 3a9 9 0 100 18 9 9 0 000-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18'],
   ['vault', 'Vault', 'M4 5h16v14H4z M9 12a3 3 0 106 0 3 3 0 00-6 0z M12 9V5'],
+  ['spectral', 'Spectral', 'M4 20L12 4l8 16z M7 15h10'],
+  ['subsurface', 'Sonar', 'M3 14c3 0 3-3 6-3s3 3 6 3 3-3 6-3 M3 19c3 0 3-3 6-3s3 3 6 3 3-3 6-3 M12 4v5'],
+  ['bio', 'Bio', 'M3 12h4l2-5 3 10 2-5h7'],
   ['links', 'Links', 'M9 15l6-6 M8 8a4 4 0 015.6 0l1 1 M16 16a4 4 0 01-5.6 0l-1-1'],
   ['ledger', 'Ledger', 'M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'],
 ];
@@ -196,10 +221,7 @@ const workCtx = work.getContext('2d', { willReadFrequently: true });
 /** @returns {Promise<void>} Open the device camera and start the loop. */
 async function startOptics() {
   try {
-    state.stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: state.facing, width: { ideal: 1280 } },
-      audio: false,
-    });
+    state.stream = await openCamera(state.cameraId, { facing: state.facing });
   } catch (error) {
     $('viewport-empty').innerHTML = `<p class="note bad">Camera refused: ${error.message}. Everything else on this console works without it.</p>`;
     return;
@@ -213,6 +235,9 @@ async function startOptics() {
   setArmed('armed');
   state.vault.start(state.stream);
   $('vault-keep').disabled = false;
+  // Labels only exist after permission has been granted once, so the picker is
+  // worth rebuilding here rather than on load.
+  await refreshCameras();
   logEvent('Optics online', 'Device camera opened. Frames are measured on this device and discarded.', 'confirm');
   requestAnimationFrame(loop);
 }
@@ -233,6 +258,8 @@ function loop() {
 
   const result = state.watch.push(frame, performance.now());
   state.contacts = result.contacts;
+  state.lastFrame = frame;
+  stepTracking(frame);
 
   if (result.energy) {
     if (!state.trail || state.trail.length !== result.energy.length) {
@@ -874,6 +901,520 @@ function blackout() {
   logEvent('Blackout', 'All console emissions stopped. Sensors still recording.', 'muted');
 }
 
+/* --------------------------------------------------------------- cameras */
+
+/** @returns {Promise<void>} Rebuild the camera picker from the device list. */
+async function refreshCameras() {
+  state.cameras = await listCameras();
+  const picker = $('camera-pick');
+  picker.replaceChildren(...state.cameras.map((camera) => {
+    const option = document.createElement('option');
+    option.value = camera.deviceId;
+    option.textContent = camera.family ? `${camera.label} · ${camera.family.name}` : camera.label;
+    option.selected = camera.deviceId === state.cameraId;
+    return option;
+  }));
+  setBadge('picker-prov', state.cameras.length ? 'LIVE' : 'BLOCKED',
+    state.cameras.length ? `${state.cameras.length} found` : 'None');
+
+  const picked = state.cameras.find((camera) => camera.deviceId === picker.value);
+  $('camera-note').className = 'note';
+  $('camera-note').textContent = picked?.family
+    ? `${picked.family.route} — ${picked.family.note}`
+    : 'Grant camera access once and the browser will reveal the device names.';
+
+  const settings = streamSettings(state.stream);
+  $('camera-readouts').replaceChildren(
+    readout('Delivering', settings ? `${settings.width}×${settings.height}` : '—', {
+      tone: settings ? 'confirm' : 'muted',
+      note: 'What the camera actually handed over, which may not be what was asked for.',
+    }),
+    readout('Frame rate', settings?.frameRate ? `${settings.frameRate} fps` : '—'),
+    readout('Processing at', `${WORK_WIDTH} px wide`, { note: 'The detection chain runs on a reduced frame so a phone can sustain it.' }),
+  );
+}
+
+/** @returns {void} List the routes that are not a plugged-in device. */
+function renderRoutes() {
+  $('routes').replaceChildren(...ROUTES.map((route) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = route.state === 'BLOCKED' ? 'alert' : 'primary';
+    const head = document.createElement('div');
+    head.className = 'row-head';
+    const name = document.createElement('b');
+    name.textContent = route.name;
+    head.append(name, badge(route.state));
+    const body = document.createElement('p');
+    body.textContent = `${route.route} — ${route.note}`;
+    li.append(head, body);
+    return li;
+  }));
+}
+
+/* --------------------------------------------------------------- tracking */
+
+/**
+ * One step of the pan-tilt loop.
+ *
+ * @param {ImageData} frame The current frame, for its dimensions.
+ * @returns {void}
+ */
+function stepTracking(frame) {
+  if (!state.tracking) return;
+  const now = performance.now();
+  const dtSec = state.trackedAtMs ? (now - state.trackedAtMs) / 1000 : 0;
+  state.trackedAtMs = now;
+
+  const subject = chooseSubject(state.contacts, state.trackSubject);
+  state.trackSubject = subject ? subject.id : null;
+  const error = subject ? aimError(subject.box, { width: frame.width, height: frame.height }) : null;
+  const command = state.panTilt.step(error, dtSec);
+
+  // A head on the sensor bridge is driven by the same rates shown on screen.
+  if (state.link && state.linkState === 'live') {
+    state.link.socket?.send?.(JSON.stringify({ kind: 'pan-tilt', pan: command.pan, tilt: command.tilt }));
+  }
+  renderTracking(command, subject);
+}
+
+/**
+ * Draw the tracking readouts.
+ *
+ * @param {object} command The latest command.
+ * @param {object|null} subject The contact being followed.
+ * @returns {void}
+ */
+function renderTracking(command, subject) {
+  setBadge('track-prov', state.tracking ? (command.moving ? 'LIVE' : 'MODEL') : 'BLOCKED',
+    state.tracking ? (command.moving ? 'Slewing' : 'Holding') : 'Idle');
+  $('track-readouts').replaceChildren(
+    readout('Subject', subject ? `${String(subject.classification?.value ?? 'contact').toUpperCase()} ${String(subject.id).padStart(2, '0')}` : 'none', {
+      tone: subject ? 'confirm' : 'muted',
+    }),
+    readout('Pan', `${command.pan.toFixed(1)}°/s`, { tone: Math.abs(command.pan) > 1 ? 'caution' : 'muted' }),
+    readout('Tilt', `${command.tilt.toFixed(1)}°/s`, { tone: Math.abs(command.tilt) > 1 ? 'caution' : 'muted' }),
+    readout('Loop', command.moving ? 'correcting' : 'settled', { note: command.reason }),
+  );
+}
+
+/* --------------------------------------------------------------- spectral */
+
+/** @returns {void} Populate the spectral deck's fixed content. */
+function buildSpectral() {
+  $('spectral-truth').textContent =
+    'An ordinary camera gives three bands, so it supports the visible indices — enough to find where '
+    + 'a block differs from itself. Near-infrared unlocks NDVI, red edge unlocks NDRE, and neither '
+    + 'lives in a phone. No camera at any price measures a nutrient: it measures reflected light, and '
+    + 'turning that into a deficiency needs tissue tests from the vines the map sent you to.';
+
+  const table = $('spectral-tiers');
+  table.innerHTML = '<tr><th>Instrument</th><th>Bands</th><th>Cost</th></tr>';
+  for (const tier of TIERS) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td></td><td></td><td></td>';
+    row.children[0].textContent = tier.tier;
+    row.children[1].textContent = tier.bands.join(', ');
+    row.children[2].textContent = tier.cost;
+    row.title = tier.note;
+    table.append(row);
+  }
+  refreshIndexOptions(['red', 'green', 'blue']);
+}
+
+/**
+ * Offer only the indices the available bands can support.
+ *
+ * @param {string[]} bands Band names available.
+ * @returns {void}
+ */
+function refreshIndexOptions(bands) {
+  const usable = availableIndices(bands);
+  $('spectral-index').replaceChildren(...usable.map((index) => {
+    const option = document.createElement('option');
+    option.value = index.id;
+    option.textContent = `${index.id.toUpperCase()} — ${index.name}`;
+    return option;
+  }));
+  setBadge('spectral-prov', 'LIVE', `${bands.length} bands`);
+}
+
+/**
+ * Compute an index over an RGBA image and render the result.
+ *
+ * @param {ImageData} image The source pixels.
+ * @returns {void}
+ */
+function runSpectral(image) {
+  const count = image.width * image.height;
+  const red = new Uint8ClampedArray(count);
+  const green = new Uint8ClampedArray(count);
+  const blue = new Uint8ClampedArray(count);
+  for (let i = 0; i < count; i += 1) {
+    red[i] = image.data[i * 4];
+    green[i] = image.data[i * 4 + 1];
+    blue[i] = image.data[i * 4 + 2];
+  }
+
+  const map = indexMap(
+    { bands: { red, green, blue }, width: image.width, height: image.height },
+    $('spectral-index').value,
+    { canopyThreshold: Number($('spectral-mask').value) },
+  );
+
+  state.spectral = { map, width: image.width, height: image.height };
+
+  const canvas = $('spectral-map');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  const out = ctx.createImageData(image.width, image.height);
+  // Stretch to the frame's own 10th–90th percentile, which is what makes a real
+  // block's variation visible. A frame with no spread at all would collapse to a
+  // single colour, so that case falls back to the index's full range.
+  const flat = Number.isNaN(map.stats.p10) || map.stats.p90 - map.stats.p10 < 1e-6;
+  const bounds = flat ? map.index.range : [map.stats.p10, map.stats.p90];
+  for (let i = 0; i < count; i += 1) {
+    const [r, g, b] = indexColour(map.values[i], bounds);
+    out.data[i * 4] = r;
+    out.data[i * 4 + 1] = g;
+    out.data[i * 4 + 2] = b;
+    out.data[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(out, 0, 0);
+  drawIndexScale(ctx, canvas, bounds, map.index, flat);
+
+  const covered = map.stats.count / count;
+  $('spectral-readouts').replaceChildren(
+    readout('Canopy pixels', `${(covered * 100).toFixed(0)}%`, {
+      tone: covered > 0.15 ? 'confirm' : 'caution',
+      note: covered > 0.15 ? 'Ground masked out before averaging.' : 'Very little canopy found — check the mask threshold.',
+    }),
+    readout('Median', Number.isNaN(map.stats.median) ? '—' : map.stats.median.toFixed(3)),
+    readout('10th–90th', Number.isNaN(map.stats.p10) ? '—' : `${map.stats.p10.toFixed(3)} – ${map.stats.p90.toFixed(3)}`, {
+      note: 'The spread is the signal. A uniform block is the variety; a spread with a low cluster is a thing on the ground.',
+    }),
+    readout('Spread', Number.isNaN(map.stats.sd) ? '—' : map.stats.sd.toFixed(3), { note: 'Standard deviation across canopy pixels.' }),
+  );
+
+  const reading = interpret(map.index, map.stats, false);
+  setBadge('spectral-read-prov', 'MODEL', 'Uncalibrated');
+  $('spectral-headline').className = 'note';
+  $('spectral-headline').textContent = reading.headline;
+  const asList = (host, items, tone) => {
+    $(host).replaceChildren(...items.map((text) => {
+      const li = document.createElement('li');
+      li.className = 'row';
+      li.dataset.tone = tone;
+      const body = document.createElement('p');
+      body.textContent = text;
+      li.append(body);
+      return li;
+    }));
+  };
+  asList('spectral-supports', reading.supports, 'confirm');
+  asList('spectral-denies', reading.doesNotSupport, 'alert');
+  $('spectral-next').textContent = reading.next;
+
+  const zones = worstZones(map, image.width, image.height, 6).slice(0, 5);
+  $('spectral-zones').replaceChildren(...(zones.length ? zones : []).map((zone) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = zone.rank <= 2 ? 'alert' : 'caution';
+    li.innerHTML = '<div class="row-head"><b></b><time></time></div><p></p>';
+    li.querySelector('b').textContent = `Cell ${zone.col + 1}/${zone.row + 1}`;
+    li.querySelector('time').textContent = `rank ${zone.rank}`;
+    li.querySelector('p').textContent = `Mean ${zone.mean.toFixed(3)} over ${zone.count} canopy pixels. Walk here and sample.`;
+    return li;
+  }));
+  if (!zones.length) {
+    $('spectral-zones').innerHTML = '<li class="empty">No canopy found to rank.</li>';
+  }
+  logEvent('Index computed', `${map.index.name} over ${map.stats.count} canopy pixels.`, 'primary');
+}
+
+/**
+ * The colour scale under an index map.
+ *
+ * Without it a false-colour image is decoration: the reader cannot tell whether
+ * red is the low end of a tight spread or a genuinely bad block.
+ *
+ * @param {CanvasRenderingContext2D} ctx The map's context.
+ * @param {HTMLCanvasElement} canvas The map canvas.
+ * @param {[number, number]} bounds Low and high ends of the colour ramp.
+ * @param {object} index The index drawn.
+ * @param {boolean} flat Whether the frame had no spread to stretch to.
+ * @returns {void}
+ */
+function drawIndexScale(ctx, canvas, bounds, index, flat) {
+  const height = Math.max(14, Math.round(canvas.height * 0.05));
+  const y = canvas.height - height;
+  for (let x = 0; x < canvas.width; x += 1) {
+    const value = bounds[0] + ((bounds[1] - bounds[0]) * x) / canvas.width;
+    const [r, g, b] = indexColour(value, bounds);
+    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+    ctx.fillRect(x, y, 1, height);
+  }
+  ctx.fillStyle = 'rgba(4, 6, 10, 0.72)';
+  ctx.fillRect(0, y - 15, canvas.width, 15);
+  ctx.font = `11px ${hud.HUD.mono}`;
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#dff0f8';
+  ctx.fillText(`${index.id.toUpperCase()}  ${bounds[0].toFixed(2)}`, 5, y - 13);
+  const right = flat ? 'no spread — full index range' : 'stretched to this frame';
+  ctx.fillText(right, canvas.width / 2 - 60, y - 13);
+  const high = bounds[1].toFixed(2);
+  ctx.fillText(high, canvas.width - ctx.measureText(high).width - 5, y - 13);
+}
+
+/* ------------------------------------------------------------- subsurface */
+
+/** The made-up dam a rehearsal sweep maps, in metres. */
+const REHEARSAL_DAM = [
+  { x: -17, y: -12 }, { x: -6, y: -18 }, { x: 8, y: -16 }, { x: 17, y: -5 },
+  { x: 15, y: 9 }, { x: 4, y: 17 }, { x: -9, y: 15 }, { x: -18, y: 3 },
+];
+
+/**
+ * Whether a point is inside the rehearsal dam.
+ *
+ * @param {{x: number, y: number}} point The point.
+ * @param {Array<{x: number, y: number}>} polygon The shape.
+ * @returns {boolean} True if inside.
+ */
+function inShape(point, polygon) {
+  let hit = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i, i += 1) {
+    const straddles = (polygon[i].y > point.y) !== (polygon[j].y > point.y);
+    const crossing = ((polygon[j].x - polygon[i].x) * (point.y - polygon[i].y))
+      / (polygon[j].y - polygon[i].y) + polygon[i].x;
+    if (straddles && point.x < crossing) hit = !hit;
+  }
+  return hit;
+}
+
+/**
+ * Synthetic beam returns from a position inside the rehearsal dam.
+ *
+ * @param {{x: number, y: number, headingDeg: number}} pose Where the vehicle is.
+ * @param {number} beams How many beams in the scan.
+ * @returns {Array<{bearingDeg: number, rangeM: number}>} Returns.
+ */
+function rehearsalScan(pose, beams = 24) {
+  const out = [];
+  for (let i = 0; i < beams; i += 1) {
+    const bearingDeg = (360 / beams) * i;
+    const angle = ((pose.headingDeg + bearingDeg) * Math.PI) / 180;
+    let range = 0;
+    while (range < 40) {
+      range += 0.25;
+      const probe = {
+        x: pose.x + Math.sin(angle) * range,
+        y: pose.y + Math.cos(angle) * range,
+      };
+      if (!inShape(probe, REHEARSAL_DAM)) break;
+    }
+    // Sonar ranges are noisy; a map built from perfect returns flatters itself.
+    out.push({ bearingDeg, rangeM: Math.max(0.5, range + (Math.random() - 0.5) * 0.3) });
+  }
+  return out;
+}
+
+/** @returns {void} Run a synthetic survey across the rehearsal dam. */
+function rehearseSweep() {
+  state.grid = createGrid({ widthM: 44, heightM: 44, cellM: 0.4 });
+  state.grid.origin = { x: -22, y: -22 };
+  state.soundings = [];
+  let pose = { x: -12, y: -8, headingDeg: 0, elapsedSec: 0, driftM: 0 };
+  let confident = 0;
+  let attempts = 0;
+
+  // Four track lines, the way a survey is actually run.
+  for (let line = 0; line < 4; line += 1) {
+    const y = -9 + line * 6;
+    for (let x = -12; x <= 12; x += 1.5) {
+      const truth = { x, y, headingDeg: 90 };
+      if (!inShape(truth, REHEARSAL_DAM)) continue;
+      const returns = rehearsalScan(truth);
+
+      // Dead reckoning walks off; scan matching pulls it back.
+      pose = deadReckon({ ...pose, x: truth.x + pose.driftM * 0.25, y: truth.y }, {
+        speedMps: 0.5, headingDeg: 90, dtSec: 3,
+      });
+      const matched = matchScan(state.grid, { ...pose, headingDeg: 90 }, returns, { radiusM: 1.6 });
+      attempts += 1;
+      if (matched.confident) confident += 1;
+      pose = { ...matched.pose, elapsedSec: matched.confident ? 0 : pose.elapsedSec };
+
+      integrateScan(state.grid, { ...pose, headingDeg: 90 }, returns, { beamDeg: 20 });
+      state.soundings.push({ depthM: 2.4 + Math.abs(Math.sin(x / 5)) * 2.6 });
+    }
+  }
+
+  state.rovPose = pose;
+  // Judged on the run as a whole, and reported as the raw count: the first scans
+  // of any survey cannot match, because there is no map yet to match against.
+  state.match = { confident, attempts };
+  logEvent('Rehearsal sweep', `Synthetic survey: ${state.soundings.length} soundings, ${confident} of ${attempts} scans matched.`, 'caution');
+  renderSonar();
+}
+
+/**
+ * How much to trust a run of scan matches.
+ *
+ * @param {{confident: number, attempts: number}|null} match The run's tally.
+ * @returns {string} A palette tone.
+ */
+function matchTone(match) {
+  if (!match || !match.attempts) return 'muted';
+  const ratio = match.confident / match.attempts;
+  if (ratio > 0.6) return 'confirm';
+  if (ratio > 0.4) return 'caution';
+  return 'alert';
+}
+
+/** @returns {void} Draw the occupancy map and the survey readouts. */
+function renderSonar() {
+  const canvas = $('sonar-map');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#04060a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (!state.grid) {
+    ctx.fillStyle = '#566b7e';
+    ctx.font = `12px ${hud.HUD.mono}`;
+    ctx.fillText('No sonar attached and no rehearsal run.', 18, 28);
+    setBadge('sonar-prov', 'BLOCKED', 'No sonar');
+    $('sonar-readouts').replaceChildren(
+      readout('Coverage', '—', { note: 'Attach a sonar bridge, or run a rehearsal to see the mapping work.' }),
+    );
+    $('sonar-capacity').replaceChildren();
+    return;
+  }
+
+  const grid = state.grid;
+  const scale = Math.min(canvas.width / grid.cols, canvas.height / grid.rows);
+  for (let row = 0; row < grid.rows; row += 1) {
+    for (let col = 0; col < grid.cols; col += 1) {
+      const p = occupancy(grid, col, row);
+      if (p === 0.5) continue;
+      // Water reads cool and dark; returns read bright. Unknown stays ground.
+      const value = Math.round(Math.abs(p - 0.5) * 2 * 255);
+      ctx.fillStyle = p > 0.5
+        ? `rgb(${Math.round(80 + value * 0.68)}, ${Math.round(60 + value * 0.3)}, 60)`
+        : `rgb(10, ${Math.round(28 + value * 0.28)}, ${Math.round(48 + value * 0.5)})`;
+      ctx.fillRect(col * scale, (grid.rows - row - 1) * scale, Math.ceil(scale), Math.ceil(scale));
+    }
+  }
+
+  const toCanvas = (point) => ({
+    x: ((point.x - grid.origin.x) / grid.cellM) * scale,
+    y: canvas.height - ((point.y - grid.origin.y) / grid.cellM) * scale,
+  });
+  const vehicle = toCanvas(state.rovPose);
+  ctx.strokeStyle = 'rgba(255, 178, 61, 0.85)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(vehicle.x, vehicle.y, Math.max(4, (state.rovPose.driftM / grid.cellM) * scale), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#ffb23d';
+  ctx.beginPath();
+  ctx.arc(vehicle.x, vehicle.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  const cover = coverage(grid);
+  setBadge('sonar-prov', 'MODEL', 'Rehearsal');
+  setBadge('sonar-survey-prov', 'MODEL', 'Synthetic');
+  $('sonar-readouts').replaceChildren(
+    readout('Mapped', `${(cover.fraction * 100).toFixed(0)}%`, { tone: 'caution', note: 'Cells with any evidence in them.' }),
+    readout('Returns', String(cover.occupied), { note: 'Cells the sonar believes are bottom or obstacle.' }),
+    readout('Drift', `${state.rovPose.driftM.toFixed(1)} m`, {
+      tone: state.rovPose.driftM > 3 ? 'alert' : 'confirm',
+      note: 'Position error since the last confident scan match.',
+    }),
+    readout('Scan match', state.match ? `${state.match.confident}/${state.match.attempts}` : '—', {
+      tone: matchTone(state.match),
+      note: state.match && state.match.confident / Math.max(1, state.match.attempts) > 0.4
+        ? 'Enough structure in the map to pull the position back. The early scans cannot match — there is nothing built yet to match against.'
+        : 'Few scans found enough structure to correct against, so most of this track is dead reckoning and will have wandered.',
+    }),
+  );
+
+  const water = capacity(state.soundings, Number($('sonar-area').value) || 0);
+  $('sonar-capacity').replaceChildren(
+    readout('Soundings', String(water.count)),
+    readout('Mean depth', water.count ? `${water.meanDepthM.toFixed(2)} m` : '—'),
+    readout('Max depth', water.count ? `${water.maxDepthM.toFixed(2)} m` : '—'),
+    readout('Stored', water.count ? `${water.megalitres.toFixed(1)} ML` : '—', {
+      tone: 'caution',
+      note: water.note,
+    }),
+  );
+}
+
+/* -------------------------------------------------------------------- bio */
+
+/** @returns {void} Populate the bio deck. */
+function buildBio() {
+  const capable = bioCapability();
+  $('bio-truth').textContent = `${capable.headline} ${capable.detail}`;
+  setBadge('bio-prov', capable.available ? 'MODEL' : 'BLOCKED', capable.available ? 'Ready' : 'No Bluetooth');
+  $('bio-pair').disabled = !capable.available;
+
+  const fill = (host, items, tone) => {
+    $(host).replaceChildren(...items.map((text) => {
+      const li = document.createElement('li');
+      li.className = 'row';
+      li.dataset.tone = tone;
+      const body = document.createElement('p');
+      body.textContent = text;
+      li.append(body);
+      return li;
+    }));
+  };
+  fill('bio-works', capable.works, 'confirm');
+  fill('bio-blocked', capable.doesNot, 'alert');
+  renderBio(null);
+}
+
+/**
+ * Draw the heart readouts.
+ *
+ * @param {object|null} reading The latest measurement.
+ * @returns {void}
+ */
+function renderBio(reading) {
+  $('bio-readouts').replaceChildren(
+    readout('Heart rate', reading ? `${reading.bpm} bpm` : '—', {
+      tone: reading ? 'confirm' : 'muted',
+      note: reading ? `From ${reading.device}.` : 'Pair a sensor to read a pulse.',
+    }),
+    readout('Variability', reading?.rmssdMs ? `${reading.rmssdMs.toFixed(0)} ms` : '—', {
+      note: 'RMSSD over the last sixty beats. A millisecond figure, not a stress score.',
+    }),
+    readout('Contact', reading?.contact === null || reading?.contact === undefined
+      ? 'not reported'
+      : (reading.contact ? 'good' : 'poor'), {
+      tone: reading?.contact === false ? 'alert' : 'muted',
+      note: 'Whether the sensor believes it is against skin.',
+    }),
+    readout('Beats held', reading ? String(reading.beats ?? 0) : '—'),
+  );
+}
+
+/** @returns {Promise<void>} Pair a Bluetooth heart rate sensor. */
+async function pairHeart() {
+  state.heart = new HeartLink({
+    onReading: (reading) => renderBio(reading),
+    onState: (linkState, detail) => {
+      setBadge('bio-prov', linkState === 'live' ? 'LINK' : 'BLOCKED', linkState);
+      $('bio-drop').disabled = linkState !== 'live';
+      if (linkState === 'live') logEvent('Wearable paired', detail, 'confirm');
+    },
+  });
+  await state.heart.connect();
+}
+
 /* ------------------------------------------------------------ persistence */
 
 /** @returns {void} Save what is worth surviving a reload. */
@@ -997,6 +1538,69 @@ $('deter-light').addEventListener('click', floodLight);
 $('deter-siren').addEventListener('click', siren);
 $('blackout').addEventListener('click', blackout);
 
+$('camera-rescan').addEventListener('click', refreshCameras);
+$('camera-use').addEventListener('click', async () => {
+  state.cameraId = $('camera-pick').value || null;
+  for (const track of state.stream?.getTracks() ?? []) track.stop();
+  state.stream = null;
+  await startOptics();
+});
+$('camera-pick').addEventListener('change', () => refreshCameras());
+
+$('track-toggle').addEventListener('click', () => {
+  state.tracking = !state.tracking;
+  state.panTilt.reset();
+  state.trackedAtMs = 0;
+  $('track-toggle').textContent = state.tracking ? 'Stop tracking' : 'Start tracking';
+  renderTracking({ pan: 0, tilt: 0, moving: false, reason: state.tracking ? 'Waiting for a contact.' : 'Tracking off.' }, null);
+});
+
+$('spectral-run').addEventListener('click', () => {
+  if (!state.lastFrame) {
+    $('spectral-headline').className = 'note bad';
+    $('spectral-headline').textContent = 'No live frame. Open a camera on the optics deck first, or load an image.';
+    return;
+  }
+  runSpectral(state.lastFrame);
+});
+$('spectral-load').addEventListener('click', () => $('spectral-file').click());
+$('spectral-file').addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const image = new Image();
+  image.onload = () => {
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, 640 / image.naturalWidth);
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    runSpectral(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    URL.revokeObjectURL(image.src);
+  };
+  image.src = URL.createObjectURL(file);
+});
+$('spectral-index').addEventListener('change', () => {
+  if (state.lastFrame) runSpectral(state.lastFrame);
+});
+
+$('sonar-rehearse').addEventListener('click', rehearseSweep);
+$('sonar-clear').addEventListener('click', () => {
+  state.grid = null;
+  state.soundings = [];
+  renderSonar();
+});
+$('sonar-area').addEventListener('input', () => {
+  if (state.grid) renderSonar();
+});
+
+$('bio-pair').addEventListener('click', pairHeart);
+$('bio-drop').addEventListener('click', () => {
+  state.heart?.disconnect();
+  state.heart = null;
+  renderBio(null);
+});
+
 setInterval(() => {
   $('clock').textContent = new Date().toLocaleTimeString();
   if (state.deck === 'vault') renderVault();
@@ -1013,6 +1617,12 @@ renderImpulses();
 renderFence();
 renderVault();
 renderContacts({ settled: false, changedFraction: 0 });
+renderRoutes();
+buildSpectral();
+buildBio();
+renderSonar();
+renderTracking({ pan: 0, tilt: 0, moving: false, reason: 'Tracking off.' }, null);
+refreshCameras();
 $('site').textContent = state.boundary.length ? `${state.boundary.length} corners` : 'not set';
 
 if ('serviceWorker' in navigator) {

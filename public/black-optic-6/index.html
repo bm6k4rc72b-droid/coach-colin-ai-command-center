@@ -80,6 +80,29 @@
           </div>
 
           <div class="panel">
+            <div class="panel-head"><h2>Camera picker</h2><span class="spacer"></span><span class="prov" id="picker-prov" data-tone="muted">Scan</span></div>
+            <p class="note">
+              A DJI Pocket or Action in USB webcam mode is a standard UVC device — it turns up here
+              like any other camera and the whole detection chain runs on it, gimbal and all. So does
+              a GoPro in webcam mode, and any HDMI capture card.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 260px"><span>Camera</span><select id="camera-pick"></select></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="camera-use" type="button">Use this camera</button>
+              <button class="ghost" id="camera-rescan" type="button">Rescan</button>
+            </div>
+            <p class="note" id="camera-note" style="margin-top: 10px"></p>
+            <div class="readouts" id="camera-readouts" style="margin-top: 11px"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Other routes in</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+            <ul class="rows" id="routes"></ul>
+          </div>
+
+          <div class="panel">
             <div class="panel-head"><h2>Camera sources</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
             <p class="note">
               Any camera that publishes a stream this browser can open — HLS, WebRTC, or an MJPEG
@@ -110,6 +133,20 @@
               <div class="panel-head"><h2>Event log</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
               <ul class="rows" id="events"></ul>
             </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Head tracking</h2><span class="spacer"></span><span class="prov" id="track-prov" data-tone="muted">Idle</span></div>
+              <p class="note">
+                Keeps the current contact centred in frame by commanding pan and tilt rates from the
+                error visible right now — damped so the picture settles instead of hunting. It points
+                a camera. There is no prediction of where anything is going and no output that could
+                drive anything but a head.
+              </p>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="track-toggle" type="button">Start tracking</button>
+              </div>
+              <div class="readouts" id="track-readouts" style="margin-top: 12px"></div>
+            </div>
+
             <div class="panel">
               <div class="panel-head"><h2>Response</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
               <p class="note">
@@ -229,6 +266,106 @@
             </div>
             <p class="note" id="link-state" style="margin-top: 10px"></p>
             <ul class="rows" id="link-options" style="margin-top: 12px"></ul>
+          </div>
+        </section>
+
+        <!-- ----------------------------------------------------- spectral -->
+        <section class="deck" id="deck-spectral">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Vegetation index</h2><span class="spacer"></span><span class="prov" id="spectral-prov" data-tone="muted">No source</span></div>
+              <p class="note" id="spectral-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 200px"><span>Index</span><select id="spectral-index"></select></label>
+                <label class="field" style="flex:0 1 160px"><span>Canopy mask</span><input id="spectral-mask" type="number" min="-0.5" max="0.6" step="0.02" value="0.04" /></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="spectral-run" type="button">Compute from live frame</button>
+                <button class="ghost" id="spectral-load" type="button">Load an image…</button>
+                <input id="spectral-file" type="file" accept="image/*" hidden />
+              </div>
+              <canvas id="spectral-map" width="480" height="360" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+              <div class="readouts" id="spectral-readouts" style="margin-top: 12px"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Reading</h2><span class="spacer"></span><span class="prov" id="spectral-read-prov" data-tone="muted">Nothing yet</span></div>
+              <p class="note" id="spectral-headline">Compute an index to get a reading.</p>
+              <h3 style="margin-top:14px">This supports</h3>
+              <ul class="rows" id="spectral-supports"></ul>
+              <h3 style="margin-top:14px">This does not support</h3>
+              <ul class="rows" id="spectral-denies"></ul>
+              <p class="note good" id="spectral-next" style="margin-top:12px"></p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Worst cells</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="spectral-zones"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Instrument tiers</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <table class="ladder" id="spectral-tiers"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- --------------------------------------------------- subsurface -->
+        <section class="deck" id="deck-subsurface">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Sonar map</h2><span class="spacer"></span><span class="prov" id="sonar-prov" data-tone="muted">No sonar</span></div>
+              <p class="note">
+                Beam returns build an occupancy map — free water in front of the return, bottom or
+                obstacle at it, the beam drawn as the cone it actually is. Underwater there is no
+                satellite fix, so the position drifts; each scan is matched against the map already
+                built to pull it back, and the drift estimate is shown rather than hidden.
+              </p>
+              <canvas id="sonar-map" width="520" height="520" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="sonar-rehearse" type="button">Run a rehearsal sweep</button>
+                <button class="ghost" id="sonar-clear" type="button">Clear map</button>
+              </div>
+              <p class="note warn" id="sonar-rehearsal-note" style="margin-top:10px">
+                No sonar is attached. A rehearsal generates synthetic returns from a made-up dam so
+                the mapping can be seen working — every number it produces is synthetic and badged as
+                modelled.
+              </p>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Survey</h2><span class="spacer"></span><span class="prov" id="sonar-survey-prov" data-tone="muted">Idle</span></div>
+              <div class="readouts" id="sonar-readouts"></div>
+              <h3 style="margin-top:14px">Stored water</h3>
+              <div class="controls" style="margin-top: 9px">
+                <label class="field" style="flex:1 1 160px"><span>Surface area (m²)</span><input id="sonar-area" type="number" min="0" step="100" value="12000" /></label>
+              </div>
+              <div class="readouts" id="sonar-capacity" style="margin-top: 11px"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------------- bio -->
+        <section class="deck" id="deck-bio">
+          <div class="panel">
+            <div class="panel-head"><h2>Wearable link</h2><span class="spacer"></span><span class="prov" id="bio-prov" data-tone="muted">None</span></div>
+            <p class="note" id="bio-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="bio-pair" type="button">Pair a sensor</button>
+              <button class="ghost" id="bio-drop" type="button" disabled>Disconnect</button>
+            </div>
+            <div class="readouts" id="bio-readouts" style="margin-top: 12px"></div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>What pairs</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+              <ul class="rows" id="bio-works"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>What does not</h2><span class="spacer"></span><span class="prov" data-tone="muted">Blocked</span></div>
+              <ul class="rows" id="bio-blocked"></ul>
+            </div>
           </div>
         </section>
 
