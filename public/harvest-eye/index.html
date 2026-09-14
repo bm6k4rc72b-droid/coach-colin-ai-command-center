@@ -27,6 +27,9 @@
       <span id="cropEmoji">🍅</span><span id="cropName">Tomato</span>
     </button>
     <button class="chip" id="plotChip" type="button">◈ <span id="plotName">Block A</span></button>
+    <button class="chip mode" id="modeChip" type="button" aria-label="Switch between fruit and canopy">
+      <span id="modeIcon">🍅</span><span id="modeName">Fruit</span>
+    </button>
     <div class="spacer"></div>
     <button class="icon" id="torchBtn" type="button" title="Torch" aria-label="Torch">☀</button>
     <button class="icon" id="lensBtn" type="button" title="Switch lens" aria-label="Switch lens">⇄</button>
@@ -36,6 +39,7 @@
   <div id="engineTag"><span id="fpsText">—</span> · <span id="engineText">on-device</span></div>
 
   <section id="readout" aria-live="polite">
+  <div id="fruitReadout">
     <div class="verdict">
       <div class="verdict-main">
         <p id="verdictLabel">Point at the crop</p>
@@ -70,6 +74,44 @@
       <button class="btn" id="calibrateBtn" type="button">Calibrate</button>
       <button class="btn" id="teachBtn" type="button">Teach</button>
     </div>
+  </div>
+
+  <div id="canopyReadout" hidden>
+    <div class="verdict">
+      <div class="verdict-main">
+        <p id="canopyLabel">Point at the canopy</p>
+        <p id="canopySub">Measuring leaf colour, not fruit</p>
+      </div>
+      <div class="verdict-days">
+        <strong id="canopyValue">—</strong>
+        <span id="canopyCaption">index</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-bar" id="legendBar"></div>
+      <div class="legend-axis">
+        <span id="legendLow">—</span>
+        <span id="legendName">ExG</span>
+        <span id="legendHigh">—</span>
+      </div>
+    </div>
+
+    <dl class="stats">
+      <div><dt>Canopy</dt><dd id="statCover">—</dd></div>
+      <div><dt>Weak</dt><dd id="statStressed">—</dd></div>
+      <div><dt>Yellowing</dt><dd id="statChlorosis">—</dd></div>
+      <div><dt>Necrotic</dt><dd id="statNecrosis">—</dd></div>
+      <div><dt>Spread</dt><dd id="statPatch">—</dd></div>
+    </dl>
+
+    <div class="actions">
+      <button class="btn primary" id="canopySaveBtn" type="button">Log scan</button>
+      <button class="btn" id="indexBtn" type="button">Index</button>
+      <button class="btn" id="fieldBtn" type="button">Field map</button>
+      <button class="btn" id="canopyCalibrateBtn" type="button">Calibrate</button>
+    </div>
+  </div>
   </section>
 
   <div id="startGate">
@@ -180,6 +222,53 @@
   </div>
 </div>
 
+<!-- Index and camera -->
+<div class="sheet" id="indexSheet" hidden role="dialog" aria-label="Vegetation index">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Vegetation index</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">These are the published visible-band indices agronomy uses when only RGB is available. They read leaf colour — chlorophyll, greenness, canopy cover — not a spectral cube.</p>
+    <div id="indexList" class="index-list"></div>
+
+    <div class="sheet-head"><h2>Camera</h2></div>
+    <p class="sheet-note">A stock phone camera has an IR-cut filter bonded over the sensor, so it cannot see near-infrared and cannot produce NDVI. Tell the app if you have attached a converted camera and NDVI unlocks.</p>
+    <div id="cameraList" class="index-list"></div>
+  </div>
+</div>
+
+<!-- Field map from a photo -->
+<div class="sheet" id="fieldSheet" hidden role="dialog" aria-label="Field map">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Field map</h2><button class="icon" data-close type="button">✕</button></div>
+    <p class="sheet-note">Feed it a drone shot, a photo from the end of a row, or anything taken from height. The same index runs over the whole image and comes back as a zone map — the hotspot list tells a scouting crew where to walk.</p>
+    <label class="btn primary file-btn">
+      Choose a photo
+      <input type="file" id="fieldInput" accept="image/*" hidden />
+    </label>
+    <div id="fieldResult" hidden>
+      <canvas id="fieldCanvas" class="field-canvas"></canvas>
+      <div class="legend">
+        <div class="legend-bar" id="fieldLegendBar"></div>
+        <div class="legend-axis">
+          <span id="fieldLegendLow">—</span>
+          <span id="fieldLegendName">—</span>
+          <span id="fieldLegendHigh">—</span>
+        </div>
+      </div>
+      <dl class="stats wide">
+        <div><dt>Mean</dt><dd id="fieldMean">—</dd></div>
+        <div><dt>Canopy</dt><dd id="fieldCover">—</dd></div>
+        <div><dt>Weak zones</dt><dd id="fieldStressed">—</dd></div>
+        <div><dt>Spread</dt><dd id="fieldPatch">—</dd></div>
+      </dl>
+      <div id="fieldHotspots" class="hotspots"></div>
+      <div class="actions">
+        <button class="btn" id="fieldExportBtn" type="button">Export zones</button>
+        <button class="btn" id="fieldToggleBtn" type="button">Show photo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Teach mode -->
 <div class="sheet" id="teachSheet" hidden role="dialog" aria-label="Teach mode">
   <div class="sheet-body">
@@ -199,6 +288,13 @@
     <p>Each frame is white-balanced, then every pixel is projected onto the crop's ripening colour path — the ordered hue anchors that a fruit of that species passes through from immature to ripe. Pixels close to the path become a fruit mask; the mask is de-speckled, split into connected blobs, and each blob is scored on shape, colour purity, smoothness and size. Green fruit has to clear a stricter bar, because unripe fruit and foliage share a hue and only texture and roundness tell them apart.</p>
     <h3>The forecast</h3>
     <p>With no history, days-to-harvest comes from the crop's nominal cycle length, warped for temperature. Once a block has been scanned at least twice more than half a day apart, a regression through <em>its own</em> readings replaces the guess, and the readout says <strong>measured</strong> instead of <strong>nominal</strong>. That is the whole reason to log scans.</p>
+    <h3>Canopy mode</h3>
+    <p>The second mode stops looking for fruit and reads the leaves instead. Each pixel is scored with a published visible-band vegetation index, masked to plant pixels, and reduced to zone statistics — the same arithmetic behind the false-colour maps you see from agricultural drones.</p>
+    <p><strong>What it can tell you:</strong> canopy cover, vigour, how much of the block is yellowing (consistent with nitrogen shortfall), how much leaf area is necrotic, and — most usefully — how far the weak zones sit below the strongest zones of the same field. That last number needs no calibration, because the field is its own reference.</p>
+    <p><strong>What it is not:</strong> hyperspectral imaging. A hyperspectral camera records a hundred or more narrow bands per pixel; your phone records three broad, overlapping ones. There is no way to recover a spectral cube from that, and any app claiming to is showing you a picture, not a measurement.</p>
+    <p><strong>NDVI</strong> is defined on near-infrared, and every phone has an IR-cut filter bonded over the sensor, so NDVI stays greyed out until you tell the app you have attached an IR-converted camera. A conversion is genuinely cheap, and with one the app computes real NDVI — nothing simulated.</p>
+    <p>Indices disagree, deliberately. NGRDI and GLI react strongly to a canopy thinning or yellowing; TGI tracks chlorophyll and can sit almost unmoved by a stress the others shout about. Switching index when a result looks wrong is using the tool correctly, not doubting it.</p>
+
     <h3>Honest limits</h3>
     <ul>
       <li>This is a colour and shape estimator, not a trained neural network. It does not know what a tomato is; it knows what ripening looks like in hue space.</li>
@@ -206,6 +302,8 @@
       <li>Internal quality — sugar, acidity, firmness — is not visible to a camera. Colour leads and correlates; it does not replace a refractometer.</li>
       <li>Mixed or harsh lighting shifts hue. Calibrate on something neutral before trusting numbers across a whole day.</li>
       <li>Anthocyanin crops (aubergine, dark grapes) and blushed cultivars benefit most from teach mode.</li>
+      <li>Vegetation indices are relative, not absolute. A TGI of 0.3 is poor in one crop and excellent in another — compare a block to itself over time, or to the rest of the same field, never to a number off the internet.</li>
+      <li>Water stress is not directly visible to any colour camera. Wilting and colour loss are late, indirect symptoms; measuring water stress properly needs canopy temperature from a thermal sensor.</li>
     </ul>
     <h3>Privacy</h3>
     <p>Frames are analysed in memory and discarded. Nothing is uploaded — there is no server to upload to. Scans, settings and taught colours live in this browser's local storage and leave only when you export them.</p>

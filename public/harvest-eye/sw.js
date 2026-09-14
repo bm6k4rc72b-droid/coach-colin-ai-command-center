@@ -6,7 +6,7 @@
  * fetch — no model weights, no API — which is exactly why offline is cheap.
  */
 
-const CACHE = 'harvesteye-v1';
+const CACHE = 'harvesteye-v2';
 
 const SHELL = [
   './',
@@ -22,6 +22,7 @@ const SHELL = [
   './js/forecast.js',
   './js/ledger.js',
   './js/rowwalk.js',
+  './js/spectral.js',
   './js/tracker.js',
   './js/vision.js',
 ];

@@ -16,6 +16,16 @@ files straight off disk (`file://`) will not get a camera.
 
 ---
 
+## Two modes
+
+**Fruit** detects and tracks individual fruit, scores maturity, and forecasts
+the harvest window. **Canopy** stops looking for fruit and reads the leaves:
+vegetation indices, canopy cover, yellowing and necrosis, and a false-colour
+zone map of where the weak plants are. The chip in the top bar switches between
+them; the ledger keeps both, separately.
+
+---
+
 ## Why it isn't just a green/red filter
 
 Six things make it worth carrying into a field.
@@ -56,6 +66,77 @@ farm already runs.
 Plus the small things that matter one-handed in sun: torch control, lens
 switching on multi-camera phones, haptics, a chirp when ripe fruit enters frame,
 and an installable offline shell.
+
+---
+
+## Canopy mode — what a phone camera can honestly measure
+
+The reels that inspired this feature show hyperspectral and multispectral
+hardware: instruments that record a hundred narrow bands per pixel, or a handful
+of calibrated ones including near-infrared. **A phone cannot do that**, and it is
+worth being blunt about why: the sensor has three broad, heavily overlapping
+colour channels, and an IR-cut filter is bonded over it at the factory
+specifically to throw away the near-infrared that NDVI is built on. No amount of
+processing recovers a spectral cube from three numbers per pixel.
+
+What a phone *can* do is the visible-band subset of the same science, which is a
+real and published field of agronomy:
+
+| Index | Reads | Formula |
+| --- | --- | --- |
+| **ExG** — Excess Green | Canopy against soil. The masking workhorse. | `2g − r − b` on chromatic coordinates |
+| **NGRDI** — Green-Red Difference | Vigour and biomass; falls as canopy yellows or thins. **Default.** | `(G − R) / (G + R)` |
+| **VARI** | Canopy cover, with some resilience to changing light. | `(G − R) / (G + R − B)` |
+| **GLI** — Green Leaf Index | Green fraction; thinning and senescence. | `(2G − R − B) / (2G + R + B)` |
+| **TGI** — Triangular Greenness | Leaf chlorophyll, and so nitrogen status. | `−0.5[190(R − G) − 120(R − B)]` |
+| **NDVI** | The real thing — needs an IR-converted camera. | `(NIR − RED) / (NIR + RED)` |
+
+Sources: Woebbecke 1995, Hunt 2005, Gitelson 2002, Louhaichi 2001, Hunt 2011 and
+2013, Rouse 1974.
+
+### Real NDVI, if you want it
+
+Removing a camera's IR-cut filter and fitting a red or blue long-pass filter
+turns one channel into a genuine NIR channel — the Public Lab "Infragram"
+arrangement, achievable with a cheap camera module and a piece of filter gel.
+Tell the app which conversion you have in **Index → Camera** and NDVI unlocks
+and is computed for real. Until then it stays greyed out, because pretending is
+worse than not offering it.
+
+### Measuring stress without a calibration lab
+
+Absolute index thresholds are close to useless across crops and conditions, so
+the headline numbers are relative to the field itself:
+
+- **Spread** — how far the weakest tenth of zones sits below the strongest
+  tenth, as a percentage. No threshold, no calibration, no crop table.
+- **Weak zones** — the share of zones more than 10% below that reference, which
+  is the conventional band management-zone maps are drawn in.
+- **Yellowing / necrotic** — leaf-area fractions from a hue classifier, kept
+  deliberately separate from the index so a grower can act on "12% of leaf area
+  is necrotic" rather than on "TGI is 0.21".
+
+Both relative measures are computed over **zones, not pixels**. Per-pixel, sensor
+noise alone drops a tail below any relative cut, and a perfectly uniform field
+reports a few percent of phantom stress; a zone is also the unit you can
+actually drive a machine to.
+
+### Field map
+
+Point it at any photo taken from height — a drone shot, a mast, a ladder — and
+the same index runs over the whole image at higher resolution and a denser
+grid, producing the zone map, a numbered hotspot list with positions, and a CSV
+of every zone for a spreader or irrigation plan. This is the drone-map workflow
+without the drone subscription.
+
+### Indices disagree, and that is the point
+
+On a test field carrying a circular stress patch and a nitrogen-poor corner,
+NGRDI reported a 67% spread and flagged 20% of zones; TGI reported 3% and
+flagged none. Neither is broken — TGI is a chlorophyll index and that particular
+stress moved red and green together, which its triangle largely cancels.
+Carrying five indices and letting the operator switch is the honest design; one
+index presented as truth would not be.
 
 ---
 
@@ -116,6 +197,11 @@ decides whether a crew is worth pulling off another block today.
   on the plant.
 - **Internal quality** — sugar, acidity, firmness — is not visible to a camera.
   Colour leads and correlates; it does not replace a refractometer.
+- **This is not hyperspectral imaging** and cannot be made into it in software.
+  Three broad channels are three broad channels.
+- **Water stress is not directly measurable** from colour. Wilting and colour
+  loss are late, indirect symptoms; the real measurement is canopy temperature,
+  which needs a thermal sensor.
 - Harsh or mixed lighting shifts hue. Calibrate before comparing readings taken
   across a whole day.
 - Anthocyanin crops and blushed cultivars benefit most from teach mode.
@@ -136,7 +222,8 @@ local storage on that one device, and leave only when you export them.
 | `public/harvest-eye/styles.css` | Dark instrument skin, safe-area aware |
 | `js/color.js` | HSV, circular hue maths, white-balance gains |
 | `js/crops.js` | Crop profiles, maturity stages, teach-mode learning |
-| `js/vision.js` | Per-frame detection pipeline |
+| `js/vision.js` | Per-frame fruit detection pipeline |
+| `js/spectral.js` | Vegetation indices, canopy masking, zone statistics |
 | `js/tracker.js` | Stable identities across frames |
 | `js/forecast.js` | Ripening velocity, harvest window, spoilage risk |
 | `js/ledger.js` | Scan history, settings, CSV and GeoJSON export |
@@ -148,7 +235,7 @@ local storage on that one device, and leave only when you export them.
 ## Testing
 
 ```bash
-npm run test:harvest-eye   # 42 unit tests over the pure logic
+npm run test:harvest-eye   # 66 unit tests over the pure logic
 npm run qa:harvest-eye     # end-to-end: real Chromium, synthetic camera feed
 ```
 
