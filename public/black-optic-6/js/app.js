@@ -32,6 +32,14 @@ import {
   capacity, coverage, createGrid, deadReckon, integrateScan, matchScan, occupancy,
 } from './sonar.js';
 import { aimError, chooseSubject, PanTilt } from './track.js';
+import {
+  autoGain, canReadTemperature, EMISSIVITY, ISOTHERM_MODES, luminanceField, manualGain,
+  PALETTES, paletteFor, rampTable, readout as thermalReadout, render as renderThermal,
+  SOURCES, spot,
+} from './thermal.js';
+import { ColourLock, LOCK_MODES, TemplateLock } from './lock.js';
+import { blockProgress, daySummary, estimateFinish, pickRate, yieldRanking } from './harvest.js';
+import { aboveHorizon, angularRate, angularSize, consistentWith, telemetryTrack } from './aerial.js';
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
 import { pose } from '../../sentry/js/ground.js';
 import { capability as rfCapability, RfLink } from '../../sentry/js/rf.js';
@@ -79,6 +87,22 @@ const state = {
   rovPose: { x: 0, y: 0, headingDeg: 0, elapsedSec: 0, driftM: 0 },
   soundings: [],
   match: null,
+  palette: 'ironbow',
+  thermalRamp: null,
+  thermalSource: 'LUMINANCE',
+  gainMode: 'auto',
+  isothermMode: 'off',
+  fusion: 0,
+  lockMode: 'motion',
+  lock: null,
+  lockResult: null,
+  blocks: [
+    { id: 'nw', name: 'Vineyard NW', hectares: 4.2, rows: 120, variety: 'Cabernet Sauvignon' },
+    { id: 'se', name: 'Vineyard SE', hectares: 3.1, rows: 96, variety: 'Merlot' },
+    { id: 'hill', name: 'Hill Block', hectares: 2.4, rows: 74, variety: 'Syrah' },
+  ],
+  picks: [],
+  telemetry: [],
 };
 
 /* ------------------------------------------------------------------ shell */
@@ -94,6 +118,8 @@ const DECKS = [
   ['spectral', 'Spectral', 'M4 20L12 4l8 16z M7 15h10'],
   ['subsurface', 'Sonar', 'M3 14c3 0 3-3 6-3s3 3 6 3 3-3 6-3 M3 19c3 0 3-3 6-3s3 3 6 3 3-3 6-3 M12 4v5'],
   ['bio', 'Bio', 'M3 12h4l2-5 3 10 2-5h7'],
+  ['harvest', 'Harvest', 'M5 20c4-8 10-12 14-14 M12 20c0-5 2-9 5-12 M5 20h14'],
+  ['aerial', 'Aerial', 'M12 4l8 14H4z M12 10v8'],
   ['links', 'Links', 'M9 15l6-6 M8 8a4 4 0 015.6 0l1 1 M16 16a4 4 0 01-5.6 0l-1-1'],
   ['ledger', 'Ledger', 'M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'],
 ];
@@ -238,6 +264,10 @@ async function startOptics() {
   // Labels only exist after permission has been granted once, so the picker is
   // worth rebuilding here rather than on load.
   await refreshCameras();
+buildPalettes();
+buildLockModes();
+renderHarvest();
+renderAerial();
   logEvent('Optics online', 'Device camera opened. Frames are measured on this device and discarded.', 'confirm');
   requestAnimationFrame(loop);
 }
@@ -273,8 +303,11 @@ function loop() {
   canvas.height = work.height;
   const ctx = canvas.getContext('2d');
   const out = ctx.createImageData(work.width, work.height);
-  renderView(state.view, { frame, mask: result.mask, energy: result.energy, trail: state.trail }, out);
+  if (state.view === 'thermal') drawThermal(frame, out);
+  else renderView(state.view, { frame, mask: result.mask, energy: result.energy, trail: state.trail }, out);
   ctx.putImageData(out, 0, 0);
+
+  stepLock(frame);
 
   drawHud(result);
   renderContacts(result);
@@ -375,7 +408,8 @@ function renderContacts(result) {
 
 /** @returns {void} Build the view switcher. */
 function buildViews() {
-  $('views').replaceChildren(...VIEWS.map((view) => {
+  const views = [...VIEWS, { id: 'thermal', label: 'Thermal', hint: 'A thermal palette over the field. What the field contains is stated on the thermal panel.' }];
+  $('views').replaceChildren(...views.map((view) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = view.label;
@@ -1415,6 +1449,365 @@ async function pairHeart() {
   await state.heart.connect();
 }
 
+/* ---------------------------------------------------------------- thermal */
+
+/**
+ * Render the current frame through a thermal palette.
+ *
+ * The field comes from luminance unless a radiometric camera is linked, and that
+ * distinction is carried into every readout below rather than being forgotten
+ * the moment the picture starts looking like thermal imaging.
+ *
+ * @param {ImageData} frame The captured frame.
+ * @param {ImageData} out Destination.
+ * @returns {void}
+ */
+function drawThermal(frame, out) {
+  const field = luminanceField(frame);
+  state.thermalSource = field.source;
+  if (!state.thermalRamp) state.thermalRamp = rampTable(paletteFor(state.palette));
+
+  const gain = state.gainMode === 'manual'
+    ? manualGain(Number($('thermal-level').value) || 0.5, Number($('thermal-span').value) || 1)
+    : autoGain(field.field);
+
+  const isotherm = state.isothermMode === 'off' ? null : {
+    mode: state.isothermMode,
+    low: Number($('thermal-iso-low').value),
+    high: Number($('thermal-iso-high').value),
+    colour: [255, 59, 78],
+  };
+
+  renderThermal(field, out, {
+    ramp: state.thermalRamp,
+    gain,
+    isotherm,
+    fusion: state.fusion > 0 ? frame : null,
+    fusionStrength: state.fusion,
+  });
+
+  state.thermalField = field;
+  state.thermalGain = gain;
+}
+
+/** @returns {void} Build the palette swatches. */
+function buildPalettes() {
+  $('thermal-truth').textContent = SOURCES[state.thermalSource].meaning;
+  $('palettes').replaceChildren(...PALETTES.map((palette) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.title = palette.use;
+    button.setAttribute('aria-pressed', String(palette.id === state.palette));
+
+    // The swatch is the palette itself, built from the same ramp the renderer uses.
+    const ramp = rampTable(palette);
+    const stops = [];
+    for (let i = 0; i <= 8; i += 1) {
+      const t = Math.round((i / 8) * 255);
+      stops.push(`rgb(${ramp[t * 3]}, ${ramp[t * 3 + 1]}, ${ramp[t * 3 + 2]}) ${(i / 8) * 100}%`);
+    }
+    const swatch = document.createElement('span');
+    swatch.className = 'swatch';
+    swatch.style.background = `linear-gradient(90deg, ${stops.join(', ')})`;
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = palette.name;
+
+    button.append(swatch, name);
+    button.addEventListener('click', () => {
+      state.palette = palette.id;
+      state.thermalRamp = rampTable(palette);
+      state.view = 'thermal';
+      buildPalettes();
+      buildViews();
+    });
+    return button;
+  }));
+
+  $('thermal-iso').replaceChildren(...ISOTHERM_MODES.map((mode) => {
+    const option = document.createElement('option');
+    option.value = mode.id;
+    option.textContent = mode.name;
+    option.title = mode.note;
+    option.selected = mode.id === state.isothermMode;
+    return option;
+  }));
+
+  const source = SOURCES[state.thermalSource];
+  setBadge('thermal-prov', source.provenance, source.temperature ? 'Radiometric' : 'Brightness');
+  $('thermal-emissivity').textContent = canReadTemperature(state.thermalSource)
+    ? `Emissivity matters here: ${EMISSIVITY.map((e) => `${e.name} ${e.value}`).join(', ')}. A shiny surface emits less and reflects its surroundings, so bare metal reads far colder than it is.`
+    : 'Emissivity correction is withheld: there is no temperature in this field to correct. It becomes available when a radiometric camera is linked.';
+  renderThermalReadouts();
+}
+
+/** @returns {void} Draw the spot and scale readouts. */
+function renderThermalReadouts() {
+  const field = state.thermalField;
+  const gain = state.thermalGain;
+  const centre = field
+    ? spot(field.field, field.width, Math.round(field.width / 2), Math.round(field.height / 2), 2)
+    : null;
+  const reading = thermalReadout(state.thermalSource, centre);
+
+  $('thermal-readouts').replaceChildren(
+    readout('Spot (centre)', reading.text, {
+      tone: reading.temperature ? 'confirm' : 'caution',
+      note: reading.temperature ? 'Calibrated temperature.' : 'Not a temperature — this is where the centre sits on the brightness scale.',
+    }),
+    readout('Scale low', gain ? gain.low.toFixed(2) : '—'),
+    readout('Scale high', gain ? (gain.low + gain.span).toFixed(2) : '—', {
+      note: state.gainMode === 'auto' ? 'Auto gain, from the 2nd and 98th percentiles of this frame.' : 'Fixed by hand, so two frames are comparable.',
+    }),
+    readout('Palette', paletteFor(state.palette).name, { tone: 'primary', note: paletteFor(state.palette).use }),
+  );
+}
+
+/* ------------------------------------------------------------------- lock */
+
+/** @returns {void} Build the tracker selector. */
+function buildLockModes() {
+  $('lock-mode').replaceChildren(...LOCK_MODES.map((mode) => {
+    const option = document.createElement('option');
+    option.value = mode.id;
+    option.textContent = mode.name;
+    option.title = mode.note;
+    option.selected = mode.id === state.lockMode;
+    return option;
+  }));
+  $('lock-note').textContent = LOCK_MODES.find((mode) => mode.id === state.lockMode).note;
+  renderLock();
+}
+
+/**
+ * Advance whichever appearance tracker is locked on.
+ *
+ * @param {ImageData} frame The current frame.
+ * @returns {void}
+ */
+function stepLock(frame) {
+  if (!state.lock) return;
+  state.lockResult = state.lock.track(frame);
+  if (state.lockResult.lost && !state.lockLoggedLost) {
+    state.lockLoggedLost = true;
+    logEvent('Lock lost', state.lockResult.reason, 'caution');
+  }
+  renderLock();
+}
+
+/** @returns {void} Draw the lock readouts. */
+function renderLock() {
+  const result = state.lockResult;
+  const active = Boolean(state.lock);
+  setBadge('lock-prov', !active ? 'MODEL' : (result && !result.lost ? 'LIVE' : 'BLOCKED'),
+    !active ? LOCK_MODES.find((mode) => mode.id === state.lockMode).name : (result && !result.lost ? 'Holding' : 'Lost'));
+
+  $('lock-readouts').replaceChildren(
+    readout('Tracker', LOCK_MODES.find((mode) => mode.id === state.lockMode).name, { tone: 'primary' }),
+    readout('State', !active ? 'not locked' : (result?.lost ? 'lost' : 'holding'), {
+      tone: !active ? 'muted' : (result?.lost ? 'alert' : 'confirm'),
+      note: result?.reason ?? 'Lock onto a contact to follow one specific thing, moving or not.',
+    }),
+    readout('Confidence', result ? result.confidence.toFixed(2) : '—', {
+      tone: result && result.confidence > 0.4 ? 'confirm' : 'caution',
+      note: state.lockMode === 'colour' ? 'Back-projection density inside the window.' : 'Normalised cross-correlation with the template.',
+    }),
+    readout('Position', result?.box ? `${Math.round(result.box.x)}, ${Math.round(result.box.y)}` : '—', { note: 'In processing-frame pixels.' }),
+  );
+}
+
+/** @returns {void} Lock the appearance tracker onto the largest contact. */
+function lockOnLargest() {
+  if (!state.lastFrame || !state.contacts.length) {
+    logEvent('Nothing to lock', 'No contacts in frame. The motion tracker has to see something before it can be followed.', 'caution');
+    return;
+  }
+  const subject = chooseSubject(state.contacts, null);
+  const box = {
+    x: subject.box.x ?? 0,
+    y: subject.box.y ?? 0,
+    w: subject.box.width ?? subject.box.w ?? 20,
+    h: subject.box.height ?? subject.box.h ?? 20,
+  };
+
+  state.lock = state.lockMode === 'colour' ? new ColourLock() : new TemplateLock();
+  const outcome = state.lock.lockOn(state.lastFrame, box);
+  state.lockLoggedLost = false;
+
+  if (!outcome.locked) {
+    state.lock = null;
+    state.lockResult = null;
+    logEvent('Lock refused', outcome.reason, 'caution');
+  } else {
+    state.lockResult = { box, confidence: 1, lost: false, reason: outcome.reason };
+    $('lock-drop').disabled = false;
+    logEvent('Locked on', `${LOCK_MODES.find((mode) => mode.id === state.lockMode).name} tracker holding contact ${subject.id}.`, 'confirm');
+  }
+  renderLock();
+}
+
+/* ---------------------------------------------------------------- harvest */
+
+/** @returns {void} Rebuild the harvest deck. */
+function renderHarvest() {
+  $('harvest-block').replaceChildren(...state.blocks.map((block) => {
+    const option = document.createElement('option');
+    option.value = block.id;
+    option.textContent = `${block.name} · ${block.hectares} ha · ${block.rows} rows`;
+    return option;
+  }));
+
+  const day = daySummary(state.blocks, state.picks);
+  setBadge('harvest-prov', state.picks.length ? 'LIVE' : 'MODEL', state.picks.length ? `${state.picks.length} loads` : 'Nothing logged');
+  $('harvest-day').replaceChildren(
+    readout('Picked today', `${(day.kg / 1000).toFixed(2)} t`, { tone: day.kg ? 'confirm' : 'muted', note: day.note }),
+    readout('Blocks started', String(day.blocksStarted)),
+    readout('Blocks finished', String(day.blocksComplete), { tone: day.blocksComplete ? 'confirm' : 'muted' }),
+  );
+
+  const rate = day.rate;
+  $('harvest-rate').replaceChildren(
+    readout('Rate', rate.kgPerHour ? `${rate.kgPerHour.toFixed(0)} kg/h` : '—', {
+      tone: rate.settled ? 'confirm' : 'caution',
+      note: rate.note,
+    }),
+    readout('Spread', rate.spreadKgPerHour ? `±${rate.spreadKgPerHour.toFixed(0)} kg/h` : '—', {
+      note: 'Across the gaps between loads. A wide spread means stops and sprints, not a steady rate.',
+    }),
+    readout('Rows', rate.rowsPerHour ? `${rate.rowsPerHour.toFixed(0)}/h` : '—'),
+    readout('Measured over', `${rate.spanMinutes.toFixed(0)} min`, {
+      tone: rate.settled ? 'confirm' : 'caution',
+    }),
+  );
+
+  const current = state.blocks.find((block) => block.id === $('harvest-block').value) ?? state.blocks[0];
+  const finish = estimateFinish(current, state.picks);
+  $('harvest-eta').className = 'note';
+  $('harvest-eta').textContent = finish.hoursMin === null
+    ? `${current.name}: ${finish.note}`
+    : `${current.name}: ${finish.hoursMin.toFixed(1)} to ${finish.hoursMax.toFixed(1)} hours left — finishing between `
+      + `${new Date(finish.finishMinMs).toLocaleTimeString()} and ${new Date(finish.finishMaxMs).toLocaleTimeString()}. ${finish.note}`;
+
+  $('harvest-blocks').replaceChildren(...state.blocks.map((block) => {
+    const progress = blockProgress(block, state.picks);
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = progress.complete ? 'confirm' : progress.kg ? 'caution' : 'primary';
+    const head = document.createElement('div');
+    head.className = 'row-head';
+    const name = document.createElement('b');
+    name.textContent = block.name;
+    const time = document.createElement('time');
+    time.textContent = `${(progress.fraction * 100).toFixed(0)}%`;
+    head.append(name, time);
+    const body = document.createElement('p');
+    body.textContent = `${progress.rows}/${block.rows} rows · ${(progress.kg / 1000).toFixed(2)} t · ${block.variety}`;
+    const meter = document.createElement('div');
+    meter.className = 'meter';
+    const fill = document.createElement('i');
+    fill.style.width = `${(progress.fraction * 100).toFixed(1)}%`;
+    if (progress.complete) fill.dataset.tone = 'caution';
+    meter.append(fill);
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = progress.note;
+    li.append(head, body, meter, why);
+    return li;
+  }));
+
+  const ranked = yieldRanking(state.blocks, state.picks);
+  $('harvest-yield').replaceChildren(...(ranked.length ? ranked : []).map((row, i) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = row.extrapolated ? 'caution' : 'confirm';
+    const head = document.createElement('div');
+    head.className = 'row-head';
+    const name = document.createElement('b');
+    name.textContent = `${i + 1}. ${row.block.name}`;
+    head.append(name, badge(row.extrapolated ? 'MODEL' : 'LIVE', row.extrapolated ? 'Extrapolated' : 'Measured'));
+    const body = document.createElement('p');
+    body.textContent = `${row.kgPerHa.toFixed(0)} kg/ha`;
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = row.note;
+    li.append(head, body, why);
+    return li;
+  }));
+  if (!ranked.length) {
+    $('harvest-yield').innerHTML = '<li class="empty">No block is far enough through to give a yield. A quarter picked is the floor — below that, fruit is not spread evenly enough to extrapolate from.</li>';
+  }
+}
+
+/* ----------------------------------------------------------------- aerial */
+
+/** @returns {void} Rebuild the aerial deck. */
+function renderAerial() {
+  const result = aboveHorizon(state.contacts, state.pose, work.height || 240);
+  setBadge('aerial-prov', result.resolved ? (result.aerial.length ? 'LIVE' : 'MODEL') : 'BLOCKED',
+    result.resolved ? `${result.aerial.length} airborne` : 'No horizon');
+  $('aerial-note').textContent = result.note;
+
+  const fov = Number($('cal-fov').value) || 70;
+  $('aerial-readouts').replaceChildren(
+    readout('Airborne', String(result.aerial.length), { tone: result.aerial.length ? 'alert' : 'muted' }),
+    readout('Field of view', `${fov}°`, { note: 'Angular measurements are only as good as this number.' }),
+    readout('Range', 'unavailable', {
+      tone: 'alert',
+      note: 'One camera measures angles, never distance. Everything below is an angle.',
+    }),
+  );
+
+  const reading = consistentWith({ angularSizeDeg: 0.5, angularRateDeg: null });
+  $('aerial-settle').replaceChildren(...reading.wouldSettleIt.map((text) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'primary';
+    const body = document.createElement('p');
+    body.textContent = text;
+    li.append(body);
+    return li;
+  }));
+
+  const host = $('aerial-contacts');
+  if (!result.aerial.length) {
+    host.innerHTML = `<li class="empty">${result.resolved
+      ? 'Nothing above the horizon.'
+      : 'Calibrate the view on the optics deck and the horizon line appears, which is what makes "airborne" meaningful.'}</li>`;
+  } else {
+    host.replaceChildren(...result.aerial.map((contact) => {
+      const sizeDeg = angularSize(contact.box, work.width || 320, fov);
+      const rateDeg = angularRate(contact.trailPx, work.width || 320, fov);
+      const verdict = consistentWith({ angularSizeDeg: sizeDeg, angularRateDeg: rateDeg });
+      const li = document.createElement('li');
+      li.className = 'row';
+      li.dataset.tone = 'caution';
+      const head = document.createElement('div');
+      head.className = 'row-head';
+      const name = document.createElement('b');
+      name.textContent = `AIRBORNE ${String(contact.id).padStart(2, '0')}`;
+      const time = document.createElement('time');
+      time.textContent = `${sizeDeg.toFixed(2)}° across`;
+      head.append(name, time);
+      const body = document.createElement('p');
+      body.textContent = `Consistent with: ${verdict.consistentWith.join('; ')}.`;
+      const why = document.createElement('div');
+      why.className = 'why';
+      why.textContent = verdict.caveat;
+      li.append(head, body, why);
+      return li;
+    }));
+  }
+
+  const track = telemetryTrack(state.telemetry);
+  setBadge('aerial-telemetry-prov', track.current ? 'LINK' : 'BLOCKED', track.current ? 'Tracking' : 'No telemetry');
+  $('aerial-telemetry').replaceChildren(
+    readout('Altitude', track.current?.altitudeM !== undefined ? `${track.current.altitudeM.toFixed(0)} m` : '—'),
+    readout('Ground speed', track.groundSpeedMps !== null ? `${track.groundSpeedMps.toFixed(1)} m/s` : '—'),
+    readout('Climb', track.climbRateMps !== null ? `${track.climbRateMps.toFixed(1)} m/s` : '—'),
+    readout('Frames', String(track.samples), { note: track.note }),
+  );
+}
+
 /* ------------------------------------------------------------ persistence */
 
 /** @returns {void} Save what is worth surviving a reload. */
@@ -1423,6 +1816,8 @@ function save() {
     localStorage.setItem(STORE, JSON.stringify({
       boundary: state.boundary,
       view: state.view,
+      picks: state.picks,
+      palette: state.palette,
       pose: state.pose ? { heightM: $('cal-height').value, tiltDeg: $('cal-tilt').value, fovDeg: $('cal-fov').value } : null,
     }));
   } catch {
@@ -1436,6 +1831,8 @@ function restore() {
     const saved = JSON.parse(localStorage.getItem(STORE) ?? 'null');
     if (!saved) return;
     if (Array.isArray(saved.boundary)) state.boundary = saved.boundary;
+    if (Array.isArray(saved.picks)) state.picks = saved.picks;
+    if (saved.palette) state.palette = saved.palette;
     if (saved.view) state.view = saved.view;
     if (saved.pose) {
       $('cal-height').value = saved.pose.heightM;
@@ -1538,6 +1935,66 @@ $('deter-light').addEventListener('click', floodLight);
 $('deter-siren').addEventListener('click', siren);
 $('blackout').addEventListener('click', blackout);
 
+for (const id of ['thermal-gain', 'thermal-level', 'thermal-span', 'thermal-iso', 'thermal-iso-low', 'thermal-iso-high']) {
+  $(id).addEventListener('input', () => {
+    state.gainMode = $('thermal-gain').value;
+    state.isothermMode = $('thermal-iso').value;
+    renderThermalReadouts();
+  });
+}
+$('thermal-fusion').addEventListener('input', (event) => {
+  state.fusion = Number(event.target.value) / 100;
+});
+
+$('lock-mode').addEventListener('change', (event) => {
+  state.lockMode = event.target.value;
+  state.lock = null;
+  state.lockResult = null;
+  $('lock-drop').disabled = true;
+  buildLockModes();
+});
+$('lock-on').addEventListener('click', lockOnLargest);
+$('lock-drop').addEventListener('click', () => {
+  state.lock = null;
+  state.lockResult = null;
+  $('lock-drop').disabled = true;
+  renderLock();
+});
+
+$('harvest-log').addEventListener('click', () => {
+  state.picks.push({
+    blockId: $('harvest-block').value,
+    atMs: Date.now(),
+    kg: Number($('harvest-kg').value) || 0,
+    rows: Number($('harvest-rows').value) || 0,
+  });
+  $('harvest-undo').disabled = false;
+  logEvent('Load logged', `${$('harvest-kg').value} kg from ${$('harvest-block').selectedOptions[0].textContent.split(' ·')[0]}.`, 'confirm');
+  renderHarvest();
+  save();
+});
+$('harvest-undo').addEventListener('click', () => {
+  state.picks.pop();
+  $('harvest-undo').disabled = !state.picks.length;
+  renderHarvest();
+  save();
+});
+$('harvest-block').addEventListener('change', renderHarvest);
+$('harvest-export').addEventListener('click', () => {
+  const rows = [['block', 'logged', 'kg', 'rows']];
+  for (const pick of state.picks) {
+    const block = state.blocks.find((entry) => entry.id === pick.blockId);
+    rows.push([block?.name ?? pick.blockId, new Date(pick.atMs).toISOString(), pick.kg, pick.rows ?? '']);
+  }
+  const blob = new Blob([rows.map((row) => row.join(',')).join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `harvest-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+});
+
 $('camera-rescan').addEventListener('click', refreshCameras);
 $('camera-use').addEventListener('click', async () => {
   state.cameraId = $('camera-pick').value || null;
@@ -1604,6 +2061,8 @@ $('bio-drop').addEventListener('click', () => {
 setInterval(() => {
   $('clock').textContent = new Date().toLocaleTimeString();
   if (state.deck === 'vault') renderVault();
+  if (state.deck === 'aerial') renderAerial();
+  if (state.deck === 'optics' && state.view === 'thermal') renderThermalReadouts();
 }, 1000);
 
 restore();
@@ -1623,6 +2082,10 @@ buildBio();
 renderSonar();
 renderTracking({ pan: 0, tilt: 0, moving: false, reason: 'Tracking off.' }, null);
 refreshCameras();
+buildPalettes();
+buildLockModes();
+renderHarvest();
+renderAerial();
 $('site').textContent = state.boundary.length ? `${state.boundary.length} corners` : 'not set';
 
 if ('serviceWorker' in navigator) {

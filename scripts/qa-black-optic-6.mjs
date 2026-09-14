@@ -137,7 +137,7 @@ async function main() {
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 11, `the console builds all its decks (${decks})`);
+    check(decks === 13, `the console builds all its decks (${decks})`);
 
     const title = await page.title();
     check(/Black Optic 6/.test(title), `the console is named Black Optic 6 ("${title}")`);
@@ -149,10 +149,10 @@ async function main() {
     check(ledger >= 30, `every specified capability is answered (${ledger} rows)`);
 
     const unsound = await page.$$eval('.ledger-row .prov[data-tone="alert"]', (nodes) => nodes.length);
-    check(unsound >= 8, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
+    check(unsound >= 10, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
 
     const ledgerText = await page.$eval('#ledger', (node) => node.textContent);
-    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment', 'firing mechanism', 'Nutrient deficiency']) {
+    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment', 'firing mechanism', 'Nutrient deficiency', 'Identifying a drone']) {
       check(ledgerText.includes(phrase), `the ledger answers "${phrase}" openly`);
     }
     check(
@@ -331,6 +331,78 @@ async function main() {
     check(/strap/i.test(bioText), 'and the ones that will');
     const bioRows = await page.$$eval('#bio-works .row, #bio-blocked .row', (nodes) => nodes.length);
     check(bioRows >= 6, `what pairs and what does not are both listed (${bioRows})`);
+
+    // -------------------------------------------------------- thermal
+    await page.click('#rail button[data-deck="optics"]');
+    const swatches = await page.$$eval('#palettes button', (nodes) => nodes.length);
+    check(swatches >= 12, `every thermal palette is offered (${swatches})`);
+
+    await page.evaluate(() => {
+      const button = [...document.querySelectorAll('#palettes button')]
+        .find((node) => node.textContent.includes('Ironbow'));
+      button?.click();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const thermalPainted = await page.evaluate(() => {
+      const canvas = document.getElementById('frame');
+      const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      // Ironbow is strongly non-grey; a luminance pass-through would not be.
+      let coloured = 0;
+      for (let i = 0; i < data.length; i += 80) {
+        if (Math.abs(data[i] - data[i + 2]) > 30) coloured += 1;
+      }
+      return coloured;
+    });
+    check(thermalPainted > 20, `the thermal palette is applied to the frame (${thermalPainted} samples)`);
+
+    const thermalText = await page.$eval('#deck-optics', (node) => node.textContent);
+    check(/not heat|brightness/i.test(thermalText), 'the thermal panel says what the field actually contains');
+    const thermalReadouts = await page.$eval('#thermal-readouts', (node) => node.textContent);
+    check(
+      !/°C/.test(thermalReadouts),
+      'no temperature is printed from a visible camera',
+    );
+    check(/of scale/.test(thermalReadouts), 'the spot reading is given as a position on the scale instead');
+    const emissivityNote = await page.$eval('#thermal-emissivity', (node) => node.textContent);
+    check(/withheld/i.test(emissivityNote), 'emissivity correction is withheld until there is a temperature to correct');
+
+    // ----------------------------------------------------------- lock
+    await page.click('#rail button[data-deck="watch"]');
+    const lockModes = await page.$$eval('#lock-mode option', (nodes) => nodes.length);
+    check(lockModes === 3, `three trackers are offered (${lockModes})`);
+    await page.click('#lock-on');
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const lockText = await page.$eval('#lock-readouts', (node) => node.textContent);
+    // Either it locked, or it refused for a stated reason. Both are correct;
+    // silently claiming a lock it does not have would not be.
+    check(
+      /holding|lost|not locked/i.test(lockText),
+      'the lock reports a state rather than implying one',
+    );
+
+    // -------------------------------------------------------- harvest
+    await page.click('#rail button[data-deck="harvest"]');
+    const blocks = await page.$$eval('#harvest-blocks .row', (nodes) => nodes.length);
+    check(blocks >= 3, `blocks are listed (${blocks})`);
+    const emptyYield = await page.$eval('#harvest-yield', (node) => node.textContent);
+    check(/quarter picked/i.test(emptyYield), 'yield is refused before a block is far enough through');
+
+    for (let i = 0; i < 4; i += 1) {
+      await page.click('#harvest-log');
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    }
+    const dayText = await page.$eval('#harvest-day', (node) => node.textContent);
+    check(/\dt|\d\.\d+ t/.test(dayText), `the day total accumulates (${dayText.slice(0, 40).trim()}…)`);
+    const rateText = await page.$eval('#harvest-rate', (node) => node.textContent);
+    check(/provisional|settled|Measured over/i.test(rateText), 'the rate states how long it was measured over');
+
+    // --------------------------------------------------------- aerial
+    await page.click('#rail button[data-deck="aerial"]');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const aerialText = await page.$eval('#deck-aerial', (node) => node.textContent);
+    check(/angles, never distance|angles, not range/i.test(aerialText), 'the aerial deck refuses to imply range');
+    const settle = await page.$$eval('#aerial-settle .row', (nodes) => nodes.length);
+    check(settle >= 3, `what would actually settle an identification is listed (${settle})`);
 
     await page.click('#rail button[data-deck="optics"]');
     await page.screenshot({ path: shot });
