@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Black Optic 6">
+  <rect width="512" height="512" fill="#04060a"/>
+  <circle cx="256" cy="256" r="96" fill="none" stroke="#4fe8ff" stroke-width="16"/>
+  <circle cx="256" cy="256" r="44" fill="none" stroke="#4fe8ff" stroke-width="10" opacity="0.65"/>
+  <circle cx="256" cy="256" r="15" fill="#ff3b4e"/>
+  <g stroke="#4fe8ff" stroke-width="12" stroke-linecap="round" opacity="0.9">
+    <path d="M256 124v34M256 354v34M124 256h34M354 256h34"/>
+  </g>
+</svg>

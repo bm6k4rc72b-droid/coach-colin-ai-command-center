@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Black Optic 6">
+  <defs>
+    <linearGradient id="bo6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4fe8ff"/>
+      <stop offset="1" stop-color="#0a5c72"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="104" fill="#04060a"/>
+  <g fill="none" stroke="url(#bo6)" stroke-width="14" stroke-linecap="round">
+    <path d="M128 104h-24v24M384 104h24v24M128 408h-24v-24M384 408h24v-24"/>
+  </g>
+  <circle cx="256" cy="256" r="116" fill="none" stroke="#4fe8ff" stroke-width="16"/>
+  <circle cx="256" cy="256" r="54" fill="none" stroke="#4fe8ff" stroke-width="10" opacity="0.65"/>
+  <circle cx="256" cy="256" r="17" fill="#ff3b4e"/>
+  <g stroke="#4fe8ff" stroke-width="12" stroke-linecap="round" opacity="0.9">
+    <path d="M256 96v42M256 374v42M96 256h42M374 256h42"/>
+  </g>
+</svg>

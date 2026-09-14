@@ -7,6 +7,17 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added **Black Optic 6**, a ranch perimeter console at `public/black-optic-6/`.
+  Eight decks — optics with a calibrated detection chain reporting metres,
+  contacts and events, an acoustic watch, a geofence that refuses to call a
+  crossing its satellite fix cannot resolve, NASA orbital imagery with overpass
+  timing, a hashed evidence vault holding the thirty seconds before an event,
+  external sensor links, and a capability ledger. Every reading carries a
+  provenance badge and only measured states may raise an alarm; seven specified
+  capabilities are marked unsound and deliberately not built, each with what the
+  console does instead. Reuses Sentry's detection chain and views and
+  Emberline's overpass prediction rather than duplicating them.
+  `npm run test:black-optic-6`, `npm run qa:black-optic-6`.
 - Added **Emberline**, a fire tracker at `public/emberline/` that fuses
   satellite detections, camera cross-bearings and network node loss into ranked
   fire hypotheses and projects them forward with Rothermel's surface spread
