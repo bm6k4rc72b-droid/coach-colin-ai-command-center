@@ -40,6 +40,10 @@ import {
 import { ColourLock, LOCK_MODES, TemplateLock } from './lock.js';
 import { blockProgress, daySummary, estimateFinish, pickRate, yieldRanking } from './harvest.js';
 import { aboveHorizon, angularRate, angularSize, consistentWith, telemetryTrack } from './aerial.js';
+import {
+  analysable, diagnose, identifyModel, recommend, RELAYS, relayUrls, rtspUrl, snapshotUrl,
+} from './argus.js';
+import { Mariachi } from './mariachi.js';
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
 import { pose } from '../../sentry/js/ground.js';
 import { capability as rfCapability, RfLink } from '../../sentry/js/rf.js';
@@ -103,6 +107,9 @@ const state = {
   ],
   picks: [],
   telemetry: [],
+  argus: null,
+  mariachi: new Mariachi({ volume: 0.45 }),
+  musicWanted: false,
 };
 
 /* ------------------------------------------------------------------ shell */
@@ -268,6 +275,8 @@ buildPalettes();
 buildLockModes();
 renderHarvest();
 renderAerial();
+buildArgus();
+syncMusic();
   logEvent('Optics online', 'Device camera opened. Frames are measured on this device and discarded.', 'confirm');
   requestAnimationFrame(loop);
 }
@@ -462,6 +471,9 @@ async function startAcoustic() {
     setBadge('acoustic-prov', 'LIVE');
     $('acoustic-start').disabled = true;
     $('acoustic-stop').disabled = false;
+    // The watch is listening on this device. Anything the console is playing
+    // through the speaker would land straight back in the microphone.
+    syncMusic();
     logEvent('Acoustic online', 'Microphone open. Audio is analysed on this device and never recorded by this panel.', 'confirm');
   } catch (error) {
     setBadge('acoustic-prov', 'BLOCKED', 'Refused');
@@ -923,6 +935,7 @@ function blackout() {
   setArmed('blackout');
   state.siren?.stop?.();
   state.siren = null;
+  syncMusic();
   const veil = document.createElement('div');
   veil.style.cssText = 'position:fixed;inset:0;background:#000;z-index:998;display:flex;align-items:center;justify-content:center;color:#1b2733;font:11px ui-monospace,monospace;letter-spacing:.2em';
   veil.textContent = 'BLACKOUT — TAP TO RESTORE';
@@ -930,6 +943,7 @@ function blackout() {
     veil.remove();
     state.blackout = false;
     setArmed(state.stream ? 'armed' : 'standby');
+    syncMusic();
   });
   document.body.append(veil);
   logEvent('Blackout', 'All console emissions stopped. Sensors still recording.', 'muted');
@@ -1808,6 +1822,246 @@ function renderAerial() {
   );
 }
 
+/* ----------------------------------------------------------------- argus */
+
+/** @returns {void} Populate the Argus panel's fixed content. */
+function buildArgus() {
+  $('argus-relay').replaceChildren(...RELAYS.map((relay) => {
+    const option = document.createElement('option');
+    option.value = relay.id;
+    option.textContent = relay.name;
+    option.title = relay.note;
+    return option;
+  }));
+  $('argus-truth').textContent =
+    'Two walls stand between an Argus and this console. The battery models serve no RTSP, ONVIF or '
+    + 'RTMP at all — holding a stream open would flatten the battery, so they sleep and talk only to '
+    + 'Reolink\'s app. And a snapshot that loads fine in the browser still cannot be measured: drawing '
+    + 'a cross-origin image taints the canvas, and every deck here reads pixels back off one. A small '
+    + 'relay on the ranch network removes both walls at once.';
+  renderArgus();
+}
+
+/** @returns {void} Redraw the Argus readouts from the current fields. */
+function renderArgus() {
+  const model = $('argus-model').value;
+  const host = $('argus-host').value.trim();
+  const family = identifyModel(model);
+  const advice = recommend(family);
+
+  setBadge('argus-prov', family ? (family.battery ? 'MODEL' : 'LINK') : 'MODEL',
+    family ? (family.battery ? 'Battery' : 'Wired') : 'Unknown model');
+
+  const relay = RELAYS.find((entry) => entry.id === $('argus-relay').value) ?? RELAYS[0];
+  const urls = relayUrls(relay.id, $('argus-relay-base').value.trim(), $('argus-relay-name').value.trim());
+  $('argus-relay-note').className = 'note';
+  $('argus-relay-note').textContent = urls
+    ? `${relay.note} Stream URL: ${urls.hls}`
+    : relay.note;
+
+  $('argus-readouts').replaceChildren(
+    readout('Model', family ? family.name : 'unrecognised', {
+      tone: family ? (family.battery ? 'caution' : 'confirm') : 'muted',
+      note: family ? family.note : 'Not a model this console knows. Testing the snapshot address is the quickest way to find out what it serves.',
+    }),
+    readout('Serves', family ? family.serves.join(', ') : '—', {
+      tone: family?.serves.includes('rtsp') ? 'confirm' : 'caution',
+    }),
+    readout('RTSP', host && family?.serves.includes('rtsp')
+      ? rtspUrl({ host, user: $('argus-user').value, password: $('argus-pass').value, stream: $('argus-stream').value })
+      : 'not served', {
+      tone: family?.serves.includes('rtsp') ? 'primary' : 'muted',
+      note: family?.serves.includes('rtsp') ? 'Point the relay at this. Browsers cannot play RTSP directly.' : 'Battery models open no RTSP port at all.',
+    }),
+    readout('Route', advice.route, { tone: 'primary', note: advice.headline }),
+  );
+
+  $('argus-steps').replaceChildren(...advice.steps.map((step, i) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'primary';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = `Step ${i + 1}`;
+    li.querySelector('p').textContent = step;
+    return li;
+  }));
+}
+
+/**
+ * Try to load a URL as an image, timing the attempt.
+ *
+ * An image load is the one probe a browser allows across origins, so it answers
+ * "is the camera there" where a fetch cannot.
+ *
+ * @param {string} url The URL.
+ * @param {number} [timeoutMs=4000] How long to wait.
+ * @returns {Promise<{loaded: boolean, elapsedMs: number}>} What happened.
+ */
+function probeImage(url, timeoutMs = 4000) {
+  return new Promise((resolve) => {
+    const started = performance.now();
+    const image = new Image();
+    const finish = (loaded) => {
+      image.onload = null;
+      image.onerror = null;
+      resolve({ loaded, elapsedMs: performance.now() - started });
+    };
+    image.onload = () => finish(true);
+    image.onerror = () => finish(false);
+    setTimeout(() => finish(false), timeoutMs);
+    image.src = url;
+  });
+}
+
+/**
+ * Try to read a URL, which is what the detection chain actually needs.
+ *
+ * @param {string} url The URL.
+ * @returns {Promise<{succeeded: boolean, status: number}>} What happened.
+ */
+async function probeFetch(url) {
+  try {
+    const response = await fetch(url, { mode: 'cors', cache: 'no-store' });
+    return { succeeded: response.ok, status: response.status };
+  } catch {
+    return { succeeded: false, status: 0 };
+  }
+}
+
+/** @returns {Promise<void>} Run the connection test and report precisely. */
+async function testArgus() {
+  const host = $('argus-host').value.trim();
+  if (!host) {
+    $('argus-relay-note').className = 'note bad';
+    $('argus-relay-note').textContent = 'Enter the camera address first — the Reolink app shows it under device settings.';
+    return;
+  }
+
+  $('argus-test').disabled = true;
+  setBadge('argus-prov', 'MODEL', 'Testing');
+
+  const url = snapshotUrl({ host, user: $('argus-user').value, password: $('argus-pass').value });
+  const [image, read] = await Promise.all([probeImage(url), probeFetch(url)]);
+  const verdict = diagnose({
+    imageLoaded: image.loaded,
+    fetchSucceeded: read.succeeded,
+    status: read.status,
+    elapsedMs: image.elapsedMs,
+    timeoutMs: 4000,
+    pageScheme: window.location.protocol,
+    targetScheme: 'http:',
+  });
+
+  const reach = analysable({
+    kind: 'snapshot',
+    url,
+    pageOrigin: window.location.origin,
+    cors: read.succeeded,
+  });
+
+  setBadge('argus-prov', read.succeeded ? 'LINK' : 'BLOCKED', verdict.outcome.headline.replace('.', ''));
+  $('argus-add').disabled = !image.loaded;
+
+  $('argus-readouts').replaceChildren(
+    readout('Result', verdict.outcome.headline, {
+      tone: read.succeeded ? 'confirm' : image.loaded ? 'caution' : 'alert',
+      note: verdict.outcome.detail,
+    }),
+    readout('Picture', image.loaded ? 'yes' : 'no', {
+      tone: image.loaded ? 'confirm' : 'alert',
+      note: `Image probe took ${image.elapsedMs.toFixed(0)} ms.`,
+    }),
+    readout('Measurable', reach.analysable ? 'yes' : 'no', {
+      tone: reach.analysable ? 'confirm' : 'alert',
+      note: reach.reason,
+    }),
+    readout('HTTP', read.status || '—', { note: read.status ? 'Status returned by the camera.' : 'No readable response reached this page.' }),
+  );
+
+  $('argus-steps').replaceChildren(...verdict.next.map((step, i) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = read.succeeded ? 'confirm' : 'caution';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = `Next ${i + 1}`;
+    li.querySelector('p').textContent = step;
+    return li;
+  }));
+
+  logEvent('Argus tested', `${verdict.outcome.headline} ${reach.analysable ? 'Frames are measurable.' : 'Frames are display-only.'}`,
+    read.succeeded ? 'confirm' : 'caution');
+  $('argus-test').disabled = false;
+}
+
+/* --------------------------------------------------------------- mariachi */
+
+/**
+ * Whether music may sound right now.
+ *
+ * Two hard interlocks, and they are not decoration. The acoustic deck listens
+ * for impulses on this device's microphone, and a speaker playing trumpets into
+ * that microphone is an impulse detector listening to itself. Blackout means
+ * every emission this console controls stops, and sound is an emission — a
+ * console playing music through a blackout would be giving away the position it
+ * was asked to hide.
+ *
+ * @returns {{allowed: boolean, reason: string}} Whether to play, and why not.
+ */
+function musicAllowed() {
+  if (state.blackout) {
+    return { allowed: false, reason: 'Blackout is on. Sound is an emission, so the music stops with everything else.' };
+  }
+  if (state.acoustic) {
+    return {
+      allowed: false,
+      reason: 'The acoustic watch is listening on this device\'s microphone. Music through the speaker would be an impulse detector listening to itself, so it is held until the watch is stopped.',
+    };
+  }
+  if (!Mariachi.supported()) {
+    return { allowed: false, reason: 'This browser has no Web Audio, so nothing can be synthesised.' };
+  }
+  return { allowed: true, reason: 'Playing — synthesised on the spot, note by note. There is no audio file in this console.' };
+}
+
+/**
+ * Show what the band is actually doing, not what was asked of it.
+ *
+ * @returns {void}
+ */
+function paintMusicButton() {
+  const button = $('music-toggle');
+  button.setAttribute('aria-pressed', String(state.mariachi.playing));
+  button.disabled = !Mariachi.supported();
+  button.textContent = state.mariachi.playing ? '♪ Mariachi on' : '♪ Mariachi';
+}
+
+
+/**
+ * Bring the music in line with what is allowed and what was asked for.
+ *
+ * @returns {void}
+ */
+function syncMusic() {
+  const permission = musicAllowed();
+  const shouldPlay = state.musicWanted && permission.allowed;
+
+  if (shouldPlay && !state.mariachi.playing) {
+    // Repaint once the audio context has actually opened: a browser that
+    // refuses the resume leaves `playing` false, and the button has to follow.
+    state.mariachi.start().then(() => paintMusicButton()).catch(() => paintMusicButton());
+  } else if (!shouldPlay && state.mariachi.playing) {
+    state.mariachi.stop();
+  }
+
+  paintMusicButton();
+
+  const note = $('music-note');
+  note.className = `note ${state.musicWanted && !permission.allowed ? 'warn' : ''}`;
+  note.textContent = state.musicWanted
+    ? permission.reason
+    : 'A son jalisciense in D — guitarrón, vihuela, two trumpets in parallel thirds, violins under it. Synthesised live; no recording is shipped. Off by default, and it stops on its own when the acoustic watch is armed or blackout is called.';
+}
+
 /* ------------------------------------------------------------ persistence */
 
 /** @returns {void} Save what is worth surviving a reload. */
@@ -1818,6 +2072,8 @@ function save() {
       view: state.view,
       picks: state.picks,
       palette: state.palette,
+      musicWanted: state.musicWanted,
+      musicVolume: state.mariachi.volume,
       pose: state.pose ? { heightM: $('cal-height').value, tiltDeg: $('cal-tilt').value, fovDeg: $('cal-fov').value } : null,
     }));
   } catch {
@@ -1833,6 +2089,11 @@ function restore() {
     if (Array.isArray(saved.boundary)) state.boundary = saved.boundary;
     if (Array.isArray(saved.picks)) state.picks = saved.picks;
     if (saved.palette) state.palette = saved.palette;
+    if (typeof saved.musicWanted === 'boolean') state.musicWanted = saved.musicWanted;
+    if (Number.isFinite(saved.musicVolume)) {
+      state.mariachi.setVolume(saved.musicVolume);
+      $('music-volume').value = String(Math.round(saved.musicVolume * 100));
+    }
     if (saved.view) state.view = saved.view;
     if (saved.pose) {
       $('cal-height').value = saved.pose.heightM;
@@ -1886,6 +2147,7 @@ $('acoustic-stop').addEventListener('click', () => {
   setBadge('acoustic-prov', 'MODEL', 'Stopped');
   $('acoustic-start').disabled = false;
   $('acoustic-stop').disabled = true;
+  syncMusic();
 });
 
 $('fence-track').addEventListener('click', startPositioning);
@@ -1995,6 +2257,29 @@ $('harvest-export').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 });
 
+for (const id of ['argus-model', 'argus-host', 'argus-user', 'argus-pass', 'argus-stream', 'argus-relay', 'argus-relay-base', 'argus-relay-name']) {
+  $(id).addEventListener('input', renderArgus);
+  $(id).addEventListener('change', renderArgus);
+}
+$('argus-test').addEventListener('click', testArgus);
+$('argus-add').addEventListener('click', () => {
+  const relay = relayUrls($('argus-relay').value, $('argus-relay-base').value.trim(), $('argus-relay-name').value.trim());
+  const url = relay ? relay.hls : snapshotUrl({ host: $('argus-host').value.trim(), user: $('argus-user').value, password: $('argus-pass').value });
+  $('stream-url').value = url;
+  $('stream-add').click();
+  logEvent('Argus added', relay ? 'Added through the relay — frames are measurable.' : 'Added as a direct snapshot — display only until a relay is in place.', relay ? 'confirm' : 'caution');
+});
+
+$('music-toggle').addEventListener('click', () => {
+  state.musicWanted = !state.musicWanted;
+  syncMusic();
+  save();
+});
+$('music-volume').addEventListener('input', (event) => {
+  state.mariachi.setVolume(Number(event.target.value) / 100);
+  save();
+});
+
 $('camera-rescan').addEventListener('click', refreshCameras);
 $('camera-use').addEventListener('click', async () => {
   state.cameraId = $('camera-pick').value || null;
@@ -2086,6 +2371,8 @@ buildPalettes();
 buildLockModes();
 renderHarvest();
 renderAerial();
+buildArgus();
+syncMusic();
 $('site').textContent = state.boundary.length ? `${state.boundary.length} corners` : 'not set';
 
 if ('serviceWorker' in navigator) {

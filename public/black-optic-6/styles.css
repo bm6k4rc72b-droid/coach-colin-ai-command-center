@@ -569,3 +569,14 @@ label.field span { font-size: 8.5px; letter-spacing: 0.16em; text-transform: upp
 .palettes button[aria-pressed='true'] span.name { color: var(--primary); }
 
 input[type='range'] { width: 100%; accent-color: var(--primary); }
+
+/* ---------------------------------------------------------------- music */
+
+.bar-music { padding: 6px 11px; font-size: 10px; letter-spacing: 0.14em; white-space: nowrap; }
+.bar-music[aria-pressed='true'] { border-color: var(--caution); color: var(--caution); background: rgba(255, 178, 61, 0.1); }
+.bar-music[disabled] { opacity: 0.35; }
+
+@media (max-width: 860px) {
+  .bar-music { padding: 6px 8px; }
+  .bar-music .label { display: none; }
+}

@@ -546,7 +546,9 @@ it came from, and only measured numbers may raise an alarm.
 **Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6/>** — locally it is `/black-optic-6/`
 (`http://localhost:4173/black-optic-6/` under `./start.sh`).
 
-Thirteen decks: optics with every thermal palette a thermal camera offers, a camera picker that takes a DJI Pocket in
+Thirteen decks: optics with every thermal palette a thermal camera offers, a
+Reolink Argus / IP camera setup that tells you whether frames will be *measurable*
+as well as visible, a camera picker that takes a DJI Pocket in
 USB webcam mode like any other camera, and a detection chain that reports metres
 once calibrated; contacts, an event log and a pan-tilt loop that keeps a subject
 centred, plus colour and appearance trackers that follow one specific thing even
@@ -563,7 +565,7 @@ ledger.
 The ledger is the point. Every capability on the specification is answered with
 one of six states — measured here, measured by a device you link, modelled with
 its error, blocked by the platform, needs hardware, or **unsound**. That last
-group is eleven rows the console will not build at any price: an autonomous turret
+group is thirteen rows the console will not build at any price: an autonomous turret
 with a firing mechanism, identifying a drone from one camera, calling a palette
 over a visible camera thermal, naming a nutrient from a spectrum, intent and aggression
 scoring, threat percentages, concealed-object detection, gait identification,
@@ -579,7 +581,7 @@ about how fast something was moving.
 
 Full write-up, including the refusals in detail:
 [`docs/black-optic-6.md`](docs/black-optic-6.md). Tests:
-`npm run test:black-optic-6` (126 unit tests) and `npm run qa:black-optic-6`,
+`npm run test:black-optic-6` (159 unit tests) and `npm run qa:black-optic-6`,
 which drives the real console in Chromium with a synthetic camera and microphone.
 
 ---

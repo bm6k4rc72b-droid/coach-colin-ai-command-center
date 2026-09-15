@@ -25,6 +25,7 @@
         <div class="bar-spacer"></div>
         <div class="bar-slot optional">Site <b id="site">not set</b></div>
         <div class="bar-slot optional">Links <b id="link-count">0</b></div>
+        <button class="ghost bar-music" id="music-toggle" type="button" title="Mariachi, synthesised on the spot">♪ Mariachi</button>
         <div class="bar-slot"><b id="clock">--:--:--</b></div>
       </header>
 
@@ -122,6 +123,33 @@
           </div>
 
           <div class="panel">
+            <div class="panel-head"><h2>Argus / IP camera</h2><span class="spacer"></span><span class="prov" id="argus-prov" data-tone="muted">Not set up</span></div>
+            <p class="note" id="argus-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 200px"><span>Model</span><input id="argus-model" type="text" placeholder="Reolink Argus 3 Pro" value="Reolink Argus 3 Pro" /></label>
+              <label class="field" style="flex:1 1 160px"><span>Address</span><input id="argus-host" type="text" placeholder="192.168.1.42" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>User</span><input id="argus-user" type="text" placeholder="viewer" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Password</span><input id="argus-pass" type="password" /></label>
+              <label class="field" style="flex:0 1 120px"><span>Stream</span><select id="argus-stream"><option value="sub">Sub</option><option value="main">Main</option></select></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="argus-test" type="button">Test connection</button>
+              <button class="ghost" id="argus-add" type="button" disabled>Add as source</button>
+            </div>
+            <div class="readouts" id="argus-readouts" style="margin-top: 12px"></div>
+            <ul class="rows" id="argus-steps" style="margin-top: 12px"></ul>
+            <h3 style="margin-top:14px">Relay</h3>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>Relay</span><select id="argus-relay"></select></label>
+              <label class="field" style="flex:1 1 180px"><span>Relay address</span><input id="argus-relay-base" type="text" placeholder="http://nas.local:1984" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Stream name</span><input id="argus-relay-name" type="text" placeholder="argus-gate" /></label>
+            </div>
+            <p class="note" id="argus-relay-note" style="margin-top: 10px"></p>
+          </div>
+
+          <div class="panel">
             <div class="panel-head"><h2>Camera sources</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
             <p class="note">
               Any camera that publishes a stream this browser can open — HLS, WebRTC, or an MJPEG
@@ -190,6 +218,10 @@
                 <button class="act" id="deter-siren" type="button">Siren</button>
                 <button class="ghost danger" id="blackout" type="button">Blackout</button>
               </div>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 160px"><span>Mariachi volume</span><input id="music-volume" type="range" min="0" max="100" value="45" /></label>
+              </div>
+              <p class="note" id="music-note" style="margin-top: 10px"></p>
               <p class="note" id="response-note" style="margin-top: 10px">
                 Blackout kills every emission this console controls — screen, torch, siren, network
                 calls — and keeps the sensors recording.

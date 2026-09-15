@@ -7,6 +7,16 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added Reolink Argus support and a mariachi ensemble to **Black Optic 6**. The
+  Argus panel identifies battery models (which serve no RTSP at all) from wired
+  ones, builds the right RTSP and snapshot addresses, and tests the connection —
+  reporting whether frames are *measurable* separately from whether a picture
+  arrived, because a cross-origin snapshot taints the canvas and every deck reads
+  pixels back off one. Relay setup for go2rtc, MediaMTX and Frigate is spelled
+  out. The mariachi is a son jalisciense synthesised note by note — guitarrón,
+  vihuela, two trumpets in parallel diatonic thirds, violins, and an alternating
+  hemiola — with no recording shipped. Off by default, and it stops itself when
+  the acoustic watch is listening or blackout is called.
 - Added thermal palettes and the tracking suite to **Black Optic 6**. All
   thirteen palettes a thermal camera offers, with auto and manual gain, isotherm
   bands, fusion edges, spot and area measurement, and emissivity correction —

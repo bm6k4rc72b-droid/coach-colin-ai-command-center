@@ -40,6 +40,8 @@ const SHELL = [
   'js/lock.js',
   'js/harvest.js',
   'js/aerial.js',
+  'js/argus.js',
+  'js/mariachi.js',
   '../sentry/js/scene.js',
   '../sentry/js/tracker.js',
   '../sentry/js/ground.js',
