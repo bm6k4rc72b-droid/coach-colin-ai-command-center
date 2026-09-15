@@ -420,3 +420,134 @@ export function recommend(family) {
     ],
   };
 }
+
+/**
+ * The path the console's own dev server proxies to a relay.
+ *
+ * Serving the relay from this origin is what removes both walls at once: no
+ * cross-origin read to be refused, no tainted canvas, and no mixed-content block
+ * when the console is opened over plain HTTP on the ranch network. It is also
+ * free — the proxy is three lines of the dev server's own configuration.
+ */
+export const LOCAL_RELAY_PATH = '/relay';
+
+/**
+ * Same-origin URLs for a stream, through the console's relay proxy.
+ *
+ * @param {string} name The stream name configured in the relay.
+ * @param {string} [relayId='go2rtc'] Which relay is behind the proxy.
+ * @returns {{hls: string, webrtc: string}|null} Both URLs.
+ */
+export function localRelayUrls(name, relayId = 'go2rtc') {
+  if (!name) return null;
+  return relayUrls(relayId, LOCAL_RELAY_PATH, name);
+}
+
+/**
+ * Whether this page can use the same-origin relay proxy.
+ *
+ * The proxy exists in the console's own dev server. A copy served from a static
+ * host has no server to proxy with, so the answer there is to run the console
+ * locally — on the same machine as the relay, which most people already have on.
+ *
+ * @param {string} origin The page's origin.
+ * @returns {{available: boolean, reason: string}} Whether the proxy is there.
+ */
+export function localRelayAvailable(origin) {
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|[^/]+\.local)(:\d+)?$/i.test(String(origin ?? ''));
+  return local
+    ? {
+      available: true,
+      reason: 'Running from the console\'s own server, so the relay is proxied at /relay — same origin, fully measurable.',
+    }
+    : {
+      available: false,
+      reason: 'This copy is served from a static host, which has no server to proxy through. Run ./start.sh on the machine beside the relay and open the console there; everything below then works with no CORS and no mixed-content block.',
+    };
+}
+
+/**
+ * A ready-to-paste go2rtc configuration for a camera.
+ *
+ * go2rtc is free and open source, a single binary of about twenty megabytes,
+ * and it runs on anything already switched on — a NAS, a mini PC, a Raspberry
+ * Pi. This writes the file so the setup is a copy and a paste rather than an
+ * afternoon of reading.
+ *
+ * For a wired camera the RTSP source is the whole answer. For a battery Argus
+ * there is no RTSP to point at, so both plausible routes are written out and
+ * labelled: Reolink's HTTP-FLV endpoint, which some battery models answer, and
+ * the Home Hub, which is mains-powered, stays awake, and re-serves its paired
+ * cameras over RTSP. Try the first; the second is the one that always works.
+ *
+ * @param {object} camera Connection details.
+ * @param {string} camera.name Stream name to use in the relay.
+ * @param {string} camera.host Camera address.
+ * @param {string} [camera.user] Username.
+ * @param {string} [camera.password] Password.
+ * @param {Family|null} [camera.family] The identified family.
+ * @param {string} [camera.hubHost] Address of a Reolink Home Hub, when there is one.
+ * @returns {string} A go2rtc YAML configuration.
+ */
+export function go2rtcConfig(camera) {
+  const { name = 'argus', host = '192.168.1.42', user = 'viewer', password = 'PASSWORD', family = null, hubHost = '' } = camera ?? {};
+  const safeName = String(name).replace(/[^a-z0-9_-]/gi, '-').toLowerCase() || 'argus';
+  const lines = [
+    '# go2rtc.yaml — free and open source: github.com/AlexxIT/go2rtc',
+    '#',
+    '# Put this beside the go2rtc binary and start it. The console then reads the',
+    '# stream through its own /relay path, which keeps it same-origin and',
+    '# therefore measurable rather than merely visible.',
+    '',
+    'api:',
+    '  listen: ":1984"',
+    '',
+    'streams:',
+  ];
+
+  if (family?.battery) {
+    lines.push(
+      `  # ${family.name}. There is no RTSP on this camera to point at, so try these in order.`,
+      '  #',
+      '  # 1. Reolink HTTP-FLV. Some battery models answer this; it costs nothing to try.',
+      `  ${safeName}: "http://${host}/flv?port=1935&app=bcs&stream=channel0_main.bcs&user=${user}&password=${password}"`,
+      '',
+      '  # 2. Through a Reolink Home Hub, which is mains powered, stays awake, and',
+      '  #    re-serves its paired battery cameras over RTSP. This is the route that',
+      '  #    always works. Uncomment it and set the hub address.',
+      `  # ${safeName}_hub: rtsp://${user}:${password}@${hubHost || 'HUB-ADDRESS'}:554/h264Preview_01_sub`,
+    );
+  } else {
+    lines.push(
+      `  # ${family ? family.name : 'IP camera'}. Sub stream: smaller, sooner, and this`,
+      '  # console processes at 320 pixels wide either way.',
+      `  ${safeName}: ${rtspUrl({ host, user, password, stream: 'sub' })}`,
+      '',
+      '  # The main stream, if you want the recording to be full resolution.',
+      `  # ${safeName}_main: ${rtspUrl({ host, user, password, stream: 'main' })}`,
+    );
+  }
+
+  lines.push(
+    '',
+    '# Then, on the machine running this:',
+    '#   ./start.sh',
+    `#   open http://localhost:4173/black-optic-6/  and add  /relay/api/stream.m3u8?src=${safeName}`,
+  );
+  return lines.join('\n');
+}
+
+/**
+ * What the whole setup costs, itemised.
+ *
+ * Worth stating plainly, because "it needs a relay" reads like a paywall and is
+ * not one: every part of this is free, and the only requirement is a computer
+ * that is already switched on.
+ */
+export const COST = Object.freeze([
+  { item: 'go2rtc', cost: 'Free', note: 'Open source, MIT licensed. One binary, about 20 MB.' },
+  { item: 'This console', cost: 'Free', note: 'Runs from the repository. No account, no key, no backend.' },
+  { item: 'Reolink subscription', cost: 'Not needed', note: 'None of this touches Reolink\'s cloud. The camera is read on your own network.' },
+  { item: 'Hardware', cost: 'Whatever is already on', note: 'A NAS, a mini PC, a Raspberry Pi. It idles at a few percent of one core.' },
+  { item: 'Reolink Home Hub', cost: 'Optional, about £70', note: 'Only if the HTTP-FLV route does not answer on your battery model. It is the route that always works.' },
+]);

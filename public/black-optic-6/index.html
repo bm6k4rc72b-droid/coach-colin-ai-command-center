@@ -147,6 +147,15 @@
               <label class="field" style="flex:0 1 150px"><span>Stream name</span><input id="argus-relay-name" type="text" placeholder="argus-gate" /></label>
             </div>
             <p class="note" id="argus-relay-note" style="margin-top: 10px"></p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="argus-config" type="button">Write my go2rtc config</button>
+              <button class="ghost" id="argus-copy" type="button" disabled>Copy</button>
+              <button class="ghost" id="argus-use-local" type="button">Use the local relay</button>
+            </div>
+            <textarea id="argus-yaml" rows="14" spellcheck="false" hidden style="margin-top: 11px; font-size: 11px"></textarea>
+            <p class="note" id="argus-local-note" style="margin-top: 10px"></p>
+            <h3 style="margin-top:14px">What this costs</h3>
+            <table class="ladder" id="argus-cost"></table>
           </div>
 
           <div class="panel">

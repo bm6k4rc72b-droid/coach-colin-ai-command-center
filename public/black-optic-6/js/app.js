@@ -41,7 +41,8 @@ import { ColourLock, LOCK_MODES, TemplateLock } from './lock.js';
 import { blockProgress, daySummary, estimateFinish, pickRate, yieldRanking } from './harvest.js';
 import { aboveHorizon, angularRate, angularSize, consistentWith, telemetryTrack } from './aerial.js';
 import {
-  analysable, diagnose, identifyModel, recommend, RELAYS, relayUrls, rtspUrl, snapshotUrl,
+  analysable, COST, diagnose, go2rtcConfig, identifyModel, localRelayAvailable, localRelayUrls,
+  recommend, RELAYS, relayUrls, rtspUrl, snapshotUrl,
 } from './argus.js';
 import { Mariachi } from './mariachi.js';
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
@@ -1833,6 +1834,21 @@ function buildArgus() {
     option.title = relay.note;
     return option;
   }));
+  const table = $('argus-cost');
+  table.innerHTML = '<tr><th>Item</th><th>Cost</th><th></th></tr>';
+  for (const row of COST) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td></td><td></td><td></td>';
+    tr.children[0].textContent = row.item;
+    tr.children[1].textContent = row.cost;
+    tr.children[2].textContent = row.note;
+    table.append(tr);
+  }
+
+  const local = localRelayAvailable(window.location.origin);
+  $('argus-local-note').className = `note ${local.available ? 'good' : 'warn'}`;
+  $('argus-local-note').textContent = local.reason;
+
   $('argus-truth').textContent =
     'Two walls stand between an Argus and this console. The battery models serve no RTSP, ONVIF or '
     + 'RTMP at all — holding a stream open would flatten the battery, so they sleep and talk only to '
@@ -2262,6 +2278,44 @@ for (const id of ['argus-model', 'argus-host', 'argus-user', 'argus-pass', 'argu
   $(id).addEventListener('change', renderArgus);
 }
 $('argus-test').addEventListener('click', testArgus);
+$('argus-config').addEventListener('click', () => {
+  const yaml = go2rtcConfig({
+    name: $('argus-relay-name').value.trim() || 'argus',
+    host: $('argus-host').value.trim() || '192.168.1.42',
+    user: $('argus-user').value.trim() || 'viewer',
+    password: $('argus-pass').value || 'PASSWORD',
+    family: identifyModel($('argus-model').value),
+  });
+  const box = $('argus-yaml');
+  box.hidden = false;
+  box.value = yaml;
+  $('argus-copy').disabled = false;
+  logEvent('Relay config written', 'Paste it beside the go2rtc binary and start it. Everything in the chain is free.', 'confirm');
+});
+$('argus-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('argus-yaml').value);
+    $('argus-local-note').className = 'note good';
+    $('argus-local-note').textContent = 'Copied. Save it as go2rtc.yaml beside the binary.';
+  } catch {
+    $('argus-yaml').select();
+  }
+});
+$('argus-use-local').addEventListener('click', () => {
+  const name = $('argus-relay-name').value.trim();
+  if (!name) {
+    $('argus-local-note').className = 'note bad';
+    $('argus-local-note').textContent = 'Give the stream a name first — the same one you put in the go2rtc config.';
+    return;
+  }
+  const urls = localRelayUrls(name);
+  $('stream-url').value = urls.hls;
+  $('stream-add').click();
+  const reach = analysable({ kind: 'hls', url: urls.hls, pageOrigin: window.location.origin });
+  logEvent('Local relay added', reach.reason, reach.analysable ? 'confirm' : 'caution');
+  $('argus-local-note').className = `note ${reach.analysable ? 'good' : 'warn'}`;
+  $('argus-local-note').textContent = reach.reason;
+});
 $('argus-add').addEventListener('click', () => {
   const relay = relayUrls($('argus-relay').value, $('argus-relay-base').value.trim(), $('argus-relay-name').value.trim());
   const url = relay ? relay.hls : snapshotUrl({ host: $('argus-host').value.trim(), user: $('argus-user').value, password: $('argus-pass').value });

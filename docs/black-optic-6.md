@@ -153,10 +153,42 @@ reads pixels back off a canvas, so a snapshot that appears to be working support
 none of it. The connection test reports **measurable: yes/no** separately from
 whether a picture arrived, because they are different questions.
 
-Both walls have the same door: a relay on the ranch network. go2rtc is the one to
-reach for with Reolink — it speaks their own protocol, so it can pull from a
-battery Argus that serves no RTSP at all, and it publishes WebRTC the browser can
-both play and read.
+Both walls have the same door, and it costs nothing.
+
+### The free setup, in full
+
+1. **Put go2rtc on a machine that stays on.** It is open source, one binary of
+   about twenty megabytes, and it idles at a few percent of one core. A NAS, a
+   mini PC, a Raspberry Pi — anything already switched on. It is the relay to
+   reach for with Reolink specifically, because it speaks their own protocol as
+   well as RTSP, which is what lets it pull from a battery Argus that serves no
+   RTSP at all.
+2. **Press "Write my go2rtc config" in the Argus panel.** It emits the YAML for
+   your camera. A wired camera gets its RTSP source; a battery one gets both
+   routes in order — Reolink's HTTP-FLV endpoint, which some battery models
+   answer and which costs nothing to try, and the Home Hub, which is mains
+   powered, stays awake, re-serves its paired cameras over RTSP, and is the route
+   that always works.
+3. **Run the console on that same machine** with `./start.sh`, and open it at
+   `http://localhost:4173/black-optic-6/`.
+4. **Press "Use the local relay".** The stream is added through `/relay`, which
+   the console's own dev server proxies to go2rtc.
+
+Step four is the one doing the real work. Serving the relay from the console's
+own origin removes both walls at once: no cross-origin read to be refused, no
+tainted canvas, and no mixed-content block from an HTTPS page reaching for an
+HTTP camera. The frames become fully measurable — motion, tracking, thermal
+palettes, vegetation indices, all of it.
+
+Nothing in that list is paid. No Reolink subscription is involved, because none
+of it touches their cloud; the camera is read on your own network. The only
+optional purchase is a Home Hub, and only if the free HTTP-FLV route does not
+answer on your model.
+
+`npm run qa:camera-relay` proves the chain: it stands a relay up on go2rtc's
+port, starts the console's real dev server with its real configuration, and
+checks that the stream comes back from the console's own origin with its bytes
+and content type intact.
 
 **Mariachi.** A *son jalisciense* in D, synthesised note by note — guitarrón on
 roots and fifths, vihuela chopping the offbeats, two trumpets in parallel
@@ -289,8 +321,9 @@ jurisdictions, often sharply.
 ## Tests
 
 ```sh
-npm run test:black-optic-6   # 159 unit tests, no browser or network needed
+npm run test:black-optic-6   # 166 unit tests, no browser or network needed
 npm run qa:black-optic-6     # drives the real console in Chromium
+npm run qa:camera-relay      # proves the relay reaches the console same-origin
 ```
 
 The unit suite covers the provenance rule, the ledger's completeness, and each

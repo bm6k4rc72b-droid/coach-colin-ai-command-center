@@ -8,8 +8,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  analysable, diagnose, FAMILIES, identifyModel, OUTCOMES, recommend,
-  RELAYS, relayUrls, rtspUrl, snapshotUrl, RTSP_PORT,
+  analysable, COST, diagnose, FAMILIES, go2rtcConfig, identifyModel, LOCAL_RELAY_PATH,
+  localRelayAvailable, localRelayUrls, OUTCOMES, recommend, RELAYS, relayUrls,
+  rtspUrl, snapshotUrl, RTSP_PORT,
 } from '../../public/black-optic-6/js/argus.js';
 
 test('battery Argus models are identified as battery, and serve no stream', () => {
@@ -178,4 +179,69 @@ test('an unknown camera gets something to try rather than a shrug', () => {
   const advice = recommend(null);
   assert.equal(advice.route, 'unknown');
   assert.ok(advice.steps.length >= 2);
+});
+
+/* --------------------------------------------------- the free way through */
+
+test('the same-origin relay path is measurable, which is the whole point of it', () => {
+  const urls = localRelayUrls('argus-gate');
+  assert.ok(urls.hls.startsWith(LOCAL_RELAY_PATH), 'it must go through the console\'s own proxy');
+  const verdict = analysable({ kind: 'hls', url: urls.hls, pageOrigin: 'http://localhost:4173' });
+  assert.equal(verdict.analysable, true, 'same origin means the frames can be read');
+  assert.equal(localRelayUrls(''), null);
+});
+
+test('the relay proxy is offered where it exists and explained where it does not', () => {
+  for (const origin of ['http://localhost:4173', 'http://127.0.0.1:4173', 'http://ranch.local:4173']) {
+    assert.equal(localRelayAvailable(origin).available, true, `${origin} runs the console's own server`);
+  }
+  const hosted = localRelayAvailable('https://bm6k4rc72b-droid.github.io');
+  assert.equal(hosted.available, false, 'a static host has no server to proxy with');
+  assert.match(hosted.reason, /start\.sh/, 'and it must say what to do instead');
+});
+
+test('a wired camera gets a config with its RTSP source in it', () => {
+  const yaml = go2rtcConfig({
+    name: 'gate', host: '192.168.1.42', user: 'viewer', password: 'secret',
+    family: identifyModel('RLC-810A'),
+  });
+  assert.match(yaml, /^streams:/m);
+  assert.match(yaml, /gate: rtsp:\/\/viewer:secret@192\.168\.1\.42:554\/h264Preview_01_sub/);
+  assert.match(yaml, /go2rtc/i);
+});
+
+test('a battery camera gets both routes, ordered, with the reliable one named', () => {
+  const yaml = go2rtcConfig({
+    name: 'gate', host: '192.168.1.42', user: 'viewer', password: 'secret',
+    family: identifyModel('Argus 3 Pro'),
+  });
+  assert.match(yaml, /flv\?port=1935/, 'the HTTP-FLV attempt is worth making and costs nothing');
+  assert.match(yaml, /Home Hub/, 'and the hub is the route that always works');
+  assert.match(yaml, /always works/);
+  assert.ok(
+    yaml.indexOf('flv?port=1935') < yaml.indexOf('Home Hub'),
+    'the free attempt should come before the one that costs money',
+  );
+});
+
+test('the generated stream name is safe to paste into a config', () => {
+  const yaml = go2rtcConfig({ name: 'Front Gate / North!', host: 'cam', family: null });
+  assert.match(yaml, /front-gate---north-:/, 'spaces and punctuation would break the YAML key');
+  assert.doesNotMatch(yaml, /\n\s+Front Gate/);
+});
+
+test('a config is produced even with nothing filled in, so it can be read before it is used', () => {
+  const yaml = go2rtcConfig({});
+  assert.match(yaml, /^streams:/m);
+  assert.match(yaml, /PASSWORD/, 'the placeholder should be obviously a placeholder');
+});
+
+test('the cost of the whole chain is itemised, and the required parts are free', () => {
+  assert.ok(COST.length >= 4);
+  const required = COST.filter((row) => !/optional/i.test(row.cost) && !/optional/i.test(row.note));
+  for (const row of required) {
+    assert.match(row.cost, /free|not needed|already on/i, `${row.item} should not cost anything`);
+  }
+  assert.ok(COST.some((row) => /subscription/i.test(row.item)), 'the cloud subscription question must be answered');
+  assert.ok(COST.some((row) => /Hub/i.test(row.item)), 'and the one optional purchase named');
 });
