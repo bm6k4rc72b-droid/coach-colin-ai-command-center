@@ -121,10 +121,31 @@ async function main() {
     const page = await browser.newPage();
     await page.setViewport({ width: 1440, height: 1000, deviceScaleFactor: 1 });
 
+    // Count oscillators as they start. A flag flipping to "playing" proves
+    // nothing about whether the band is actually sounding notes; this does.
+    await page.evaluateOnNewDocument(() => {
+      window.__notes = 0;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const original = Ctx.prototype.createOscillator;
+      Ctx.prototype.createOscillator = function patched(...args) {
+        const osc = original.apply(this, args);
+        const start = osc.start.bind(osc);
+        osc.start = (...when) => {
+          window.__notes += 1;
+          return start(...when);
+        };
+        return osc;
+      };
+    });
+
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => {
-      if (message.type() === 'error' && !/gibs\.earthdata|net::ERR/.test(message.text())) {
+      // A camera that does not answer logs a network error from the browser
+      // itself; that is the probe working, not the console failing.
+      if (message.type() === 'error'
+        && !/gibs\.earthdata|net::ERR|Failed to load resource/.test(message.text())) {
         errors.push(message.text());
       }
     });
@@ -149,10 +170,10 @@ async function main() {
     check(ledger >= 30, `every specified capability is answered (${ledger} rows)`);
 
     const unsound = await page.$$eval('.ledger-row .prov[data-tone="alert"]', (nodes) => nodes.length);
-    check(unsound >= 10, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
+    check(unsound >= 12, `the refusals are shown rather than dropped (${unsound} marked unsound)`);
 
     const ledgerText = await page.$eval('#ledger', (node) => node.textContent);
-    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment', 'firing mechanism', 'Nutrient deficiency', 'Identifying a drone']) {
+    for (const phrase of ['intent', 'gait', 'Concealed', 'Threat assessment', 'firing mechanism', 'Nutrient deficiency', 'Identifying a drone', 'will not let this page read']) {
       check(ledgerText.includes(phrase), `the ledger answers "${phrase}" openly`);
     }
     check(
@@ -403,6 +424,107 @@ async function main() {
     check(/angles, never distance|angles, not range/i.test(aerialText), 'the aerial deck refuses to imply range');
     const settle = await page.$$eval('#aerial-settle .row', (nodes) => nodes.length);
     check(settle >= 3, `what would actually settle an identification is listed (${settle})`);
+
+    // ---------------------------------------------------------- argus
+    await page.click('#rail button[data-deck="optics"]');
+    const argusText = await page.$eval('#argus-readouts', (node) => node.textContent);
+    check(/battery/i.test(argusText), `a battery Argus is identified as one (${argusText.slice(0, 40).trim()}…)`);
+    const argusSteps = await page.$$eval('#argus-steps .row', (nodes) => nodes.length);
+    check(argusSteps >= 3, `the route in is spelled out step by step (${argusSteps})`);
+    const argusPanel = await page.$eval('#argus-truth', (node) => node.textContent);
+    check(/taints the canvas/i.test(argusPanel), 'the canvas-taint wall is stated up front');
+
+    // A wired model must be offered RTSP; a battery one must not.
+    await page.evaluate(() => {
+      const field = document.getElementById('argus-model');
+      field.value = 'Reolink RLC-810A';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('argus-host').value = '192.168.1.42';
+      document.getElementById('argus-host').dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const wiredText = await page.$eval('#argus-readouts', (node) => node.textContent);
+    check(/rtsp:\/\//.test(wiredText), 'a wired camera gets a real RTSP address built for it');
+    check(/h264Preview_01_sub/.test(wiredText), 'and it is Reolink\'s own path shape');
+
+    await page.evaluate(() => {
+      const field = document.getElementById('argus-model');
+      field.value = 'Reolink Argus 3 Pro';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const batteryText = await page.$eval('#argus-readouts', (node) => node.textContent);
+    check(/not served/.test(batteryText), 'a battery camera is not offered an RTSP address it cannot serve');
+
+    // The test button must reach a verdict on an address that does not exist.
+    await page.evaluate(() => {
+      const field = document.getElementById('argus-host');
+      field.value = '10.255.255.1';
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.click('#argus-test');
+    await page.waitForFunction(
+      () => !document.getElementById('argus-test').disabled,
+      { timeout: 20000 },
+    );
+    const verdict = await page.$eval('#argus-readouts', (node) => node.textContent);
+    check(/Measurable/.test(verdict), 'the test reports whether frames could be measured, not just seen');
+    check(
+      /no answer|refused|blocked|reachable|rejected/i.test(verdict),
+      `the test reaches a named verdict rather than hanging (${verdict.slice(0, 34).trim()}…)`,
+    );
+
+    // -------------------------------------------------------- mariachi
+    const musicSupported = await page.evaluate(() => Boolean(window.AudioContext || window.webkitAudioContext));
+    check(musicSupported, 'the browser can synthesise audio');
+
+    const startsSilent = await page.$eval('#music-toggle', (node) => node.getAttribute('aria-pressed'));
+    check(startsSilent === 'false', 'the console does not start making noise on its own');
+
+    // The acoustic watch is still running from the deck test above, so asking
+    // for music here must be refused — which is the interlock, working.
+    await page.click('#music-toggle');
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const heldByWatch = await page.$eval('#music-toggle', (node) => node.getAttribute('aria-pressed'));
+    check(heldByWatch === 'false', 'music is refused while the acoustic watch is listening');
+
+    await page.click('#rail button[data-deck="watch"]');
+    const musicNote = await page.$eval('#music-note', (node) => node.textContent);
+    check(
+      /listening on this device|impulse detector listening to itself/i.test(musicNote),
+      'and says why, rather than just going quiet',
+    );
+
+    await page.click('#rail button[data-deck="acoustic"]');
+    await page.click('#acoustic-stop');
+    const resumed = await page.waitForFunction(
+      () => document.getElementById('music-toggle').getAttribute('aria-pressed') === 'true',
+      { timeout: 8000 },
+    ).then(() => true).catch(() => false);
+    check(resumed, 'and starts as soon as the watch is stopped');
+
+    const graph = await page.evaluate(() => {
+      const button = document.getElementById('music-toggle');
+      return button.getAttribute('aria-pressed') === 'true' && button.textContent.includes('on');
+    });
+    check(graph, 'the ensemble reports itself playing');
+
+    await new Promise((resolve) => setTimeout(resolve, 1600));
+    const notes = await page.evaluate(() => window.__notes ?? 0);
+    // A bar carries about thirty events and lasts a second, so a second and a
+    // half of playing is dozens of notes. Near zero would mean a silent "on".
+    check(notes > 40, `the band is actually sounding notes (${notes} scheduled)`);
+
+    // Blackout is the other interlock: sound is an emission.
+    await page.click('#rail button[data-deck="watch"]');
+    await page.click('#blackout');
+    const silencedByBlackout = await page.waitForFunction(
+      () => document.getElementById('music-toggle').getAttribute('aria-pressed') === 'false',
+      { timeout: 8000 },
+    ).then(() => true).catch(() => false);
+    check(silencedByBlackout, 'blackout silences the music, because sound is an emission');
+    await page.evaluate(() => {
+      [...document.querySelectorAll('div')].find((node) => node.textContent === 'BLACKOUT — TAP TO RESTORE')?.click();
+    });
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
     await page.click('#rail button[data-deck="optics"]');
     await page.screenshot({ path: shot });

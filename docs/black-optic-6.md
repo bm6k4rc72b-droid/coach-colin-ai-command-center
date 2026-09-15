@@ -135,6 +135,44 @@ no sonar attached — badged synthetic throughout.
 heart rate service, with beat-to-beat variability where the sensor sends
 intervals. This is the operator's own sensor, not a subject's.
 
+**Argus / IP camera.** Reolink's Argus line is the obvious camera for a property
+with no cable in the ground, and getting it into this console runs into two
+separate walls.
+
+The first is the camera. Battery models — Argus 2, 3, Eco, PT, the Go series —
+serve no RTSP, ONVIF or RTMP at all. Holding a stream open would flatten the
+battery, so they sleep and talk only to Reolink's own app. Wired Reolink (the RLC
+series) serves RTSP happily, and a Reolink Home Hub stays awake and can re-serve
+its paired battery cameras.
+
+The second wall is the browser, and it is the one that catches people. A snapshot
+URL loads perfectly well in an `<img>` — you will see the picture. But the camera
+sends no cross-origin headers, so the moment that image is drawn to a canvas the
+canvas is *tainted* and `getImageData` throws. Every measurement in this console
+reads pixels back off a canvas, so a snapshot that appears to be working supports
+none of it. The connection test reports **measurable: yes/no** separately from
+whether a picture arrived, because they are different questions.
+
+Both walls have the same door: a relay on the ranch network. go2rtc is the one to
+reach for with Reolink — it speaks their own protocol, so it can pull from a
+battery Argus that serves no RTSP at all, and it publishes WebRTC the browser can
+both play and read.
+
+**Mariachi.** A *son jalisciense* in D, synthesised note by note — guitarrón on
+roots and fifths, vihuela chopping the offbeats, two trumpets in parallel
+diatonic thirds, violins underneath, and the hemiola alternating between two
+groups of three and three groups of two so it stays a son rather than becoming a
+waltz. No recording is shipped, so nothing here is anybody's copyright.
+
+It is off by default and it stops itself in two cases, enforced rather than
+warned about:
+
+- **The acoustic watch is listening.** That deck detects impulses on this
+  device's microphone. A speaker playing trumpets into that microphone is an
+  impulse detector listening to itself.
+- **Blackout is called.** Sound is an emission, and a console playing music
+  through a blackout is giving away the position it was asked to hide.
+
 **Links.** A socket for external sensors — an ESP32 in CSI mode, a 60 GHz
 presence module, a magnetometer node, a thermal camera — using the same link the
 perimeter camera app defined.
@@ -251,7 +289,7 @@ jurisdictions, often sharply.
 ## Tests
 
 ```sh
-npm run test:black-optic-6   # 126 unit tests, no browser or network needed
+npm run test:black-optic-6   # 159 unit tests, no browser or network needed
 npm run qa:black-optic-6     # drives the real console in Chromium
 ```
 
@@ -265,7 +303,7 @@ microphone, confirms every deck renders, that the camera moves the badge to
 `LIVE` and paints frames, that calibration switches the readouts from pixels to
 metres, that an RGB camera is offered only the three visible indices, that the
 sonar rehearsal maps a dam and reports its drift, and that the ledger still shows
-its eleven refusals — a console whose honest rows are dropped in a refactor looks
+its thirteen refusals — a console whose honest rows are dropped in a refactor looks
 identical to one that never had them. Two assertions are worth naming: no
 temperature may be printed from a visible camera, and the tracking controller
 must contain no lead or intercept maths.
