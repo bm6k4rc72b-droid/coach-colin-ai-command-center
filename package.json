@@ -60,6 +60,7 @@
     "qa:astra": "node scripts/qa-astra.mjs",
     "qa:carrier": "node scripts/qa-carrier.mjs",
     "qa:black-optic-6": "node scripts/qa-black-optic-6.mjs",
+    "qa:camera-relay": "node scripts/qa-camera-relay.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs",
     "qa:touchline": "node scripts/qa-touchline.mjs",
     "qa:vice": "node scripts/qa-vice.mjs"

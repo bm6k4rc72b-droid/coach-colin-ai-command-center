@@ -7748,6 +7748,28 @@ export default defineConfig(({ mode }) => {
       allowedHosts: (env.HOST === '0.0.0.0' || env.HOST === '::')
         ? true
         : ['localhost', '127.0.0.1', '.local'],
+      proxy: {
+        // Camera relay, for Black Optic 6.
+        //
+        // A browser will not let a page read pixels back off a cross-origin
+        // image, and every measurement in that console does exactly that — so a
+        // camera stream fetched straight from the local network displays and
+        // measures nothing. Serving the relay from this origin removes the
+        // problem entirely rather than working around it: same origin, no CORS
+        // preflight, no tainted canvas, and no mixed-content block when the
+        // console is opened over plain HTTP on the ranch network.
+        //
+        // Defaults to go2rtc's own port. Point CAMERA_RELAY_URL somewhere else
+        // for MediaMTX, Frigate, or a relay on another machine.
+        '/relay': {
+          target: env.CAMERA_RELAY_URL || 'http://localhost:1984',
+          changeOrigin: true,
+          // go2rtc signals WebRTC over a websocket; without this the low-latency
+          // path silently falls back to HLS and picks up seconds of delay.
+          ws: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/relay/, ''),
+        },
+      },
     },
     // Expose selected API keys to the browser via import.meta.env.*
     define: {

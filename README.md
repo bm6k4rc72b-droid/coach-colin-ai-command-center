@@ -547,8 +547,9 @@ it came from, and only measured numbers may raise an alarm.
 (`http://localhost:4173/black-optic-6/` under `./start.sh`).
 
 Thirteen decks: optics with every thermal palette a thermal camera offers, a
-Reolink Argus / IP camera setup that tells you whether frames will be *measurable*
-as well as visible, a camera picker that takes a DJI Pocket in
+Reolink Argus / IP camera setup that writes your relay config, tells you whether
+frames will be *measurable* as well as visible, and reaches the camera through a
+same-origin proxy so they are, a camera picker that takes a DJI Pocket in
 USB webcam mode like any other camera, and a detection chain that reports metres
 once calibrated; contacts, an event log and a pan-tilt loop that keeps a subject
 centred, plus colour and appearance trackers that follow one specific thing even
@@ -581,7 +582,7 @@ about how fast something was moving.
 
 Full write-up, including the refusals in detail:
 [`docs/black-optic-6.md`](docs/black-optic-6.md). Tests:
-`npm run test:black-optic-6` (159 unit tests) and `npm run qa:black-optic-6`,
+`npm run test:black-optic-6` (166 unit tests) and `npm run qa:black-optic-6`,
 which drives the real console in Chromium with a synthetic camera and microphone.
 
 ---

@@ -472,6 +472,30 @@ async function main() {
       `the test reaches a named verdict rather than hanging (${verdict.slice(0, 34).trim()}…)`,
     );
 
+    // The free way through: a config to paste, and a same-origin relay path.
+    await page.evaluate(() => {
+      const name = document.getElementById('argus-relay-name');
+      name.value = 'argus-gate';
+      name.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.click('#argus-config');
+    const yaml = await page.$eval('#argus-yaml', (node) => node.value);
+    check(/^streams:/m.test(yaml), 'a go2rtc config is written out ready to paste');
+    check(/Home Hub/.test(yaml), 'and a battery camera is given the route that always works');
+    check(/go2rtc/i.test(yaml), 'naming the free program that does it');
+
+    const costRows = await page.$$eval('#argus-cost tr', (nodes) => nodes.length);
+    check(costRows >= 5, `what the setup costs is itemised (${costRows} rows)`);
+    const costText = await page.$eval('#argus-cost', (node) => node.textContent);
+    check(/Not needed/.test(costText), 'and it says plainly that no subscription is needed');
+
+    await page.click('#argus-use-local');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const localNote = await page.$eval('#argus-local-note', (node) => node.textContent);
+    check(/measurable|same origin/i.test(localNote), `the local relay route reports measurable (${localNote.slice(0, 40).trim()}…)`);
+    const added = await page.$$eval('#sources .row', (nodes) => nodes.length);
+    check(added >= 1, 'and the stream is added as a source');
+
     // -------------------------------------------------------- mariachi
     const musicSupported = await page.evaluate(() => Boolean(window.AudioContext || window.webkitAudioContext));
     check(musicSupported, 'the browser can synthesise audio');

@@ -7,6 +7,16 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Made the **Black Optic 6** camera path work end to end, for nothing. The dev
+  server now proxies `/relay` to a camera relay (go2rtc by default,
+  `CAMERA_RELAY_URL` to point elsewhere), which serves the stream from the
+  console's own origin — no cross-origin read to be refused, no tainted canvas,
+  no mixed-content block — so frames become measurable rather than merely
+  visible. The Argus panel writes a ready-to-paste go2rtc config for the camera
+  entered, ordering the free route before the one that costs money, adds the
+  stream through the local relay in one press, and itemises what the whole setup
+  costs. `npm run qa:camera-relay` stands a relay up and proves the chain against
+  the real dev server.
 - Added Reolink Argus support and a mariachi ensemble to **Black Optic 6**. The
   Argus panel identifies battery models (which serve no RTSP at all) from wired
   ones, builds the right RTSP and snapshot addresses, and tests the connection —
