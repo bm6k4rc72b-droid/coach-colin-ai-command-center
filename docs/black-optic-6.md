@@ -340,3 +340,111 @@ its thirteen refusals — a console whose honest rows are dropped in a refactor 
 identical to one that never had them. Two assertions are worth naming: no
 temperature may be printed from a visible camera, and the tracking controller
 must contain no lead or intercept maths.
+
+---
+
+## World feeds — what is happening off the ranch
+
+Every other deck measures something on the property. This one reports what
+somebody else's instruments measured elsewhere, which makes the provenance
+question sharper rather than softer.
+
+### What each feed actually needs
+
+| Feed | Source | Works on a static page? | Why |
+| --- | --- | --- | --- |
+| **Seismic** | USGS | **Yes — nothing at all** | USGS sends CORS headers, so the browser reads the GeoJSON directly. No key, no relay, no server. |
+| **Roads** | Caltrans / Austin / TfL | Frames yes, list no | An `<img>` needs no CORS so the picture appears; the catalog is a cross-origin *read* and needs the relay, and so does measuring anything off a frame |
+| **Fire points** | NASA FIRMS | No | Needs a free `MAP_KEY`, which cannot live in a static page |
+| **Headlines** | GDELT | No | No CORS header; also the source with the licence that matters |
+
+The dev server proxies the two that need it at `/relay/caltrans` and
+`/relay/gdelt`, in front of the existing camera relay because Vite matches
+proxy rules in order.
+
+### Report, never predict
+
+The temptation with an earthquake feed is to compute what the shaking *was at
+the ranch* — take magnitude, distance and depth, run an intensity prediction
+equation, print a number. This console will not.
+
+Doing it properly needs a regional IPE whose coefficients cannot be checked at
+three in the morning; doing it improperly produces a confident number that is
+out by two whole intensity units. That is the difference between "go and look at
+the tank foundations" and "go back to bed".
+
+So the console reports what USGS itself computed, in a fixed order of
+preference:
+
+1. **`cdi`** — Did You Feel It, the intensity people actually reported. An
+   observation, so it is shown as LINKED.
+2. **`mmi`** — ShakeMap's modelled maximum for the event as a whole. Shown as
+   MODELLED, and labelled as *not* an estimate for this ranch.
+3. **Nothing.** Where the feed publishes no intensity, the panel says so.
+
+`shaking-here` is in the ledger as UNSOUND, with the honest path written next to
+it: an accelerometer on the property would *measure* it for a few hundred
+dollars instead of estimating it.
+
+### Two things the feed itself tells you
+
+- **`status` is `automatic` until a seismologist reviews it.** Automatic
+  magnitudes get revised, routinely by a couple of tenths and occasionally by
+  much more, and the solution minutes after an event is the one most likely to
+  be wrong. Unreviewed rows carry the warning and render in caution amber.
+- **Depth is the least-constrained parameter** in a location solution. A depth
+  at or above zero usually means the analyst fixed it rather than solved for it,
+  and the panel says so before anybody reasons about it.
+
+For a M6+ event there is a third: the rupture is tens of kilometres long, so the
+epicentre distance this console computes can be much further away than the
+nearest shaking. That caveat appears automatically above M6.
+
+### The `Number(null)` bug this found
+
+`Number(null)` is `0`, and `Number.isFinite(0)` is `true`. The obvious guard —
+`Number.isFinite(Number(p.mag)) ? Number(p.mag) : null` — therefore turns a
+magnitude USGS has not assigned yet into a confident **M0.0**, and an absent Did
+You Feel It count into "0 reports", which reads as *nobody felt it* rather than
+*nobody was asked*. Both are fabricated readings of exactly the kind this
+console exists to refuse, and both came from one missing null check. There is
+now a single `num()` helper and a test that pins it.
+
+### Cameras: published catalogs only
+
+The roads panel reads catalogs that a transport agency published deliberately —
+cameras pointed at public roads by the agency that owns the road, no login, no
+expectation of privacy. Caltrans District 4 covers Napa and is preselected.
+
+It has **no facility for finding a camera nobody published**, and that is a
+decision rather than a limitation. `cam-discovery` is the only row on the whole
+ledger whose "what would change the answer" is *nothing* — every other refusal
+is physics, a platform, or a measurement that does not support the claim; this
+one would still be refused if it became trivial.
+
+Whether a frame can be *measured* is answered by `analysable()` in `argus.js`
+rather than by a second function here: a traffic camera and a Reolink on a fence
+post hit exactly the same canvas-taint wall, and two functions answering one
+question eventually disagree.
+
+### Headlines, and the licence that has teeth
+
+Google News' terms restrict use to **personal, non-commercial** purposes. A
+vineyard is a business, so `chooseSource()` will not select it unless the caller
+explicitly declares personal use — and silently substitutes GDELT, whose terms
+permit commercial use with citation, saying why. The citation travels with the
+results rather than living in a footer.
+
+Three things the panel states before any headline arrives, because a news panel
+on a security console looks like situational awareness and is nothing of the
+kind:
+
+- A location-matched headline is a **string match, not an incident**.
+- **Silence is not safety.** An empty result means nothing was published and
+  indexed — a fact about newsrooms and crawlers, not about the valley. The panel
+  renders "nothing indexed", never "all clear".
+- **Nothing here is timely enough to act on.** Indexing lag runs minutes to
+  hours. `news-as-warning` is in the ledger as UNSOUND for exactly this.
+
+A feed that cannot be reached shows *no rows at all* rather than an empty list,
+for the same reason.

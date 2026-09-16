@@ -45,6 +45,18 @@ import {
   recommend, RELAYS, relayUrls, rtspUrl, snapshotUrl,
 } from './argus.js';
 import { Mariachi } from './mariachi.js';
+import {
+  BANDS as QUAKE_BANDS, WINDOWS as QUAKE_WINDOWS, USGS_CREDIT,
+  feedUrl, parseFeed, near as quakesNear, describe as describeQuake, freshness,
+} from './world.js';
+import {
+  CALTRANS_DISTRICTS, catalogRoute, catalogViaRelay, normaliseCaltrans,
+  nearest as camerasNear, rangeLabel, frameUrl, measurability, credits as camCredits,
+} from './trafficcam.js';
+import {
+  SPANS as NEWS_SPANS, chooseSource, gdeltViaRelay, parseGdelt,
+  emptyVerdict, caveat as newsCaveat, creditFor,
+} from './newsfeed.js';
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
 import { pose } from '../../sentry/js/ground.js';
 import { capability as rfCapability, RfLink } from '../../sentry/js/rf.js';
@@ -128,9 +140,269 @@ const DECKS = [
   ['bio', 'Bio', 'M3 12h4l2-5 3 10 2-5h7'],
   ['harvest', 'Harvest', 'M5 20c4-8 10-12 14-14 M12 20c0-5 2-9 5-12 M5 20h14'],
   ['aerial', 'Aerial', 'M12 4l8 14H4z M12 10v8'],
+  ['world', 'World', 'M12 3a9 9 0 100 18 9 9 0 000-18z M3.6 9h16.8 M3.6 15h16.8 M12 3c2.5 3 2.5 15 0 18 M12 3c-2.5 3-2.5 15 0 18'],
   ['links', 'Links', 'M9 15l6-6 M8 8a4 4 0 015.6 0l1 1 M16 16a4 4 0 01-5.6 0l-1-1'],
   ['ledger', 'Ledger', 'M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'],
 ];
+
+
+/* ==========================================================================
+ * World — feeds from off the ranch.
+ *
+ * Three panels with three different honesty problems. Seismic is the only one
+ * that works with no relay at all, so it leads. Roads display without a relay
+ * and become measurable with one. Headlines need the relay and need the loudest
+ * caveat on the deck, because a quiet news feed reads as an all-clear and is
+ * nothing of the sort.
+ * ====================================================================== */
+
+/** Where the ranch is, for range and bearing. Same fallback the orbital deck uses. */
+function ranchPlace() {
+  return state.fix ?? state.boundary[0] ?? { lat: 38.5025, lon: -122.3977 };
+}
+
+/** @returns {void} Populate the world deck's fixed controls. */
+function buildWorld() {
+  $('quake-band').replaceChildren(...QUAKE_BANDS.map((band) => {
+    const option = document.createElement('option');
+    option.value = band.id;
+    option.textContent = band.label;
+    option.title = band.note;
+    if (band.id === '2.5') option.selected = true;
+    return option;
+  }));
+  $('quake-window').replaceChildren(...QUAKE_WINDOWS.map((window) => {
+    const option = document.createElement('option');
+    option.value = window.id;
+    option.textContent = window.label;
+    if (window.id === 'day') option.selected = true;
+    return option;
+  }));
+  $('quake-truth').textContent =
+    'USGS event solutions with range and bearing from this ranch. The one feed here that needs '
+    + 'nothing at all — no key, no relay, no server. What this console will not do is work out what '
+    + 'the shaking was here: it reports the intensity USGS published, and where none was published '
+    + 'it says so rather than estimating one from magnitude and distance.';
+  $('quake-credit').textContent = USGS_CREDIT;
+
+  $('cam-district').replaceChildren(...CALTRANS_DISTRICTS.map((district) => {
+    const option = document.createElement('option');
+    option.value = String(district.id);
+    option.textContent = `D${district.id} — ${district.name}`;
+    if (district.home) option.selected = true;
+    return option;
+  }));
+  $('cam-truth').textContent =
+    'Agency cameras pointed at public roads and published on purpose. Frames appear without a relay; '
+    + 'the camera list needs one, and so does measuring anything off a frame. This console reads '
+    + 'published catalogs only — it will not look for a camera nobody published.';
+
+  $('news-span').replaceChildren(...NEWS_SPANS.map((span) => {
+    const option = document.createElement('option');
+    option.value = span.id;
+    option.textContent = span.label;
+    if (span.id === '24h') option.selected = true;
+    return option;
+  }));
+  $('news-truth').textContent = newsCaveat();
+}
+
+/** @returns {Promise<void>} Fetch and render the seismic list. */
+async function fetchQuakes() {
+  if (state.blackout) return;
+  const prov = $('quake-prov');
+  prov.dataset.tone = 'caution';
+  prov.textContent = 'Fetching';
+  $('quake-fresh').textContent = '';
+
+  const band = $('quake-band').value;
+  const window = $('quake-window').value;
+  const radius = Number($('quake-radius').value);
+  const radiusKm = Number.isFinite(radius) && radius > 0 ? radius : Infinity;
+
+  try {
+    const response = await fetch(feedUrl(band, window), { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const feed = parseFeed(await response.json());
+    const quakes = quakesNear(feed.quakes, ranchPlace(), radiusKm);
+
+    const age = freshness(feed);
+    $('quake-fresh').textContent = age.verdict;
+    prov.dataset.tone = age.stale ? 'caution' : 'primary';
+    prov.textContent = age.stale ? 'Stale' : 'Linked';
+
+    renderQuakes(quakes, feed);
+  } catch (error) {
+    prov.dataset.tone = 'alert';
+    prov.textContent = 'Unreachable';
+    $('quake-fresh').textContent = `USGS did not answer: ${error.message}. Nothing is being shown — an empty list here would look like a quiet week.`;
+    $('quake-list').replaceChildren();
+  }
+}
+
+/** @returns {void} Draw the seismic rows. */
+function renderQuakes(quakes, feed) {
+  const host = $('quake-list');
+  if (!quakes.length) {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'muted';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = 'No events in range';
+    li.querySelector('p').textContent =
+      `The feed carried ${feed.quakes.length} event${feed.quakes.length === 1 ? '' : 's'}, none within the radius set above. `
+      + 'That is a statement about this feed and this radius, not about the ground.';
+    host.replaceChildren(li);
+    return;
+  }
+
+  host.replaceChildren(...quakes.slice(0, 40).map((quake) => {
+    const said = describeQuake(quake);
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = said.reviewed ? 'primary' : 'caution';
+    li.innerHTML = '<div class="row-head"><b></b><time></time></div><p></p><p class="sub"></p>';
+    li.querySelector('b').textContent = `${said.magnitude} · ${said.range}`;
+    li.querySelector('time').textContent = quake.time
+      ? new Date(quake.time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    li.querySelector('p').textContent = `${said.place}. ${said.depth}.`
+      + (said.shaking ? ` Shaking ${said.shaking.text} (${said.shaking.source}).` : '');
+    li.querySelector('.sub').textContent = said.caveats.join(' ');
+    if (quake.url) li.title = quake.url;
+    return li;
+  }));
+}
+
+/** @returns {Promise<void>} Load the traffic-camera catalog for a district. */
+async function fetchCameras() {
+  if (state.blackout) return;
+  const prov = $('cam-prov');
+  const district = Number($('cam-district').value);
+  prov.dataset.tone = 'caution';
+  prov.textContent = 'Fetching';
+
+  try {
+    const response = await fetch(catalogViaRelay(district), { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const parsed = normaliseCaltrans(await response.json(), district);
+    const cameras = camerasNear(parsed.cameras, ranchPlace(), 8);
+    prov.dataset.tone = 'primary';
+    prov.textContent = 'Linked';
+    renderCameras(cameras, { relayed: true, total: parsed.cameras.length });
+  } catch {
+    // No relay is the ordinary case on a static host, and it is not an error.
+    const route = catalogRoute({ relayAvailable: false, district });
+    prov.dataset.tone = 'muted';
+    prov.textContent = 'Needs relay';
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'muted';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = 'Camera list needs the relay';
+    li.querySelector('p').textContent = route.verdict;
+    $('cam-list').replaceChildren(li);
+    $('cam-credit').textContent = '';
+  }
+}
+
+/** @returns {void} Draw the nearest cameras with a live frame each. */
+function renderCameras(cameras, { relayed, total }) {
+  const host = $('cam-list');
+  if (!cameras.length) {
+    host.replaceChildren();
+    return;
+  }
+  const origin = window.location.origin;
+  host.replaceChildren(...cameras.map((camera) => {
+    const verdict = measurability(camera, { pageOrigin: origin, viaRelay: relayed });
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = verdict.analysable ? 'primary' : 'muted';
+    li.innerHTML = '<div class="row-head"><b></b><time></time></div><img alt="" loading="lazy" /><p class="sub"></p>';
+    li.querySelector('b').textContent = camera.name;
+    li.querySelector('time').textContent = rangeLabel(camera);
+    const img = li.querySelector('img');
+    img.src = frameUrl(camera);
+    img.width = 320;
+    img.style.cssText = 'width:100%;margin-top:8px;border:1px solid var(--hair);display:block';
+    img.alt = `Traffic camera at ${camera.name}`;
+    li.querySelector('.sub').textContent = verdict.reason;
+    return li;
+  }));
+  $('cam-credit').textContent = camCredits(cameras)
+    .map((entry) => entry.credit).join(' · ') + ` — nearest ${cameras.length} of ${total}.`;
+}
+
+/** @returns {Promise<void>} Fetch regional headlines through the relay. */
+async function fetchNews() {
+  if (state.blackout) return;
+  const prov = $('news-prov');
+  const place = $('news-place').value.trim();
+  const span = $('news-span').value;
+  if (!place) return;
+
+  const picked = chooseSource({});
+  prov.dataset.tone = 'caution';
+  prov.textContent = 'Fetching';
+
+  try {
+    const response = await fetch(gdeltViaRelay(place, { span, max: 20 }), { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const parsed = parseGdelt(await response.json());
+    prov.dataset.tone = 'primary';
+    prov.textContent = 'Linked';
+    renderNews(parsed.articles, place, span, picked);
+  } catch {
+    prov.dataset.tone = 'muted';
+    prov.textContent = 'Needs relay';
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'muted';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = 'Headlines need the relay';
+    li.querySelector('p').textContent =
+      'Neither news source sends CORS headers, so a browser will not let this page read them directly. '
+      + 'The same relay the cameras use serves them. Nothing is shown rather than an empty list, because '
+      + 'an empty list here reads as a quiet week.';
+    $('news-list').replaceChildren(li);
+    $('news-credit').textContent = '';
+  }
+}
+
+/** @returns {void} Draw the headline rows. */
+function renderNews(articles, place, span, picked) {
+  const host = $('news-list');
+  if (!articles.length) {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'muted';
+    li.innerHTML = '<div class="row-head"><b></b></div><p></p>';
+    li.querySelector('b').textContent = 'Nothing indexed';
+    li.querySelector('p').textContent = emptyVerdict(place, span);
+    host.replaceChildren(li);
+    return;
+  }
+  host.replaceChildren(...articles.map((article) => {
+    const li = document.createElement('li');
+    li.className = 'row';
+    li.dataset.tone = 'muted';
+    li.innerHTML = '<div class="row-head"><b></b><time></time></div><p></p>';
+    const link = document.createElement('a');
+    link.href = article.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = article.title;
+    li.querySelector('b').replaceChildren(link);
+    li.querySelector('time').textContent = article.publishedMs
+      ? new Date(article.publishedMs).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    li.querySelector('p').textContent = article.domain;
+    return li;
+  }));
+  const credit = creditFor(picked.source.id);
+  $('news-credit').textContent = `${credit.credit} — ${credit.terms}`;
+}
 
 /** @returns {void} Build the navigation rail. */
 function buildRail() {
@@ -2187,6 +2459,9 @@ $('fence-clear').addEventListener('click', () => {
 });
 
 $('sat-fetch').addEventListener('click', fetchScene);
+$('quake-fetch').addEventListener('click', fetchQuakes);
+$('cam-fetch').addEventListener('click', fetchCameras);
+$('news-fetch').addEventListener('click', fetchNews);
 $('sat-here').addEventListener('click', () => {
   if (!state.fix) startPositioning();
   renderLooks();
@@ -2408,6 +2683,7 @@ restore();
 buildRail();
 buildViews();
 buildSatellite();
+buildWorld();
 buildLinks();
 renderLedger();
 renderEvents();

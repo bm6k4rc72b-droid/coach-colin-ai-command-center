@@ -242,6 +242,12 @@ function buildField() {
   for (const id of scene('field').shows) host.append(capabilityCard(id));
 }
 
+function buildWorld() {
+  const host = el('world-grid');
+  if (!host) return;
+  for (const id of scene('world').shows) host.append(capabilityCard(id));
+}
+
 function buildLedger() {
   const host = el('ledger-rows');
   if (!host) return;
@@ -756,6 +762,7 @@ function boot() {
   buildSatellites();
   buildHighlights();
   buildField();
+  buildWorld();
   buildLedger();
   buildRangeFraming();
 

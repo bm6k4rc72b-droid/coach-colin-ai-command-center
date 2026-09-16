@@ -50,6 +50,32 @@ async function loadPuppeteer() {
 }
 
 /**
+ * Find a browser to drive.
+ *
+ * Puppeteer's own download is the first choice, but CI images, sandboxes and
+ * anywhere with a locked-down cache ship a Chromium somewhere else instead.
+ * Falling through the usual places is the difference between this check running
+ * everywhere and running on one laptop.
+ */
+function findBrowser(puppeteer) {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    (() => { try { return puppeteer.executablePath(); } catch { return null; } })(),
+    process.env.PLAYWRIGHT_BROWSERS_PATH ? path.join(process.env.PLAYWRIGHT_BROWSERS_PATH, 'chromium') : null,
+    '/opt/pw-browsers/chromium',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    try { if (fs.existsSync(candidate)) return candidate; } catch { /* keep looking */ }
+  }
+  return undefined;
+}
+
+/**
  * Serve `public/` on a loopback port.
  *
  * @returns {Promise<{server: import('node:http').Server, port: number}>} The server.
@@ -95,7 +121,7 @@ async function main() {
   const { server, port } = await serve();
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    executablePath: findBrowser(puppeteer),
     args: [
       '--no-sandbox',
       '--use-fake-ui-for-media-stream',
@@ -119,6 +145,7 @@ async function main() {
 
   try {
     const page = await browser.newPage();
+    page.setDefaultTimeout(20000);
     await page.setViewport({ width: 1440, height: 1000, deviceScaleFactor: 1 });
 
     // Count oscillators as they start. A flag flipping to "playing" proves
@@ -153,12 +180,15 @@ async function main() {
     const origin = `http://127.0.0.1:${port}`;
     const context = browser.defaultBrowserContext();
     await context.overridePermissions(origin, ['camera', 'microphone', 'geolocation']);
-    await page.goto(`${origin}/black-optic-6/`, { waitUntil: 'networkidle0' });
+    // `load` rather than `networkidle0`: the console keeps timers and a media
+    // stream running, and waiting for network quiet on a page that is never
+    // quiet hangs the check instead of failing it.
+    await page.goto(`${origin}/black-optic-6/`, { waitUntil: 'load' });
     await page.waitForSelector('#rail button');
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 13, `the console builds all its decks (${decks})`);
+    check(decks === 14, `the console builds all its decks (${decks})`);
 
     const title = await page.title();
     check(/Black Optic 6/.test(title), `the console is named Black Optic 6 ("${title}")`);
@@ -180,6 +210,63 @@ async function main() {
       /autonomous weapon/i.test(ledgerText),
       'the turret row names what it is rather than listing it as unimplemented',
     );
+
+    // ---------------------------------------------------------------- world
+    await page.click('#rail button[data-deck="world"]');
+    await page.waitForSelector('#quake-band option');
+
+    const world = await page.evaluate(() => ({
+      bands: document.querySelectorAll('#quake-band option').length,
+      windows: document.querySelectorAll('#quake-window option').length,
+      districts: document.querySelectorAll('#cam-district option').length,
+      spans: document.querySelectorAll('#news-span option').length,
+      homeDistrict: document.querySelector('#cam-district option[selected], #cam-district').value,
+      credit: document.getElementById('quake-credit').textContent,
+      quakeTruth: document.getElementById('quake-truth').textContent,
+      camTruth: document.getElementById('cam-truth').textContent,
+      newsTruth: document.getElementById('news-truth').textContent,
+    }));
+    check(world.bands === 5 && world.windows === 4, `the seismic feed offers its bands and windows (${world.bands}/${world.windows})`);
+    check(world.districts === 12, `every Caltrans district is listed (${world.districts})`);
+    check(world.homeDistrict === '4', `the ranch district is preselected (D${world.homeDistrict})`);
+    check(/U\.S\. Geological Survey/.test(world.credit), 'the USGS credit is beside the data, not in a footer');
+    check(/will not do is work out what the shaking was here/i.test(world.quakeTruth),
+      'the seismic panel refuses to estimate site intensity, in place');
+    check(/will not look for a camera nobody published/i.test(world.camTruth),
+      'the camera panel states it reads published catalogs only');
+    check(/not verified incidents/i.test(world.newsTruth) && /lag/i.test(world.newsTruth),
+      'the headline panel carries its caveat before any headline arrives');
+
+    // These fetches cannot succeed from a sandboxed check, which is the point:
+    // what matters is that a failed feed says so rather than rendering an empty
+    // list that reads as a quiet week.
+    await page.click('#quake-fetch');
+    await page.waitForFunction(
+      () => !/Fetching/.test(document.getElementById('quake-prov').textContent),
+      { timeout: 20000 },
+    ).catch(() => {});
+    const seismic = await page.evaluate(() => ({
+      prov: document.getElementById('quake-prov').textContent,
+      fresh: document.getElementById('quake-fresh').textContent,
+      rows: document.querySelectorAll('#quake-list .row').length,
+    }));
+    check(seismic.prov !== 'Idle', `the seismic fetch resolves to a named state ("${seismic.prov}")`);
+    if (seismic.prov === 'Unreachable') {
+      check(/would look like a quiet week/i.test(seismic.fresh),
+        'an unreachable feed says so instead of showing an empty list');
+      check(seismic.rows === 0, 'and shows no rows it cannot stand behind');
+    } else {
+      check(true, `the seismic feed answered (${seismic.rows} rows within range)`);
+    }
+
+    await page.click('#cam-fetch');
+    await page.waitForFunction(
+      () => !/Fetching/.test(document.getElementById('cam-prov').textContent),
+      { timeout: 20000 },
+    ).catch(() => {});
+    const roads = await page.$eval('#cam-list', (node) => node.textContent);
+    check(/relay/i.test(roads) || /km/.test(roads),
+      'the roads panel either lists cameras or explains that the list needs the relay');
 
     // Filtering narrows the list rather than emptying it.
     await page.evaluate(() => {

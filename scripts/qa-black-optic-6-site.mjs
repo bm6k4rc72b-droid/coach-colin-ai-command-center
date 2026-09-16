@@ -179,7 +179,7 @@ async function main() {
     check(/Black Optic 6/.test(title), `the page is named Black Optic 6 ("${title}")`);
 
     const acts = await page.$$eval('.act', (nodes) => nodes.length);
-    check(acts === 11, `all eleven acts are laid out (${acts})`);
+    check(acts === 12, `all twelve acts are laid out (${acts})`);
 
     const emptyLines = await page.$$eval('[data-line]', (nodes) => nodes.filter((n) => !n.textContent.trim()).length);
     check(emptyLines === 0, 'every act got its line out of the catalogue');
@@ -411,7 +411,7 @@ async function main() {
       const scripts = voices.allScripts();
       return { guides: names.size, acts: scripts.length, lines: scripts.reduce((n, s) => n + s.lines.length, 0) };
     });
-    check(guides.guides >= 9, `each act has its own guide (${guides.guides} distinct voices)`);
+    check(guides.guides >= 10, `each act has its own guide (${guides.guides} distinct voices)`);
     check(guides.lines > 60, `and a script assembled from the ledger (${guides.lines} spoken lines)`);
 
     const guideChip = await page.$eval('#guide-name', (node) => node.textContent);
@@ -429,7 +429,7 @@ async function main() {
       const headings = [...document.querySelectorAll('h1, h2')].map((n) => n.textContent.trim());
       return { headings: headings.length, h1: document.querySelectorAll('h1').length };
     });
-    check(readable.h1 === 1 && readable.headings >= 10,
+    check(readable.h1 === 1 && readable.headings >= 11,
       `the page is a document first (${readable.headings} headings, ${readable.h1} h1)`);
 
     const skip = await page.$eval('.skip', (node) => node.getAttribute('href'));

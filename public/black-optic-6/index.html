@@ -308,6 +308,50 @@
           </div>
         </section>
 
+        <!-- -------------------------------------------------------- world -->
+        <section class="deck" id="deck-world">
+          <div class="panel">
+            <div class="panel-head"><h2>Seismic</h2><span class="spacer"></span><span class="prov" id="quake-prov" data-tone="muted">Idle</span></div>
+            <p class="note" id="quake-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 150px"><span>Magnitude</span><select id="quake-band"></select></label>
+              <label class="field" style="flex:1 1 130px"><span>Window</span><select id="quake-window"></select></label>
+              <label class="field" style="flex:0 1 120px"><span>Within km</span><input id="quake-radius" type="text" value="300" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="quake-fetch" type="button">Fetch events</button>
+              <span class="note" id="quake-fresh"></span>
+            </div>
+            <ul class="rows" id="quake-list" style="margin-top: 12px"></ul>
+            <p class="note" id="quake-credit" style="margin-top: 10px"></p>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Roads</h2><span class="spacer"></span><span class="prov" id="cam-prov" data-tone="muted">Idle</span></div>
+              <p class="note" id="cam-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 190px"><span>District</span><select id="cam-district"></select></label>
+                <button class="act" id="cam-fetch" type="button">Load cameras</button>
+              </div>
+              <ul class="rows" id="cam-list" style="margin-top: 12px"></ul>
+              <p class="note" id="cam-credit" style="margin-top: 10px"></p>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Headlines</h2><span class="spacer"></span><span class="prov" id="news-prov" data-tone="muted">Idle</span></div>
+              <p class="note" id="news-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 170px"><span>Place</span><input id="news-place" type="text" value="Napa County" /></label>
+                <label class="field" style="flex:0 1 140px"><span>Span</span><select id="news-span"></select></label>
+                <button class="act" id="news-fetch" type="button">Fetch</button>
+              </div>
+              <ul class="rows" id="news-list" style="margin-top: 12px"></ul>
+              <p class="note" id="news-credit" style="margin-top: 10px"></p>
+            </div>
+          </div>
+        </section>
+
         <!-- -------------------------------------------------------- vault -->
         <section class="deck" id="deck-vault">
           <div class="panel">

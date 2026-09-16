@@ -5,6 +5,45 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ## [Unreleased] — 2026-08-24
 
+### Added
+
+- Added a **world deck** to Black Optic 6: the feeds from off the ranch, each
+  one labelled with what it actually needs. USGS earthquakes with a range and
+  bearing from the gate — the only one that works on the static deploy with no
+  key, no relay and no server, because USGS sends the CORS header a browser
+  needs. Public traffic cameras (Caltrans District 4 covers Napa) whose frames
+  display anywhere but whose catalog and pixel readback need the relay. NASA
+  FIRMS fire points, which need a free key. GDELT headlines, which need the
+  relay and carry the licence that matters: Google News is implemented but gated
+  behind an explicit personal-use declaration, because its terms exclude a
+  working business, and the source picker substitutes GDELT and says why.
+
+  The seismic panel will not compute what the shaking was at the ranch. It
+  reports the intensity USGS published — preferring Did You Feel It, what people
+  actually reported, over ShakeMap's modelled maximum — and where neither exists
+  it says so rather than running a half-remembered prediction equation and
+  printing a number that is out by two intensity units. Unreviewed solutions are
+  marked, because an automatic magnitude gets revised; a depth at or above zero
+  is flagged as fixed by the analyst rather than solved for; and above M6 the
+  panel notes that the rupture is tens of kilometres long, so the epicentre is a
+  misleading distance. A feed that cannot be reached shows no rows at all, since
+  an empty list reads as a quiet week.
+
+  Seven new ledger rows, three of them refusals: estimating site shaking,
+  treating headlines as an early warning, and finding cameras nobody published —
+  the last being the only row on the ledger whose "what would change the answer"
+  is *nothing*, because it is a decision rather than a limit. The film picked up
+  a twelfth act from the same ledger automatically.
+
+  Found and fixed a real bug in the process: `Number(null)` is `0` and
+  `Number.isFinite(0)` is `true`, so the obvious guard turned a magnitude USGS
+  had not assigned into a confident **M0.0** and an absent Did You Feel It count
+  into "0 reports" — which reads as nobody felt it rather than nobody was asked.
+
+  `npm run test:black-optic-6` is now 213 unit tests. The console QA also gained
+  browser discovery and lost a `networkidle0` wait that hung it instead of
+  failing.
+
 ### Changed
 
 - Replaced the **Black Optic 6 film's** vector operator with a photographic
