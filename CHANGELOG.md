@@ -5,6 +5,27 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ## [Unreleased] — 2026-08-24
 
+### Changed
+
+- Replaced the **Black Optic 6 film's** vector operator with a photographic
+  plate. It is composited rather than cut out, and the reason is in the pixels:
+  the plate is graded cold, so the white hat sits at b\* ≈ −22 — bluer than most
+  of the background — and the leather coat sits at L ≈ 2, b\* ≈ −3, which is the
+  same pixel as the dark corners of the frame. No colour threshold separates
+  them, and the topology that would (the Earth's glow rings him) breaks at the
+  bottom where coat and floor merge. So the plate is kept whole and given a
+  separable edge feather that reaches exactly zero on all four sides, landing it
+  on the near-black page with no visible edge and keeping the Earth and console
+  panels at full fidelity. An elliptical feather was tried first and is recorded
+  in the docs as the instructive failure — any ellipse generous enough to spare
+  the subject extends past the plate's own bounds and leaves a visible rectangle.
+  The approach is now a push-in framed against the frame rather than against
+  anatomy, still linear in scroll so the rate of growth is constant, with the
+  gait model reduced to the footfall bob. Each act declares which side the plate
+  takes so it clears the alternating text column, and the film closes by
+  dissolving to a second plate. The vector rig remains as the fallback for the
+  first frames of every load and for browsers that never get the plates.
+
 ### Added
 
 - Added the **Black Optic 6 film** at `/black-optic-6-site/` — a scroll-driven

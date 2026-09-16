@@ -1,9 +1,15 @@
 /**
- * Drawing the operator.
+ * Drawing the operator — the fallback path.
+ *
+ * The film composites a photographic plate of the operator (see `plate.js`).
+ * This file is what draws instead when that plate has not decoded yet, fails to
+ * load, or is refused: a figure built from strokes and fills on a 2D canvas, no
+ * image assets, nothing traced from anybody's character. It is not dead code —
+ * it is the reason a page on a bad connection still has a subject rather than an
+ * empty stage, and it runs for the first frames of every single load.
  *
  * `operator.js` decides where every joint is. This file decides what a joint
- * looks like, and it does the whole figure in strokes and fills on a 2D canvas
- * — no sprites, no image assets, nothing traced from anybody's character.
+ * looks like.
  *
  * The design brief was the silhouette from the reference: long storm coat, hard
  * shoulder and shin plates, a full visor with one horizontal light bar. Drawn

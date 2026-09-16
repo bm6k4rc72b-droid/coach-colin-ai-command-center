@@ -19,6 +19,7 @@
 import { clamp01, easeInOut, envelope, letterbox, stateAt } from './timeline.js';
 import { operatorAt, postureFor } from './operator.js';
 import { drawOperator } from './figure.js';
+import { OperatorPlates } from './plate.js';
 import { Backdrop } from './anamorphic.js';
 import {
   SCENES, scene, resolve, CAMERA_VARIANTS, THERMAL_VARIANTS, THERMAL_SOURCES,
@@ -282,6 +283,13 @@ class Stage {
 
     this.backdrop = new Backdrop(this.backdropCanvas);
     this.ctx = this.operatorCanvas.getContext('2d');
+
+    // The photographic plates. Until they decode — and if they never do, on a
+    // connection that drops them or a browser that refuses the format — the
+    // vector rig in figure.js carries the film instead. The page is never
+    // without a subject.
+    this.plates = new OperatorPlates();
+    this.plates.load().then((ok) => { this.plateReady = ok; if (this.onready) this.onready(); });
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.width = 0;
     this.height = 0;
@@ -362,11 +370,33 @@ class Stage {
     }
 
     // ---- operator --------------------------------------------------------
-    this.drawFigure(position, act, frame);
+    this.drawFigure(position, act, frame, state);
     return state;
   }
 
-  drawFigure(position, act, frame) {
+  /**
+   * Where the plate sits, as a fraction of viewport width.
+   *
+   * Averaged across the acts by their presence, so he slides from one side to
+   * the other through a transition rather than jumping the instant the active
+   * act changes. Below the breakpoint the text column is full width and there
+   * is no free side, so he centres and the caller drops his opacity instead.
+   */
+  plateSide(state) {
+    if (this.width <= 720) return 0.5;
+    let weight = 0;
+    let sum = 0;
+    for (const entry of state.scenes) {
+      if (entry.presence <= 0) continue;
+      const act = scene(entry.id);
+      if (!act) continue;
+      sum += (act.side ?? 0.5) * entry.presence;
+      weight += entry.presence;
+    }
+    return weight > 0 ? sum / weight : 0.5;
+  }
+
+  drawFigure(position, act, frame, state) {
     const ctx = this.ctx;
     const dpr = this.dpr;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -382,21 +412,25 @@ class Stage {
     // page still has a subject, it just does not move.
     const walk = reduceMotion.matches ? 0.45 : position;
     const posture = postureFor(act.id);
-    const state = operatorAt(walk, { frameHeight, posture });
+    const figure = operatorAt(walk, { frameHeight, posture });
 
-    // He crosses from right of centre to left as he arrives, which keeps him
-    // out of the text column — the column alternates sides, and so does he.
-    const drift = Math.sin(walk * Math.PI * 1.15) * 0.16;
-    const centreX = this.width * (0.63 + drift * (this.width > 760 ? 1 : 0.4) - walk * 0.20);
+    const centreX = this.width * this.plateSide(state);
+
+    // On a phone the plate sits behind the text, so it has to give way. A
+    // photograph at 40% under body copy is still atmosphere; at full strength
+    // it is an accessibility problem.
+    const alpha = this.width <= 720 ? 0.38 : 1;
 
     ctx.save();
     ctx.translate(0, frameTop);
     ctx.beginPath();
     ctx.rect(0, 0, this.width, frameHeight);
     ctx.clip();
-    drawOperator(ctx, state, { centreX, scale: 1 });
+    if (!this.plates.draw(ctx, figure, { centreX, frameHeight, alpha })) {
+      drawOperator(ctx, figure, { centreX, scale: 1 });
+    }
     ctx.restore();
-    this.figure = state;
+    this.figure = figure;
   }
 
   /** A single streak rake on an act change. Cheap, and it sells the cut. */
@@ -725,6 +759,7 @@ function boot() {
   buildRangeFraming();
 
   const stage = new Stage();
+  stage.onready = () => request();
   wireVoices(stage);
   const thermalDemo = wireThermalDemo();
   wireRangeDemo();

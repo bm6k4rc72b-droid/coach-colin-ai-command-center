@@ -344,7 +344,17 @@ main { position: relative; z-index: 10; }
 /* The title card is the one place the column goes wide, because the title is a
    single unbreakable line and its size has to come from somewhere. Everything
    inside it that is meant to be *read* gets pulled back to a sane measure. */
-.act--arrival .act__body { max-width: min(92vw, 1000px); }
+.act--arrival .act__body {
+  max-width: min(92vw, 1000px);
+  /* The centred acts are the two where the operator plate sits behind the
+     words rather than beside them, and at the close he fills the frame. A soft
+     scrim buys the contrast back without putting a visible panel on the page. */
+  background: radial-gradient(ellipse 78% 64% at 50% 44%,
+    rgba(4, 6, 10, 0.86) 0%,
+    rgba(4, 6, 10, 0.68) 42%,
+    rgba(4, 6, 10, 0) 76%);
+  padding: 34px 24px;
+}
 .act--arrival .act__line,
 .act--arrival .readout { max-width: 34ch; margin-inline: auto; }
 .act--arrival .act__kicker { justify-content: center; }
