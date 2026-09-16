@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Black Optic 6 — ranch sensing platform</title>
+<meta name="description" content="Sixty-five sensing capabilities for a working ranch, each one labelled with what actually measures it. Thermal, orbital, aerial, harvest and perimeter — in a browser, with no server.">
+<meta name="theme-color" content="#04060a">
+<meta property="og:title" content="Black Optic 6">
+<meta property="og:description" content="Sixty-five capabilities. Twenty-one measure something right now. The rest say exactly what they need — or exactly why they will never work.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304060a'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%234fe8ff' stroke-width='1.6'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='%234fe8ff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<a class="skip" href="#acts">Skip the film — go straight to the capability list</a>
+
+<!-- The stage. Fixed, never scrolls, purely atmospheric: every word of the
+     page below is readable with this element removed. -->
+<div class="stage" aria-hidden="true">
+  <canvas id="backdrop"></canvas>
+  <canvas id="operator"></canvas>
+  <div class="flare" id="flare"></div>
+  <div class="matte matte--top" id="matte-top"></div>
+  <div class="matte matte--bottom" id="matte-bottom"></div>
+</div>
+
+<div class="hud hud--act" aria-hidden="true">
+  <span class="act-no" id="hud-act">I</span>
+  <span id="hud-name">Black Optic 6</span>
+</div>
+
+<div class="hud hud--progress" aria-hidden="true">
+  <span id="hud-pct">00%</span>
+  <span class="progress-track"><span class="progress-fill" id="hud-fill"></span></span>
+</div>
+
+<!-- The guide chip. Announces who narrates the current act and offers to read
+     it aloud. Speech is never started without a click — an autoplaying voice is
+     a hostile act. -->
+<div class="guide" id="guide">
+  <span class="guide__dot" aria-hidden="true"></span>
+  <span>
+    <span class="guide__name" id="guide-name">CONTROL</span>
+    <span class="guide__role" id="guide-role">· Dispatch</span>
+  </span>
+  <button class="btn btn--ghost" id="guide-speak" aria-describedby="guide-voice">Brief me</button>
+  <span class="visually-hidden" id="guide-voice">Reads this section aloud using your device's own speech engine.</span>
+</div>
+
+<main id="acts">
+
+  <!-- ============================================================ I · title -->
+  <section class="act act--arrival" id="act-arrival" data-act="arrival" style="--weight: 1.15">
+    <div class="act__body">
+      <p class="act__kicker">Ranch sensing platform</p>
+      <h1 class="act__title">Black&nbsp;Optic&nbsp;6</h1>
+      <p class="act__line" data-line></p>
+      <div class="tally" id="tally"></div>
+      <p class="scroll-cue">Scroll</p>
+    </div>
+  </section>
+
+  <!-- =========================================================== II · optics -->
+  <section class="act" id="act-optics" data-act="optics" style="--weight: 1.15">
+    <div class="act__body">
+      <p class="act__kicker">Optics</p>
+      <h2 class="act__title">Every camera is a sensor</h2>
+      <p class="act__line" data-line></p>
+      <div class="reveal">
+        <div class="grid" id="camera-grid"></div>
+      </div>
+      <p class="readout" data-depth="0.04">The detection chain does not care what made the picture. What it cares about is whether the browser is allowed to read the pixels back — and for the cameras where it is not, there is a relay, and the relay is free.</p>
+    </div>
+  </section>
+
+  <!-- ========================================================== III · thermal -->
+  <section class="act" id="act-thermal" data-act="thermal" style="--weight: 1.2">
+    <div class="act__body">
+      <p class="act__kicker">Thermal</p>
+      <h2 class="act__title">Thirteen ways to see heat</h2>
+      <p class="act__line" data-line></p>
+      <div class="reveal">
+        <div class="grid" id="palette-grid"></div>
+      </div>
+      <div class="reveal" style="margin-top: 26px">
+        <div class="grid grid--wide" id="thermal-source-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== IV · satellite -->
+  <section class="act" id="act-satellite" data-act="satellite" style="--weight: 1.15">
+    <div class="act__body">
+      <p class="act__kicker">Orbital</p>
+      <h2 class="act__title">Five satellites, and what they cost</h2>
+      <p class="act__line" data-line></p>
+      <div class="scroll-x"><table class="table" id="satellite-table">
+        <caption>Overpass times are computed from each spacecraft's local time of ascending node, so the console can tell you when the next look is — not just show you the last one.</caption>
+      </table></div>
+      <div class="scroll-x" style="margin-top: 26px"><table class="table" id="ladder-table">
+        <caption>Four rungs from free to expensive. Nothing on this ladder resolves a person — at 30 cm a standing adult is roughly four pixels of shadow.</caption>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- =========================================================== V · aerial -->
+  <section class="act" id="act-aerial" data-act="aerial" style="--weight: 1.2">
+    <div class="act__body">
+      <p class="act__kicker">Aerial</p>
+      <h2 class="act__title">What is in your sky</h2>
+      <p class="act__line" data-line></p>
+      <div class="reveal"><div class="grid" id="drone-grid"></div></div>
+    </div>
+  </section>
+
+  <!-- ======================================================== VI · wearables -->
+  <section class="act" id="act-wearables" data-act="wearables" style="--weight: 1.2">
+    <div class="act__body">
+      <p class="act__kicker">Wearables</p>
+      <h2 class="act__title">The sensor on you</h2>
+      <p class="act__line" data-line></p>
+      <div class="reveal"><div class="grid" id="wearable-grid"></div></div>
+      <div class="reveal" style="margin-top: 22px"><div class="grid" id="glasses-grid"></div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ VII · field -->
+  <section class="act" id="act-field" data-act="field" style="--weight: 1.15">
+    <div class="act__body">
+      <p class="act__kicker">Field</p>
+      <h2 class="act__title">The block, the game, the crew</h2>
+      <p class="act__line" data-line></p>
+      <div class="reveal"><div class="grid" id="field-grid"></div></div>
+    </div>
+  </section>
+
+  <!-- =========================================================== VIII · range -->
+  <section class="act" id="act-range" data-act="range" style="--weight: 1.2">
+    <div class="act__body">
+      <p class="act__kicker">Marksmanship</p>
+      <h2 class="act__title">Steel at known distance</h2>
+      <p class="act__line" data-line></p>
+      <p class="readout" id="range-framing"></p>
+
+      <div class="demo" style="margin-top: 20px">
+        <div>
+          <div class="screen">
+            <canvas id="range-canvas" width="480" height="270" aria-label="Range view: a steel plate at the selected distance. Click or tap to place your hold."></canvas>
+            <span class="screen__corner"></span><span class="screen__corner"></span>
+            <span class="screen__corner"></span><span class="screen__corner"></span>
+          </div>
+          <div class="controls">
+            <button class="btn" id="range-fire">Fire</button>
+            <button class="btn btn--ghost" id="range-reveal">Show correct hold</button>
+            <button class="btn btn--ghost" id="range-reset">Reset</button>
+          </div>
+          <p class="readout" id="range-result">Tap the view to place your hold, then fire. The trainer tells you where the bullet went and why.</p>
+        </div>
+
+        <div>
+          <div class="controls" style="margin-top: 0">
+            <label class="field">Load
+              <select id="range-load"></select>
+            </label>
+            <label class="field">Target
+              <select id="range-target"></select>
+            </label>
+            <label class="field">Zero
+              <select id="range-zero">
+                <option value="100">100 yd</option>
+                <option value="200" selected>200 yd</option>
+                <option value="300">300 yd</option>
+              </select>
+            </label>
+            <label class="field">Wind <span id="range-wind-label">8 mph</span>
+              <input type="range" id="range-wind" min="0" max="25" step="1" value="8">
+            </label>
+          </div>
+          <div class="scroll-x" style="margin-top: 16px"><table class="table" id="dope-table">
+            <caption id="dope-caption"></caption>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= IX · demo -->
+  <section class="act" id="act-demo" data-act="demo" style="--weight: 1.2">
+    <div class="act__body">
+      <p class="act__kicker">Demo</p>
+      <h2 class="act__title">Run it here</h2>
+      <p class="act__line" data-line></p>
+
+      <div class="demo">
+        <div>
+          <div class="screen">
+            <canvas id="demo-canvas" width="320" height="180" aria-label="Live thermal palette view. Tap to read a point; drag to lock the colour tracker onto something."></canvas>
+            <span class="screen__corner"></span><span class="screen__corner"></span>
+            <span class="screen__corner"></span><span class="screen__corner"></span>
+          </div>
+          <div class="controls">
+            <button class="btn" id="demo-camera">Use my camera</button>
+            <button class="btn btn--ghost" id="demo-clear">Clear lock</button>
+          </div>
+          <p class="readout" id="demo-readout"></p>
+        </div>
+        <div>
+          <label class="field" style="margin-bottom: 14px">Palette
+            <select id="demo-palette"></select>
+          </label>
+          <p class="card__note" id="demo-palette-note"></p>
+          <p class="readout" id="demo-source"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== X · ledger -->
+  <section class="act" id="act-ledger" data-act="ledger" style="--weight: 1.15">
+    <div class="act__body">
+      <p class="act__kicker">Ledger</p>
+      <h2 class="act__title">The rows that say no</h2>
+      <p class="act__line" data-line></p>
+      <div id="ledger-rows"></div>
+      <p class="readout" style="margin-top: 22px">Every one of these is on somebody's product page today. That is the reason they are on this one, named, with the measurement they would need written next to them.</p>
+    </div>
+  </section>
+
+  <!-- ========================================================== XI · launch -->
+  <section class="act act--arrival" id="act-launch" data-act="launch" style="--weight: 1">
+    <div class="act__body">
+      <p class="act__kicker">Enter</p>
+      <h2 class="act__title">Open the console</h2>
+      <p class="act__line" data-line></p>
+      <p><a class="btn btn--lead" href="../black-optic-6/">Launch Black Optic 6</a></p>
+      <p class="readout" style="margin-top: 20px">No account. No server. Nothing leaves the device.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="colophon">
+  <p><strong>How this page was made.</strong> The backdrop is a WebGL fragment shader — anamorphic streak flares, vertically-oval bokeh, elliptical vignette and film grain, rendered live rather than played from a file, which is why it responds to where you are on the page. The operator is drawn from a joint rig on a 2D canvas; his gait is driven by ground covered rather than by a timer, so scrolling back walks him backwards through the same footfalls. He is an original design, not a character from anything.</p>
+  <p><strong>Where the words come from.</strong> Every feature claim on this page is read out of the console's own capability ledger at load time, wearing whatever state that ledger gives it. There is no second copy of the marketing text for anyone to sweeten later. The voices are your device's built-in speech engine, offline and free, reading those same rows.</p>
+  <p><a href="../black-optic-6/">Console</a> · <a href="../carrier/">Carrier</a> · <a href="https://github.com/bm6k4rc72b-droid/coach-colin-ai-command-center">Source</a></p>
+</footer>
+
+<script type="module" src="js/site.js"></script>
+</body>
+</html>

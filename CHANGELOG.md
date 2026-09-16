@@ -7,6 +7,26 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added the **Black Optic 6 film** at `/black-optic-6-site/` — a scroll-driven
+  cinematic showcase for the console. Anamorphic WebGL backdrop (vertically oval
+  bokeh, horizontal blue streak flares, elliptical vignette, mustache distortion,
+  halation and grain), parallax plates, a 3D card reveal, and an original
+  operator drawn from a joint rig who walks toward the lens as you scroll — his
+  gait driven by ground covered rather than a timer, so scrolling back walks him
+  backwards through the same footfalls, and his apparent size linear in scroll
+  because reciprocal distance is what gets interpolated. Eleven acts cover every
+  camera route, all thirteen thermal palettes as live ramps, five satellites and
+  four priced rungs of resolution ladder, drones, watches and glasses, harvest
+  and field work, a marksmanship trainer, an interactive demo and the ledger's
+  refusals. Every claim on the page is read out of `capability.js` at load time
+  wearing the ledger's own state — there is no second copy of the marketing text,
+  a typo in a capability id throws rather than rendering a blank card, and a test
+  fails if an unsound row is quietly dropped. Ten guides read each act aloud
+  through the browser's own offline speech engine, from sentences composed from
+  those same rows. The range act is a ballistics trainer against static steel —
+  lag-time wind drift, true-MOA conversions, and a solver that marks its own rows
+  amber past transonic. `npm run test:black-optic-6-site` (83 unit tests) and
+  `npm run qa:black-optic-6-site` (35 checks in real Chromium).
 - Made the **Black Optic 6** camera path work end to end, for nothing. The dev
   server now proxies `/relay` to a camera relay (go2rtc by default,
   `CAMERA_RELAY_URL` to point elsewhere), which serves the stream from the
