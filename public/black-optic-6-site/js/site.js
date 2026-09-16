@@ -416,10 +416,11 @@ class Stage {
 
     const centreX = this.width * this.plateSide(state);
 
-    // On a phone the plate sits behind the text, so it has to give way. A
-    // photograph at 40% under body copy is still atmosphere; at full strength
-    // it is an accessibility problem.
-    const alpha = this.width <= 720 ? 0.38 : 1;
+    // On a phone the plate sits behind the text, so it has to give way. At a
+    // quarter strength it is still atmosphere; at anything like full strength
+    // it is an accessibility problem, because there is no free side of the
+    // viewport to move him to.
+    const alpha = this.width <= 720 ? 0.26 : 1;
 
     ctx.save();
     ctx.translate(0, frameTop);

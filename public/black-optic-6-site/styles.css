@@ -558,7 +558,11 @@ main { position: relative; z-index: 10; }
   line-height: 1.5;
 }
 
-.scroll-x { overflow-x: auto; }
+/* Tables scroll sideways rather than compress. Without a floor on the width a
+   phone squeezes the first column until its note wraps one word per line, which
+   is unreadable in a way that horizontal scrolling never is. */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll-x .table { min-width: 560px; }
 
 /* ================================================================== demo */
 
