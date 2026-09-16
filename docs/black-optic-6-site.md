@@ -72,42 +72,89 @@ JavaScript fails, a screen reader walks it, or someone prints it.
 
 ## The operator
 
-An original figure — long storm coat, hard shoulder and shin plates, a visor
-with one horizontal light bar. Drawn from a joint rig in
-[`js/operator.js`](../public/black-optic-6-site/js/operator.js) and
-[`js/figure.js`](../public/black-optic-6-site/js/figure.js), not traced from
-anything.
+A photographic plate of the operator, composited over the backdrop and pushed in
+by your scroll position. Two plates: he stands in the command centre for most of
+the film and tips his hat to camera over the last stretch.
 
-Three decisions do most of the work:
+### Why a plate and not a cutout
 
-**Screen size grows linearly, not distance.** Apparent height goes as 1/d, so
-walking 64 m → 2.6 m at a constant pace would sit motionless for most of the
-scroll and then explode in the last tenth. The timeline interpolates *reciprocal*
-distance instead, which puts the growth on screen at a constant rate — the same
-trick a dolly operator uses through a push-in. A test asserts it:
+The obvious move is to matte him out and composite the subject alone. It does not
+survive contact with the image, and the numbers say why:
 
-```js
-const steps = [0, 0.25, 0.5, 0.75, 1].map((p) => apparentHeight(distanceAt(p), 1080));
-// every delta must be equal
-```
+| | L\* | b\* |
+| --- | --- | --- |
+| White hat | 63 | **−22** |
+| Leather coat | 2 | −3 |
+| Dark frame corner | 1 | −4 |
+| Earth | 22–39 | −23 to −36 |
 
-**The gait is driven by ground covered, not by a timer.** Step count is distance
-÷ stride length, and stride length is 0.43 × standing height, the measured adult
-ratio. Scroll back and his feet walk backwards through the same footfalls; stop
-scrolling and he stops mid-step, weight on one leg. The headless check confirms
-the phase at 10% is bit-identical before and after a trip to 95%.
+The plate is graded cold, so his white hat is *bluer* than most of the
+background — any blue-channel key eats it. And the coat and the dark corners of
+the frame are the same pixel, so no luminance threshold separates them either.
+The topology that would work (the Earth's glow forms a bright ring right around
+him) breaks at the bottom of frame, where the coat and the console floor merge
+into one connected black region. Every matte that can be pulled from this image
+either eats the hat or leaves a blue rim, and a blue rim against a dark page is
+the most obvious sign of a cheap cutout there is.
 
-**The knee is not a sinusoid.** The hip very nearly is; the knee flexes sharply
-through swing and stays near-straight through stance, so it gets a rectified sine
-biased into the swing half. A test measures maximum stance flexion against
-maximum swing flexion rather than trusting the formula.
+### What is done instead
 
-He changes posture per act — console in hand, thermal monocular to the eye, two
-hands on drone sticks, wrist turned in, glassing a block, low ready at the range
-— and each posture scales the arm swing, because a figure carrying something does
-not swing both arms.
+The plate is kept whole and given a **separable edge feather** — alpha ramps from
+zero to one over the outer 10–20% of each edge, and the four ramps are multiplied
+so corners darken fastest. The plate's own corners are already #000–#040a10 and
+the page ground is #04060a, so it lands with no visible edge at all, and the
+Earth and the console panels come with it at full photographic fidelity because
+they were always part of the artwork.
 
----
+An elliptical feather was tried first and is the instructive failure: an ellipse
+large enough to leave the subject and the Earth at full opacity necessarily
+extends past the plate's own bounds, so `rx × outer` came to 0.52 of the width,
+it never reached zero at the sides, and the plate kept a visible rectangle. A
+test now asserts alpha is exactly zero at all four edges and both diagonal
+corners, and exactly one in the middle.
+
+### The push-in
+
+This is the one place the film departs from the motion model.
+
+The earlier vector rig was sized from anatomy: a 1.83 m figure at whatever
+distance the model reported, which at 60 m is a thirty-pixel silhouette and reads
+perfectly, because a distant person *should* be a smudge. A photograph at thirty
+pixels does not read as a distant person — it reads as a thumbnail, because the
+plate carries a whole scene and the man inside it is only part of it.
+
+So the plate is framed against the frame, the way a push-in is actually shot: it
+starts at 0.62 of frame height and finishes filling it twice over, cropped by the
+matte. The interpolation is linear in scroll, which is exactly the
+constant-rate-of-growth property the reciprocal-distance model was chosen to
+give, so the approach still reads as one continuous move rather than an ease. A
+test asserts every increment is equal and positive.
+
+What survives from the gait model is the **bob**: a small vertical oscillation at
+the footfall rate, because a dolly on a walking subject is never perfectly
+steady, and a plate that slides in without one reads as a sticker being scaled.
+
+### Placement
+
+Each act declares which side of the viewport the plate takes, as data in
+`catalog.js` rather than as a formula, because it is art direction: the text
+column alternates sides down the page and the plate has to take whichever side
+the column is not on. The compositor blends between neighbouring acts' values
+using the same presence weights that cross-dissolve the scenes, so he drifts
+across during a transition instead of jumping. A test checks the rule holds
+against the actual act order — reordering the film without moving him would
+otherwise put a 400-pixel photograph under a paragraph. Below 720 px there is no
+free side, so he centres and drops to 38% opacity, and the two centred acts get a
+radial scrim behind their text.
+
+### The fallback
+
+`figure.js` still draws the original figure from a joint rig, and it is not dead
+code: it runs for the first frames of every load, and it carries the whole film
+on a connection that drops the plates or a browser that refuses them. Its gait is
+driven by ground covered rather than by a timer, so scrolling back walks it
+backwards through the same footfalls, and its knee gets a rectified sine biased
+into swing rather than the hip's sinusoid. Those tests still run.
 
 ## The lens
 
@@ -232,17 +279,20 @@ Two details that are usually got wrong elsewhere:
 ## Tests
 
 ```
-npm run test:black-optic-6-site   # 83 unit tests
-npm run qa:black-optic-6-site     # 35 checks, real Chromium
+npm run test:black-optic-6-site   # 95 unit tests
+npm run qa:black-optic-6-site     # 40 checks, real Chromium
 ```
 
-The unit suites cover the timeline, the gait and rig, the lens maths, the
-ballistics, the voice assignment and — the important one — the rule that nothing
-reaches the page or a voice that is not in the ledger.
+The unit suites cover the timeline, the gait and rig, the plate feather and
+push-in, the lens maths, the ballistics, the voice assignment and — the important
+one — the rule that nothing reaches the page or a voice that is not in the
+ledger.
 
 The headless check proves the film: the shader draws a non-black frame, the
 operator grows and his step count rises as the page scrolls, scrolling back
-reproduces the same gait phase exactly, all thirteen palette strips are real
+reproduces the same gait phase exactly, both plates decode and reach the canvas
+as a photograph rather than a silhouette, the feather still reaches zero on every
+edge, all thirteen palette strips are real
 ramps rather than flat blocks, the demo animates with no camera granted, the
 brightness readout refuses to print degrees, firing reports a cause, the guide
 changes with the act, reduced motion keeps every card visible, and nothing

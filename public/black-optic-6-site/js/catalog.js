@@ -75,10 +75,19 @@ export function resolve(id) {
  * `weight` buys scroll distance — thirteen thermal palettes need room, a title
  * card does not. `tint` steers the backdrop shader's haze colour, so the film
  * changes temperature as it moves rather than running one grade throughout.
+ *
+ * `side` is where the operator plate sits, as a fraction of viewport width. It
+ * is data rather than a formula because it is art direction: the text column
+ * alternates sides down the page, and the plate has to take whichever side the
+ * column is not on, or a 400-pixel photograph ends up behind a paragraph. The
+ * compositor blends between neighbouring acts' values using the same presence
+ * weights that cross-dissolve the scenes, so he drifts across during the
+ * transition instead of jumping when the active act changes.
  */
 export const SCENES = Object.freeze([
   {
     id: 'arrival',
+    side: 0.74,
     weight: 1.1,
     act: 'I',
     title: 'Black Optic 6',
@@ -90,6 +99,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'optics',
+    side: 0.24,
     weight: 1.35,
     act: 'II',
     title: 'Every camera is a sensor',
@@ -101,6 +111,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'thermal',
+    side: 0.76,
     weight: 1.5,
     act: 'III',
     title: 'Thirteen ways to see heat',
@@ -112,6 +123,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'satellite',
+    side: 0.24,
     weight: 1.35,
     act: 'IV',
     title: 'Five satellites, and what they cost',
@@ -123,6 +135,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'aerial',
+    side: 0.76,
     weight: 1.25,
     act: 'V',
     title: 'What is in your sky',
@@ -134,6 +147,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'wearables',
+    side: 0.24,
     weight: 1.2,
     act: 'VI',
     title: 'The sensor on you',
@@ -145,6 +159,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'field',
+    side: 0.76,
     weight: 1.35,
     act: 'VII',
     title: 'The block, the game, the crew',
@@ -156,6 +171,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'range',
+    side: 0.24,
     weight: 1.3,
     act: 'VIII',
     title: 'Steel at known distance',
@@ -167,6 +183,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'demo',
+    side: 0.78,
     weight: 1.4,
     act: 'IX',
     title: 'Run it here',
@@ -178,6 +195,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'ledger',
+    side: 0.22,
     weight: 1.3,
     act: 'X',
     title: 'The rows that say no',
@@ -189,6 +207,7 @@ export const SCENES = Object.freeze([
   },
   {
     id: 'launch',
+    side: 0.5,
     weight: 1,
     act: '—',
     title: 'Open the console',

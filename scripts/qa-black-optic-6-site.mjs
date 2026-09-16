@@ -34,6 +34,9 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.json': 'application/json',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
 };
 
 /** Load Puppeteer, tolerating a `puppeteer-core`-only install. */
@@ -248,6 +251,52 @@ async function main() {
     const drew = await page.evaluate(() => window.__figures.length);
     check(drew > 3, `the operator canvas is being repainted (${drew} frames)`);
 
+    // ------------------------------------------------------------- the plate
+    const plates = await page.evaluate(async () => {
+      const { PLATES } = await import('./js/plate.js');
+      const results = await Promise.all(PLATES.map((plate) => new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve({ id: plate.id, w: image.naturalWidth, h: image.naturalHeight });
+        image.onerror = () => resolve({ id: plate.id, w: 0, h: 0 });
+        image.src = plate.src;
+      })));
+      return results;
+    });
+    check(plates.every((plate) => plate.w > 400 && plate.h > 400),
+      `both operator plates decode (${plates.map((p) => `${p.id} ${p.w}x${p.h}`).join(', ')})`);
+
+    // The plate must actually reach the canvas — a figure that "renders" as a
+    // fully transparent draw is the failure a frame counter cannot see.
+    const onCanvas = await page.evaluate(() => {
+      const canvas = document.getElementById('operator');
+      const ctx = canvas.getContext('2d');
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let opaque = 0;
+      let bright = 0;
+      for (let i = 3; i < data.length; i += 4 * 97) {
+        if (data[i] > 24) opaque += 1;
+        if (data[i - 1] > 60 || data[i - 2] > 60) bright += 1;
+      }
+      return { opaque, bright };
+    });
+    check(onCanvas.opaque > 40, `the operator plate is on the canvas (${onCanvas.opaque} sampled opaque pixels)`);
+    check(onCanvas.bright > 5, `and it is a photograph, not a silhouette (${onCanvas.bright} lit samples)`);
+
+    // The feather is what lets the plate sit on a dark page. If it ever stops
+    // reaching zero the plate grows a visible rectangle, which is invisible in
+    // a frame count and obvious to anybody looking at the page.
+    const feather = await page.evaluate(async () => {
+      const { PLATES, featherAlpha } = await import('./js/plate.js');
+      return PLATES.map((plate) => ({
+        id: plate.id,
+        edges: [[0, 0.5], [1, 0.5], [0.5, 0], [0.5, 1], [0, 0], [1, 1]]
+          .map(([x, y]) => featherAlpha(x, y, plate.feather)),
+        middle: featherAlpha(0.5, 0.5, plate.feather),
+      }));
+    });
+    check(feather.every((p) => p.edges.every((a) => a === 0) && p.middle === 1),
+      'the plate feather reaches zero on every edge and full in the middle');
+
     // -------------------------------------------------------------- content
     const cameras = await page.$$eval('#camera-grid .card', (nodes) => nodes.length);
     check(cameras >= 12, `every camera route is listed (${cameras})`);
@@ -345,6 +394,15 @@ async function main() {
     await page.click('#range-reveal');
     const reveal = await page.$eval('#range-result', (node) => node.textContent);
     check(/mil/.test(reveal), `the trainer then shows the correct hold ("${reveal.slice(0, 64)}…")`);
+
+    // -------------------------------------------------------- the last beat
+    await scrollTo(page, 1);
+    const closing = await page.evaluate(async () => {
+      const { plateMix } = await import('./js/plate.js');
+      return plateMix(1);
+    });
+    check(closing.over === 'arrival' && closing.mix === 1,
+      'the film closes on the hat-tip plate');
 
     // ----------------------------------------------------------- the guides
     const guides = await page.evaluate(async () => {

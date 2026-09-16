@@ -608,13 +608,20 @@ Watch row is beside the strap that does work. The title card's counts come from
 satellites from the orbital panel. A typo in a capability id throws at load
 rather than rendering a confident blank card.
 
-The operator is an original design drawn from a joint rig rather than traced, and
-his gait is driven by ground covered rather than by a timer — scroll back and he
-walks backwards through the same footfalls. Apparent height is linear in scroll
-because the timeline interpolates reciprocal distance, which is how a push-in
-keeps a subject growing evenly. The voices are the browser's own speech engine,
-offline and free, reading sentences composed from the ledger; a test walks all 88
-of them and fails if any contains copy that exists nowhere in the catalogue.
+The operator is a photographic plate, feathered into the page at every edge
+rather than cut out — the plate is graded cold, so the white hat reads bluer than
+the sky behind it and the leather coat is the same pixel value as the dark frame
+corners, and no matte pullable from it avoids either eating the hat or leaving a
+blue rim. Kept whole and feathered, it lands on the near-black page with no
+visible edge and keeps the Earth and console panels that were always part of the
+artwork. The approach is a push-in at a constant rate of growth, with a small bob
+at the footfall rate, and each act declares which side the plate takes so it
+always clears the text column. A vector figure drawn from a joint rig carries the
+first frames of every load and the whole film if the plates never arrive.
+
+The voices are the browser's own speech engine, offline and free, reading
+sentences composed from the ledger; a test walks all 88 of them and fails if any
+contains copy that exists nowhere in the catalogue.
 
 The range act is a ballistics trainer against static steel — drop, lag-time wind
 drift, holdover, and a solver that turns its own rows amber past transonic where
@@ -622,10 +629,11 @@ it stops being trustworthy. It is not a targeting system, and it says so on the
 page.
 
 Write-up: [`docs/black-optic-6-site.md`](docs/black-optic-6-site.md). Tests:
-`npm run test:black-optic-6-site` (83 unit tests) and
-`npm run qa:black-optic-6-site`, which drives the real page in Chromium and
-checks that the shader paints, the operator moves, the demo runs without a
-camera, and the honest rows survived onto the rendered page.
+`npm run test:black-optic-6-site` (95 unit tests) and
+`npm run qa:black-optic-6-site` (40 checks), which drives the real page in
+Chromium and checks that the shader paints, the operator moves, both plates
+decode and reach the canvas, the feather still reaches zero on every edge, the
+demo runs without a camera, and the honest rows survived onto the rendered page.
 
 ---
 
