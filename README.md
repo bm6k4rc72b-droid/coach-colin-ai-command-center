@@ -587,6 +587,48 @@ which drives the real console in Chromium with a synthetic camera and microphone
 
 ---
 
+## And its film: the Black Optic 6 showcase
+
+A scroll-driven cinematic site for the console at
+[`public/black-optic-6-site/`](public/black-optic-6-site) — anamorphic WebGL
+backdrop, parallax plates, a 3D card reveal, an operator who walks toward the
+lens as you scroll, an interactive demo, a ballistics trainer, and a different
+synthesised voice explaining each of the eleven acts.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6-site/>**
+— locally `/black-optic-6-site/` under `./start.sh`.
+
+Its one rule is the same as the console's, pointed at marketing: **every feature
+claim is read out of the capability ledger at load time, wearing whatever state
+that ledger gives it.** There is no second copy of the text to sweeten later. A
+row the ledger calls UNSOUND appears on the site as UNSOUND, in the section about
+the thing it sits next to — the turret row is in the marksmanship act, the Apple
+Watch row is beside the strap that does work. The title card's counts come from
+`tally()`, the thirteen palettes from the renderer that draws them, the five
+satellites from the orbital panel. A typo in a capability id throws at load
+rather than rendering a confident blank card.
+
+The operator is an original design drawn from a joint rig rather than traced, and
+his gait is driven by ground covered rather than by a timer — scroll back and he
+walks backwards through the same footfalls. Apparent height is linear in scroll
+because the timeline interpolates reciprocal distance, which is how a push-in
+keeps a subject growing evenly. The voices are the browser's own speech engine,
+offline and free, reading sentences composed from the ledger; a test walks all 88
+of them and fails if any contains copy that exists nowhere in the catalogue.
+
+The range act is a ballistics trainer against static steel — drop, lag-time wind
+drift, holdover, and a solver that turns its own rows amber past transonic where
+it stops being trustworthy. It is not a targeting system, and it says so on the
+page.
+
+Write-up: [`docs/black-optic-6-site.md`](docs/black-optic-6-site.md). Tests:
+`npm run test:black-optic-6-site` (83 unit tests) and
+`npm run qa:black-optic-6-site`, which drives the real page in Chromium and
+checks that the shader paints, the operator moves, the demo runs without a
+camera, and the honest rows survived onto the rendered page.
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream

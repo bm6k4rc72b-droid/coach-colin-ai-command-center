@@ -1,0 +1,730 @@
+/**
+ * BLACK OPTIC 6 — the film.
+ *
+ * The console's rule was "glow is a signal, not a finish". A showcase site is
+ * allowed to be beautiful, so the rule relaxes exactly one notch and no further:
+ * **the frame may glow; the data may not.** Atmosphere lives in the backdrop,
+ * the lens artefacts and the letterbox. The moment a number or a verdict appears
+ * it is set in the console's own tactical type at the console's own contrast,
+ * because the whole argument of this platform is that its readings are sober. A
+ * site that renders a measurement in neon undercuts the product it is selling.
+ *
+ * Structure:
+ *
+ * - A fixed **stage** — WebGL haze, the operator canvas, and two matte bars that
+ *   open and close. It never scrolls; the film is played *through* it.
+ * - Ordinary document flow on top, one `<section>` per act. Real flow, real
+ *   headings, real links: with JavaScript off you get a plain, readable,
+ *   navigable page, and with `prefers-reduced-motion` you get the same page
+ *   without a single transform.
+ * - Parallax is applied to elements carrying `data-depth`, computed from their
+ *   distance to viewport centre. Nothing is position-hacked and nothing relies
+ *   on a fixed document height.
+ *
+ * `svh` units throughout rather than `vh`, so a phone's collapsing address bar
+ * does not make the letterbox jump every time the page moves.
+ */
+
+:root {
+  --void: #04060a;
+  --deck: #070b12;
+  --plate: rgba(10, 18, 28, 0.72);
+  --plate-solid: #0a121c;
+
+  --hair: rgba(120, 170, 205, 0.16);
+  --hair-strong: rgba(120, 200, 235, 0.38);
+
+  --ink: #dff0f8;
+  --ink-dim: #8aa6ba;
+  --ink-faint: #566b7e;
+
+  --primary: #4fe8ff;
+  --confirm: #29e07f;
+  --caution: #ffb23d;
+  --alert: #ff3b4e;
+  --muted: #5a6b7d;
+
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --condensed: 'Oswald', 'Roboto Condensed', 'Avenir Next Condensed', ui-sans-serif, system-ui, sans-serif;
+  --body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --gutter: clamp(18px, 4.5vw, 64px);
+  --measure: 62ch;
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: clamp(15px, 1.05vw + 12px, 18px);
+  line-height: 1.62;
+  overflow-x: hidden;
+}
+
+/* ===================================================================== stage */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The CSS fallback when WebGL is refused. Never removed — it sits under the
+   canvas, so a context loss mid-session degrades instead of going black. */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 70% at 50% 82%, rgba(14, 42, 62, 0.85), transparent 70%),
+    radial-gradient(60% 40% at 18% 46%, rgba(30, 86, 120, 0.30), transparent 72%),
+    radial-gradient(50% 36% at 82% 50%, rgba(90, 52, 20, 0.22), transparent 74%),
+    linear-gradient(180deg, #050a11 0%, #071019 58%, #050a10 100%);
+}
+
+#backdrop { opacity: 0.98; }
+
+#operator { mix-blend-mode: normal; }
+
+/* The matte. Opens from a squeezed 2.39 frame at the title to nearly full
+   height in the demo, then closes again for the ledger. */
+.matte {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #020407;
+  z-index: 3;
+  will-change: height;
+}
+.matte--top { top: 0; }
+.matte--bottom { bottom: 0; }
+
+.matte::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79, 232, 255, 0.22), transparent);
+}
+.matte--top::after { bottom: 0; }
+.matte--bottom::after { top: 0; }
+
+/* A single anamorphic streak that rakes across on scene changes. */
+/* Sized to the stage rather than overhanging it: the stage clips visually, but
+   an oversized child still widens the document's scrollable area on a phone,
+   which is a horizontal scrollbar nobody asked for. The gradient already fades
+   to nothing at both ends, so there is nothing to gain from the overhang. */
+.flare {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 2px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, rgba(79, 232, 255, 0.0) 20%, rgba(120, 220, 255, 0.55) 50%, rgba(79, 232, 255, 0.0) 80%, transparent);
+  filter: blur(1.5px);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* ================================================================== chrome */
+
+/* The HUD is fixed, so content scrolls under it. Without a plate behind it the
+   act number lands on top of a dope-card row and both become unreadable. */
+.hud {
+  position: fixed;
+  z-index: 40;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  padding: 6px 10px;
+  background: rgba(4, 7, 12, 0.78);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(8px);
+}
+
+.hud--act {
+  top: max(12px, env(safe-area-inset-top));
+  left: var(--gutter);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.hud--act .act-no { color: var(--primary); }
+
+.hud--progress {
+  top: max(12px, env(safe-area-inset-top));
+  right: var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-track {
+  width: clamp(60px, 14vw, 140px);
+  height: 2px;
+  background: var(--hair);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--primary);
+  box-shadow: 0 0 10px rgba(79, 232, 255, 0.5);
+}
+
+/* The guide chip — who is narrating this act. */
+.guide {
+  position: fixed;
+  z-index: 45;
+  left: var(--gutter);
+  bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 10px;
+  background: rgba(6, 12, 20, 0.86);
+  border: 1px solid var(--hair);
+  backdrop-filter: blur(10px);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  max-width: min(78vw, 420px);
+}
+
+.guide__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+.guide.is-speaking .guide__dot {
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.guide__name { color: var(--ink); letter-spacing: 0.14em; }
+.guide__role { color: var(--ink-faint); }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border: 1px solid var(--hair-strong);
+  background: rgba(10, 20, 32, 0.6);
+  color: var(--ink);
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
+}
+.btn:hover, .btn:focus-visible {
+  background: rgba(20, 44, 64, 0.8);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn[aria-pressed='true'] {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(16, 48, 66, 0.85);
+}
+.btn--ghost { border-color: var(--hair); color: var(--ink-dim); }
+.btn--lead {
+  font-size: 13px;
+  padding: 14px 28px;
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 24px rgba(79, 232, 255, 0.18);
+}
+
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ================================================================== scroll */
+
+main { position: relative; z-index: 10; }
+
+.act {
+  position: relative;
+  min-height: calc(var(--weight, 1) * 100svh);
+  padding: 14svh var(--gutter) 12svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Column sits to one side so the operator has the other. Alternating keeps
+   the eye moving and stops eleven acts reading as one long list. */
+.act__body {
+  max-width: var(--measure);
+  width: 100%;
+}
+.act:nth-child(even) .act__body { margin-left: auto; }
+
+.act__kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.act__kicker::before {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--primary);
+  flex: none;
+}
+
+.act__title {
+  font-family: var(--condensed);
+  font-weight: 600;
+  font-size: clamp(30px, 6.2vw, 74px);
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+
+.act__line {
+  margin: 0 0 30px;
+  color: var(--ink-dim);
+  font-size: clamp(15px, 0.6vw + 14px, 19px);
+  text-wrap: pretty;
+}
+
+/* --- the title act ---------------------------------------------------- */
+
+.act--arrival { text-align: center; align-items: center; }
+/* The title card is the one place the column goes wide, because the title is a
+   single unbreakable line and its size has to come from somewhere. Everything
+   inside it that is meant to be *read* gets pulled back to a sane measure. */
+.act--arrival .act__body { max-width: min(92vw, 1000px); }
+.act--arrival .act__line,
+.act--arrival .readout { max-width: 34ch; margin-inline: auto; }
+.act--arrival .act__kicker { justify-content: center; }
+.act--arrival .act__kicker::after {
+  content: '';
+  width: 26px;
+  height: 1px;
+  background: var(--primary);
+}
+/* The title is set as one unbreakable line, so its size has to be chosen from
+   the column width rather than from taste: at 9.5vw "Black Optic 6" clears a
+   360px phone with room to spare, and the clamp's ceiling takes over long
+   before a desktop. A larger figure here is a horizontal scrollbar on a phone. */
+.act--arrival .act__title {
+  font-size: clamp(34px, 8vw, 118px);
+  letter-spacing: 0.02em;
+}
+
+.tally {
+  display: flex;
+  gap: clamp(14px, 3vw, 34px);
+  justify-content: center;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  margin-top: 26px;
+}
+.tally__cell { text-align: center; }
+.tally__n {
+  display: block;
+  font-size: clamp(22px, 3.4vw, 38px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.tally__k {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+  margin-top: 7px;
+  text-transform: uppercase;
+}
+.tally__cell[data-state='LIVE'] .tally__n { color: var(--confirm); }
+.tally__cell[data-state='LINK'] .tally__n { color: var(--primary); }
+.tally__cell[data-state='MODEL'] .tally__n { color: var(--caution); }
+.tally__cell[data-state='UNSOUND'] .tally__n { color: var(--alert); }
+
+.scroll-cue {
+  margin-top: 46px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+.scroll-cue::after {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 46px;
+  margin: 14px auto 0;
+  background: linear-gradient(180deg, var(--primary), transparent);
+}
+
+/* ============================================================ reveal cards */
+
+/* The 3D reveal. Cards start pushed back and tipped away from the viewer, and
+   come up to the picture plane as their section enters. `perspective` on the
+   parent rather than each card so they share one vanishing point — cards with
+   individual perspectives read as stickers. */
+.reveal {
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
+}
+
+.card {
+  border: 1px solid var(--hair);
+  background: var(--plate);
+  backdrop-filter: blur(9px);
+  padding: 16px 18px;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.card__name {
+  font-family: var(--condensed);
+  font-size: 17px;
+  letter-spacing: 0.01em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.card__note {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+}
+
+.card__meta {
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  /* `start`, not the default `stretch`: a short card stretched to match a long
+     neighbour is a card with a hole in it. */
+  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 268px), 1fr));
+}
+.grid--wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+
+/* =================================================================== badges */
+
+.badge {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.13em;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex: none;
+}
+.badge[data-tone='confirm'] { color: var(--confirm); }
+.badge[data-tone='primary'] { color: var(--primary); }
+.badge[data-tone='caution'] { color: var(--caution); }
+.badge[data-tone='muted']   { color: var(--muted); }
+.badge[data-tone='alert']   { color: var(--alert); }
+
+/* ============================================================== palettes */
+
+.palette-strip {
+  height: 26px;
+  width: 100%;
+  border: 1px solid var(--hair);
+  display: block;
+}
+
+/* Thirteen palettes in a text column is seven rows of scrolling. The strips
+   stay legible well under 200px, so they get their own tighter track. */
+#palette-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 168px), 1fr)); }
+
+.palette-card { padding: 12px 13px; }
+.palette-card .card__name { font-size: 15px; }
+.palette-card .palette-strip { margin: 9px 0 9px; }
+.palette-card .card__note { font-size: 12.5px; }
+
+/* ================================================================ tables */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.table th, .table td {
+  text-align: left;
+  padding: 9px 12px 9px 0;
+  border-bottom: 1px solid var(--hair);
+  vertical-align: top;
+}
+.table th {
+  color: var(--ink-faint);
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+/* Numbers must not wrap. "2422 fps" breaking across two lines turns a dope
+   card into a wall of ragged text exactly where it needs to be scannable. */
+.table td.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 14px;
+  white-space: nowrap;
+}
+
+#dope-table { font-size: 11px; }
+#dope-table td, #dope-table th { padding-right: 10px; }
+.table caption {
+  caption-side: bottom;
+  text-align: left;
+  color: var(--ink-faint);
+  font-family: var(--body);
+  font-size: 12.5px;
+  padding-top: 12px;
+  line-height: 1.5;
+}
+
+.scroll-x { overflow-x: auto; }
+
+/* ================================================================== demo */
+
+.demo {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: start;
+}
+
+.screen {
+  position: relative;
+  border: 1px solid var(--hair-strong);
+  background: #000;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.screen canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: auto;
+  touch-action: none;
+}
+.screen__corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--primary);
+  pointer-events: none;
+}
+.screen__corner:nth-child(1) { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+.screen__corner:nth-child(2) { top: 6px; right: 6px; border-left: 0; border-bottom: 0; }
+.screen__corner:nth-child(3) { bottom: 6px; left: 6px; border-right: 0; border-top: 0; }
+.screen__corner:nth-child(4) { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.readout {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  margin-top: 12px;
+  line-height: 1.7;
+}
+.readout strong {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+select, input[type='range'] {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: rgba(10, 20, 32, 0.8);
+  border: 1px solid var(--hair);
+  padding: 7px 9px;
+  max-width: 100%;
+}
+input[type='range'] { padding: 0; accent-color: var(--primary); min-width: 110px; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ================================================================ ledger */
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hair);
+  align-items: start;
+}
+.ledger-row h3 {
+  margin: 0 0 4px;
+  font-family: var(--condensed);
+  font-size: 16px;
+  font-weight: 500;
+}
+.ledger-row p { margin: 0; font-size: 13.5px; color: var(--ink-dim); }
+.ledger-row .path {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* ================================================================= footer */
+
+.colophon {
+  position: relative;
+  z-index: 10;
+  border-top: 1px solid var(--hair);
+  padding: 40px var(--gutter) max(40px, env(safe-area-inset-bottom));
+  background: var(--void);
+  font-size: 13.5px;
+  color: var(--ink-faint);
+}
+.colophon a { color: var(--ink-dim); }
+.colophon p { max-width: 74ch; }
+
+/* ================================================================== a11y */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: absolute;
+  top: -60px;
+  left: var(--gutter);
+  z-index: 100;
+  background: var(--plate-solid);
+  padding: 10px 16px;
+  border: 1px solid var(--primary);
+}
+.skip:focus { top: 12px; }
+
+/* Anyone who has asked for less motion gets a still frame and a readable page:
+   no walk cycle, no parallax, no backdrop animation, no smooth scrolling. The
+   content is identical, which is the point — none of the meaning was in the
+   movement. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .card { transform: none !important; opacity: 1 !important; }
+  .flare { display: none; }
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media (max-width: 720px) {
+  /* On a phone the HUD sits directly on top of the section heading, and there
+     is no room to move it to. So it becomes what it is actually for at that
+     size: a hairline that says how far through the film you are. */
+  .hud--act { display: none; }
+  .hud--progress {
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+  .hud--progress span:first-child { display: none; }
+  .hud--progress .progress-track { width: 100%; height: 2px; }
+
+  .act { padding: 12svh var(--gutter) 10svh; }
+  .act:nth-child(even) .act__body { margin-left: 0; }
+  .guide { font-size: 10px; padding: 7px 10px; }
+  .hud--act { font-size: 10px; }
+  .ledger-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+@media print {
+  .stage, .guide, .hud, .flare { display: none; }
+  body { background: #fff; color: #000; }
+}
