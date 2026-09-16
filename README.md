@@ -546,7 +546,7 @@ it came from, and only measured numbers may raise an alarm.
 **Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6/>** — locally it is `/black-optic-6/`
 (`http://localhost:4173/black-optic-6/` under `./start.sh`).
 
-Thirteen decks: optics with every thermal palette a thermal camera offers, a
+Fourteen decks: optics with every thermal palette a thermal camera offers, a
 Reolink Argus / IP camera setup that writes your relay config, tells you whether
 frames will be *measurable* as well as visible, and reaches the camera through a
 same-origin proxy so they are, a camera picker that takes a DJI Pocket in
@@ -560,8 +560,10 @@ satellite fix cannot support; vegetation indices with the bare alleys masked out
 and the worst cells ranked; sonar occupancy mapping with an honest drift
 estimate; a Bluetooth wearable link; real NASA imagery over your coordinates with
 the next overpass times; an evidence vault that keeps the thirty seconds *before*
-an event and hashes the clip; links for external sensors; and a capability
-ledger.
+an event and hashes the clip; links for external sensors; a world deck carrying
+the feeds from off the property — USGS earthquakes with a range and bearing from
+your gate, public traffic cameras on the roads out, active-fire points and
+regional headlines; and a capability ledger.
 
 The ledger is the point. Every capability on the specification is answered with
 one of six states — measured here, measured by a device you link, modelled with
@@ -582,8 +584,17 @@ about how fast something was moving.
 
 Full write-up, including the refusals in detail:
 [`docs/black-optic-6.md`](docs/black-optic-6.md). Tests:
-`npm run test:black-optic-6` (166 unit tests) and `npm run qa:black-optic-6`,
+`npm run test:black-optic-6` (213 unit tests) and `npm run qa:black-optic-6`,
 which drives the real console in Chromium with a synthetic camera and microphone.
+
+Of the world feeds, exactly one works on the static deploy with no setup at all:
+USGS sends the CORS header a browser needs, so the seismic panel reads it
+directly. The other three need the same free relay the fence cameras already
+use, and the deck says which is which in place rather than failing quietly. The
+seismic panel will not compute what the shaking was *at the ranch* — it reports
+the intensity USGS published, prefers what people actually reported over what
+ShakeMap modelled, and where neither exists it says so instead of estimating one
+from magnitude and distance.
 
 ---
 

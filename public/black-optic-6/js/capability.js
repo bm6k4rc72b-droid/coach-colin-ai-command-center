@@ -28,6 +28,7 @@ export const BOARDS = Object.freeze({
   biometric: 'Biometric & kinetic',
   physics: 'Physics-based visions',
   stack: 'All-vision stack',
+  world: 'World feeds — off the ranch',
 });
 
 /**
@@ -433,6 +434,66 @@ export const CAPABILITIES = Object.freeze([
   },
 
   // ---------------------------------------------------------------- modelled
+  {
+    id: 'earthquakes',
+    name: 'Earthquake feed',
+    board: 'world',
+    state: 'LINK',
+    verdict: 'USGS event solutions over your coordinates, with range and bearing from the ranch. Keyless, public domain, and the one world feed that needs no relay and no server at all — USGS sends CORS headers, so the browser fetches it directly.',
+    path: 'Already live. Solutions are automatic until a seismologist reviews them, and the console shows which is which because an automatic magnitude gets revised.',
+    panel: 'world',
+  },
+  {
+    id: 'shaking-here',
+    name: 'What the shaking was at this ranch',
+    board: 'world',
+    state: 'UNSOUND',
+    verdict: 'The console reports the intensity USGS published — ShakeMap\'s modelled maximum, and the Did You Feel It value people actually reported — and refuses to compute its own. Predicting site intensity needs a regional equation whose coefficients cannot be checked at three in the morning, and getting them wrong produces a confident number that is out by two whole intensity units. That is the difference between going to look at the tank foundations and going back to bed.',
+    path: 'A ground-motion sensor on the property would measure it instead of estimating it. An accelerometer that logs peak ground acceleration is a few hundred dollars and reports what actually happened here rather than what a model expects.',
+  },
+  {
+    id: 'fire-points',
+    name: 'Active fire detections as points',
+    board: 'world',
+    state: 'LINK',
+    verdict: 'NASA FIRMS publishes VIIRS and MODIS hotspot detections as records rather than as a picture, which is what lets the console put a range and bearing on one. It needs a free MAP_KEY, and the key cannot sit in a static page, so it is fetched through the relay.',
+    path: 'Free key from NASA FIRMS, then the same relay the cameras use. The keyless thermal-anomaly imagery in the orbital panel keeps working without either.',
+    panel: 'world',
+  },
+  {
+    id: 'traffic-cams',
+    name: 'Public traffic cameras',
+    board: 'world',
+    state: 'LINK',
+    verdict: 'Agency cameras pointed at public roads and published deliberately — Caltrans District 4 covers Napa. The frames display on any page because an image tag needs no CORS; the camera list does need the relay, and so does measuring anything off a frame.',
+    path: 'Frames work now. The relay adds the catalog and makes the frames measurable rather than merely visible.',
+    panel: 'world',
+  },
+  {
+    id: 'cam-discovery',
+    name: 'Finding cameras nobody published',
+    board: 'world',
+    state: 'UNSOUND',
+    verdict: 'Not built and not a gap. This console reads catalogs that an agency published on purpose. Unsecured private cameras are trivially findable on the open internet, and opening one is a stranger\'s living room rather than a road — no part of this platform will search for, index, or open a camera whose owner did not publish it.',
+    path: 'Nothing changes this one. Every other row on this ledger says no because of physics, a platform, or a measurement that does not support the claim; this one is a decision, and it is the only row here that would still be refused if it became trivial.',
+  },
+  {
+    id: 'regional-news',
+    name: 'Regional headlines',
+    board: 'world',
+    state: 'LINK',
+    verdict: 'Location-matched articles through GDELT, whose terms permit commercial use with citation. Google News is implemented but gated: its terms restrict it to personal, non-commercial use, and a vineyard is a business. Needs the relay.',
+    path: 'The relay. The panel states in place that these are string matches rather than verified incidents, and that an empty result means nothing was indexed, not that nothing happened.',
+    panel: 'world',
+  },
+  {
+    id: 'news-as-warning',
+    name: 'Headlines as an early warning',
+    board: 'world',
+    state: 'UNSOUND',
+    verdict: 'Indexing lag on both sources runs from minutes to hours, and a query match is not an incident. The first you hear about a fire on your own ground will not be a news API. Treating a quiet feed as an all-clear is the specific mistake this row exists to prevent.',
+    path: 'For fire specifically: the thermal detections above, and CAL FIRE / Watch Duty for official incident reporting. For the property itself, the sensors on it.',
+  },
   {
     id: 'satellite-imagery',
     name: 'Satellite camera access',

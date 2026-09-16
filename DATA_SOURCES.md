@@ -38,6 +38,18 @@ How to read this:
 | **Radio Browser** | Geolocated internet-radio station directory and station-level tags | Public-domain directory data under PDDL 1.0; individual broadcaster stream terms apply | "Radio Browser" plus a link to the selected broadcaster |
 | **Re:Earth Terrain** (Mapterhorn) | Terrain (keyless globe stacks — OSM etc. — + `/api/terrain/heights` ellipsoidal-height lookups) | Terrain mesh: CC BY 4.0; geoid: EGM2008 (NGA, public domain) | "Terrain (keyless globe stacks): Re:Earth Terrain / Mapterhorn (CC BY 4.0) / EGM2008 (NGA)" |
 
+### Also used by Black Optic 6
+
+The ranch console's world deck (`public/black-optic-6/`) draws on four of the
+sources above, under the same terms and with the same attribution: **USGS**
+earthquakes (fetched directly from the browser — it is the only one of the four
+that sends CORS headers), **Caltrans / City of Austin / TfL** traffic cameras,
+**NASA FIRMS** active-fire points, and **GDELT** for regional headlines. Google
+News is deliberately *not* used there by default: its terms restrict it to
+personal, non-commercial use, and the console's source picker substitutes GDELT
+unless personal use is explicitly declared. TfL's required credit is carried in
+the camera record itself rather than in a footer.
+
 ### Notes on the live sources
 
 - **Google Maps Platform.** You supply your own API key and are bound by [Google's ToS](https://cloud.google.com/maps-platform/terms). Google Maps Content (tiles, geocodes, places) **may not be cached, stored, rehosted, or committed** — this app only ever uses it live, which is the compliant pattern. The "Google" attribution is displayed on the globe and must stay visible. Restrict your key (see [SECURITY.md](SECURITY.md)).
