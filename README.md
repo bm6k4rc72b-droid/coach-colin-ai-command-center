@@ -47,6 +47,70 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: MakeCNS Fly
+
+A viral post described a reconstructed fruit fly brain flying a real drone from a
+single camera watching a hand, with "zero flight logic", self-stabilising within
+eleven seconds. [`public/makecns-fly/`](public/makecns-fly) builds that machine —
+spiking network, camera, quadrotor, the lot — and then **measures which part of it
+is actually flying**, by removing one part at a time and watching what changes.
+
+Locally it is `/makecns-fly/` (`http://localhost:4173/makecns-fly/` under
+`./start.sh`). It runs offline, fetches nothing, and discards every camera frame
+in the tick it was read.
+
+- **The stated sensor configuration cannot work, and needs no simulation to
+  refute.** If palm openness is the only input, nothing entering the network
+  depends on the drone's altitude or attitude. There is no error signal, so there
+  is nothing for any amount of downstream machinery to correct. The app carries a
+  permanent `LOOP OPEN` indicator for that configuration. Closing the loop takes
+  six proprioceptive channels — an IMU — that the account never mentions.
+- **The airframe is not flying itself.** Constant throttle reaches an
+  unrecoverable tilt in **165 ms** on the default seed — under 300 ms on every
+  seed tried — dominated by the centre-of-mass offset rather than rotor mismatch.
+  There is no stabilisation anywhere in the plant.
+- **One constant decides whether the network transmits or destroys information.**
+  At a tonic drive of 0.20 the pool is busy on its own and a linear readout of
+  motor rates recovers roll with an R-squared near zero; at 0.10 the same wiring
+  recovers it at about 0.66 and holds altitude perfectly. Identical network. Only
+  whether it was listening changed.
+- **A generous version does fly — after a lot of help that no telling of the
+  story includes.** Five things had to be added before anything flew: a
+  control-axis output basis, teacher gains placed from the airframe's constants,
+  persistent excitation during training, a gradual hand-over against covariate
+  shift, and two rate timescales so the readout can form a derivative. Each is a
+  measurable step and each is documented where it lives.
+- **The ledger does the attribution.** Eight flights, each removing one
+  component: the bare airframe, the PD controller, the intact network, the
+  network with recurrence cut, with every spike replaced by rate-matched noise,
+  frozen, with an unfitted readout, and with the demonstration's own sensors. On
+  the default settings the intact system holds altitude 100% of the window, the
+  PD controller 95%, and every network ablation collapses to a few percent — so
+  in this configuration the network really is load-bearing. The app prints the
+  caveat that qualifies it: those ablations are not refitted, so a readout out of
+  calibration is being counted as a computation removed, and the network's share
+  is an upper bound. The rows free of that confound are the ones that bear on the
+  original claim — an unfitted readout does not fly, and the demonstration's own
+  sensor configuration does not fly.
+- **Scoring runs to the end of the window, not to the crash**, which reverses
+  conclusions: scored only over the seconds it survived, the rate-matched-noise
+  condition reports a 70% hold; scored over the whole window, where a wreck counts
+  as not holding, it reports 2%.
+
+It also refuses to lie about its own network: it ships no connectome, generates
+one from published summary statistics, says so on a banner that never scrolls
+away, and reports what fraction of its neurons fired at all during the flight you
+are looking at.
+
+```bash
+npm run test:makecns-fly   # 58 unit tests
+npm run qa:makecns-fly     # end-to-end in a real browser
+```
+
+Full notes: [`docs/makecns-fly.md`](docs/makecns-fly.md).
+
+---
+
 ## Also in here: Emberline
 
 A fire tracker at [`public/emberline/`](public/emberline) that fuses **satellite

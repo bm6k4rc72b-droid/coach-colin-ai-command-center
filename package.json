@@ -51,6 +51,7 @@
     "test:touchline": "node --test tests/touchline/*.test.mjs",
     "test:emberline": "node --test tests/emberline/*.test.mjs",
     "test:vice": "node --test tests/vice/*.test.mjs",
+    "test:makecns-fly": "node --test tests/makecns-fly/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
     "qa:map-source-tray": "node scripts/qa-map-source-tray.mjs",
@@ -65,7 +66,8 @@
     "qa:camera-relay": "node scripts/qa-camera-relay.mjs",
     "qa:realtor": "node scripts/qa-realtor.mjs",
     "qa:touchline": "node scripts/qa-touchline.mjs",
-    "qa:vice": "node scripts/qa-vice.mjs"
+    "qa:vice": "node scripts/qa-vice.mjs",
+    "qa:makecns-fly": "node scripts/qa-makecns-fly.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",
