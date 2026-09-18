@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="MakeCNS Fly">
+  <rect width="128" height="128" rx="28" fill="#07090e"/>
+  <g stroke="#7c89a3" stroke-width="1.6" stroke-opacity="0.55" fill="none">
+    <path d="M40 40 L64 58 L88 40"/>
+    <path d="M40 88 L64 70 L88 88"/>
+    <path d="M40 40 L40 88 M88 40 L88 88"/>
+  </g>
+  <g fill="#c77dff">
+    <circle cx="40" cy="40" r="9"/>
+    <circle cx="88" cy="40" r="9"/>
+    <circle cx="40" cy="88" r="9"/>
+    <circle cx="88" cy="88" r="9"/>
+  </g>
+  <circle cx="64" cy="64" r="11" fill="#58c6ff"/>
+  <circle cx="64" cy="64" r="4.5" fill="#07090e"/>
+</svg>
