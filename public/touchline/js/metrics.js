@@ -152,11 +152,13 @@ export function occupancy(path, options = {}) {
  * providers use different thresholds, which is why two systems watching the
  * same match disagree.
  *
+ * @param {{sprintMps: number, highIntensityMps: number}} [sport] Field model
+ *   whose conventions apply; football's if none is given.
  * @returns {{highIntensityKph: number, sprintKph: number}} The definitions.
  */
-export function definitions() {
+export function definitions(sport = null) {
   return {
-    highIntensityKph: HIGH_INTENSITY_MPS * 3.6,
-    sprintKph: SPRINT_MPS * 3.6,
+    highIntensityKph: (sport?.highIntensityMps ?? HIGH_INTENSITY_MPS) * 3.6,
+    sprintKph: (sport?.sprintMps ?? SPRINT_MPS) * 3.6,
   };
 }

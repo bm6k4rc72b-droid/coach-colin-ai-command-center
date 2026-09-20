@@ -38,8 +38,21 @@
 import { apply, distanceToLines, expectedPixelHeight, onPitch, scaleAt } from './pitch.js';
 import { paintWhite } from './segment.js';
 
-/** Diameter of a size 5 football, metres. */
+/** Diameter of a size 5 football, metres. The default when no sport is given. */
 export const BALL_DIAMETER_M = 0.22;
+
+/**
+ * The ball a field model describes, or football's if it describes none.
+ *
+ * @param {{diameterM: number, isBall: Function}} [ball] Sport's ball model.
+ * @returns {{diameterM: number, isBall: Function}} A usable ball model.
+ */
+function ballModel(ball) {
+  return {
+    diameterM: ball?.diameterM ?? BALL_DIAMETER_M,
+    isBall: ball?.isBall ?? paintWhite,
+  };
+}
 
 /** Fastest a struck ball travels, metres per second. Roughly 130 km/h. */
 export const MAX_BALL_SPEED_MPS = 36;
@@ -75,10 +88,15 @@ export const CLUTTER_DECAY = 0.99;
  * @param {object} options Gating options.
  * @param {number[]} options.imageToPitch Row-major 3x3 homography.
  * @param {{lengthM: number, widthM: number}} options.dimensions Pitch size.
+ * @param {{diameterM: number, isBall: Function}} [options.ball] The sport's
+ *   ball: how big it is and what colour it is. Football's white sphere by
+ *   default; a gridiron's is brown leather and two-thirds the size, and a
+ *   colour test tuned for one finds nothing at all of the other.
  * @returns {{x: number, y: number, u: number, v: number, area: number,
  *   widthM: number}[]} Candidates in pitch metres.
  */
-export function ballCandidates(frame, blobs, { imageToPitch, dimensions }) {
+export function ballCandidates(frame, blobs, { imageToPitch, dimensions, ball }) {
+  const { diameterM, isBall } = ballModel(ball);
   const { data, width } = frame;
   const out = [];
   for (const blob of blobs) {
@@ -88,14 +106,14 @@ export function ballCandidates(frame, blobs, { imageToPitch, dimensions }) {
     if (!scale) continue;
     const widthM = pixelWidth / scale;
     const heightM = pixelHeight / scale;
-    if (widthM > BALL_DIAMETER_M * 4 || heightM > BALL_DIAMETER_M * 4) continue;
-    if (widthM < BALL_DIAMETER_M * 0.33 && heightM < BALL_DIAMETER_M * 0.33) continue;
+    if (widthM > diameterM * 4 || heightM > diameterM * 4) continue;
+    if (widthM < diameterM * 0.33 && heightM < diameterM * 0.33) continue;
     // A ball is round. A one-pixel fleck of anything is not evidence.
     if (blob.area < 2) continue;
     const centreX = Math.round(blob.cx);
     const centreY = Math.round(blob.cy);
     const i = (centreY * width + centreX) * 4;
-    if (!paintWhite(data[i], data[i + 1], data[i + 2])) continue;
+    if (!isBall(data[i], data[i + 1], data[i + 2])) continue;
     const at = apply(imageToPitch, { x: blob.cx, y: blob.maxY });
     if (!onPitch(at, dimensions, 2)) continue;
     // Where two painted lines meet, the far end of a pitch offers a small round
@@ -114,7 +132,7 @@ export function ballCandidates(frame, blobs, { imageToPitch, dimensions }) {
       clearanceM: clearance,
       // How near this is to being exactly ball-sized, used to break ties before
       // the ball has been acquired and there is no motion to judge it by.
-      sizeError: Math.abs(widthM - BALL_DIAMETER_M) / BALL_DIAMETER_M,
+      sizeError: Math.abs(widthM - diameterM) / diameterM,
     });
   }
   return out;
@@ -130,6 +148,7 @@ export class BallTracker {
    */
   constructor(options = {}) {
     this.imageToPitch = options.imageToPitch ?? null;
+    this.ball = options.ball ?? null;
     this.x = 0;
     this.y = 0;
     this.vx = 0;
@@ -281,9 +300,10 @@ export class BallTracker {
  * @param {number[]} imageToPitch Row-major 3x3 homography.
  * @param {number} u Image column to test.
  * @param {number} v Image row to test.
+ * @param {{diameterM: number}} [ball] The sport's ball.
  * @returns {number} Diameter of a ball at that point, in pixels.
  */
-export function ballPixelsAt(imageToPitch, u, v) {
+export function ballPixelsAt(imageToPitch, u, v, ball = null) {
   const { minM } = scaleAt(imageToPitch, u, v);
-  return minM > 1e-9 ? BALL_DIAMETER_M / minM : 0;
+  return minM > 1e-9 ? ballModel(ball).diameterM / minM : 0;
 }

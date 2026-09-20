@@ -21,15 +21,42 @@ import {
   KITS,
   camera,
   cameraBasis,
+  gridironScene,
   project,
   renderScene,
 } from '../../public/touchline/js/demo.js';
+import { SPORTS } from '../../public/touchline/js/sports.js';
 import { fitHomography } from '../../public/touchline/js/pitch.js';
 import { detect, fitTurf } from '../../public/touchline/js/segment.js';
 import { Tracker } from '../../public/touchline/js/track.js';
 import { BallTracker, ballCandidates } from '../../public/touchline/js/ball.js';
 
 export { KITS, camera, cameraBasis, project, renderScene };
+
+/**
+ * A field to play a passage on: the camera, the paint, and the sport's rules.
+ *
+ * The soccer rig is the default because most of the suite is about football.
+ * `gridironRig()` swaps in the other field wholesale — different camera,
+ * different lines, six-foot numbers painted on the grass, a brown ball and the
+ * thresholds that go with the sport.
+ *
+ * @returns {object} Everything {@link play} needs to render and analyse.
+ */
+export function gridironRig() {
+  const scene = gridironScene();
+  return {
+    basis: scene.basis,
+    pitchToImage: scene.pitchToImage,
+    dimensions: scene.dimensions,
+    lines: scene.lines,
+    markings: scene.markings,
+    lineWidthM: scene.lineWidthM,
+    ballColour: scene.ballColour,
+    paintedRegions: scene.paintedRegions,
+    sport: SPORTS.gridiron,
+  };
+}
 
 /** The pitch every fixture plays on. */
 export const DIMENSIONS = Object.freeze({ lengthM: 105, widthM: 68 });
@@ -120,9 +147,26 @@ export function play(script) {
     withBall = false,
     onFrame = null,
   } = script;
+  const sport = cameraRig.sport ?? SPORTS.soccer;
+  const dimensions = cameraRig.dimensions ?? DIMENSIONS;
+  const paint = {
+    lines: cameraRig.lines ?? null,
+    markings: cameraRig.markings ?? [],
+    lineWidthM: cameraRig.lineWidthM ?? 0.12,
+    ballColour: cameraRig.ballColour ?? [245, 245, 245],
+  };
+  const detectOptions = {
+    dimensions,
+    lineWidthM: paint.lineWidthM,
+    paintedRegions: cameraRig.paintedRegions ?? [],
+  };
   const fit = fitHomography(marks);
-  const tracker = new Tracker({ imageToPitch: fit.imageToPitch });
-  const ball = new BallTracker({ imageToPitch: fit.imageToPitch });
+  const tracker = new Tracker({
+    imageToPitch: fit.imageToPitch,
+    sprintMps: sport.sprintMps,
+    highIntensityMps: sport.highIntensityMps,
+  });
+  const ball = new BallTracker({ imageToPitch: fit.imageToPitch, ball: sport.ball });
   let turf = null;
   let worstDetectionErrorM = 0;
   const detectionsPerFrame = [];
@@ -138,14 +182,16 @@ export function play(script) {
       players: scene.players,
       ball: scene.ball ?? null,
       seed: 101 + i,
+      dimensions,
+      ...paint,
     });
     if (!turf) {
-      turf = fitTurf(frame, { imageToPitch: fit.imageToPitch, dimensions: DIMENSIONS });
+      turf = fitTurf(frame, { imageToPitch: fit.imageToPitch, dimensions });
     }
     const detection = detect(frame, {
       turf,
       imageToPitch: fit.imageToPitch,
-      dimensions: DIMENSIONS,
+      ...detectOptions,
     });
     detectionsPerFrame.push(detection.candidates.length);
     truth.push(scene.players.map((player) => ({ x: player.x, y: player.y })));
@@ -164,7 +210,8 @@ export function play(script) {
       ball.update(
         ballCandidates(frame, detection.blobs, {
           imageToPitch: fit.imageToPitch,
-          dimensions: DIMENSIONS,
+          dimensions,
+          ball: sport.ball,
         }),
         t * 1000,
       );

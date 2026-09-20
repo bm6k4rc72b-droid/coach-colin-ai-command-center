@@ -274,13 +274,40 @@ parts that can be measured and states plainly what the rest would take.
   possession figures with them.
 - **Nothing is extrapolated.** Every player row carries the fraction of the
   session they were actually tracked for, as a bar you cannot skim past.
+- **American football works too**, because almost none of this is about
+  football: the measurements need a flat rectangle of known size, and a gridiron
+  is as flat as a pitch. Pick the sport in Setup and the markings, the paint, the
+  ball's colour and the sprint threshold all change together. Hash marks turn out
+  to be the best calibration targets in either sport — a hash is a one-yard stub
+  crossing a yard line, so the crossing is a point you can hit, where a corner
+  flag is two long lines meeting at a shallow angle.
+- **A painted yard number is not a player**, which took measuring rather than
+  guessing. A six-foot "4" is the same height as a standing player, the same
+  width, and fills its box to the same degree — nothing about its geometry gives
+  it away. What does is that paint lies flat: a number measures 0.80–0.88 of a
+  player's height under foreshortening, and a player standing on that same
+  number takes the region to 1.18. Colour cannot do it — a white jersey on a
+  white number measures 0.97 paint against the number's 1.00 — so height does,
+  and it works the same whatever colour the jersey is.
+- **Possession is refused for American football** rather than invented. The
+  machinery would produce two percentages that added to a hundred and meant
+  nothing: the ball is in a player's hands for most of a play, and possession is
+  decided by downs. Separation — distance to the nearest opponent, and how fast
+  it is closing — is measured instead, and needs no ball.
+
+It **cannot** follow a broadcast, or a phone pointed at a television. Filming a
+screen is fine in principle — one plane seen through another is still a
+homography — but a broadcast camera pans, zooms and cuts every few seconds, and
+each of those kills a fit made for one fixed view. It would spend the whole game
+correctly reporting that its metres were stale.
 
 Full write-up, including what it refuses to do and why:
 [`docs/touchline.md`](docs/touchline.md). Tests: `npm run test:touchline`
-(75 unit tests) and `npm run qa:touchline` (42 end-to-end checks driving the
-real app in Chromium against a clip choreographed as a 7 m/s break — the app
-returns 25.9 km/h against a true 25.2, 31.8 m against 32.2, and exactly zero for
-the five players who never move).
+(97 unit tests) and `npm run qa:touchline` (59 end-to-end checks driving the
+real app in Chromium against both sports — a 7.5 m/s football break returns
+27.5 km/h against a true 27.0, a 9.6 m/s route returns 35.2 against 34.6, the
+painted numbers never join the team sheet, and the players who never move log
+exactly zero).
 
 ---
 

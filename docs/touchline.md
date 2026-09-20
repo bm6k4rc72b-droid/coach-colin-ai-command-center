@@ -43,6 +43,35 @@ measured honestly and states plainly what the rest would take.
 | Tactical radar / plan view | **Yes.** Everyone on a scale pitch, with paths and territory. |
 | A 3D reconstruction of the match | **No.** One camera on a plane gives positions on the grass, not height. |
 | Works on any clip, any camera, any angle | **No.** One fixed view per calibration. A pan or zoom kills the fit, and the app says so rather than reporting nonsense. |
+| Works on a broadcast, or a phone pointed at a TV | **No, and this is the hard limit.** See below. |
+
+### Why you cannot point it at a television
+
+It is the first thing anyone asks, and the answer is no for a reason that no
+amount of work removes cheaply.
+
+Filming a screen is not the problem. A camera looking at a flat TV showing a
+flat field is one plane seen through another, and the composition of two
+homographies is still a homography — so in principle the geometry survives
+intact. Moiré, glare and the score bug are nuisances, not blockers.
+
+The blocker is that **a broadcast camera never holds still**. This app fits one
+homography to one view and compensates for nudges up to five pixels; beyond that
+the fit is dead and every measurement is marked stale. A broadcast pans
+continuously, zooms through every play and cuts to a different camera every few
+seconds. Pointed at a television, the app would spend the entire game correctly
+reporting that its metres are stale, which is useless — and the alternative,
+quietly carrying on, would be worse.
+
+What would fix it is a different piece of engineering: continuous
+camera-motion estimation that re-fits the homography against the field markings
+on every frame and detects cuts. That is how broadcast tracking systems work,
+and it is a substantial build rather than a setting.
+
+What *does* work today is a fixed camera: a phone on a tripod or clipped to a
+fence, or a tactical/all-22 feed held on one shot. If you have the game as a
+file, feed the file in directly rather than filming the screen — it removes the
+moiré and the glare, though not the panning.
 
 ### Why there is no completion percentage
 
@@ -55,6 +84,85 @@ What geometry does know is worth having, so that is what is reported: the pass
 is 23 m, the nearest defender is 16.6 m off the line, and by the time the ball
 arrives they would be 16.2 m off it. A coach can argue with those. Nobody can
 argue with 95%.
+
+---
+
+## Two sports, one measurement core
+
+Almost none of this app is about football. The homography, the tracker, the
+noise floors and the coverage accounting all say "a flat rectangle of known
+size", and a gridiron is as flat as a pitch. Pick **American football** in Setup
+and the parts that genuinely differ change together:
+
+- **The markings**, because they are what you click to calibrate and what the
+  app draws back over the footage to prove the fit. A gridiron's hash marks turn
+  out to be the best calibration targets in either sport: a hash is a one-yard
+  stub crossing a yard line, so the crossing is a point you can hit within a
+  pixel or two, where a corner flag is two long lines meeting at a shallow angle
+  and can be clicked a metre out without looking wrong.
+- **The paint.** A pitch is thin white lines. A gridiron adds six-foot numbers
+  every ten yards, and a painted "4" is the same height as a standing player,
+  the same width, fills its bounding box to the same degree and stands on the
+  same grass. See below — this was the hard part.
+- **The ball**, which is brown, smaller, and invisible for most of every play.
+- **What may honestly be said about possession**, which on a gridiron is
+  nothing. See below.
+- **The running thresholds.** A gridiron sprint is 22 mph where a football one
+  is 15.7. The tracker takes the sport's numbers, so the same eight-metre-a-
+  second run counts as a sprint in one sport and not the other, and the report
+  prints the threshold beside the count.
+
+### Why a painted number is not a player
+
+Nothing about a yard number's geometry gives it away, and a phantom who never
+moves would quietly enter the tracked count, the team totals and the territory
+map while looking entirely reasonable.
+
+What gives it away is that **paint lies flat**. A camera looking across a field
+sees a six-foot number heavily foreshortened — measured here at 0.80 to 0.88 of
+the height a standing player would have at that spot — while a player standing
+on that same number is not foreshortened at all and takes the region to 1.18.
+From an ordinary sideline angle the existing size gate removes the numbers
+without any help at all. From a high, steep angle it does not, and then three
+conditions have to hold together before a region is written off as scenery: it
+sits where the field model says there is paint, it is made of paint, and it is
+too flat to have a person standing in it.
+
+All three are needed, and each one alone was tried and measured:
+
+| Rule alone | What it deletes |
+| --- | --- |
+| Inside a painted region | Every player standing on a number — which on a gridiron is a lot of them |
+| Mostly paint by pixel count | A team playing in white |
+| Too short for a person | Anyone who crouches |
+
+Colour cannot be the discriminator, and the measurement says so plainly: a
+player in a *white* jersey standing on a white number measures 0.97 paint
+against the number's own 1.00. Height separates them where colour cannot, and
+does it the same way whatever colour the jersey is.
+
+One case survives all of it and is listed in the app: a player crouched in a
+three-point stance, in white, on a number, seen from a steep angle — short
+enough to look like paint and white enough to be made of it.
+
+The aspect gate that keeps far-touchline paint out of a football team sheet is
+*suspended* on painted ground, because there it does the opposite of its job: a
+player standing on a number is one region with the number attached, two metres
+tall and nearly three wide, and the gate would throw away the player along with
+the paint.
+
+### Why possession is not reported for American football
+
+The machinery is right there, it would produce two percentages, and they would
+add up to a hundred. They would also mean nothing. The ball spends most of a
+play inside a player's hands where no camera can see it, and which side has it
+is decided by downs rather than by who is standing nearest. So the ledger is not
+run at all — an unused ledger that still accumulates is a number waiting to be
+put on screen by mistake — and the panel says why.
+
+What replaces it is **separation**: how far each player is from the nearest
+opponent and how fast that gap is closing. It needs no ball, it is the figure
+this sport is actually read on, and it is honest about being geometry.
 
 ---
 
@@ -167,7 +275,14 @@ corrupts a number rather than merely losing one.
 
 Speed is measured over a one-second window rather than frame to frame, and the
 reported peak is the median of seven consecutive windows, so a peak has to be
-held to be believed. Fitting a line through the window instead of measuring it
+held to be believed. The window also holds a minimum number of samples, so that
+the figure means the same thing on a fast device and a slow one — without it the
+same sprint read 3% high at 25 frames a second and 8% high at nine.
+
+The cost of that is worth knowing before you wonder about it: on a slow device
+the window takes a couple of seconds to fill, so a player's top speed starts low
+and climbs to its real value over the first few seconds of tracking them. It is
+not ramping up; the measurement is. Fitting a line through the window instead of measuring it
 end to end was tried and is *worse*: the positions have already been through the
 tracker's filter, so consecutive samples share most of their error, and a
 least-squares slope over correlated samples has a wider tail than the chord.
@@ -279,6 +394,9 @@ its denominator, and rating any player.
 ## What it cannot do
 
 - **Recognise a player.** No shirt numbers, no faces, no identity of any kind.
+- **Report possession in American football**, or tell a crouching player in a
+  white jersey from the yard number they are standing on.
+- **Follow a broadcast**, or a phone pointed at a television.
 - **Predict whether a pass would be completed.** See above.
 - **Reconstruct a match in 3D.** A header, a chipped pass and a shot over the
   bar are the same to a ground plane.
@@ -294,8 +412,8 @@ its denominator, and rating any player.
 ## Running the checks
 
 ```bash
-npm run test:touchline   # 75 unit tests
-npm run qa:touchline     # 42 end-to-end checks driving the real app in Chromium
+npm run test:touchline   # 97 unit tests, both sports
+npm run qa:touchline     # 59 end-to-end checks driving the real app in Chromium
 ```
 
 The unit suite renders scenes through the app's own demo generator — a real
@@ -306,11 +424,13 @@ green threshold, a mean-based turf model, and any segmentation that forgets the
 lines.
 
 The end-to-end harness drives the shipped app in a browser against the built-in
-demo, whose choreography is a break at 7 m/s, a covering run at 3 m/s, and five
-players who never move. It checks the numbers on screen against those, not
-merely that numbers appeared: the break comes back at 25.9 km/h against a
-choreographed 25.2, over 31.8 m against 32.2, and the five who stood still log
-exactly zero.
+demos, whose choreography is written in metres and seconds: a football break at
+7.5 m/s with a covering run at 3 m/s and five players who never move, and a
+gridiron go route at 9.6 m/s with four linemen who never move. It checks the
+numbers on screen against those, not merely that numbers appeared: the break
+comes back at 27.5 km/h against a choreographed 27.0 over 32.6 m against 32.3,
+the route at 35.2 km/h against 34.6, the painted yard numbers never join the
+team sheet, and everyone who stood still logs exactly zero.
 
 ---
 
@@ -332,8 +452,10 @@ public/touchline/
   js/overlay.js       the broadcast overlay, drawing only what was measured
   js/report.js        the written summary and the digest a model may see
   js/llm.js           optional analyst, numbers only
-  js/demo.js          the synthetic match — shipped, and used by the tests
+  js/sports.js        the field models: markings, paint, ball, thresholds
+  js/demo.js          the synthetic match and the synthetic play — shipped,
+                      and used by the tests
   js/app.js           capture, calibration, the loop, the panels
-tests/touchline/      geometry, vision and analysis suites
+tests/touchline/      geometry, vision, analysis and gridiron suites
 scripts/qa-touchline.mjs
 ```

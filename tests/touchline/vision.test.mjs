@@ -132,13 +132,25 @@ test('paint is removed by shape, and only paint', () => {
   const empty = frameOf([], null, 3);
   const turf = fitTurf(empty, { imageToPitch: fit.imageToPitch, dimensions: DIMENSIONS });
   const raw = turfMask(empty, { turf, imageToPitch: fit.imageToPitch, dimensions: DIMENSIONS });
-  let before = 0;
-  for (const value of raw) before += value;
+  // Count the paint specifically, rather than the mask as a whole. The mask
+  // also carries whatever sits above the far touchline — a player standing
+  // there has their head up there, so those pixels are considered — and
+  // including them would measure the stand rather than the line removal this
+  // test is about.
+  const paintPixels = () => {
+    let count = 0;
+    for (let i = 0; i < raw.length; i += 1) {
+      if (!raw[i]) continue;
+      const p = i * 4;
+      if (paintWhite(empty.data[p], empty.data[p + 1], empty.data[p + 2])) count += 1;
+    }
+    return count;
+  };
+  const before = paintPixels();
   assert.ok(before > 1000, 'the painted lines were never in the mask to begin with');
   suppressLines(empty, raw, { turf, imageToPitch: fit.imageToPitch });
-  let after = 0;
-  for (const value of raw) after += value;
-  assert.ok(after < before * 0.35, `paint removal left ${((after / before) * 100).toFixed(0)}% behind`);
+  const after = paintPixels();
+  assert.ok(after < before * 0.2, `paint removal left ${((after / before) * 100).toFixed(0)}% behind`);
 });
 
 test('two players who overlap are reported as one region, not split or lost', () => {

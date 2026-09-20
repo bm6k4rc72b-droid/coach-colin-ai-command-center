@@ -172,6 +172,56 @@ export function pressureOn(carrier, opponents, radiusM = PRESSURE_RADIUS_M) {
 }
 
 /**
+ * How much room every player has, and who is nearest to taking it away.
+ *
+ * This is the gridiron analogue of the pass-lane panel, and the reason it
+ * exists is that the pass-lane panel does not transfer. A football lane is a
+ * corridor along the ground between two players who are both visible and one of
+ * whom demonstrably has the ball. On a gridiron the ball is in somebody's
+ * hands, the throw travels over the defenders rather than between them, and
+ * which team has possession is a matter of downs rather than of proximity —
+ * so the app knows neither who is passing nor to whom.
+ *
+ * What it does know, from positions alone, is separation: how far each player
+ * is from the nearest opponent, and whether that gap is opening or closing.
+ * That is the measurement a coach actually reads off this sport, it needs no
+ * ball, and it is honest about being geometry.
+ *
+ * @param {object[]} players Tracked players with `id`, `x`, `y`, `team` and,
+ *   where known, `vx` and `vy`.
+ * @param {object} [options] Options.
+ * @param {number} [options.limit=6] How many rows to return.
+ * @returns {{id: number, label: string, team: string, nearestId: number|null,
+ *   nearestM: number|null, closingMps: number, open: boolean}[]} Rows, most
+ *   separation first.
+ */
+export function separations(players, options = {}) {
+  const limit = options.limit ?? 6;
+  const sides = players.filter((player) => player.team === 'home' || player.team === 'away');
+  const out = [];
+  for (const player of sides) {
+    const opponents = sides.filter((other) => other.team !== player.team);
+    if (!opponents.length) continue;
+    const pressure = pressureOn(player, opponents, options.radiusM ?? PRESSURE_RADIUS_M);
+    out.push({
+      id: player.id,
+      label: player.label ?? `#${player.id}`,
+      team: player.team,
+      nearestId: pressure.nearestId,
+      nearestM: pressure.nearestM,
+      closingMps: pressure.closingMps,
+      // "Open" is a threshold on a measurement, not a judgement about whether
+      // the player should get the ball: three metres is roughly the distance a
+      // defender cannot close inside the time a throw is in the air, and it is
+      // stated here rather than hidden so it can be argued with.
+      open: (pressure.nearestM ?? 0) >= 3,
+    });
+  }
+  out.sort((a, b) => (b.nearestM ?? 0) - (a.nearestM ?? 0));
+  return out.slice(0, limit);
+}
+
+/**
  * Rank the passes available to the player on the ball.
  *
  * @param {object} carrier Player in possession, with `id`.

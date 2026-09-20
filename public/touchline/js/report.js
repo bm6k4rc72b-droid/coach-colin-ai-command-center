@@ -40,6 +40,8 @@ export function distance(metres) {
  * Build the written summary.
  *
  * @param {object} session Everything measured this session.
+ * @param {object} [session.sport] The field model, which decides the running
+ *   thresholds and whether possession may honestly be reported at all.
  * @param {number} session.sessionMs Length of the session.
  * @param {object} session.possession Summary from the possession ledger.
  * @param {{seenShare: number}} session.ball Ball tracker state.
@@ -54,6 +56,7 @@ export function distance(metres) {
  */
 export function matchReport(session) {
   const {
+    sport = null,
     sessionMs,
     possession,
     ball,
@@ -64,13 +67,21 @@ export function matchReport(session) {
     staleFrames = 0,
     shape = null,
   } = session;
+  // Some sports have no honest proximity-possession figure. Where that is the
+  // case the report says so once, plainly, rather than printing a bar whose
+  // only virtue is that it adds up.
+  const reportsPossession = (sport?.possession ?? 'proximity') === 'proximity';
 
   const caveats = [];
   const assignedPct = Math.round(possession.assignedShare * 100);
   caveats.push(
-    `Watched for ${duration(sessionMs)}. The ball was visible in ${Math.round(
-      ball.seenShare * 100,
-    )}% of frames, and ${assignedPct}% of the clock could be attributed to a team.`,
+    reportsPossession
+      ? `Watched for ${duration(sessionMs)}. The ball was visible in ${Math.round(
+          ball.seenShare * 100,
+        )}% of frames, and ${assignedPct}% of the clock could be attributed to a team.`
+      : `Watched for ${duration(sessionMs)}. The ball was visible in ${Math.round(
+          ball.seenShare * 100,
+        )}% of frames. Possession is not reported for this sport: the ball spends most of a play inside a player's hands, and which side has it is decided by downs rather than by who is standing nearest it.`,
   );
   if (calibration) {
     caveats.push(
@@ -99,7 +110,7 @@ export function matchReport(session) {
   const homeName = teams.names.home;
   const awayName = teams.names.away;
 
-  if (possession.assignedMs > 0) {
+  if (reportsPossession && possession.assignedMs > 0) {
     lines.push(
       `${homeName} held the ball for ${duration(possession.homeMs)} and ${awayName} for ${duration(
         possession.awayMs,
@@ -127,13 +138,13 @@ export function matchReport(session) {
         )} s, across ${possession.turnovers} changes of possession.`,
       );
     }
-  } else {
+  } else if (reportsPossession) {
     lines.push(
       'Possession was never attributed: the ball was not visible for long enough beside a player who was clearly nearest to it.',
     );
   }
 
-  const thresholds = definitions();
+  const thresholds = definitions(sport);
   for (const [side, name] of [
     ['home', homeName],
     ['away', awayName],
@@ -176,8 +187,9 @@ export function matchReport(session) {
     );
   }
 
-  const headline =
-    possession.assignedMs > 0
+  const headline = !reportsPossession
+    ? `${duration(sessionMs)} watched, ${rows.length} players tracked`
+    : possession.assignedMs > 0
       ? `${Math.round(possession.homeShare * 100)}–${Math.round(
           possession.awayShare * 100,
         )} on the ball, from ${assignedPct}% of ${duration(sessionMs)} attributed`
@@ -188,6 +200,8 @@ export function matchReport(session) {
     caveats,
     lines,
     digest: {
+      sport: sport?.id ?? 'soccer',
+      possessionReported: reportsPossession,
       sessionSeconds: Math.round(sessionMs / 1000),
       ballVisibleShare: Number(ball.seenShare.toFixed(3)),
       possession: {

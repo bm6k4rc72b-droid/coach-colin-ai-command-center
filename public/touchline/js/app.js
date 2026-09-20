@@ -26,7 +26,6 @@ import {
   apply,
   fitHomography,
   frameShift,
-  landmarks,
   shiftHomography,
 } from './pitch.js';
 import { detect, fitTurf } from './segment.js';
@@ -34,7 +33,8 @@ import { Tracker } from './track.js';
 import { TeamVote, assignTeam, clusterKits, palette } from './teams.js';
 import { BallTracker, ballCandidates, ballPixelsAt } from './ball.js';
 import { PossessionLedger, controlOf } from './possession.js';
-import { passOptions, pressureOn } from './passing.js';
+import { passOptions, pressureOn, separations } from './passing.js';
+import { SPORTS, sportById } from './sports.js';
 import { controlGrid, spaceAround, teamShape } from './space.js';
 import { playerTable, teamTotals } from './metrics.js';
 import {
@@ -104,6 +104,7 @@ const state = {
   source: null,
   running: false,
   tab: 'live',
+  sport: SPORTS.soccer,
   dimensions: { ...FULL_PITCH },
   marks: [],
   calibrating: false,
@@ -147,24 +148,74 @@ const viewCtx = dom.view.getContext('2d');
 const overlayCtx = dom.overlay.getContext('2d');
 const planCtx = dom.plan.getContext('2d');
 
-/** The landmarks calibration asks for, in the order it asks for them. */
+/**
+ * The landmarks calibration asks for, in the order it asks for them.
+ *
+ * The order is the field model's, and it matters: it runs from the marks a
+ * person can hit within a pixel or two to the ones they cannot. A gridiron's
+ * hash intersections are stubs crossing a yard line and are excellent; a
+ * corner flag is two long lines meeting at a shallow angle and can be clicked a
+ * metre out without looking wrong.
+ *
+ * @returns {{id: string, label: string, x: number, y: number}[]} Landmarks.
+ */
 function calibrationTargets() {
-  const all = landmarks(state.dimensions);
-  const wanted = [
-    'box-left-near',
-    'box-left-far',
-    'box-left-goal-near',
-    'box-left-goal-far',
-    'six-left-near',
-    'six-left-far',
-    'halfway-near',
-    'halfway-far',
-    'corner-near-left',
-    'corner-far-left',
-    'box-right-near',
-    'box-right-far',
-  ];
-  return wanted.map((id) => all.find((mark) => mark.id === id)).filter(Boolean);
+  const all = state.sport.landmarks(state.dimensions);
+  return state.sport.calibrationIds
+    .map((id) => all.find((mark) => mark.id === id))
+    .filter(Boolean);
+}
+
+/** The field's own painted markings, for drawing and for the plan view. */
+function fieldLines() {
+  return state.sport.lines(state.dimensions);
+}
+
+/** Rebuild every stateful piece of analysis for the current field model. */
+function resetAnalysis(imageToPitch = null) {
+  state.tracker = new Tracker({
+    imageToPitch,
+    sprintMps: state.sport.sprintMps,
+    highIntensityMps: state.sport.highIntensityMps,
+  });
+  state.ball = new BallTracker({ imageToPitch, ball: state.sport.ball });
+  state.vote = new TeamVote();
+  state.ledger = new PossessionLedger();
+  state.kitSamples = [];
+  state.kitModel = null;
+  state.turf = null;
+}
+
+/**
+ * Switch sport.
+ *
+ * Everything measured so far belongs to the old field, so it goes: the
+ * calibration was fitted to different landmarks, the tracks were measured with
+ * different thresholds, and the possession ledger may not even apply.
+ *
+ * @param {string} id Sport identifier.
+ */
+function setSport(id) {
+  state.sport = sportById(id);
+  state.dimensions = { ...state.sport.dimensions };
+  state.marks = [];
+  state.fit = null;
+  state.fitSize = { width: 0, height: 0 };
+  state.liveHomography = null;
+  state.stale = false;
+  state.staleFrames = 0;
+  state.latest = null;
+  resetAnalysis();
+  $('pitch-length').value = state.dimensions.lengthM.toFixed(1);
+  $('pitch-width').value = state.dimensions.widthM.toFixed(1);
+  $('field-word').textContent = state.sport.fieldWord;
+  dom.calibrationStatus.textContent = `No ${state.sport.fieldWord} model.`;
+  renderMarks();
+  updateReadout();
+  // The built-in clip is of a particular sport, so switching sport swaps the
+  // clip too. Leaving a football demo playing under a gridiron model would show
+  // a pitch the app was busy measuring as a hundred-yard field.
+  if (state.source === 'demo') runDemo();
 }
 
 /* ------------------------------------------------------------------ sources */
@@ -417,6 +468,11 @@ function analyse(timeMs) {
     imageToPitch: state.liveHomography,
     dimensions: state.dimensions,
     openRadius: state.noise,
+    lineWidthM: state.sport.lineWidthM,
+    // A gridiron's yard numbers are the same size and shape as a standing
+    // player. The field model knows where they are painted so they can be
+    // recognised as scenery instead of joining the team sheet.
+    paintedRegions: state.sport.paintedRegions(state.dimensions),
   });
 
   const { live } = state.tracker.update(detection.candidates, timeMs);
@@ -450,18 +506,28 @@ function analyse(timeMs) {
     ballCandidates(frame, detection.blobs, {
       imageToPitch: state.liveHomography,
       dimensions: state.dimensions,
+      ball: state.sport.ball,
     }),
     timeMs,
   );
 
-  const control = controlOf(live, ballState);
-  const held = state.ledger.update(control, timeMs);
+  // Proximity possession is a measurement in one sport and a fiction in the
+  // other. Where the field model says it does not apply, the ledger is not run
+  // at all rather than run and quietly ignored — an unused ledger that still
+  // accumulates is a number waiting to be put on screen by mistake.
+  const tracksPossession = state.sport.possession === 'proximity';
+  const control = tracksPossession
+    ? controlOf(live, ballState)
+    : { state: 'unseen', team: null, playerId: null, distanceM: null, nearest: [] };
+  const held = tracksPossession
+    ? state.ledger.update(control, timeMs)
+    : { holder: null, holderId: null };
 
   const carrier = held.holderId !== null ? live.find((t) => t.id === held.holderId) ?? null : null;
   let options = [];
   let pressure = null;
   let localSpace = null;
-  if (carrier && (carrier.team === 'home' || carrier.team === 'away')) {
+  if (carrier && state.sport.passLanes && (carrier.team === 'home' || carrier.team === 'away')) {
     const mates = live.filter((t) => t.team === carrier.team && t.id !== carrier.id);
     const opponents = live.filter(
       (t) => (t.team === 'home' || t.team === 'away') && t.team !== carrier.team,
@@ -482,6 +548,8 @@ function analyse(timeMs) {
     pressure,
     localSpace,
     grid: state.showTerritory ? controlGrid(live, { dimensions: state.dimensions }) : null,
+    separation: state.sport.passLanes ? [] : separations(live),
+    tracksPossession,
   };
   updateReadout();
   refreshPanels();
@@ -499,7 +567,7 @@ function draw() {
 
   const scale = Math.max(0.75, width / 640);
   if (state.showModel && state.liveHomography && state.fit) {
-    drawPitchModel(overlayCtx, state.fit.pitchToImage, state.dimensions);
+    drawPitchModel(overlayCtx, state.fit.pitchToImage, state.dimensions, undefined, fieldLines());
   }
   drawMarks();
 
@@ -598,13 +666,13 @@ function updateReadout() {
   dom.readoutFit.className = 'readout-row muted';
   if (state.stale) {
     dom.readoutFit.className = 'readout-row warn';
-    dom.readoutFit.textContent = `metres are stale — ${state.staleReason}. Re-mark the pitch.`;
+    dom.readoutFit.textContent = `metres are stale — ${state.staleReason}. Re-mark the ${state.sport.fieldWord}.`;
   } else if (state.fit) {
-    dom.readoutFit.textContent = `pitch model fits to ${state.fit.residualM.toFixed(
+    dom.readoutFit.textContent = `${state.sport.fieldWord} model fits to ${state.fit.residualM.toFixed(
       2,
     )} m (worst ${state.fit.worstM.toFixed(2)} m)`;
   } else {
-    dom.readoutFit.textContent = 'no pitch model — nothing is in metres';
+    dom.readoutFit.textContent = `no ${state.sport.fieldWord} model — nothing is in metres`;
   }
 }
 
@@ -624,6 +692,11 @@ function refreshLive() {
   if (!latest) return;
   dom.liveEmpty.hidden = true;
   dom.live.hidden = false;
+
+  if (!latest.tracksPossession) {
+    renderNonPossessionPanel(latest);
+    return;
+  }
 
   const possession = state.ledger.summary();
   const home = Math.round(possession.homeShare * 100);
@@ -684,6 +757,58 @@ function refreshLive() {
     .join('');
 }
 
+/**
+ * The live panel for a sport where proximity possession means nothing.
+ *
+ * It would be easy to run the possession ledger anyway and show the result —
+ * the code is there, it would produce two percentages, and they would add up to
+ * a hundred. They would also be meaningless: on a gridiron the ball is in a
+ * player's hands for most of every play, possession is a matter of downs rather
+ * than of who is standing nearest, and nobody would be able to tell the
+ * resulting number from a real one.
+ *
+ * So the panel says so, and shows the measurement this sport does support:
+ * separation, which needs no ball at all.
+ *
+ * @param {object} latest The most recent analysis.
+ */
+function renderNonPossessionPanel(latest) {
+  dom.possession.innerHTML = `
+    <p class="poss-note">
+      Possession is not reported for ${escapeHtml(state.sport.label)}. The ball is in a player's
+      hands for most of a play, and which side has it is a matter of downs rather than of who is
+      standing nearest — a proximity figure here would add up to 100% and mean nothing.
+      ${latest.ball.visible ? 'The ball is visible in this frame.' : `The ball is not visible right now (seen in ${Math.round(latest.ball.seenShare * 100)}% of frames so far).`}
+    </p>`;
+
+  const rows = latest.separation ?? [];
+  if (!rows.length) {
+    dom.carrier.innerHTML =
+      '<strong>Separation</strong><span class="sub">Waiting for two sides to be told apart by kit colour.</span>';
+    dom.lanes.innerHTML = '';
+    return;
+  }
+  dom.carrier.innerHTML = `
+    <strong>Separation</strong>
+    <span class="sub">
+      Distance from each player to the nearest opponent, and how fast that gap is closing.
+      Measured from positions alone — no ball needed.
+    </span>`;
+  dom.lanes.innerHTML = rows
+    .map(
+      (row) => `
+      <li class="lane ${row.open ? 'lane-open' : 'lane-screened'}">
+        <span class="who">${escapeHtml(row.label)}</span>
+        <span class="openness">${row.open ? 'open' : 'covered'}</span>
+        <span class="metrics">
+          ${row.nearestM === null ? 'no opponent tracked' : `${row.nearestM.toFixed(1)} m to nearest opponent`}
+          ${row.closingMps > 0.5 ? `· closing at ${row.closingMps.toFixed(1)} m/s` : row.closingMps < -0.5 ? `· opening at ${(-row.closingMps).toFixed(1)} m/s` : '· holding'}
+        </span>
+      </li>`,
+    )
+    .join('');
+}
+
 /** Say why nobody has the ball, in the app's own words. */
 function describeControl(control) {
   switch (control.state) {
@@ -710,6 +835,7 @@ function refreshPlan() {
     ball: latest.ball,
     grid: latest.grid,
     dimensions: state.dimensions,
+    lines: fieldLines(),
     width: dom.plan.width,
     height: dom.plan.height,
     trails: state.showTrails ? latest.live : [],
@@ -745,6 +871,7 @@ function refreshReport() {
   if (!latest) return;
   const rows = playerTable(state.tracker.tracks.filter((t) => t.confirmed), latest.timeMs);
   const report = matchReport({
+    sport: state.sport,
     sessionMs: latest.timeMs,
     possession: state.ledger.summary(),
     ball: latest.ball,
@@ -834,13 +961,7 @@ function tryFit() {
   state.liveHomography = fit.imageToPitch;
   state.stale = false;
   state.staleFrames = 0;
-  state.turf = null;
-  state.tracker = new Tracker({ imageToPitch: fit.imageToPitch });
-  state.ball = new BallTracker({ imageToPitch: fit.imageToPitch });
-  state.vote = new TeamVote();
-  state.ledger = new PossessionLedger();
-  state.kitSamples = [];
-  state.kitModel = null;
+  resetAnalysis(fit.imageToPitch);
   // A new pitch model is a new session: the tracks, the ledger and the clock
   // all start again rather than carrying figures measured against the old one.
   state.analysed = 0;
@@ -849,7 +970,12 @@ function tryFit() {
   state.lastMediaMs = null;
   state.mediaZeroMs = null;
   state.mediaOffsetMs = 0;
-  const ballPx = ballPixelsAt(fit.imageToPitch, dom.view.width / 2, dom.view.height * 0.35);
+  const ballPx = ballPixelsAt(
+    fit.imageToPitch,
+    dom.view.width / 2,
+    dom.view.height * 0.35,
+    state.sport.ball,
+  );
   dom.calibrationStatus.textContent = `Fitted to ${state.marks.length} marks: ${fit.residualM.toFixed(
     2,
   )} m average error, ${fit.worstM.toFixed(2)} m at worst. A ball at mid-frame is about ${ballPx.toFixed(
@@ -889,22 +1015,23 @@ function renderMarks() {
  * what was asked for.
  */
 async function runDemo() {
-  const { startDemo, DEMO_CAMERA } = await import('./demo.js');
+  const { startDemo, DEMO_CAMERA, GRIDIRON_CAMERA } = await import('./demo.js');
   state.demo?.stop();
-  const demo = startDemo();
+  const demo = startDemo({ sport: state.sport.id });
   state.demo = demo;
+  const demoCamera = state.sport.id === 'gridiron' ? GRIDIRON_CAMERA : DEMO_CAMERA;
   dom.video.src = '';
   dom.video.srcObject = demo.stream;
   dom.video.muted = true;
   await dom.video.play();
-  state.dimensions = { ...FULL_PITCH };
+  state.dimensions = { ...state.sport.dimensions };
   // Wait for a frame before fitting anything. The marks are in the coordinates
   // of the analysis canvas, and until a source has delivered a frame that
   // canvas has no size to speak of — fitting first and sizing second produces a
   // pitch model in one coordinate system used in another.
   await frameReady();
   grab();
-  const scale = dom.view.width / DEMO_CAMERA.width;
+  const scale = dom.view.width / demoCamera.width;
   state.marks = demo.marks.map((mark) => ({
     ...mark,
     image: { x: mark.image.x * scale, y: mark.image.y * scale },
@@ -935,7 +1062,7 @@ $('calibrate-clear').addEventListener('click', () => {
   state.fit = null;
   state.liveHomography = null;
   renderMarks();
-  dom.calibrationStatus.textContent = 'No pitch model.';
+  dom.calibrationStatus.textContent = `No ${state.sport.fieldWord} model.`;
   updateReadout();
 });
 $('settings-toggle').addEventListener('click', () => {
@@ -945,11 +1072,14 @@ $('settings-toggle').addEventListener('click', () => {
 $('settings-close').addEventListener('click', () => {
   dom.settings.hidden = true;
 });
+$('sport').addEventListener('change', (event) => {
+  setSport(event.target.value);
+});
 $('pitch-length').addEventListener('change', (event) => {
-  state.dimensions.lengthM = Number(event.target.value) || FULL_PITCH.lengthM;
+  state.dimensions.lengthM = Number(event.target.value) || state.sport.dimensions.lengthM;
 });
 $('pitch-width').addEventListener('change', (event) => {
-  state.dimensions.widthM = Number(event.target.value) || FULL_PITCH.widthM;
+  state.dimensions.widthM = Number(event.target.value) || state.sport.dimensions.widthM;
 });
 $('tolerance').addEventListener('input', (event) => {
   state.tolerance = Number(event.target.value);

@@ -29,6 +29,7 @@
  */
 
 import { FULL_PITCH, pitchLines, scaleAt, invert3 } from './pitch.js';
+import { GRIDIRON, YARD_M, gridironLandmarks, gridironLines, gridironPaintedRegions } from './sports.js';
 
 const RAD = Math.PI / 180;
 
@@ -164,6 +165,14 @@ function noise(seed) {
  * @param {number} [scene.seed=7] Noise seed.
  * @param {{lengthM: number, widthM: number}} [scene.dimensions=FULL_PITCH] Pitch.
  * @param {Uint8ClampedArray} [scene.into] Buffer to reuse.
+ * @param {{a: object, b: object}[]} [scene.lines] Painted lines; the soccer
+ *   pitch's by default.
+ * @param {{minX: number, maxX: number, minY: number, maxY: number}[]}
+ *   [scene.markings] Solid painted shapes in field metres — the strokes of a
+ *   gridiron's yard numbers, which are the whole reason this parameter exists.
+ * @param {number} [scene.lineWidthM=0.12] Width of a painted line.
+ * @param {[number, number, number]} [scene.ballColour] Ball colour; white by
+ *   default, leather brown for a gridiron.
  * @returns {{data: Uint8ClampedArray, width: number, height: number,
  *   drawn: object[]}} An RGBA frame and what ended up in it.
  */
@@ -175,6 +184,10 @@ export function renderScene({
   seed = 7,
   dimensions = FULL_PITCH,
   into = null,
+  lines = null,
+  markings = [],
+  lineWidthM = 0.12,
+  ballColour = [245, 245, 245],
 }) {
   const width = basis.width;
   const height = basis.height;
@@ -221,7 +234,7 @@ export function renderScene({
   // pixels near the camera, one at the halfway line. Drawing every line the
   // same thickness would flatter the segmenter near the camera and slander it
   // in the distance.
-  for (const line of pitchLines(dimensions)) {
+  for (const line of lines ?? pitchLines(dimensions)) {
     const a = project(pitchToImage, line.a.x, line.a.y);
     const b = project(pitchToImage, line.b.x, line.b.y);
     if (a.w <= 0 || b.w <= 0) continue;
@@ -231,9 +244,24 @@ export function renderScene({
       const x = a.x + (b.x - a.x) * t;
       const y = a.y + (b.y - a.y) * t;
       const { minM } = scaleAt(imageToPitch, x, y);
-      const radius = minM > 1e-9 ? Math.max(0, Math.round(0.12 / minM / 2)) : 0;
+      const radius = minM > 1e-9 ? Math.max(0, Math.round(lineWidthM / minM / 2)) : 0;
       for (let dy = -radius; dy <= radius; dy += 1)
         for (let dx = -radius; dx <= radius; dx += 1) put(x + dx, y + dy, 232, 234, 230);
+    }
+  }
+
+  // Solid paint — the strokes of a gridiron's yard numbers. Walked in field
+  // metres and projected per sample rather than drawn as a projected
+  // rectangle, so the perspective is exact and a number at the far hash comes
+  // out as small as it should be.
+  for (const mark of markings) {
+    const step = 0.012;
+    for (let fy = mark.minY; fy <= mark.maxY; fy += step) {
+      for (let fx = mark.minX; fx <= mark.maxX; fx += step) {
+        const at = project(pitchToImage, fx, fy);
+        if (at.w <= 0) continue;
+        put(at.x, at.y, 232, 234, 230);
+      }
     }
   }
 
@@ -260,11 +288,12 @@ export function renderScene({
   if (ball) {
     const at = project(pitchToImage, ball.x, ball.y);
     if (at.w > 0) {
-      const top = projectAbove(basis, ball.x, ball.y, 0.22);
+      const top = projectAbove(basis, ball.x, ball.y, ball.diameterM ?? 0.22);
       const radius = Math.max(1, Math.abs(at.y - top.y) / 2);
+      const [br, bg, bb] = ballColour;
       for (let dy = -radius; dy <= radius; dy += 0.5)
         for (let dx = -radius; dx <= radius; dx += 0.5)
-          if (dx * dx + dy * dy <= radius * radius) put(at.x + dx, at.y + dy - radius, 245, 245, 245);
+          if (dx * dx + dy * dy <= radius * radius) put(at.x + dx, at.y + dy - radius, br, bg, bb);
     }
   }
 
@@ -291,11 +320,19 @@ export const DEMO_SECONDS = 12;
  * pixels to panel.
  */
 export const DEMO_TRUTH = Object.freeze({
-  /** The break: 7 m/s, held for 4.6 s, from x = 8 m to x = 40.2 m. */
-  runnerSpeedMps: 7,
-  runSeconds: 4.6,
-  runDistanceM: 7 * 4.6,
-  runnerLabel: 'the home player breaking from 8 m to 40.2 m along the pitch',
+  /**
+   * The break: 7.5 m/s, held for 4.3 s, from x = 8 m to x = 40.3 m.
+   *
+   * Deliberately clear of the 7 m/s sprint threshold rather than sitting on it.
+   * At exactly the threshold, whether the run counts as a sprint comes down to
+   * which side of it the measurement noise falls on — so the fixture would
+   * assert a coin flip, and every change to the speed window would appear to
+   * break it.
+   */
+  runnerSpeedMps: 7.5,
+  runSeconds: 4.3,
+  runDistanceM: 7.5 * 4.3,
+  runnerLabel: 'the home player breaking from 8 m to 40.3 m along the pitch',
   /** The covering run across the pitch. */
   joggerSpeedMps: 3,
   /**
@@ -331,7 +368,7 @@ export const DEMO_TRUTH = Object.freeze({
 export function choreography(t) {
   const loop = t % DEMO_SECONDS;
   const players = [
-    { id: 'runner', x: 8 + 7 * Math.min(loop, 4.6), y: 26, kit: KITS.home },
+    { id: 'runner', x: 8 + 7.5 * Math.min(loop, 4.3), y: 26, kit: KITS.home },
     { id: 'tracker', x: 30 - 3 * Math.min(loop, 4.6), y: 44, kit: KITS.away },
     { id: 'holder-a', x: 20, y: 16, kit: KITS.home },
     { id: 'holder-b', x: 26, y: 52, kit: KITS.away },
@@ -347,7 +384,7 @@ export function choreography(t) {
   const ball =
     loop < 1.2
       ? { x: 9 + 14 * loop, y: 27.5 }
-      : { x: Math.min(8 + 7 * Math.min(loop, 4.6) + 1.4, 42), y: 26.6 };
+      : { x: Math.min(8 + 7.5 * Math.min(loop, 4.3) + 1.4, 42), y: 26.6 };
   return { players, ball };
 }
 
@@ -378,6 +415,229 @@ export function demoMarks(dimensions = FULL_PITCH) {
   });
 }
 
+/* ------------------------------------------------------------------ gridiron */
+
+/** The camera the gridiron demo films through: a phone high on the sideline. */
+export const GRIDIRON_CAMERA = Object.freeze({
+  position: [48, -34, 15],
+  target: [48, 22, 0],
+  fovDeg: 52,
+  width: 640,
+  height: 360,
+});
+
+/** Leather, as a football is. */
+export const BALL_LEATHER = Object.freeze([139, 90, 55]);
+
+/**
+ * Seven-segment strokes for the digits a field carries.
+ *
+ * Field numerals are block figures a foot thick, and a seven-segment rendering
+ * of one is close enough in size, stroke and fill to put the segmenter under
+ * the same pressure the real thing does: a shape as tall as a player, as wide
+ * as a player, standing on the grass, made entirely of paint.
+ */
+const SEGMENTS = Object.freeze({
+  0: 'abcdef',
+  1: 'bc',
+  2: 'abdeg',
+  3: 'abcdg',
+  4: 'bcfg',
+  5: 'acdfg',
+  6: 'acdefg',
+  7: 'abc',
+  8: 'abcdefg',
+  9: 'abcdfg',
+});
+
+/**
+ * The painted strokes of one digit, as rectangles in field metres.
+ *
+ * @param {string} digit Character '0' to '9'.
+ * @param {number} x Left edge, metres along the field.
+ * @param {number} y Bottom edge, metres across the field.
+ * @param {number} w Digit width, metres.
+ * @param {number} h Digit height, metres.
+ * @param {number} stroke Paint thickness, metres.
+ * @returns {{minX: number, maxX: number, minY: number, maxY: number}[]} Strokes.
+ */
+export function digitStrokes(digit, x, y, w, h, stroke) {
+  const on = SEGMENTS[digit] ?? '';
+  const half = h / 2;
+  const out = [];
+  const bar = (x0, y0, x1, y1) => out.push({ minX: x0, maxX: x1, minY: y0, maxY: y1 });
+  if (on.includes('a')) bar(x, y + h - stroke, x + w, y + h);
+  if (on.includes('b')) bar(x + w - stroke, y + half, x + w, y + h);
+  if (on.includes('c')) bar(x + w - stroke, y, x + w, y + half);
+  if (on.includes('d')) bar(x, y, x + w, y + stroke);
+  if (on.includes('e')) bar(x, y, x + stroke, y + half);
+  if (on.includes('f')) bar(x, y + half, x + stroke, y + h);
+  if (on.includes('g')) bar(x, y + half - stroke / 2, x + w, y + half + stroke / 2);
+  return out;
+}
+
+/**
+ * Every painted yard number on the field, as strokes ready to draw.
+ *
+ * @param {object} [dimensions=GRIDIRON] Field dimensions.
+ * @returns {{minX: number, maxX: number, minY: number, maxY: number}[]} Strokes.
+ */
+export function gridironNumberStrokes(dimensions = GRIDIRON) {
+  const d = { ...GRIDIRON, ...dimensions };
+  const strokes = [];
+  for (let yard = 10; yard <= 90; yard += 10) {
+    const centreX = d.endZoneM + yard * YARD_M;
+    const shown = String(yard <= 50 ? yard : 100 - yard).padStart(2, '0');
+    for (const nearSideline of [true, false]) {
+      const bottom = nearSideline
+        ? d.numberInsetM
+        : d.widthM - d.numberInsetM - d.numberHeightM;
+      const gap = d.numberWidthM * 0.25;
+      const totalWidth = d.numberWidthM * 2 + gap;
+      let left = centreX - totalWidth / 2;
+      for (const character of shown) {
+        strokes.push(
+          ...digitStrokes(
+            character,
+            left,
+            bottom,
+            d.numberWidthM,
+            d.numberHeightM,
+            d.numberStrokeM,
+          ),
+        );
+        left += d.numberWidthM + gap;
+      }
+    }
+  }
+  return strokes;
+}
+
+/** Length of the gridiron demo loop, seconds. */
+export const GRIDIRON_SECONDS = 12;
+
+/**
+ * Quiet seconds at the top of each loop, before the ball is snapped.
+ *
+ * A looping clip teleports everyone back to the line of scrimmage, which no
+ * real footage does and which the tracker is right to treat as everyone
+ * vanishing and a new set of people appearing. The tracks from the previous
+ * loop coast on their last velocity for about a second and a half before they
+ * are retired, and if the next route starts inside that window the new tracks
+ * have to compete with the ghosts of the old ones — the route track breaks
+ * partway and the receiver arrives at the end of it as a stranger with no
+ * distance to his name.
+ *
+ * So the loop opens with everybody standing still for longer than it takes the
+ * ghosts to die. It costs a second and a half of clip and makes every loop
+ * behave like the first, which is what a fixture has to do.
+ */
+export const GRIDIRON_SET_SECONDS = 2;
+
+/**
+ * What the gridiron demo is doing, so a test can check the app against it.
+ *
+ * These are the numbers written into {@link gridironChoreography}, not numbers
+ * measured from it.
+ */
+export const GRIDIRON_TRUTH = Object.freeze({
+  /** The receiver's route: 9.6 m/s held for 4 s, from x = 30 m to x = 68.4 m. */
+  receiverSpeedMps: 9.6,
+  runSeconds: 4,
+  runDistanceM: 9.6 * 4,
+  /** The cornerback covering him. */
+  cornerSpeedMps: 8.8,
+  /** Linemen who do not move at all; every one must log exactly zero metres. */
+  stationaryPlayers: 4,
+  /** Where the route finishes, for picking the receiver out of the tracks. */
+  routeEnd: Object.freeze({ x: 30 + 9.6 * 4, y: 21.6 }),
+  paintedNumbersInView: 'at least one full yard number stands in the frame',
+});
+
+/**
+ * Where everybody is at a given moment of the gridiron demo.
+ *
+ * A go route down the near hash: the receiver runs 9.6 m/s, the corner tracks
+ * at 8.8 m/s and loses a step, the quarterback drops back slowly, and four
+ * linemen hold their ground so the app has something that must register exactly
+ * zero. The ball is thrown late in the route.
+ *
+ * @param {number} t Seconds since the clip started.
+ * @returns {{players: object[], ball: {x: number, y: number}}} The scene.
+ */
+export function gridironChoreography(t) {
+  const loop = t % GRIDIRON_SECONDS;
+  const sinceSnap = Math.max(0, loop - GRIDIRON_SET_SECONDS);
+  const run = Math.min(sinceSnap, GRIDIRON_TRUTH.runSeconds);
+  const players = [
+    { id: 'receiver', x: 30 + 9.6 * run, y: 21.6, kit: KITS.home },
+    // The corner starts level and loses a step, finishing three metres behind
+    // and four across. He used to finish shoulder to shoulder with the
+    // receiver, which looked realistic and made the fixture useless: the two
+    // merged into one region at the end of every route, and the foot point of
+    // the merged blob swung a metre each way, so the receiver was credited with
+    // "running" while standing still. A fixture has to isolate what it claims
+    // to measure.
+    { id: 'corner', x: 30 + 8.8 * run, y: 25.8, kit: KITS.away },
+    { id: 'quarterback', x: 26 - 1.4 * Math.min(sinceSnap, 2), y: 30, kit: KITS.home },
+    { id: 'line-a', x: 33, y: 27, kit: KITS.home },
+    { id: 'line-b', x: 34.5, y: 31, kit: KITS.away },
+    { id: 'line-c', x: 33, y: 34, kit: KITS.home },
+    { id: 'line-d', x: 34.5, y: 37.5, kit: KITS.away },
+    { id: 'safety', x: 52 + 1.5 * Math.sin(sinceSnap), y: 33, kit: KITS.away },
+  ];
+  // The throw: the ball leaves the quarterback at 2.6 s and travels to where
+  // the receiver will be. Before that it is in his hands and invisible, which
+  // is the normal state of this sport's ball and the reason possession is not
+  // reported for it.
+  const thrownFor = Math.max(0, sinceSnap - 2.6);
+  const ball =
+    thrownFor > 0 && thrownFor < 1.6
+      ? { x: 26 + 24 * (thrownFor / 1.6), y: 30 - 8 * (thrownFor / 1.6), diameterM: 0.17 }
+      : null;
+  return { players, ball };
+}
+
+/**
+ * The gridiron landmarks the demo calibrates itself from.
+ *
+ * @param {object} [dimensions=GRIDIRON] Field dimensions.
+ * @returns {object[]} Marks ready for `fitHomography`.
+ */
+export function gridironMarks(dimensions = GRIDIRON) {
+  const h = camera(GRIDIRON_CAMERA);
+  const all = gridironLandmarks(dimensions);
+  // Hash intersections only. Each is a one-yard stub crossing a yard line, so
+  // the crossing is a point rather than the smear two long lines make where
+  // they meet at a shallow angle.
+  const wanted = ['yard-20-near', 'yard-20-far', 'fifty-near', 'fifty-far', 'yard-40-near'];
+  return wanted
+    .map((id) => all.find((mark) => mark.id === id))
+    .filter(Boolean)
+    .map((mark) => {
+      const at = project(h, mark.x, mark.y);
+      return { id: mark.id, label: mark.label, image: { x: at.x, y: at.y }, pitch: { x: mark.x, y: mark.y } };
+    });
+}
+
+/**
+ * Everything the gridiron demo needs to render a frame.
+ *
+ * @returns {object} Camera, homography, lines, paint and ball colour.
+ */
+export function gridironScene() {
+  return {
+    basis: cameraBasis(GRIDIRON_CAMERA),
+    pitchToImage: camera(GRIDIRON_CAMERA),
+    dimensions: GRIDIRON,
+    lines: gridironLines(),
+    markings: gridironNumberStrokes(),
+    lineWidthM: 4 * 0.0254,
+    ballColour: BALL_LEATHER,
+    paintedRegions: gridironPaintedRegions(),
+  };
+}
+
 /**
  * Play the demo into a canvas and hand back a stream the app can treat as a
  * camera.
@@ -389,16 +649,22 @@ export function demoMarks(dimensions = FULL_PITCH) {
  *
  * @param {object} [options] Playback options.
  * @param {number} [options.fps=25] Frames a second.
+ * @param {'soccer'|'gridiron'} [options.sport='soccer'] Which clip to play.
  * @returns {{stream: MediaStream, marks: object[], stop: () => void}} A live
  *   stream of the synthetic match, the landmarks in it, and a way to stop it.
  */
 export function startDemo(options = {}) {
   const fps = options.fps ?? 25;
-  const basis = cameraBasis(DEMO_CAMERA);
-  const pitchToImage = camera(DEMO_CAMERA);
+  const gridiron = options.sport === 'gridiron';
+  const spec = gridiron ? GRIDIRON_CAMERA : DEMO_CAMERA;
+  const field = gridiron
+    ? gridironScene()
+    : { basis: cameraBasis(DEMO_CAMERA), pitchToImage: camera(DEMO_CAMERA) };
+  const play = gridiron ? gridironChoreography : choreography;
+  const marks = gridiron ? gridironMarks() : demoMarks();
   const canvas = document.createElement('canvas');
-  canvas.width = DEMO_CAMERA.width;
-  canvas.height = DEMO_CAMERA.height;
+  canvas.width = spec.width;
+  canvas.height = spec.height;
   const ctx = canvas.getContext('2d');
   const image = ctx.createImageData(canvas.width, canvas.height);
   const startedAt = performance.now();
@@ -406,11 +672,21 @@ export function startDemo(options = {}) {
   let timer = 0;
 
   const paint = () => {
+    // Content time comes from the clock, and it has to.
+    //
+    // Counting painted frames instead looks tidier — a loaded machine would
+    // play the clip in slow motion rather than jerkily — and it is wrong here,
+    // measurably. The app timestamps each frame with the media time the stream
+    // puts on it, and a canvas capture stamps frames by the wall clock whether
+    // or not the canvas was repainted in between. Advancing the players by a
+    // frame while the stream advances the clock by however long the analysis
+    // took makes every player appear to move slower than they were told to: a
+    // 9.6 m/s route came back at 6.1. The two clocks have to be the same clock,
+    // and the stream's is the wall.
     const t = (performance.now() - startedAt) / 1000;
-    const scene = choreography(t);
+    const scene = play(t);
     renderScene({
-      basis,
-      pitchToImage,
+      ...field,
       players: scene.players,
       ball: scene.ball,
       seed: 11 + (frame % 997),
@@ -424,7 +700,7 @@ export function startDemo(options = {}) {
   timer = setInterval(paint, 1000 / fps);
   return {
     stream: canvas.captureStream(fps),
-    marks: demoMarks(),
+    marks,
     stop: () => clearInterval(timer),
   };
 }

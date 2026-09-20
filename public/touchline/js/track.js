@@ -79,8 +79,16 @@ export const MAX_SPEED_MPS = 12;
 /** Multiples of the local ground scale a move must clear to count as travel. */
 const TRAVEL_NOISE_PIXELS = 1.5;
 
-/** Speed a sprint must fall below before another one can be counted, m/s. */
-const SPRINT_EXIT_MPS = 6;
+/**
+ * Fraction of the sprint threshold a player must drop below before another
+ * sprint can be counted.
+ *
+ * Expressed as a fraction rather than a speed because the threshold itself
+ * differs by sport — a gridiron sprint is 22 mph where a football one is
+ * 15.7 — and a fixed exit speed that sat sensibly below one would sit above
+ * the other, counting a jog as the end of every sprint or never ending one.
+ */
+const SPRINT_EXIT_FRACTION = 6 / 7;
 
 /**
  * Windowed speed readings a peak is taken across, to reject single spikes.
@@ -118,7 +126,31 @@ const SPEED_WINDOW_MS = 1000;
  */
 const MIN_SPEED_SAMPLES = 20;
 
-/** Speed above which a player is running hard, metres per second (~19.8 km/h). */
+/**
+ * Longest the speed window may grow, milliseconds.
+ *
+ * The minimum sample count above fights noise on a slow device by letting the
+ * window stretch. Left unbounded it stretches too far: at eight frames a second
+ * twenty samples is two and a half seconds of window, and a peak is only
+ * reported once seven consecutive windows agree — so a player has to hold their
+ * speed for well over three seconds before it appears. A football sprint lasts
+ * that long. An American football play often does not, and the top speed of a
+ * four-second route would simply never be reported.
+ *
+ * So the window is capped in time as well as floored in samples, and the cap
+ * wins. The cost is a slightly noisier reading on a slow device, which the
+ * median across windows absorbs.
+ */
+const MAX_SPEED_WINDOW_MS = 2000;
+
+/**
+ * Speed above which a player is running hard, metres per second (~19.8 km/h).
+ *
+ * Football's convention, and the default. Thresholds like this are convention
+ * rather than physics — different providers use different ones, which is why
+ * two systems watching the same match disagree about high-intensity distance,
+ * and why the app prints the threshold beside the figure.
+ */
 export const HIGH_INTENSITY_MPS = 5.5;
 
 /** Speed that counts as a sprint, metres per second (~25.2 km/h). */
@@ -202,6 +234,12 @@ export class Tracker {
   constructor(options = {}) {
     this.imageToPitch = options.imageToPitch ?? null;
     this.maxTracks = options.maxTracks ?? 30;
+    // The running thresholds belong to the sport, not to the tracker. A
+    // gridiron sprint is 22 mph and a football one 15.7, so a tracker with
+    // football's numbers hard-coded would report that nobody on a gridiron
+    // ever sprinted.
+    this.sprintMps = options.sprintMps ?? SPRINT_MPS;
+    this.highIntensityMps = options.highIntensityMps ?? HIGH_INTENSITY_MPS;
     this.tracks = [];
     this.nextId = 1;
   }
@@ -413,7 +451,7 @@ export class Tracker {
       track.anchor = { x: track.x, y: track.y };
     } else if (fromAnchor > floor) {
       track.distanceM += fromAnchor;
-      if (track.speedMps >= HIGH_INTENSITY_MPS) track.highIntensityM += fromAnchor;
+      if (track.speedMps >= this.highIntensityMps) track.highIntensityM += fromAnchor;
       track.anchor = { x: track.x, y: track.y };
     }
     void previousX;
@@ -421,9 +459,11 @@ export class Tracker {
 
     track.samples.push({ t: timeMs, x: track.x, y: track.y });
     while (
-      track.samples.length > MIN_SPEED_SAMPLES &&
-      timeMs - track.samples[0].t > SPEED_WINDOW_MS
+      (track.samples.length > MIN_SPEED_SAMPLES &&
+        timeMs - track.samples[0].t > SPEED_WINDOW_MS) ||
+      timeMs - track.samples[0].t > MAX_SPEED_WINDOW_MS
     ) {
+      if (track.samples.length <= 2) break;
       track.samples.shift();
     }
     // Speed over a window rather than frame to frame: a single frame of
@@ -463,11 +503,11 @@ export class Tracker {
     // threshold, a player holding 7.0 m/s crosses it a dozen times on noise
     // alone and the match report credits a dozen sprints.
     if (track.sprintActive) {
-      if (track.speedMps < SPRINT_EXIT_MPS) {
+      if (track.speedMps < this.sprintMps * SPRINT_EXIT_FRACTION) {
         track.sprintActive = false;
         track.sprintSinceMs = null;
       }
-    } else if (track.speedMps >= SPRINT_MPS) {
+    } else if (track.speedMps >= this.sprintMps) {
       if (track.sprintSinceMs === null) track.sprintSinceMs = timeMs;
       else if (timeMs - track.sprintSinceMs >= SPRINT_MIN_MS) {
         track.sprints += 1;

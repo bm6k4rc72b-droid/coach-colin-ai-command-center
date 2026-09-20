@@ -146,11 +146,30 @@
           </header>
 
           <section class="group">
-            <h3>The pitch</h3>
+            <h3>The sport</h3>
+            <p class="note">
+              Almost none of this app is about football: the measurements need a flat rectangle of
+              known size, and a gridiron is as flat as a pitch. What changes with the sport is the
+              markings you calibrate against, the paint the segmenter has to ignore, what colour the
+              ball is, and whether possession can honestly be reported at all.
+            </p>
+            <label class="field">
+              <span>Field</span>
+              <select id="sport">
+                <option value="soccer">Football (soccer)</option>
+                <option value="gridiron">American football</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="group">
+            <h3>The <span id="field-word">pitch</span></h3>
             <p class="note">
               Nothing is in metres until this is done. Mark four painted landmarks you can see in the
-              picture and type the real size of the pitch. Corners of the penalty area are the best
-              marks: they are painted intersections, so you can hit them to within a few pixels.
+              picture and type the real size of the field. The app asks for the best ones first: a
+              gridiron's hash marks are one-yard stubs crossing a yard line, so the crossing is a
+              point you can hit within a pixel or two, while a corner is two long lines meeting at a
+              shallow angle and can be clicked a metre out without looking wrong.
             </p>
             <div class="grid-2">
               <label class="field">
@@ -251,6 +270,26 @@
                 <strong>Reconstruct a match in 3D.</strong> One camera on a plane gives positions on
                 the grass. It cannot give height, so a header, a chipped pass and a shot over the bar
                 are the same to it.
+              </li>
+              <li>
+                <strong>Report possession in American football.</strong> The ball is in a player's
+                hands for most of a play and possession is decided by downs, not by who is standing
+                nearest. A proximity figure would add up to 100% and mean nothing, so none is shown —
+                separation is measured instead, which needs no ball.
+              </li>
+              <li>
+                <strong>Tell a crouching player in a white jersey from the number they are
+                standing on.</strong> A gridiron's yard numbers are exactly the size and shape of a
+                standing player. They are recognised as scenery because paint lies flat and is
+                foreshortened while a player is not — but a player crouched on a number, in white,
+                seen from a steep angle, is short enough to look like paint and white enough to be
+                made of it, and will be missed.
+              </li>
+              <li>
+                <strong>Analyse a broadcast, or a TV screen filmed with a phone.</strong> The pitch
+                model is fitted to one fixed view. Broadcast cameras pan, zoom and cut every few
+                seconds, and each of those invalidates the calibration — so the app would spend the
+                whole game reporting that its metres are stale, which is correct and useless.
               </li>
               <li>
                 <strong>Follow a moving camera.</strong> A homography is fitted to one view. Small
