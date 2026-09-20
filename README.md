@@ -459,7 +459,13 @@ in code and assert in CI.
   vertex generated from maths, no model files. Deck changes fly the camera
   between waypoints, device tilt parallaxes the volume, and each deck has its own
   chord in a synthesised score.
-- **Nine decks**: the intelligence engine and its eight-section dossier with
+- **An AR bench** — the compound stands in your room through the device camera,
+  turning on a plinth with its evidence orbiting it: each claim with its tier,
+  each study with its design, population, sample size and a live link to the
+  literature. Drag, tilt or let it rotate; capture a card with the citation and
+  disclosure baked in. Works on a laptop, an iPhone and an Android, and works
+  without a camera at all.
+- **Ten decks**: the intelligence engine and its eight-section dossier with
   "Show me the science" on every claim; the knowledge graph; a paper decoder that
   tells you what a study *doesn't* prove; a comparison lab, a four-reviewer
   debate room and a study-design simulator; a myth detector, social fact checker
@@ -472,8 +478,8 @@ in code and assert in CI.
   offered plainly rather than buried.
 
 Full write-up, including the evidence model and the known limits:
-[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (89 unit tests)
-and `npm run qa:astra` (66 end-to-end checks driving the real platform in
+[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (111 unit tests)
+and `npm run qa:astra` (81 end-to-end checks driving the real platform in
 Chromium).
 
 ---

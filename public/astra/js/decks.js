@@ -21,6 +21,7 @@ import { FORMATS, generatePackage, recommendNext, toMarkdown, variants } from '.
 import { arrivalProfile, executiveDashboard, proposeCampaign } from './command.js';
 import { UNLOCKS, summary as progressSummary } from './progress.js';
 import { ago, copyText, download, el, fill, pct, richText } from './dom.js';
+import { buildPanels } from './ar.js';
 
 /* ------------------------------------------------------------------ shared */
 
@@ -1277,6 +1278,157 @@ export function renderProfile(ctx) {
       ]))),
     ]) : null,
   ].filter(Boolean));
+}
+
+/* --------------------------------------------------------------- 09 · AR */
+
+/**
+ * The Augmented Reality bench.
+ *
+ * The compound stands in your room, turning, with its evidence orbiting it.
+ * The deck panel itself is the control surface and the reading position: the
+ * scene lives behind it, full-bleed, so the controls never cover the object.
+ *
+ * @param {object} ctx App context.
+ * @returns {HTMLElement} The deck.
+ */
+export function renderAR(ctx) {
+  const state = ctx.deckState.ar || (ctx.deckState.ar = { compound: 'bpc-157', focus: null, camera: false });
+  const detail = el('div.ar-detail');
+
+  /**
+   * Show one panel's full contents in the reading sheet.
+   *
+   * @param {object} panel The panel that was opened.
+   */
+  const focus = (panel) => {
+    state.focus = panel.id;
+    ctx.award(panel.kind === 'study' ? 'study-open' : 'sources-expand', { peptide: state.compound });
+    ctx.score?.cue('open');
+    fill(detail, [
+      el('div.ar-detail-head', { style: { '--accent': panel.accent } }, [
+        el('span.ar-panel-label', { text: panel.label }),
+        el('h4', { text: panel.title }),
+      ]),
+      ...panel.lines.map((line) => el('p', { text: line })),
+      panel.url ? el('a.source-link', {
+        href: panel.url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        onclick: () => ctx.award('pubmed-open', { study: panel.id }),
+      }, ['Open the literature →']) : null,
+      el('button.btn.ghost.sm', { type: 'button', onclick: () => fill(detail, []) }, ['Close']),
+    ].filter(Boolean));
+  };
+
+  ctx.arFocus = focus;
+
+  /**
+   * Switch the compound on the plinth.
+   *
+   * @param {string} id Compound id.
+   */
+  const show = (id) => {
+    state.compound = id;
+    ctx.ar?.setCompound(id);
+    ctx.award('dossier-open', { peptide: id });
+    ctx.telemetry.push('dossier', { peptide: id });
+    fill(detail, []);
+    ctx.render();
+  };
+
+  const entry = findAny(state.compound);
+  const reading = entryReading(entry);
+  const panels = buildPanels(entry);
+
+  const root = el('div.deck.ar', {}, [
+    el('div.deck-head', {}, [
+      el('p.kicker', { text: 'Augmented Reality bench' }),
+      el('h2', { text: `${entry.name} — in your room` }),
+      el('p.deck-lede', { text: 'Turn the compound with a drag, a tilt, or let it rotate. Every panel orbiting it is a claim, a study or a regulatory fact from the dossier — tap one to read it in full, with its citation.' }),
+    ]),
+    el('div.ar-controls', {}, [
+      el('button.btn.primary', {
+        type: 'button',
+        onclick: async () => {
+          const started = await ctx.ar.startCamera();
+          state.camera = started;
+          ctx.toast(started
+            ? 'Camera on. Nothing is recorded or uploaded.'
+            : 'No camera available, or access was declined — the studio backdrop stays.');
+          ctx.render();
+        },
+      }, [state.camera ? '⊙ Camera on' : '⊙ Use camera']),
+      state.camera ? el('button.btn.ghost', {
+        type: 'button', onclick: async () => { await ctx.ar.flipCamera(); ctx.toast('Camera flipped.'); },
+      }, ['⇄ Flip']) : null,
+      state.camera ? el('button.btn.ghost', {
+        type: 'button', onclick: () => { ctx.ar.stopCamera(); state.camera = false; ctx.render(); },
+      }, ['Stop camera']) : null,
+      el('button.btn.ghost', {
+        type: 'button',
+        onclick: async () => {
+          const on = await ctx.ar.enableGyro();
+          ctx.toast(on ? 'Tilt to turn the compound.' : 'Motion access was not granted — drag to turn it instead.');
+        },
+      }, ['◈ Tilt to turn']),
+      el('label.switch', {}, [
+        el('input', {
+          type: 'checkbox',
+          checked: ctx.ar?.lab.ar.autoSpin ? true : null,
+          onchange: (event) => ctx.ar.setAutoSpin(event.target.checked),
+        }),
+        el('span', { text: 'Auto-rotate' }),
+      ]),
+    ].filter(Boolean)),
+    el('div.ar-zoom', {}, [
+      el('label.sim-slider', {}, [
+        el('span.sim-label', {}, ['Distance', el('span.sim-value', { text: 'zoom' })]),
+        el('input', {
+          type: 'range', min: '3.4', max: '16', step: '0.2', value: String(ctx.ar?.lab.ar.distance ?? 7.4),
+          oninput: (event) => ctx.ar.lab.setARDistance(Number(event.target.value)),
+        }),
+      ]),
+    ]),
+    el('div.ar-meter', { style: { '--band': reading.band.accent } }, [
+      el('span.meter-label', { text: reading.band.label }),
+      el('span.meter-value', { text: pct(reading.score) }),
+      el('span.quiet', { text: `${panels.length} data panels orbiting · best design ${reading.best.label}` }),
+    ]),
+    detail,
+    el('div.ar-picker', {}, [
+      el('h4', { text: 'On the plinth' }),
+      el('div.chips', {}, comparable().map((option) => el('button.chip', {
+        type: 'button',
+        class: option.id === state.compound ? 'on' : '',
+        onclick: () => show(option.id),
+      }, [option.name]))),
+    ]),
+    el('div.ar-actions', {}, [
+      el('button.btn.primary', {
+        type: 'button',
+        onclick: async () => {
+          const url = await ctx.ar.capture();
+          if (!url) {
+            ctx.toast('Nothing rendered yet — give the scene a moment.');
+            return;
+          }
+          const anchor = el('a', { href: url, download: `astra-${state.compound}-ar.png` });
+          document.body.append(anchor);
+          anchor.click();
+          anchor.remove();
+          ctx.score?.cue('reward');
+          ctx.toast('Captured, with the citation band baked in.');
+        },
+      }, ['⧉ Capture card']),
+      el('button.btn.ghost', {
+        type: 'button', onclick: () => ctx.go('engine', { subject: state.compound }),
+      }, ['Open the full dossier →']),
+    ]),
+    el('p.fine', { text: 'Camera frames are read on this device and discarded — nothing is recorded, uploaded or stored. The captured card carries the compound, its evidence level and the disclosure.' }),
+  ]);
+
+  return root;
 }
 
 /* ------------------------------------------------------- 09 · the settings */
