@@ -23,7 +23,7 @@
  * @module astra/command
  */
 
-import { GOALS, PEPTIDES, corpusSize } from './data/peptides.js';
+import { GOALS, PEPTIDES, corpusSize, findAny } from './data/peptides.js';
 import { scoreEvidence, tier } from './evidence.js';
 import { corpusVerdict } from './engine.js';
 
@@ -395,6 +395,42 @@ export function proposeCampaign(dashboard, { days = 7 } = {}) {
       note: 'Nothing here is scheduled, sent or published. Approving generates the asset drafts in the Content Studio; publishing remains a manual act by a person.',
     },
   };
+}
+
+/**
+ * Resolve a deep link into a deck and a compound.
+ *
+ * This is what makes a printed QR code work. A card carries a URL like
+ * `…/astra/?compound=kpv#ar`, and somebody scanning it with their phone's
+ * native camera should land on the KPV bench — not on the default compound,
+ * which is what happens when the hash is read and the query string is not.
+ *
+ * The compound is validated against the corpus rather than trusted, so a
+ * mistyped or stale code falls back to the ordinary entrance instead of
+ * opening an empty deck.
+ *
+ * @param {object} [context] Overrides for testing.
+ * @param {string} [context.hash] The URL hash, with or without its `#`.
+ * @param {string} [context.search] The query string.
+ * @param {string[]} [context.decks] Deck ids that exist.
+ * @returns {{ deck: string|null, compound: string|null, unknown: string|null }} The resolved target.
+ */
+export function deepLink({ hash = '', search = '', decks = [] } = {}) {
+  const params = new URLSearchParams(search || '');
+  const requested = (params.get('compound') || params.get('c') || '').trim().toLowerCase();
+  const compound = requested && findAny(requested) ? requested : null;
+  // A card that names a compound the library has dropped is reported rather
+  // than ignored. Silently showing a different compound than the one printed
+  // on the card is a small lie, and this platform does not get to tell those.
+  const unknown = requested && !compound ? requested : null;
+
+  const wanted = String(hash || '').replace(/^#\/?/, '').trim();
+  let deck = decks.includes(wanted) ? wanted : null;
+  // A code that names a compound but no deck opens its dossier, which is the
+  // safe general answer; the printed sheet asks for the AR bench explicitly.
+  if (!deck && compound) deck = decks.includes('engine') ? 'engine' : null;
+
+  return { deck, compound, unknown };
 }
 
 /**

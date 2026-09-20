@@ -13,7 +13,7 @@ import { Lab } from './lab.js';
 import { Score } from './audio.js';
 import { Lens, Tilt, interpretScan, prefersReducedMotion } from './sensors.js';
 import { Intro } from './intro.js';
-import { Radar, Telemetry, arrivalProfile } from './command.js';
+import { Radar, Telemetry, arrivalProfile, deepLink } from './command.js';
 import { ask, composeLocalAnswer, goalsIn, readSettings, writeSettings } from './astra.js';
 import { knowledgeGraph, neighbourhood } from './graph.js';
 import { resolveNamed } from './engine.js';
@@ -374,10 +374,22 @@ function enterFacility() {
   score.start();
   setMuted(state.muted);
   const arrival = arrivalProfile({ referrer: document.referrer, search: location.search });
-  const deck = RENDERERS[arrival.deck] ? arrival.deck : 'engine';
-  telemetry.push('arrival', { profile: arrival.id });
-  go(location.hash.slice(1) in RENDERERS ? location.hash.slice(1) : deck);
-  toast(arrival.lead);
+  const link = deepLink({ hash: location.hash, search: location.search, decks: Object.keys(RENDERERS) });
+  const deck = link.deck || (RENDERERS[arrival.deck] ? arrival.deck : 'engine');
+  telemetry.push('arrival', { profile: arrival.id, compound: link.compound || undefined });
+
+  // A scanned card names its compound in the query string. The AR bench and
+  // the engine keep it under different keys, so the payload is shaped for
+  // whichever deck the link asked for.
+  const payload = link.compound
+    ? (deck === 'ar' ? { compound: link.compound } : { subject: link.compound })
+    : {};
+  go(deck, payload);
+  if (link.unknown) {
+    toast(`That code names "${link.unknown}", which this library does not cover. Showing the bench instead.`);
+  } else {
+    toast(link.compound ? `Scanned in: ${findAny(link.compound).name}` : arrival.lead);
+  }
 }
 
 /**
@@ -479,8 +491,9 @@ function boot() {
   registerWorker();
 
   // Deep links skip the entrance, because somebody arriving on a specific
-  // dossier asked for that dossier rather than for the descent.
-  if (location.hash.slice(1) in RENDERERS) enterFacility();
+  // dossier — or scanning a card — asked for that, not for the descent.
+  const link = deepLink({ hash: location.hash, search: location.search, decks: Object.keys(RENDERERS) });
+  if (link.deck || link.compound || link.unknown) enterFacility();
 }
 
 boot();

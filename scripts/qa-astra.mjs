@@ -489,6 +489,97 @@ async function main() {
   check('leaving AR restores the vault and releases the camera',
     !arExit.mode && !arExit.arOn && !arExit.live);
 
+  /* ---------------------------------------------------- QR sheet & links */
+
+  await page.evaluate(() => globalThis.__astra.go('ar'));
+  await wait(700);
+  await page.evaluate(() => [...document.querySelectorAll('.ar-actions .btn')]
+    .find((button) => button.textContent.includes('QR sheet')).click());
+  await wait(900);
+
+  const sheet = await page.evaluate(() => {
+    const host = document.getElementById('qr-sheet');
+    const cards = [...host.querySelectorAll('.qr-card')];
+    return {
+      shown: !host.hidden,
+      cards: cards.length,
+      svgs: host.querySelectorAll('.qr-code svg').length,
+      urls: cards.map((card) => card.querySelector('.qr-url').textContent),
+      printable: document.body.classList.contains('sheet-open'),
+    };
+  });
+  check('the QR sheet builds a card per compound', sheet.shown && sheet.cards === 13, `${sheet.cards} cards`);
+  // Colour carries meaning here — the compound's accent and its evidence band —
+  // so a sheet where every card is the same colour is a broken sheet.
+  const accents = await page.evaluate(() => {
+    const read = (node, name) => getComputedStyle(node).getPropertyValue(name).trim();
+    const cards = [...document.querySelectorAll('.qr-card')];
+    return {
+      accents: new Set(cards.map((card) => read(card, '--accent'))).size,
+      bands: new Set(cards.map((card) => read(card.querySelector('.qr-band'), '--band'))).size,
+    };
+  });
+  check('each card carries its own compound accent', accents.accents >= 8, `${accents.accents} distinct accents`);
+  check('each card carries its evidence band colour', accents.bands >= 4, `${accents.bands} distinct bands`);
+  check('every card carries a rendered code', sheet.svgs === sheet.cards, `${sheet.svgs} codes`);
+  check('codes encode the live origin, not a baked one',
+    sheet.urls.every((url) => url.startsWith(`http://127.0.0.1:${port}/astra/?compound=`)),
+    sheet.urls[0]);
+  check('every card points at a distinct compound',
+    new Set(sheet.urls).size === sheet.cards, `${new Set(sheet.urls).size} distinct`);
+  check('the sheet takes over for printing', sheet.printable);
+
+  await page.evaluate(() => [...document.querySelectorAll('.qr-actions .btn')]
+    .find((button) => button.textContent === 'Close').click());
+  await wait(300);
+  check('the sheet closes again',
+    await page.evaluate(() => document.getElementById('qr-sheet').hidden));
+
+  // The whole point: a scanned card must open that compound's bench.
+  const scanned = await page.goto(`${base}?compound=ghk-cu#ar`, { waitUntil: 'domcontentloaded' })
+    .then(() => wait(2200))
+    .then(() => page.evaluate(() => ({
+      entered: document.body.classList.contains('entered'),
+      deck: globalThis.__astra.state.deck,
+      compound: globalThis.__astra.ar.entry?.id,
+      arOn: globalThis.__astra.lab.ar.on,
+      panels: document.querySelectorAll('.ar-panel').length,
+    })));
+  check('a scanned card skips the entrance', scanned.entered);
+  check('a scanned card opens the AR bench', scanned.deck === 'ar' && scanned.arOn, `deck ${scanned.deck}`);
+  check('a scanned card opens the right compound', scanned.compound === 'ghk-cu', `got ${scanned.compound}`);
+  check('the scanned compound arrives with its evidence', scanned.panels >= 8, `${scanned.panels} panels`);
+
+  // A compound with no deck lands on the dossier instead.
+  const dossierLink = await page.goto(`${base}?compound=semaglutide`, { waitUntil: 'domcontentloaded' })
+    .then(() => wait(2000))
+    .then(() => page.evaluate(() => ({
+      deck: globalThis.__astra.state.deck,
+      subject: globalThis.__astra.ctx.deckState.engine?.subject,
+      dossier: document.querySelector('.dossier h2')?.textContent || '',
+    })));
+  check('a card with no deck opens the dossier',
+    dossierLink.deck === 'engine' && dossierLink.subject === 'semaglutide', `deck ${dossierLink.deck}`);
+  check('the dossier it opens is the right one', dossierLink.dossier === 'Semaglutide', dossierLink.dossier);
+
+  // A stale code must not strand anyone on an empty deck.
+  const stale = await page.goto(`${base}?compound=discontinued-thing#ar`, { waitUntil: 'domcontentloaded' })
+    .then(() => wait(1800))
+    .then(() => page.evaluate(() => ({
+      broken: document.getElementById('panel-body').textContent.includes('failed to render'),
+      toast: document.getElementById('toast').textContent,
+      deck: globalThis.__astra.state.deck,
+    })));
+  check('a stale code still opens the deck it asked for', stale.deck === 'ar' && !stale.broken, stale.deck);
+  check('a stale code says so rather than quietly showing another compound',
+    /does not cover/i.test(stale.toast), stale.toast.slice(0, 70));
+
+  // Back to a clean session for the checks that follow.
+  await page.goto(base, { waitUntil: 'domcontentloaded' });
+  await wait(1500);
+  await page.evaluate(() => document.querySelector('[data-deck="engine"]').click());
+  await wait(700);
+
   /* ------------------------------------------------------------ progress */
 
   await page.evaluate(() => globalThis.__astra.go('profile'));

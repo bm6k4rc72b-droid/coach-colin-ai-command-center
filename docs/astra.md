@@ -11,8 +11,8 @@ step, no framework, no dependencies, no backend, no account. Locally it is
 it is `/astra/`.
 
 ```sh
-npm run test:astra   # 111 unit tests, no browser needed
-npm run qa:astra     # 81 end-to-end checks driving the real platform in Chromium
+npm run test:astra   # 134 unit tests, no browser needed
+npm run qa:astra     # 97 end-to-end checks driving the real platform in Chromium
 npm run qa:astra -- --out shot.png   # …and a screenshot
 ```
 
@@ -217,6 +217,33 @@ Four decisions make it work on a laptop, an iPhone and an Android alike:
 No frame is uploaded or stored. The camera is read into a canvas for the capture
 button and discarded.
 
+**Scanning a card into the bench.** Each compound has a deep link —
+`…/astra/?compound=kpv#ar` — that opens its AR bench directly, and the bench
+builds a printable sheet of QR codes, one per compound, so a printed card can
+be scanned with a phone's native camera and land on the right molecule. No app,
+no install.
+
+A QR code is a *launcher*, not an anchor: it carries a URL and its work is done
+once the page opens. It does not hold the molecule onto the card — that would
+be image-target tracking, which is a separate and larger piece of work.
+
+Two details are load-bearing:
+
+- **The codes encode the live origin.** They are generated in the browser from
+  `location.origin + location.pathname` at the moment the sheet is shown, not
+  baked into the repository as images. A baked image hardcodes one deployment
+  and fails silently on every other — localhost, a custom domain, a fork.
+- **A stale card says so.** A code naming a compound the library no longer
+  covers reports that plainly rather than quietly showing a different compound.
+  Silently swapping the subject is a small lie, and this platform does not get
+  to tell those.
+
+The encoder is in [`js/qr.js`](../public/astra/js/qr.js): byte mode, error
+correction level M, versions 1 to 10, no dependencies. It is the kind of code
+that looks perfect and produces symbols that scan as nothing, so every encoding
+test round-trips through `jsqr` — a real, independent decoder, a devDependency
+used only by the tests. If the decoder cannot read it, neither can a phone.
+
 **Lab** — three tabs. *Comparison* puts two compounds across five axes and names
 which has the better **evidence** (never which works better). *Debate Room*
 convenes four reviewers — research scientist, clinical evidence reviewer,
@@ -369,8 +396,8 @@ own last-good store.
 ## Testing
 
 ```sh
-npm run test:astra   # 111 unit tests over the pure logic
-npm run qa:astra     # 81 end-to-end checks in headless Chromium
+npm run test:astra   # 134 unit tests over the pure logic
+npm run qa:astra     # 97 end-to-end checks in headless Chromium
 ```
 
 The unit tests cover the corpus's shape, the evidence arithmetic and its
@@ -385,6 +412,8 @@ and the progression system. The interesting ones are the invariants:
 - Every dossier section is populated for every compound.
 - Every claim's cited studies actually exist on that compound.
 - Every AR panel's evidence reading agrees with the dossier's.
+- Every compound's printed QR code decodes back to its own deep link.
+- A stale or malformed card link is refused rather than followed.
 - No AR panel escapes the stage, and none is drawn from behind the camera.
 
 The end-to-end suite drives the real platform: the entrance reveals and
@@ -421,6 +450,7 @@ public/astra/
     engine.js           retrieval, the eight-section dossier, the stack rule
     astra.js            the concierge, local and model paths
     ar.js               the augmented-reality bench
+    qr.js               the QR encoder, for printable compound cards
     decoder.js          the research paper decoder
     claims.js           myth detector, fact checker, compliance guardian
     compare.js          the comparison lab

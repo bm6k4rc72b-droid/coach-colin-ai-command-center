@@ -39,6 +39,7 @@ const SHELL = [
   './js/lab.js',
   './js/mathkit.js',
   './js/progress.js',
+  './js/qr.js',
   './js/reviewers.js',
   './js/sensors.js',
   './js/studio.js',

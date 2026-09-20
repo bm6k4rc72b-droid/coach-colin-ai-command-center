@@ -465,6 +465,10 @@ in code and assert in CI.
   literature. Drag, tilt or let it rotate; capture a card with the citation and
   disclosure baked in. Works on a laptop, an iPhone and an Android, and works
   without a camera at all.
+- **Printable QR cards** — a code per compound that opens its AR bench from a
+  phone's native camera, generated in-browser from the live URL so they work on
+  any deployment. The encoder is dependency-free and every code is verified by
+  round-tripping through a real decoder in the tests.
 - **Ten decks**: the intelligence engine and its eight-section dossier with
   "Show me the science" on every claim; the knowledge graph; a paper decoder that
   tells you what a study *doesn't* prove; a comparison lab, a four-reviewer
@@ -478,8 +482,8 @@ in code and assert in CI.
   offered plainly rather than buried.
 
 Full write-up, including the evidence model and the known limits:
-[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (111 unit tests)
-and `npm run qa:astra` (81 end-to-end checks driving the real platform in
+[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (134 unit tests)
+and `npm run qa:astra` (97 end-to-end checks driving the real platform in
 Chromium).
 
 ---
