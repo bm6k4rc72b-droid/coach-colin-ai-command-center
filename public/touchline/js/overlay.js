@@ -57,13 +57,17 @@ function toImage(pitchToImage, point) {
  * @param {number[]} pitchToImage Row-major 3x3.
  * @param {{lengthM: number, widthM: number}} dimensions Pitch size.
  * @param {string} [colour=INK.model] Stroke colour.
+ * @param {{a: object, b: object}[]} [lines] The field's own markings; the
+ *   soccer pitch's if none are given. A gridiron drawn with penalty boxes
+ *   would be worse than drawing nothing, because the whole point of this
+ *   overlay is that a person can see whether the model matches the paint.
  */
-export function drawPitchModel(ctx, pitchToImage, dimensions, colour = INK.model) {
+export function drawPitchModel(ctx, pitchToImage, dimensions, colour = INK.model, lines = null) {
   ctx.save();
   ctx.strokeStyle = colour;
   ctx.lineWidth = 1.25;
   ctx.beginPath();
-  for (const line of pitchLines(dimensions)) {
+  for (const line of lines ?? pitchLines(dimensions)) {
     const a = toImage(pitchToImage, line.a);
     const b = toImage(pitchToImage, line.b);
     if (!a || !b) continue;
@@ -321,9 +325,10 @@ export function drawStrip(ctx, cells, width, height, scale = 1) {
  * @param {number} scene.width Canvas width.
  * @param {number} scene.height Canvas height.
  * @param {object[]} [scene.trails] Paths to draw behind the players.
+ * @param {{a: object, b: object}[]} [scene.lines] The field's markings.
  */
 export function drawPlan(ctx, scene) {
-  const { players, ball, grid, dimensions, width, height, trails = [] } = scene;
+  const { players, ball, grid, dimensions, width, height, trails = [], lines = null } = scene;
   const margin = 8;
   const scale = Math.min(
     (width - margin * 2) / dimensions.lengthM,
@@ -358,7 +363,7 @@ export function drawPlan(ctx, scene) {
   ctx.strokeStyle = 'rgba(226, 232, 240, 0.35)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  for (const line of pitchLines(dimensions)) {
+  for (const line of lines ?? pitchLines(dimensions)) {
     ctx.moveTo(px(line.a.x), py(line.a.y));
     ctx.lineTo(px(line.b.x), py(line.b.y));
   }

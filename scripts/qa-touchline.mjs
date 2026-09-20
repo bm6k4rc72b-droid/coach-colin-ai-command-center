@@ -28,7 +28,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { DEMO_TRUTH } from '../public/touchline/js/demo.js';
+import { DEMO_TRUTH, GRIDIRON_TRUTH } from '../public/touchline/js/demo.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -370,13 +370,184 @@ async function main() {
     await page.screenshot({ path: screenshot });
     check(fs.existsSync(screenshot), `screenshot written to ${screenshot}`);
 
+    // ------------------------------------------------------------- gridiron
+    {
+      // Switching sport is the real test of whether the field model is wired
+      // through: the calibration landmarks, the paint the segmenter must ignore,
+      // the colour of the ball and whether possession may be reported at all all
+      // change at once, and any one of them left hard-coded shows up here.
+      await page.click('#settings-toggle');
+      await page.select('#sport', 'gridiron');
+      await page.click('#settings-close');
+      await wait(400);
+
+      const switched = await page.evaluate(() => {
+        const state = globalThis.touchline.state;
+        return {
+          sport: state.sport.id,
+          lengthM: state.dimensions.lengthM,
+          widthM: state.dimensions.widthM,
+          markIds: state.marks.map((mark) => mark.id ?? ''),
+          marks: state.marks.map((mark) => mark.pitch),
+        };
+      });
+      check(switched.sport === 'gridiron', `the sport switched to ${switched.sport}`);
+      check(
+        Math.abs(switched.lengthM - 109.728) < 0.01 && Math.abs(switched.widthM - 48.768) < 0.01,
+        `the field became ${switched.lengthM.toFixed(1)} x ${switched.widthM.toFixed(1)} m`,
+      );
+      // The football marks must be gone rather than reinterpreted against the
+      // new field. Their identity is the evidence: a pitch calibration is made
+      // of penalty-box and six-yard landmarks, and none of those exist here.
+      check(
+        switched.markIds.length > 0 &&
+          switched.markIds.every((id) => !/box|six|halfway|corner-(near|far)-(left|right)$/.test(id)),
+        `the football landmarks were discarded (now ${switched.markIds.join(', ') || 'none'})`,
+      );
+      check(
+        switched.marks.every(
+          (mark) => mark.x >= 0 && mark.x <= 109.8 && mark.y >= 0 && mark.y <= 48.8,
+        ),
+        'every mark now sits on the gridiron rather than on a pitch',
+      );
+
+      const gridironTargets = await page.evaluate(() => {
+        const state = globalThis.touchline.state;
+        return state.sport.calibrationIds.slice(0, 4);
+      });
+      check(
+        gridironTargets.every((id) => !/box|six|halfway/.test(id)),
+        `calibration now asks for gridiron landmarks (${gridironTargets.join(', ')})`,
+      );
+
+      // Switching sport restarts the built-in clip, so there is nothing to
+      // click: the gridiron demo should already be running.
+      await wait(1500);
+      await page.waitForFunction(
+        () => (globalThis.touchline?.state?.latest?.live?.length ?? 0) >= 5,
+        { timeout: 30000 },
+      );
+      check(true, 'the gridiron demo is tracking players');
+
+      const gridironFit = await page.evaluate(() => globalThis.touchline.state.fit?.residualM ?? null);
+      check(
+        gridironFit !== null && gridironFit < 0.01,
+        `the gridiron calibration fits to ${gridironFit?.toFixed(4)} m`,
+      );
+
+      // Capture the route at the moment it completes rather than afterwards.
+      // The clip loops every nine seconds, and when it restarts the receiver
+      // teleports back to the line of scrimmage — which retires the track. A
+      // snapshot taken a few seconds later can therefore land on a freshly born
+      // track that has barely moved, and grade the app on that instead.
+      // The receiver is identified by where the route finishes, not by being
+      // the longest track: a safety drifting on a sine for a couple of minutes
+      // covers more ground than a four-second route, and "the biggest number"
+      // would quietly grade the app on him instead.
+      //
+      // The peak is sampled continuously inside the page rather than caught by
+      // polling from here. The clip loops, the route lasts four seconds of it,
+      // and a check that has to observe one instant is a race it will lose
+      // every few runs — which is a flaky test, not a flaky app.
+      await page.evaluate(
+        (end, goal) => {
+          globalThis.__route = null;
+          globalThis.__routeTimer = setInterval(() => {
+            // The first completed route, not the running maximum. A track that
+            // stands at the end of the route keeps drifting by a few tens of
+            // centimetres a second, so a maximum taken over a whole session
+            // eventually exceeds the route it is measuring.
+            if (globalThis.__route) return;
+            const tracks = globalThis.touchline?.state?.tracker?.tracks ?? [];
+            for (const track of tracks) {
+              if (!track.confirmed) continue;
+              if (Math.hypot(track.x - end.x, track.y - end.y) > 3) continue;
+              if (track.distanceM < goal) continue;
+              globalThis.__route = {
+                distanceM: track.distanceM,
+                topSpeedMps: track.topSpeedMps,
+              };
+              return;
+            }
+          }, 100);
+        },
+        GRIDIRON_TRUTH.routeEnd,
+        GRIDIRON_TRUTH.runDistanceM - 6,
+      );
+
+      await page
+        .waitForFunction(() => globalThis.__route !== null, { timeout: 60000, polling: 500 })
+        .catch(() => {
+          /* asserted below with whatever the sampler actually saw */
+        });
+      const route = await page.evaluate(() => {
+        clearInterval(globalThis.__routeTimer);
+        return globalThis.__route;
+      });
+
+      const gridiron = await page.evaluate(() => {
+        const state = globalThis.touchline.state;
+        return {
+          tracks: state.tracker.tracks
+            .filter((t) => t.confirmed)
+            .map((t) => ({ distanceM: t.distanceM, topSpeedMps: t.topSpeedMps, sprints: t.sprints })),
+          sprintMps: state.tracker.sprintMps,
+          possessionPanel: document.getElementById('possession').textContent,
+          lanes: document.getElementById('lanes').textContent,
+          ballSeen: state.latest?.ball?.seenShare ?? 0,
+          assignedMs: state.ledger.summary().assignedMs,
+        };
+      });
+
+      check(
+        Math.abs(gridiron.sprintMps - 9.83) < 0.01,
+        `the tracker took the gridiron sprint threshold (${(gridiron.sprintMps * 3.6).toFixed(1)} km/h)`,
+      );
+      const routeTruthKph = GRIDIRON_TRUTH.receiverSpeedMps * 3.6;
+      const routeKph = (route?.topSpeedMps ?? 0) * 3.6;
+      check(
+        Math.abs(routeKph - routeTruthKph) / routeTruthKph < 0.1,
+        `the route was clocked at ${routeKph.toFixed(1)} km/h against a choreographed ${routeTruthKph.toFixed(1)}`,
+      );
+      check(
+        route !== null && Math.abs(route.distanceM - GRIDIRON_TRUTH.runDistanceM) < 6,
+        `the route covered ${route?.distanceM?.toFixed(1) ?? 'nothing'} m against a choreographed ${GRIDIRON_TRUTH.runDistanceM.toFixed(1)}`,
+      );
+      const stationary = gridiron.tracks.filter((t) => t.distanceM === 0).length;
+      check(
+        stationary >= 3,
+        `${stationary} linemen logged exactly zero metres (${GRIDIRON_TRUTH.stationaryPlayers} never moved)`,
+      );
+      check(
+        gridiron.tracks.length <= 12,
+        `${gridiron.tracks.length} identities — the painted yard numbers did not join the team sheet`,
+      );
+
+      check(
+        /not reported/i.test(gridiron.possessionPanel) && /downs/i.test(gridiron.possessionPanel),
+        'the panel declines to report possession, and says why',
+      );
+      check(
+        gridiron.assignedMs === 0,
+        `no possession time was accumulated (${gridiron.assignedMs} ms)`,
+      );
+      check(
+        /nearest opponent|Waiting for two sides/i.test(gridiron.lanes) || gridiron.lanes.trim() === '',
+        'separation replaces the pass-lane panel',
+      );
+
+      const gridironShot = screenshot.replace(/\.png$/, '-gridiron.png');
+      await page.screenshot({ path: gridironShot });
+      check(fs.existsSync(gridironShot), `gridiron screenshot written to ${gridironShot}`);
+    }
+
     // --------------------------------------------------------- losing metres
     await page.click('#settings-toggle');
     await page.click('#calibrate-clear');
     await wait(300);
     const clearedNote = await page.$eval('#readout-fit', (node) => node.textContent);
     check(
-      /no pitch model/i.test(clearedNote),
+      /no (pitch|field) model/i.test(clearedNote),
       `clearing the marks takes the metres away ("${clearedNote.trim()}")`,
     );
     await page.click('#settings-close');

@@ -17,6 +17,17 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
   seven-scene episode on passive Wi-Fi sensing, with per-scene citations and a
   checker that warns when a caption cannot be read before its cut or a claim
   names no source. `npm run test:carrier`, `npm run qa:carrier`.
+- Touchline now measures American football as well as football. The field
+  model — markings, calibration landmarks, paint, ball colour and size, and the
+  running thresholds — moved into `public/touchline/js/sports.js`, so the
+  measurement core stays sport-agnostic. A gridiron's painted yard numbers are
+  the same size and shape as a standing player and are recognised as scenery by
+  the fact that paint lies flat and is foreshortened while a player is not;
+  colour cannot separate them, because a white jersey on a white number measures
+  0.97 paint against the number's 1.00. Possession is declined for the sport
+  rather than invented, and separation from the nearest opponent is reported
+  instead. Players standing near the far touchline are no longer decapitated by
+  the field mask, which affected both sports.
 - Added Touchline at `public/touchline/`: a match-analysis app that turns
   footage of a pitch into distances, speeds, possession and passing-lane
   geometry in metres, measured on-device from a homography fitted to marked

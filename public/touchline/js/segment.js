@@ -140,13 +140,53 @@ export function turfMask(frame, { turf, imageToPitch, dimensions, marginM = 1 })
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const idx = y * width + x;
-      const p = apply(imageToPitch, { x, y });
-      if (!onPitch(p, dimensions, marginM)) continue;
       const i = idx * 4;
-      if (greenness(data[i], data[i + 1], data[i + 2]) < turf.floor) mask[idx] = 1;
+      // Colour first, geometry second. Most of a frame is grass, and grass is
+      // settled by three additions and a divide; asking where each pixel lands
+      // on the field first spends a matrix multiply on every blade of it. The
+      // order does not change a single bit of the result, only the bill.
+      if (greenness(data[i], data[i + 1], data[i + 2]) >= turf.floor) continue;
+      const p = apply(imageToPitch, { x, y });
+      if (onPitch(p, dimensions, marginM)) {
+        mask[idx] = 1;
+      } else if (standingOnField(imageToPitch, dimensions, marginM, x, y)) {
+        mask[idx] = 1;
+      }
     }
   }
   return mask;
+}
+
+/**
+ * Whether a pixel could belong to someone standing on the field, even though
+ * the ground point beneath it is not.
+ *
+ * A player at the far touchline is a problem the ground plane creates and
+ * cannot solve. Their feet map onto the field; their head maps to a point
+ * several metres *beyond* the far touchline, because the mapping only knows
+ * about the ground and their head is nowhere near it. Masking strictly by where
+ * a pixel lands therefore decapitates every player at the far edge, and a
+ * headless player is too short to pass the size gate and is dropped — silently,
+ * and worst exactly where a winger hugging the touchline or a receiver on the
+ * far number stands.
+ *
+ * So a pixel that lands off the field gets a second question: is the ground
+ * directly below it, a player's height down the picture, on the field? If it
+ * is, the pixel may be part of that player and is considered. Their feet still
+ * have to be on the field for them to be reported — that gate is unchanged, and
+ * it is what keeps the crowd out.
+ *
+ * @param {number[]} imageToPitch Row-major 3x3 homography.
+ * @param {{lengthM: number, widthM: number}} dimensions Field size.
+ * @param {number} marginM Slack outside the lines, metres.
+ * @param {number} x Pixel column.
+ * @param {number} y Pixel row.
+ * @returns {boolean} True when a player standing on the field could reach here.
+ */
+export function standingOnField(imageToPitch, dimensions, marginM, x, y) {
+  const height = expectedPixelHeight(imageToPitch, x, y);
+  if (!height || height > 400) return false;
+  return onPitch(apply(imageToPitch, { x, y: y + height }), dimensions, marginM);
 }
 
 /** Width of a painted line, metres. The Laws allow up to 0.12 m. */
@@ -198,9 +238,12 @@ export function paintWhite(r, g, b) {
  * @param {object} options Suppression options.
  * @param {{floor: number}} options.turf Turf model.
  * @param {number[]} options.imageToPitch Row-major 3x3 homography.
+ * @param {number} [options.lineWidthM=LINE_WIDTH_M] Width of a boundary line;
+ *   a gridiron's are four inches where the Laws of the Game allow twelve
+ *   centimetres, and the probe distance follows from it.
  * @returns {Uint8Array} The same mask, with paint removed.
  */
-export function suppressLines(frame, mask, { turf, imageToPitch }) {
+export function suppressLines(frame, mask, { turf, imageToPitch, lineWidthM = LINE_WIDTH_M }) {
   const { data, width, height } = frame;
   // "Not paint" rather than "is grass". The two differ in exactly the place it
   // matters: the far touchline has grass on one side and a stand full of
@@ -230,7 +273,7 @@ export function suppressLines(frame, mask, { turf, imageToPitch }) {
       // most likely to have a player standing on it. It stays well inside a
       // player's half-width — paint is 12 cm, a player is half a metre — so
       // widening it costs arithmetic and nothing else.
-      const reach = Math.min(20, Math.max(2, Math.round(LINE_WIDTH_M / minM) + 2));
+      const reach = Math.min(20, Math.max(2, Math.round(lineWidthM / minM) + 2));
       // Probed in four directions, not two. A line running diagonally across
       // the picture is six pixels wide but nine pixels of horizontal crossing
       // and nine of vertical, so an axis-only test declares it thick and leaves
@@ -545,6 +588,105 @@ export function sampleKit(frame, blob) {
   return { r: r / total, g: g / total, b: b / total, luma: (r + g + b) / (3 * n), samples: n };
 }
 
+/**
+ * How much of a region is field paint rather than a person.
+ *
+ * A gridiron carries six-foot numbers every ten yards. A painted "4" is about
+ * 1.8 m tall and 1.2 m wide, fills a third of its bounding box, and stands
+ * upright on the grass — which is to say it passes every size, density and
+ * aspect test a standing player passes, because it is the same size and shape
+ * as one. Nothing about its geometry gives it away.
+ *
+ * What gives it away is that it is made of paint. A player is a helmet, a face,
+ * a jersey, pants, socks and a shadow, in several colours; a number is one
+ * colour, and that colour is the same white as the lines. So this measures the
+ * share of a region's pixels that are paint, and the caller uses it together
+ * with a model of where the paint is — either alone would be wrong. Paint
+ * fraction alone would delete a team in white; region alone would delete any
+ * player standing on a number, which on a gridiron is most of them.
+ *
+ * @param {{data: Uint8ClampedArray, width: number, height: number}} frame RGBA.
+ * @param {Blob} blob Region to measure.
+ * @returns {number} Fraction of sampled pixels that are paint, 0 to 1.
+ */
+export function paintFraction(frame, blob) {
+  const { data, width, height } = frame;
+  let paint = 0;
+  let seen = 0;
+  for (let y = blob.minY; y <= blob.maxY; y += 1) {
+    if (y < 0 || y >= height) continue;
+    for (let x = blob.minX; x <= blob.maxX; x += 1) {
+      if (x < 0 || x >= width) continue;
+      const i = (y * width + x) * 4;
+      // Only pixels that are part of the region count; the grass showing
+      // between the strokes of a number is not evidence either way.
+      if (greenness(data[i], data[i + 1], data[i + 2]) > 0.16) continue;
+      seen += 1;
+      if (paintWhite(data[i], data[i + 1], data[i + 2])) paint += 1;
+    }
+  }
+  return seen ? paint / seen : 0;
+}
+
+/**
+ * Share of a region's pixels that must be paint before it can be called
+ * scenery.
+ *
+ * A painted number is essentially all paint. A player in a coloured jersey
+ * standing on one drags the figure down sharply — helmet, skin, pants and the
+ * shadow under them all fall outside the paint test.
+ *
+ * On its own this is not enough, and measuring showed why: a player in a
+ * *white* jersey standing on a white number measures 0.97, all but
+ * indistinguishable from the 1.00 of the number alone. Colour cannot separate
+ * white from white. That is what {@link PAINT_SCENERY_HEIGHT} is for.
+ */
+export const PAINT_SCENERY_SHARE = 0.82;
+
+/**
+ * How tall a region inside painted ground must be before it might be a person.
+ *
+ * This is the rule that actually works, and it is about geometry rather than
+ * colour. Paint lies flat. A camera looking across a field sees a six-foot
+ * number heavily foreshortened — measured here at 0.80 to 0.88 of the height a
+ * standing player would have at the same spot — while the player standing on
+ * that same number is not foreshortened at all and takes the region to 1.18.
+ * The two separate cleanly whatever colour the jersey is, which is exactly the
+ * case colour could not handle.
+ *
+ * The threshold sits between the two, nearer the paint, because the cost of the
+ * two errors is not symmetric: a missed player loses a row, an invented one
+ * quietly changes every team figure on the screen.
+ *
+ * What this does not survive is a player crouched in a three-point stance, in a
+ * white jersey, on a number, seen from a steep angle — short enough to look
+ * like paint and white enough to be made of it. That is in the app's list of
+ * what it cannot do rather than pretended away.
+ */
+export const PAINT_SCENERY_HEIGHT = 1.05;
+
+/**
+ * Whether a field position falls inside a region known to be painted.
+ *
+ * @param {{x: number, y: number}} point Field position, metres.
+ * @param {{minX: number, maxX: number, minY: number, maxY: number}[]} regions
+ *   Painted regions from the field model.
+ * @returns {boolean} True when the point is inside one.
+ */
+export function inPaintedRegion(point, regions) {
+  for (const region of regions) {
+    if (
+      point.x >= region.minX &&
+      point.x <= region.maxX &&
+      point.y >= region.minY &&
+      point.y <= region.maxY
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Bounds on how tall a blob may be, as a fraction of an expected player. */
 export const HEIGHT_BAND = Object.freeze({ min: 0.45, max: 2.4 });
 
@@ -562,7 +704,10 @@ export const HEIGHT_BAND = Object.freeze({ min: 0.45, max: 2.4 });
  *   widthM: number, merged: boolean, kit?: object})[]} Candidates with their
  *   pitch position.
  */
-export function playerCandidates(blobs, { imageToPitch, dimensions, marginM = 1, frame = null }) {
+export function playerCandidates(
+  blobs,
+  { imageToPitch, dimensions, marginM = 1, frame = null, paintedRegions = [] },
+) {
   const out = [];
   for (const blob of blobs) {
     const expected = expectedPixelHeight(imageToPitch, blob.footU, blob.footV);
@@ -579,12 +724,36 @@ export function playerCandidates(blobs, { imageToPitch, dimensions, marginM = 1,
     const pixelWidth = blob.maxX - blob.minX + 1;
     const widthM = (pixelWidth / expected) * 1.8;
     const heightM = ratio * 1.8;
+    const onPaint = paintedRegions.length > 0 && inPaintedRegion(foot, paintedRegions);
+
     // A person is taller than they are wide, and so is any huddle of people
     // standing shoulder to shoulder. A stretch of far touchline paint is not:
     // it is two metres of white, thirty centimetres tall. This is the gate that
     // keeps the lines the ridge filter could not remove — the ones with a stand
     // behind them rather than grass — out of the team sheet.
-    if (heightM < widthM * 0.9) continue;
+    //
+    // It is suspended on ground the field model says is painted, because there
+    // it does the opposite of its job. A player standing on a gridiron's yard
+    // number is one region with the number attached: two metres tall and nearly
+    // three wide, so the aspect test throws away the player along with the
+    // paint. On that ground the height test below is the better discriminator
+    // and takes over — paint lies flat and measures four-fifths of a player,
+    // while a player standing on it measures more than one.
+    if (!onPaint && heightM < widthM * 0.9) continue;
+
+    // Scenery needs all three: it sits where the field model says there is
+    // paint, it is made of paint, and it is too flat to have a person standing
+    // in it. Any one of them alone deletes real players — the region alone
+    // deletes everyone standing on a number, the paint share alone deletes a
+    // team in white, and the height alone deletes anyone who crouches.
+    if (
+      onPaint &&
+      frame &&
+      ratio < PAINT_SCENERY_HEIGHT &&
+      paintFraction(frame, blob) >= PAINT_SCENERY_SHARE
+    ) {
+      continue;
+    }
     out.push({
       ...blob,
       pitch: { x: foot.x, y: foot.y },
@@ -615,6 +784,10 @@ export function playerCandidates(blobs, { imageToPitch, dimensions, marginM = 1,
  *   once the paint is removed by shape there is nothing left for an erosion to
  *   clean up, and an erosion large enough to matter deletes the ball, which is
  *   three pixels across. Grainy footage can turn it back on.
+ * @param {{minX: number, maxX: number, minY: number, maxY: number}[]}
+ *   [options.paintedRegions] Regions the field model says carry large paint,
+ *   such as a gridiron's yard-line numbers.
+ * @param {number} [options.lineWidthM=LINE_WIDTH_M] Width of a boundary line.
  * @param {number} [options.minArea=4] Smallest region kept, pixels. Tuned for
  *   the ball, not for players: a ball is three pixels across in this footage,
  *   and a threshold set for a person deletes it before the ball detector is
@@ -623,14 +796,27 @@ export function playerCandidates(blobs, { imageToPitch, dimensions, marginM = 1,
  *   the opened mask (the ball detector reuses it), and the raw regions.
  */
 export function detect(frame, options) {
-  const { turf, imageToPitch, dimensions, openRadius = 0, minArea = 4 } = options;
+  const {
+    turf,
+    imageToPitch,
+    dimensions,
+    openRadius = 0,
+    minArea = 4,
+    paintedRegions = [],
+    lineWidthM = LINE_WIDTH_M,
+  } = options;
   const raw = turfMask(frame, { turf, imageToPitch, dimensions });
-  suppressLines(frame, raw, { turf, imageToPitch });
+  suppressLines(frame, raw, { turf, imageToPitch, lineWidthM });
   const mask = open(raw, frame.width, frame.height, openRadius);
   const blobs = components(mask, frame.width, frame.height, minArea);
   const stitched = stitch(blobs, imageToPitch);
   return {
-    candidates: playerCandidates(stitched, { imageToPitch, dimensions, frame }),
+    candidates: playerCandidates(stitched, {
+      imageToPitch,
+      dimensions,
+      frame,
+      paintedRegions,
+    }),
     mask,
     blobs,
   };

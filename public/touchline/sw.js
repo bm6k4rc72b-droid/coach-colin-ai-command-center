@@ -30,6 +30,7 @@ const SHELL = [
   'js/overlay.js',
   'js/report.js',
   'js/demo.js',
+  'js/sports.js',
   'js/llm.js',
 ];
 
