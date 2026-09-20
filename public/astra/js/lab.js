@@ -21,10 +21,12 @@
  */
 
 import {
-  buildGraphGeometry, buildHelix, buildMolecule, buildMotes, buildVault, buildVials, hexToRgb,
+  buildArRing, buildGraphGeometry, buildHelix, buildMolecule, buildMotes, buildVault, buildVials,
+  hexToRgb,
 } from './geometry.js';
 import {
-  approach, clamp, identity, lookAt, multiply, perspective, rotationY, smoothstep, translation,
+  approach, clamp, identity, lookAt, multiply, perspective, rotationX, rotationY, scaling,
+  smoothstep, translation,
 } from './mathkit.js';
 
 const POINT_VERT = `#version 300 es
@@ -248,6 +250,17 @@ export class Lab {
     this.framingGoal = 0;
     this.drag = null;
 
+    // Augmented-reality mode: the vault is dropped, the compound floats alone
+    // over the live camera feed, and its rotation is driven by the device
+    // rather than by a waypoint. `spin` is the continuous auto-rotation;
+    // `yaw`/`pitch` are what the hand or the gyroscope adds on top.
+    this.ar = { on: false, yaw: 0, pitch: 0, spin: 0, autoSpin: true, distance: 7.4, scale: 1, offsetX: 0, offsetY: 0 };
+    // The last frame's matrices, kept so DOM callouts can be anchored to points
+    // in the scene without the AR layer needing its own copy of the camera.
+    this.lastMVP = identity();
+    this.lastViewProjection = identity();
+    this.afterFrame = null;
+
     const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, powerPreference: 'high-performance' });
     if (!gl) return;
     this.gl = gl;
@@ -270,6 +283,7 @@ export class Lab {
     const vials = buildVials(4);
     const motes = buildMotes(760);
     const molecule = buildMolecule({ seed: 11 });
+    const arRing = buildArRing();
 
     this.geo = {
       vault: { buffer: buffer(gl, vault.positions), intensity: buffer(gl, vault.intensities), count: vault.count },
@@ -282,6 +296,7 @@ export class Lab {
         atoms: { buffer: buffer(gl, molecule.atoms.positions), seeds: buffer(gl, molecule.atoms.seeds), count: molecule.atoms.count },
         bonds: { buffer: buffer(gl, molecule.bonds.positions), intensity: buffer(gl, molecule.bonds.intensities), count: molecule.bonds.count },
       },
+      arRing: { buffer: buffer(gl, arRing.positions), intensity: buffer(gl, arRing.intensities), count: arRing.count },
     };
     this.graphGeo = null;
     this.focus = [0, 0, 0];
@@ -332,6 +347,115 @@ export class Lab {
     this.goal.target = [...point.target];
     this.userDriven = false;
     this.setScene(point.scene);
+  }
+
+  /**
+   * Enter or leave augmented-reality mode.
+   *
+   * @param {boolean} on Whether the compound floats over the camera feed.
+   */
+  setAR(on) {
+    this.ar.on = Boolean(on);
+    if (this.ar.on) this.scene = 'molecule';
+  }
+
+  /**
+   * Drive the AR rotation from a hand or a gyroscope.
+   *
+   * @param {number} yaw Radians around the vertical axis.
+   * @param {number} pitch Radians around the horizontal axis, clamped.
+   */
+  setARSpin(yaw, pitch) {
+    this.ar.yaw = yaw;
+    this.ar.pitch = clamp(pitch, -1.1, 1.1);
+  }
+
+  /**
+   * How far the AR camera sits from the compound.
+   *
+   * @param {number} distance World units.
+   */
+  setARDistance(distance) {
+    this.ar.distance = clamp(distance, 3.4, 16);
+  }
+
+  /**
+   * Offset the AR camera so the compound sits somewhere other than dead centre.
+   *
+   * The console panel covers the right of a laptop screen and the bottom of a
+   * phone, so "centre of the viewport" is the wrong place for the object. The
+   * AR scene measures the free area and moves the camera instead of the model,
+   * which keeps the plinth level and the perspective honest.
+   *
+   * @param {number} x World units; positive moves the compound left in frame.
+   * @param {number} y World units; positive moves it down in frame.
+   */
+  setARFraming(x, y) {
+    this.ar.offsetX = x;
+    this.ar.offsetY = y;
+  }
+
+  /**
+   * How many world units one CSS pixel covers at the compound's distance.
+   *
+   * Lets the AR layer convert a measurement it made in the DOM into a camera
+   * offset without duplicating the projection maths.
+   *
+   * @returns {number} World units per pixel.
+   */
+  worldPerPixel() {
+    const width = this.canvas.clientWidth || 1;
+    const height = this.canvas.clientHeight || 1;
+    const aspect = width / Math.max(1, height);
+    return (2 * this.ar.distance * Math.tan(0.82 / 2) * aspect) / width;
+  }
+
+  /**
+   * Project a point in the compound's own space to CSS pixels on the canvas.
+   *
+   * This is what lets data panels hang off the molecule: they are DOM nodes
+   * positioned from the same matrix the renderer just drew with, so they track
+   * the rotation exactly rather than approximating it.
+   *
+   * @param {number[]} point `[x, y, z]` in model space.
+   * @param {boolean} [world] Project in world space instead of model space.
+   * @returns {{ x: number, y: number, depth: number, visible: boolean }} Screen position.
+   */
+  project(point, world = false) {
+    const m = world ? this.lastViewProjection : this.lastMVP;
+    const x = m[0] * point[0] + m[4] * point[1] + m[8] * point[2] + m[12];
+    const y = m[1] * point[0] + m[5] * point[1] + m[9] * point[2] + m[13];
+    const z = m[2] * point[0] + m[6] * point[1] + m[10] * point[2] + m[14];
+    const w = m[3] * point[0] + m[7] * point[1] + m[11] * point[2] + m[15];
+    if (!w) return { x: 0, y: 0, depth: 0, visible: false };
+    const width = this.canvas.clientWidth || 1;
+    const height = this.canvas.clientHeight || 1;
+    return {
+      x: ((x / w) * 0.5 + 0.5) * width,
+      y: (0.5 - (y / w) * 0.5) * height,
+      // Distance in front of the camera, in world units. Clip-space z would be
+      // the obvious choice and is the wrong one: with a far plane at 120 it
+      // saturates near 1 for everything in the scene, so every panel would read
+      // as maximally distant. `w` is linear and comparable to the AR camera's
+      // own distance, which is exactly what a near/far fade needs.
+      depth: w,
+      clipDepth: z / w,
+      visible: w > 0,
+    };
+  }
+
+  /**
+   * Run a callback immediately after the next frame is drawn.
+   *
+   * A WebGL canvas is only readable in the same turn it was rendered unless the
+   * drawing buffer is preserved, and preserving it costs performance on every
+   * frame for the sake of an occasional screenshot. This hook is the cheaper
+   * trade: the compositor grabs its pixels while they are still there.
+   *
+   * @param {() => void} callback Called once, after the draw.
+   */
+  onAfterFrame(callback) {
+    this.afterFrame = callback;
   }
 
   /**
@@ -558,6 +682,13 @@ export class Lab {
     this.#resize();
     const aspect = this.canvas.width / Math.max(1, this.canvas.height);
 
+    if (this.ar.on) {
+      this.#frameAR(dt, aspect);
+      this.afterFrame?.();
+      this.afterFrame = null;
+      return;
+    }
+
     // Tilt parallaxes the eye position rather than rotating the camera, which
     // reads as looking around a real volume instead of as a spinning scene.
     const tiltX = this.tilt.x * (this.reducedMotion ? 0.2 : 1);
@@ -626,6 +757,60 @@ export class Lab {
       this.#drawPoints(this.geo.vialFill, viewProjection, { color: this.accent, alpha: 0.42, size: 190, drift: 0.5 });
       this.#drawPoints(this.geo.vialFill, viewProjection, { color: this.accent, alpha: 0.7, size: 62, drift: 0.5 });
     }
+
+    this.lastViewProjection = viewProjection;
+    this.lastMVP = viewProjection;
+    this.afterFrame?.();
+    this.afterFrame = null;
+  }
+
+  /**
+   * Draw the augmented-reality scene: the compound alone, over the camera.
+   *
+   * Everything the vault contributes — walls, floor, dais, vials, dust — is
+   * dropped, because in AR the room is the room you are actually standing in.
+   * What is left is the molecule, a ring to give it a footprint, and the
+   * matrices the data panels hang from.
+   *
+   * @param {number} dt Seconds since the last frame.
+   * @param {number} aspect Viewport aspect ratio.
+   */
+  #frameAR(dt, aspect) {
+    const gl = this.gl;
+
+    if (this.ar.autoSpin && !this.drag && !this.reducedMotion) this.ar.spin += dt * 0.42;
+
+    const projection = perspective(0.82, aspect, 0.1, 120);
+    const view = lookAt(
+      [this.ar.offsetX, this.ar.offsetY, this.ar.distance],
+      [this.ar.offsetX, this.ar.offsetY, 0],
+      [0, 1, 0],
+    );
+    const viewProjection = multiply(projection, view);
+
+    // Pitch first, then yaw, so tilting the device nods the compound rather
+    // than rolling it once it has spun round.
+    const model = multiply(
+      rotationX(this.ar.pitch),
+      multiply(rotationY(this.ar.spin + this.ar.yaw), scaling(this.ar.scale)),
+    );
+    const mvp = multiply(viewProjection, model);
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.disable(gl.DEPTH_TEST);
+
+    this.#drawLines(this.geo.molecule.bonds, mvp, { color: this.accent, alpha: 1.1, sweep: 0.25 });
+    this.#drawPoints(this.geo.molecule.atoms, mvp, { color: this.accent, alpha: 0.4, size: 420, drift: 0.3 });
+    this.#drawPoints(this.geo.molecule.atoms, mvp, { color: [1, 1, 1], alpha: 0.85, size: 130, drift: 0.3 });
+    // The orbit ring sits in world space so it reads as a fixed plinth the
+    // compound turns inside, which is what sells the object as *placed*.
+    this.#drawLines(this.geo.arRing, viewProjection, { color: [0.85, 0.71, 0.34], alpha: 0.5, sweep: 0.8 });
+
+    this.lastViewProjection = viewProjection;
+    this.lastMVP = mvp;
   }
 
   /** Start the render loop. */

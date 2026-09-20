@@ -11,8 +11,8 @@ step, no framework, no dependencies, no backend, no account. Locally it is
 it is `/astra/`.
 
 ```sh
-npm run test:astra   # 89 unit tests, no browser needed
-npm run qa:astra     # 66 end-to-end checks driving the real platform in Chromium
+npm run test:astra   # 111 unit tests, no browser needed
+npm run qa:astra     # 81 end-to-end checks driving the real platform in Chromium
 npm run qa:astra -- --out shot.png   # …and a screenshot
 ```
 
@@ -37,7 +37,7 @@ Three layers, as the brief framed them:
 | Layer | Decks | What it does |
 | --- | --- | --- |
 | **Peptide Intelligence Engine** | Engine, Map, Record | Ask anything; get an eight-section dossier with graded claims and openable sources |
-| **Research Laboratory** | Decoder, Lab, Verify | Decode a paper, compare compounds, convene a review panel, simulate a study design, check a claim |
+| **Research Laboratory** | Decoder, AR, Lab, Verify | Decode a paper, stand a compound in your room, compare compounds, convene a review panel, simulate a study design, check a claim |
 | **Marketing Command Centre** | Studio, Command | Turn one paper into thirty governed assets; propose a campaign a human approves |
 
 ---
@@ -182,6 +182,40 @@ structural cues — design vocabulary, sample-size patterns, species words,
 statistical reporting, hedging density — and is deliberately conservative: when
 it cannot tell, it says so. "Randomised" applied to rats does not promote the
 study.
+
+**AR** — the augmented-reality bench. The compound lifts out of the vault and
+stands in the room you are actually in: the device camera becomes the
+background, the molecule turns on a fixed plinth, and its evidence orbits it as
+panels anchored in three dimensions — each claim with its tier, each study with
+its design, population, sample size, finding, limitation and a live link to the
+literature. Tap a panel to read it in full; **Capture card** composites the
+whole view into a PNG with the compound, its evidence level and the disclosure
+baked into a footer band.
+
+Four decisions make it work on a laptop, an iPhone and an Android alike:
+
+- **The camera is optional.** Without one, or when access is declined, the scene
+  falls back to a studio backdrop and everything else is identical. Nothing in
+  the bench is gated behind a permission.
+- **Rotation comes from whatever the device has** — the gyroscope where it
+  exists and is permitted, a drag everywhere else, and a slow auto-rotate when
+  neither is in use.
+- **Panels are DOM, anchored by projection.** They are positioned each frame
+  from the renderer's own matrix, so they track the rotation exactly while
+  staying real text: selectable, readable by a screen reader, with working
+  links. The fade uses eye-space distance rather than clip-space `z`, which with
+  a far plane at 120 saturates near 1 for everything in the scene and would read
+  every panel as maximally distant.
+- **The stage is measured, not assumed.** The console covers the right of a
+  laptop and the bottom of a phone, so the bench measures the free area, centres
+  the compound in it by moving the camera, confines panels to it, and gives it a
+  budget — six panels on a laptop, two on a phone. Fading the back half is not
+  enough on a small screen: four panels in a 360-pixel stage cover the compound
+  entirely, which defeats the point of putting it in your room. The rest wait
+  their turn as the compound rotates.
+
+No frame is uploaded or stored. The camera is read into a canvas for the capture
+button and discarded.
 
 **Lab** — three tabs. *Comparison* puts two compounds across five axes and names
 which has the better **evidence** (never which works better). *Debate Room*
@@ -335,8 +369,8 @@ own last-good store.
 ## Testing
 
 ```sh
-npm run test:astra   # 89 unit tests over the pure logic
-npm run qa:astra     # 66 end-to-end checks in headless Chromium
+npm run test:astra   # 111 unit tests over the pure logic
+npm run qa:astra     # 81 end-to-end checks in headless Chromium
 ```
 
 The unit tests cover the corpus's shape, the evidence arithmetic and its
@@ -350,14 +384,17 @@ and the progression system. The interesting ones are the invariants:
 - The studio never emits copy its own guardian would block.
 - Every dossier section is populated for every compound.
 - Every claim's cited studies actually exist on that compound.
+- Every AR panel's evidence reading agrees with the dossier's.
+- No AR panel escapes the stage, and none is drawn from behind the camera.
 
 The end-to-end suite drives the real platform: the entrance reveals and
 scroll-links to the lab camera, WebGL renders, all nine decks open, the engine
 answers and builds a dossier, "Show me the science" expands into studies with
 working literature links, the decoder grades an animal study as animal evidence,
 the guardian blocks unpublishable copy, the studio generates thirty governed
-assets, the command centre proposes a campaign behind an approval gate, and the
-whole thing keeps answering with the network cut.
+assets, the command centre proposes a campaign behind an approval gate, the AR
+bench anchors its panels in three dimensions and carries them round as the
+compound turns, and the whole thing keeps answering with the network cut.
 
 Set `PUPPETEER_EXECUTABLE_PATH` to use a browser Puppeteer did not download.
 
@@ -383,6 +420,7 @@ public/astra/
     evidence.js         tiers, bands, relevance, the confidence arithmetic
     engine.js           retrieval, the eight-section dossier, the stack rule
     astra.js            the concierge, local and model paths
+    ar.js               the augmented-reality bench
     decoder.js          the research paper decoder
     claims.js           myth detector, fact checker, compliance guardian
     compare.js          the comparison lab

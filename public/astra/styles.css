@@ -1532,6 +1532,181 @@ body.entered .intro {
 .log-label { color: var(--text-dim); }
 .log-when { color: var(--text-faint); font-size: 0.72rem; }
 
+/* --------------------------------------------------------------- AR bench */
+
+/* The live camera, full-bleed behind the renderer. It only becomes visible
+   once a stream is attached, so a declined permission leaves the studio
+   backdrop rather than a black hole. */
+#ar-video {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  background: #000;
+}
+#ar-video.live { opacity: 1; }
+#ar-video.mirrored { transform: scaleX(-1); }
+
+/* With the camera live the decorative layers would sit on top of the room,
+   so they step back. The vignette stays: it keeps the panels legible. */
+body.ar-mode #grain { opacity: 0.12; }
+body.ar-mode #scanlines { display: none; }
+body.ar-mode::before { opacity: 0.35; }
+
+#ar-surface {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  touch-action: none;
+  cursor: grab;
+}
+#ar-surface:active { cursor: grabbing; }
+body.ar-mode #ar-surface { display: block; }
+
+#ar-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  pointer-events: none;
+}
+body.ar-mode #ar-layer { display: block; }
+
+/* Panels are positioned by transform from the renderer's own matrix, so they
+   must sit at the origin and never participate in layout. */
+.ar-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(232px, 44vw);
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 46%, transparent);
+  border-left: 2px solid var(--accent);
+  border-radius: 12px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 12%, transparent), rgba(4, 9, 18, 0.9));
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.6), 0 0 26px color-mix(in srgb, var(--accent) 18%, transparent);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  will-change: transform, opacity;
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+.ar-panel:hover,
+.ar-panel:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.66), 0 0 40px color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.ar-panel-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.ar-panel h4 {
+  margin: 0 0 5px;
+  font-size: 0.83rem;
+  line-height: 1.32;
+  color: #f2f7ff;
+}
+.ar-panel p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.42;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ar-panel-value {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* The deck's own controls */
+.ar-controls, .ar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.ar-controls .switch { margin: 0; }
+.ar-zoom { margin-bottom: 14px; }
+
+.ar-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid color-mix(in srgb, var(--band) 32%, transparent);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--band) 10%, transparent), transparent 70%);
+}
+.ar-meter .meter-value { font-size: 1.3rem; }
+.ar-meter .quiet { flex-basis: 100%; }
+
+.ar-detail {
+  margin-bottom: 14px;
+}
+.ar-detail:empty { display: none; }
+.ar-detail-head {
+  padding-bottom: 8px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 36%, transparent);
+}
+.ar-detail-head h4 { margin: 3px 0 0; color: #f2f7ff; }
+.ar-detail p { font-size: 0.85rem; color: var(--text-dim); }
+.ar-detail .source-link { display: inline-block; margin: 4px 12px 10px 0; }
+
+.ar-picker { margin-bottom: 14px; }
+.ar-picker h4 {
+  padding-bottom: 6px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* On a phone the panel covers most of the screen, so in AR it collapses to a
+   sheet and the compound gets the room. */
+@media (max-width: 820px) {
+  body.ar-mode #panel { height: 46svh; }
+  .ar-panel { width: min(178px, 48vw); padding: 8px 10px; border-radius: 10px; }
+  .ar-panel h4 {
+    font-size: 0.74rem;
+    /* A four-line title on a phone is a wall, and the full text is one tap
+       away in the reading sheet regardless. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ar-panel p { -webkit-line-clamp: 2; font-size: 0.68rem; }
+  .ar-panel-value { font-size: 1.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-panel { transition: none !important; }
+}
+
 /* ------------------------------------------------------------ lens, toast */
 
 .lens-panel {

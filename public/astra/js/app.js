@@ -20,9 +20,10 @@ import { resolveNamed } from './engine.js';
 import { findAny } from './data/peptides.js';
 import { load as loadProgress, record as recordProgress, reset as resetProgress, save as saveProgress, summary as progressSummary } from './progress.js';
 import {
-  renderCommand, renderCompare, renderDecoder, renderEngine,
+  renderAR, renderCommand, renderCompare, renderDecoder, renderEngine,
   renderGraph, renderProfile, renderSettings, renderStudio, renderVerify,
 } from './decks.js';
+import { ARScene } from './ar.js';
 import { el, fill } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -32,6 +33,7 @@ const DECK_TITLES = {
   engine: 'Intelligence Engine',
   graph: 'Knowledge Graph',
   decoder: 'Paper Decoder',
+  ar: 'AR Bench',
   compare: 'The Lab',
   verify: 'Verification',
   studio: 'Content Studio',
@@ -45,6 +47,7 @@ const RENDERERS = {
   engine: renderEngine,
   graph: renderGraph,
   decoder: renderDecoder,
+  ar: renderAR,
   compare: renderCompare,
   verify: renderVerify,
   studio: renderStudio,
@@ -55,7 +58,7 @@ const RENDERERS = {
 
 /** Which lab waypoint each deck flies to. */
 const DECK_WAYPOINTS = {
-  engine: 'engine', graph: 'graph', decoder: 'decoder', compare: 'compare',
+  engine: 'engine', graph: 'graph', decoder: 'decoder', ar: 'compound', compare: 'compare',
   verify: 'verify', studio: 'studio', command: 'command', profile: 'command', settings: 'engine',
 };
 
@@ -65,6 +68,17 @@ const tilt = new Tilt();
 const lens = new Lens($('lens-video'));
 const telemetry = new Telemetry();
 const radar = new Radar();
+const ar = new ARScene({
+  video: $('ar-video'),
+  layer: $('ar-layer'),
+  lab,
+  // Its own camera handle: the scanner lens draws into a thumbnail, the AR
+  // bench draws full-bleed, and two features sharing one video element would
+  // mean whichever started last stole the other's picture.
+  lens: new Lens($('ar-video')),
+  tilt,
+  onFocus: (panel) => ctx.arFocus?.(panel),
+});
 
 const state = {
   deck: 'engine',
@@ -169,6 +183,7 @@ const ctx = {
   deckState: {},
   telemetry,
   radar,
+  ar,
   progress,
   lab,
   score,
@@ -248,6 +263,16 @@ function go(deck, payload = {}) {
   }
   for (const button of document.querySelectorAll('.deck-btn')) {
     button.classList.toggle('active', button.dataset.deck === deck);
+  }
+  // The AR scene owns the camera and the renderer's mode, so entering and
+  // leaving it is driven here rather than by the deck's own render.
+  if (deck === 'ar') {
+    document.body.classList.add('ar-mode');
+    ar.setCompound(ctx.deckState.ar?.compound || 'bpc-157');
+    ar.start();
+  } else if (document.body.classList.contains('ar-mode')) {
+    document.body.classList.remove('ar-mode');
+    ar.stop();
   }
   lab.goTo(DECK_WAYPOINTS[deck] || 'engine');
   // The console's panel sits on the right on a wide screen, so the subject is
@@ -428,6 +453,7 @@ function boot() {
     lab.setFraming(window.innerWidth > 900 ? -5.5 : 0);
     score.setMood('intro');
   });
+  ar.bindDrag($('ar-surface'));
   $('panel-toggle').addEventListener('click', () => {
     document.body.classList.toggle('panel-collapsed');
   });
@@ -460,4 +486,4 @@ function boot() {
 boot();
 
 /** Exposed for the end-to-end harness, which drives the real app. */
-globalThis.__astra = { ctx, go, state, progress, lab, score, telemetry };
+globalThis.__astra = { ctx, go, state, progress, lab, score, telemetry, ar };
