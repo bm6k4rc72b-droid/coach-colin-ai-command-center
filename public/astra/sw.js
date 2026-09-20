@@ -22,6 +22,7 @@ const SHELL = [
   './icon.svg',
   './icon-maskable.svg',
   './js/app.js',
+  './js/ar.js',
   './js/astra.js',
   './js/audio.js',
   './js/claims.js',

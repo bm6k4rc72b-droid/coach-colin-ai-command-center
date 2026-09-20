@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Black Optic 6 — ranch perimeter console</title>
+    <meta
+      name="description"
+      content="A perimeter security console that states where every number came from: live optics, acoustic watch, geofence, orbital imagery and an honest capability ledger."
+    />
+    <meta name="theme-color" content="#04060a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Black Optic 6" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="console">
+      <header class="bar">
+        <div class="wordmark"><b>Black Optic</b><span>6</span></div>
+        <div class="armed" id="armed" data-state="standby"><span class="pip"></span><span id="armed-label">Standby</span></div>
+        <div class="bar-spacer"></div>
+        <div class="bar-slot optional">Site <b id="site">not set</b></div>
+        <div class="bar-slot optional">Links <b id="link-count">0</b></div>
+        <button class="ghost bar-music" id="music-toggle" type="button" title="Mariachi, synthesised on the spot">♪ Mariachi</button>
+        <div class="bar-slot"><b id="clock">--:--:--</b></div>
+      </header>
+
+      <nav class="rail" id="rail" aria-label="Console sections"></nav>
+
+      <main class="stage">
+        <!-- ------------------------------------------------------- optics -->
+        <section class="deck" id="deck-optics" data-open="true">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Optics</h2>
+                <span class="spacer"></span>
+                <span class="prov" id="optics-prov" data-tone="muted">Offline</span>
+              </div>
+              <div class="viewport" id="viewport">
+                <video id="video" playsinline muted autoplay></video>
+                <canvas id="frame"></canvas>
+                <canvas id="hud"></canvas>
+                <div class="sweep" id="sweep" hidden></div>
+                <div class="viewport-empty" id="viewport-empty">
+                  <p>
+                    Point a camera at the ground you want watched. Everything runs on this device —
+                    frames are measured and discarded, nothing is uploaded, and there is no face
+                    recognition anywhere in this console.
+                  </p>
+                  <div class="controls" style="justify-content: center">
+                    <button class="act" id="optics-start" type="button">Open camera</button>
+                  </div>
+                </div>
+              </div>
+              <div class="views" id="views"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Calibration</h2><span class="spacer"></span><span class="prov" id="calib-prov" data-tone="caution">Pixels</span></div>
+              <p class="note">
+                Until the view is calibrated the console reports pixels and refuses to convert them.
+                Type the camera's mounting and it reports metres — height, ground speed, distance —
+                and the horizon line appears so you can check the answer.
+              </p>
+              <div class="readouts" style="margin-top: 11px">
+                <label class="field"><span>Mount height (m)</span><input id="cal-height" type="number" min="0.5" max="20" step="0.1" value="3" /></label>
+                <label class="field"><span>Down tilt (°)</span><input id="cal-tilt" type="number" min="0" max="80" step="1" value="20" /></label>
+                <label class="field"><span>Field of view (°)</span><input id="cal-fov" type="number" min="30" max="140" step="1" value="70" /></label>
+              </div>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="cal-apply" type="button">Apply</button>
+                <button class="ghost" id="cal-clear" type="button">Back to pixels</button>
+              </div>
+              <p class="note" id="cal-note" style="margin-top: 10px"></p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Thermal palettes</h2><span class="spacer"></span><span class="prov" id="thermal-prov" data-tone="caution">Brightness</span></div>
+            <p class="note" id="thermal-truth"></p>
+            <div class="palettes" id="palettes" style="margin-top: 11px"></div>
+            <div class="controls" style="margin-top: 12px">
+              <label class="field" style="flex:0 1 150px"><span>Scale</span><select id="thermal-gain"><option value="auto">Auto (AGC)</option><option value="manual">Manual</option></select></label>
+              <label class="field" style="flex:0 1 130px"><span>Level</span><input id="thermal-level" type="number" step="0.05" value="0.5" /></label>
+              <label class="field" style="flex:0 1 130px"><span>Span</span><input id="thermal-span" type="number" step="0.05" min="0.01" value="1" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>Isotherm</span><select id="thermal-iso"></select></label>
+              <label class="field" style="flex:0 1 130px"><span>Low</span><input id="thermal-iso-low" type="number" step="0.05" value="0.75" /></label>
+              <label class="field" style="flex:0 1 130px"><span>High</span><input id="thermal-iso-high" type="number" step="0.05" value="1" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Fusion edges</span><input id="thermal-fusion" type="range" min="0" max="100" value="0" /></label>
+            </div>
+            <div class="readouts" id="thermal-readouts" style="margin-top: 12px"></div>
+            <p class="note" id="thermal-emissivity" style="margin-top: 10px"></p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Camera picker</h2><span class="spacer"></span><span class="prov" id="picker-prov" data-tone="muted">Scan</span></div>
+            <p class="note">
+              A DJI Pocket or Action in USB webcam mode is a standard UVC device — it turns up here
+              like any other camera and the whole detection chain runs on it, gimbal and all. So does
+              a GoPro in webcam mode, and any HDMI capture card.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 260px"><span>Camera</span><select id="camera-pick"></select></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="camera-use" type="button">Use this camera</button>
+              <button class="ghost" id="camera-rescan" type="button">Rescan</button>
+            </div>
+            <p class="note" id="camera-note" style="margin-top: 10px"></p>
+            <div class="readouts" id="camera-readouts" style="margin-top: 11px"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Other routes in</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+            <ul class="rows" id="routes"></ul>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Argus / IP camera</h2><span class="spacer"></span><span class="prov" id="argus-prov" data-tone="muted">Not set up</span></div>
+            <p class="note" id="argus-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 200px"><span>Model</span><input id="argus-model" type="text" placeholder="Reolink Argus 3 Pro" value="Reolink Argus 3 Pro" /></label>
+              <label class="field" style="flex:1 1 160px"><span>Address</span><input id="argus-host" type="text" placeholder="192.168.1.42" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>User</span><input id="argus-user" type="text" placeholder="viewer" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Password</span><input id="argus-pass" type="password" /></label>
+              <label class="field" style="flex:0 1 120px"><span>Stream</span><select id="argus-stream"><option value="sub">Sub</option><option value="main">Main</option></select></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="argus-test" type="button">Test connection</button>
+              <button class="ghost" id="argus-add" type="button" disabled>Add as source</button>
+            </div>
+            <div class="readouts" id="argus-readouts" style="margin-top: 12px"></div>
+            <ul class="rows" id="argus-steps" style="margin-top: 12px"></ul>
+            <h3 style="margin-top:14px">Relay</h3>
+            <div class="controls" style="margin-top: 9px">
+              <label class="field" style="flex:0 1 150px"><span>Relay</span><select id="argus-relay"></select></label>
+              <label class="field" style="flex:1 1 180px"><span>Relay address</span><input id="argus-relay-base" type="text" placeholder="http://nas.local:1984" /></label>
+              <label class="field" style="flex:0 1 150px"><span>Stream name</span><input id="argus-relay-name" type="text" placeholder="argus-gate" /></label>
+            </div>
+            <p class="note" id="argus-relay-note" style="margin-top: 10px"></p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="argus-config" type="button">Write my go2rtc config</button>
+              <button class="ghost" id="argus-copy" type="button" disabled>Copy</button>
+              <button class="ghost" id="argus-use-local" type="button">Use the local relay</button>
+            </div>
+            <textarea id="argus-yaml" rows="14" spellcheck="false" hidden style="margin-top: 11px; font-size: 11px"></textarea>
+            <p class="note" id="argus-local-note" style="margin-top: 10px"></p>
+            <h3 style="margin-top:14px">What this costs</h3>
+            <table class="ladder" id="argus-cost"></table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>Camera sources</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+            <p class="note">
+              Any camera that publishes a stream this browser can open — HLS, WebRTC, or an MJPEG
+              URL — becomes another view. Vendor-cloud-only cameras cannot be used, because the
+              stream never reaches this device.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex: 1 1 260px"><span>Stream URL</span><input id="stream-url" type="text" placeholder="https://camera.local/stream.m3u8" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="stream-add" type="button">Add source</button>
+              <button class="ghost" id="camera-flip" type="button">Switch device camera</button>
+            </div>
+            <ul class="rows" id="sources" style="margin-top: 11px"></ul>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- watch -->
+        <section class="deck" id="deck-watch">
+          <div class="panel" id="watch-panel">
+            <div class="panel-head"><h2>Contacts</h2><span class="spacer"></span><span class="prov" id="watch-prov" data-tone="muted">Camera off</span></div>
+            <div class="readouts" id="watch-readouts"></div>
+            <ul class="rows" id="contacts" style="margin-top: 12px"></ul>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Event log</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <ul class="rows" id="events"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Target lock</h2><span class="spacer"></span><span class="prov" id="lock-prov" data-tone="muted">Motion</span></div>
+              <p class="note" id="lock-note"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 180px"><span>Tracker</span><select id="lock-mode"></select></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="lock-on" type="button">Lock the largest contact</button>
+                <button class="ghost" id="lock-drop" type="button" disabled>Release</button>
+              </div>
+              <div class="readouts" id="lock-readouts" style="margin-top: 12px"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Head tracking</h2><span class="spacer"></span><span class="prov" id="track-prov" data-tone="muted">Idle</span></div>
+              <p class="note">
+                Keeps the current contact centred in frame by commanding pan and tilt rates from the
+                error visible right now — damped so the picture settles instead of hunting. It points
+                a camera. There is no prediction of where anything is going and no output that could
+                drive anything but a head.
+              </p>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="track-toggle" type="button">Start tracking</button>
+              </div>
+              <div class="readouts" id="track-readouts" style="margin-top: 12px"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Response</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <p class="note">
+                Both of these are this device only, at whatever range this device has. They are
+                crude, and at close range that is enough.
+              </p>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="deter-light" type="button">Flood light</button>
+                <button class="act" id="deter-siren" type="button">Siren</button>
+                <button class="ghost danger" id="blackout" type="button">Blackout</button>
+              </div>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 160px"><span>Mariachi volume</span><input id="music-volume" type="range" min="0" max="100" value="45" /></label>
+              </div>
+              <p class="note" id="music-note" style="margin-top: 10px"></p>
+              <p class="note" id="response-note" style="margin-top: 10px">
+                Blackout kills every emission this console controls — screen, torch, siren, network
+                calls — and keeps the sensors recording.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ----------------------------------------------------- acoustic -->
+        <section class="deck" id="deck-acoustic">
+          <div class="panel">
+            <div class="panel-head"><h2>Acoustic watch</h2><span class="spacer"></span><span class="prov" id="acoustic-prov" data-tone="muted">Offline</span></div>
+            <p class="note">
+              One microphone answers <b>how loud</b> and <b>exactly when</b>. It cannot answer
+              <b>where</b> — bearing needs four or more microphones at known positions sharing a
+              clock. Impulses are logged by shape and level; naming the sound is yours.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="acoustic-start" type="button">Open microphone</button>
+              <button class="ghost" id="acoustic-stop" type="button" disabled>Stop</button>
+            </div>
+            <div class="readouts" id="acoustic-readouts" style="margin-top: 12px"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Impulses</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+            <ul class="rows" id="impulses"></ul>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------- perimeter -->
+        <section class="deck" id="deck-perimeter">
+          <div class="panel">
+            <div class="panel-head"><h2>Geofence</h2><span class="spacer"></span><span class="prov" id="fence-prov" data-tone="muted">No fix</span></div>
+            <p class="note">
+              Walk the boundary and mark each corner. The console only calls a crossing when the
+              fix is sharp enough to resolve which side of the line you are on — a ±30 m fix under
+              the tree line cannot, and it says so instead of alerting.
+            </p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="fence-track" type="button">Start positioning</button>
+              <button class="act" id="fence-mark" type="button" disabled>Mark corner</button>
+              <button class="ghost" id="fence-undo" type="button" disabled>Undo</button>
+              <button class="ghost danger" id="fence-clear" type="button" disabled>Clear</button>
+            </div>
+            <div class="readouts" id="fence-readouts" style="margin-top: 12px"></div>
+            <canvas id="fence-map" width="600" height="360" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------- satellite -->
+        <section class="deck" id="deck-satellite">
+          <div class="panel">
+            <div class="panel-head"><h2>Orbital imagery</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+            <p class="note" id="sat-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 220px"><span>Layer</span><select id="sat-layer"></select></label>
+              <label class="field" style="flex:0 1 150px"><span>Date</span><input id="sat-date" type="text" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="sat-fetch" type="button">Fetch scene</button>
+              <button class="ghost" id="sat-here" type="button">Use my position</button>
+            </div>
+            <div class="mosaic" id="sat-mosaic" style="margin-top: 12px"></div>
+            <p class="note" id="sat-note" style="margin-top: 10px"></p>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Next looks</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="sat-looks"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Sharper imagery</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <table class="ladder" id="sat-ladder"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- world -->
+        <section class="deck" id="deck-world">
+          <div class="panel">
+            <div class="panel-head"><h2>Seismic</h2><span class="spacer"></span><span class="prov" id="quake-prov" data-tone="muted">Idle</span></div>
+            <p class="note" id="quake-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 150px"><span>Magnitude</span><select id="quake-band"></select></label>
+              <label class="field" style="flex:1 1 130px"><span>Window</span><select id="quake-window"></select></label>
+              <label class="field" style="flex:0 1 120px"><span>Within km</span><input id="quake-radius" type="text" value="300" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="quake-fetch" type="button">Fetch events</button>
+              <span class="note" id="quake-fresh"></span>
+            </div>
+            <ul class="rows" id="quake-list" style="margin-top: 12px"></ul>
+            <p class="note" id="quake-credit" style="margin-top: 10px"></p>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Roads</h2><span class="spacer"></span><span class="prov" id="cam-prov" data-tone="muted">Idle</span></div>
+              <p class="note" id="cam-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 190px"><span>District</span><select id="cam-district"></select></label>
+                <button class="act" id="cam-fetch" type="button">Load cameras</button>
+              </div>
+              <ul class="rows" id="cam-list" style="margin-top: 12px"></ul>
+              <p class="note" id="cam-credit" style="margin-top: 10px"></p>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Headlines</h2><span class="spacer"></span><span class="prov" id="news-prov" data-tone="muted">Idle</span></div>
+              <p class="note" id="news-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 170px"><span>Place</span><input id="news-place" type="text" value="Napa County" /></label>
+                <label class="field" style="flex:0 1 140px"><span>Span</span><select id="news-span"></select></label>
+                <button class="act" id="news-fetch" type="button">Fetch</button>
+              </div>
+              <ul class="rows" id="news-list" style="margin-top: 12px"></ul>
+              <p class="note" id="news-credit" style="margin-top: 10px"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- vault -->
+        <section class="deck" id="deck-vault">
+          <div class="panel">
+            <div class="panel-head"><h2>Evidence vault</h2><span class="spacer"></span><span class="prov" id="vault-prov" data-tone="muted">Idle</span></div>
+            <p class="note">
+              The recorder runs into a rolling buffer, so a saved clip contains the thirty seconds
+              <b>before</b> the event as well as after it. Each clip is hashed as it is written and
+              stays on this device until you export it.
+            </p>
+            <div class="readouts" id="vault-readouts" style="margin-top: 12px"></div>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="vault-keep" type="button" disabled>Keep last 60 s</button>
+            </div>
+            <ul class="rows" id="clips" style="margin-top: 12px"></ul>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- links -->
+        <section class="deck" id="deck-links">
+          <div class="panel">
+            <div class="panel-head"><h2>Sensor links</h2><span class="spacer"></span><span class="prov" id="links-prov" data-tone="muted">None</span></div>
+            <p class="note" id="links-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <label class="field" style="flex:1 1 260px"><span>Sensor bridge socket</span><input id="link-url" type="text" placeholder="ws://192.168.1.50:8080" /></label>
+            </div>
+            <div class="controls" style="margin-top: 9px">
+              <button class="act" id="link-connect" type="button">Connect</button>
+              <button class="ghost" id="link-disconnect" type="button" disabled>Disconnect</button>
+            </div>
+            <p class="note" id="link-state" style="margin-top: 10px"></p>
+            <ul class="rows" id="link-options" style="margin-top: 12px"></ul>
+          </div>
+        </section>
+
+        <!-- ----------------------------------------------------- spectral -->
+        <section class="deck" id="deck-spectral">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Vegetation index</h2><span class="spacer"></span><span class="prov" id="spectral-prov" data-tone="muted">No source</span></div>
+              <p class="note" id="spectral-truth"></p>
+              <div class="controls" style="margin-top: 11px">
+                <label class="field" style="flex:1 1 200px"><span>Index</span><select id="spectral-index"></select></label>
+                <label class="field" style="flex:0 1 160px"><span>Canopy mask</span><input id="spectral-mask" type="number" min="-0.5" max="0.6" step="0.02" value="0.04" /></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="spectral-run" type="button">Compute from live frame</button>
+                <button class="ghost" id="spectral-load" type="button">Load an image…</button>
+                <input id="spectral-file" type="file" accept="image/*" hidden />
+              </div>
+              <canvas id="spectral-map" width="480" height="360" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+              <div class="readouts" id="spectral-readouts" style="margin-top: 12px"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Reading</h2><span class="spacer"></span><span class="prov" id="spectral-read-prov" data-tone="muted">Nothing yet</span></div>
+              <p class="note" id="spectral-headline">Compute an index to get a reading.</p>
+              <h3 style="margin-top:14px">This supports</h3>
+              <ul class="rows" id="spectral-supports"></ul>
+              <h3 style="margin-top:14px">This does not support</h3>
+              <ul class="rows" id="spectral-denies"></ul>
+              <p class="note good" id="spectral-next" style="margin-top:12px"></p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Worst cells</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="spectral-zones"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Instrument tiers</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <table class="ladder" id="spectral-tiers"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- --------------------------------------------------- subsurface -->
+        <section class="deck" id="deck-subsurface">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Sonar map</h2><span class="spacer"></span><span class="prov" id="sonar-prov" data-tone="muted">No sonar</span></div>
+              <p class="note">
+                Beam returns build an occupancy map — free water in front of the return, bottom or
+                obstacle at it, the beam drawn as the cone it actually is. Underwater there is no
+                satellite fix, so the position drifts; each scan is matched against the map already
+                built to pull it back, and the drift estimate is shown rather than hidden.
+              </p>
+              <canvas id="sonar-map" width="520" height="520" style="width:100%;margin-top:12px;border:1px solid var(--hair);background:#04060a"></canvas>
+              <div class="controls" style="margin-top: 11px">
+                <button class="act" id="sonar-rehearse" type="button">Run a rehearsal sweep</button>
+                <button class="ghost" id="sonar-clear" type="button">Clear map</button>
+              </div>
+              <p class="note warn" id="sonar-rehearsal-note" style="margin-top:10px">
+                No sonar is attached. A rehearsal generates synthetic returns from a made-up dam so
+                the mapping can be seen working — every number it produces is synthetic and badged as
+                modelled.
+              </p>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h2>Survey</h2><span class="spacer"></span><span class="prov" id="sonar-survey-prov" data-tone="muted">Idle</span></div>
+              <div class="readouts" id="sonar-readouts"></div>
+              <h3 style="margin-top:14px">Stored water</h3>
+              <div class="controls" style="margin-top: 9px">
+                <label class="field" style="flex:1 1 160px"><span>Surface area (m²)</span><input id="sonar-area" type="number" min="0" step="100" value="12000" /></label>
+              </div>
+              <div class="readouts" id="sonar-capacity" style="margin-top: 11px"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------------- bio -->
+        <section class="deck" id="deck-bio">
+          <div class="panel">
+            <div class="panel-head"><h2>Wearable link</h2><span class="spacer"></span><span class="prov" id="bio-prov" data-tone="muted">None</span></div>
+            <p class="note" id="bio-truth"></p>
+            <div class="controls" style="margin-top: 11px">
+              <button class="act" id="bio-pair" type="button">Pair a sensor</button>
+              <button class="ghost" id="bio-drop" type="button" disabled>Disconnect</button>
+            </div>
+            <div class="readouts" id="bio-readouts" style="margin-top: 12px"></div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>What pairs</h2><span class="spacer"></span><span class="prov" data-tone="primary">Linked</span></div>
+              <ul class="rows" id="bio-works"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>What does not</h2><span class="spacer"></span><span class="prov" data-tone="muted">Blocked</span></div>
+              <ul class="rows" id="bio-blocked"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------ harvest -->
+        <section class="deck" id="deck-harvest">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Picking today</h2><span class="spacer"></span><span class="prov" id="harvest-prov" data-tone="muted">Nothing logged</span></div>
+              <div class="readouts" id="harvest-day"></div>
+              <h3 style="margin-top:14px">Log a load</h3>
+              <div class="controls" style="margin-top: 9px">
+                <label class="field" style="flex:1 1 180px"><span>Block</span><select id="harvest-block"></select></label>
+                <label class="field" style="flex:0 1 120px"><span>Weight (kg)</span><input id="harvest-kg" type="number" min="0" step="10" value="420" /></label>
+                <label class="field" style="flex:0 1 110px"><span>Rows done</span><input id="harvest-rows" type="number" min="0" step="1" value="9" /></label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <button class="act" id="harvest-log" type="button">Log it</button>
+                <button class="ghost" id="harvest-undo" type="button" disabled>Undo last</button>
+                <button class="ghost" id="harvest-export" type="button">Export CSV</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Rate and finish</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <div class="readouts" id="harvest-rate"></div>
+              <p class="note" id="harvest-eta" style="margin-top:12px"></p>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Blocks</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Live</span></div>
+              <ul class="rows" id="harvest-blocks"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Yield ranking</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="harvest-yield"></ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------- aerial -->
+        <section class="deck" id="deck-aerial">
+          <div class="panel">
+            <div class="panel-head"><h2>Airborne contacts</h2><span class="spacer"></span><span class="prov" id="aerial-prov" data-tone="muted">No horizon</span></div>
+            <p class="note" id="aerial-note"></p>
+            <div class="readouts" id="aerial-readouts" style="margin-top: 12px"></div>
+            <ul class="rows" id="aerial-contacts" style="margin-top: 12px"></ul>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>What would settle it</h2><span class="spacer"></span><span class="prov" data-tone="muted">Reference</span></div>
+              <ul class="rows" id="aerial-settle"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Your own aircraft</h2><span class="spacer"></span><span class="prov" id="aerial-telemetry-prov" data-tone="muted">No telemetry</span></div>
+              <div class="readouts" id="aerial-telemetry"></div>
+              <p class="note" style="margin-top:10px">
+                Telemetry bridged from your own drone is a measurement, not an inference — position
+                and altitude come from the aircraft. Route it in on the links deck.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------------- ledger -->
+        <section class="deck" id="deck-ledger">
+          <div class="panel">
+            <div class="panel-head"><h2>Capability ledger</h2><span class="spacer"></span><span class="prov" data-tone="primary">Specification</span></div>
+            <p class="note">
+              Every capability on the specification, and what is actually true of it on this
+              hardware. Three kinds of no: the platform blocks it, the sensor does not exist here,
+              or the measurement does not support the claim. The last group is not a build queue.
+            </p>
+            <div class="tally" id="ledger-tally" style="margin-top: 12px"></div>
+            <div class="ledger" id="ledger"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

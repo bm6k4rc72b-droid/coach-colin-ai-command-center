@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>MakeCNS Fly — what is flying it</title>
+    <meta
+      name="description"
+      content="A spiking network with a connectome's statistics, wired to a simulated quadrotor through a camera watching a hand — with the control authority of every component measured by ablation rather than claimed."
+    />
+    <meta name="theme-color" content="#07090e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MakeCNS Fly" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>MakeCNS Fly</h1>
+            <p class="tagline">A brain, a drone, and which one is flying</p>
+          </div>
+        </div>
+        <div class="bar-status">
+          <span class="chip" id="provenance-chip">Building network…</span>
+          <span class="chip chip-loop" id="loop-chip">—</span>
+          <span class="chip" id="speed-chip">—</span>
+        </div>
+      </header>
+
+      <p class="banner" id="honesty-banner">
+        This is <strong>not</strong> a fruit fly's brain. It is a generated network with a published
+        connectome's statistics, at a fraction of its size. What the real thing would do is unknown
+        and this app does not guess.
+      </p>
+
+      <main class="stage">
+        <section class="viewport" aria-label="Flight and neural activity">
+          <div class="panes">
+            <figure class="pane pane-flight">
+              <figcaption>
+                <span>Flight</span>
+                <span class="pane-note" id="flight-note">—</span>
+              </figcaption>
+              <canvas id="flight-canvas" aria-label="Side view of the quadrotor, its commanded altitude and its tilt"></canvas>
+            </figure>
+
+            <figure class="pane pane-raster">
+              <figcaption>
+                <span>Spikes</span>
+                <span class="pane-note" id="raster-note">—</span>
+              </figcaption>
+              <canvas id="raster-canvas" aria-label="Raster plot of spiking activity by population"></canvas>
+              <div class="raster-key">
+                <span><i class="sw sw-sensory"></i>hand</span>
+                <span><i class="sw sw-proprio"></i>proprioception</span>
+                <span><i class="sw sw-inter"></i>interneurons</span>
+                <span><i class="sw sw-motor"></i>motor</span>
+              </div>
+            </figure>
+
+            <figure class="pane pane-trace">
+              <figcaption>
+                <span>Altitude against command</span>
+                <span class="pane-note" id="trace-note">—</span>
+              </figcaption>
+              <canvas id="trace-canvas" aria-label="Altitude over time against the commanded altitude"></canvas>
+            </figure>
+
+            <figure class="pane pane-throttle">
+              <figcaption>
+                <span>Throttles</span>
+                <span class="pane-note" id="throttle-note">readout vs teacher</span>
+              </figcaption>
+              <canvas id="throttle-canvas" aria-label="Commanded throttle per rotor against the teacher's command"></canvas>
+            </figure>
+          </div>
+
+          <div class="transport">
+            <button class="btn btn-primary" id="run-toggle" type="button">Start</button>
+            <button class="btn" id="restart" type="button">Restart flight</button>
+            <label class="palm-control">
+              <span>Palm openness</span>
+              <input id="palm" type="range" min="0" max="100" value="50" />
+              <output id="palm-out">0.50</output>
+            </label>
+            <label class="palm-control">
+              <span>Speed</span>
+              <select id="speed"></select>
+            </label>
+            <span class="phase" id="phase-readout">idle</span>
+          </div>
+        </section>
+
+        <section class="panel" aria-label="Instruments">
+          <nav class="tabs" role="tablist">
+            <button role="tab" class="tab tab-on" data-tab="flight" type="button">Flight</button>
+            <button role="tab" class="tab" data-tab="brain" type="button">Brain</button>
+            <button role="tab" class="tab" data-tab="ledger" type="button">Ledger</button>
+            <button role="tab" class="tab" data-tab="camera" type="button">Camera</button>
+            <button role="tab" class="tab" data-tab="link" type="button">Hardware</button>
+            <button role="tab" class="tab" data-tab="limits" type="button">Limits</button>
+          </nav>
+
+          <div class="tab-body" id="tab-flight">
+            <div class="readout-grid" id="flight-stats"></div>
+            <h3>Sensing</h3>
+            <p class="hint" id="sensor-hint"></p>
+            <div class="controls">
+              <label>
+                <span>Sensor configuration</span>
+                <select id="sensor-set"></select>
+              </label>
+              <label>
+                <span>Readout</span>
+                <select id="readout-mode"></select>
+              </label>
+            </div>
+            <h3>Scores so far</h3>
+            <div class="readout-grid" id="score-grid"></div>
+            <p class="hint">
+              Only the unsupervised phase is scored. Anything flown while the teacher was connected
+              is the teacher's flying, not the network's.
+            </p>
+          </div>
+
+          <div class="tab-body" id="tab-brain" hidden>
+            <div id="provenance-block"></div>
+            <h3>Network</h3>
+            <div class="controls">
+              <label>
+                <span>Neurons simulated</span>
+                <select id="neuron-count"></select>
+              </label>
+              <label>
+                <span>Statistics matched to</span>
+                <select id="profile"></select>
+              </label>
+              <label>
+                <span>Recurrent gain <em id="recurrent-out">0.20</em></span>
+                <input id="recurrent" type="range" min="0" max="120" value="20" />
+              </label>
+              <label>
+                <span>Tonic drive <em id="bias-out">0.10</em></span>
+                <input id="bias" type="range" min="0" max="40" value="10" />
+              </label>
+              <label>
+                <span>Live ablation</span>
+                <select id="ablation"></select>
+              </label>
+            </div>
+            <label>
+              <span>Seed</span>
+              <input id="seed" type="number" min="1" max="99999" step="1" value="5" />
+            </label>
+            <button class="btn" id="rebuild" type="button">Rebuild network</button>
+            <p class="hint">
+              Results move with the seed — a different draw of the same architecture holds altitude
+              anywhere from a quarter to all of the time, and the share of neurons that fire at all
+              moves with it. Rebuilding on a few seeds is the honest way to read any result here.
+            </p>
+            <div class="readout-grid" id="net-stats"></div>
+            <p class="hint">
+              Tonic drive decides whether the network listens. Raise it and the pool fires happily on
+              its own while the aircraft's state becomes undecodable from the motor pool — the same
+              wiring, no longer paying attention.
+            </p>
+          </div>
+
+          <div class="tab-body" id="tab-ledger" hidden>
+            <p class="hint">
+              Eight flights, each removing one component, so the hover can be attributed to whatever
+              actually changes it. Takes a minute or so and runs in slices, so the page keeps moving.
+            </p>
+            <div class="controls controls-inline">
+              <button class="btn btn-primary" id="run-ledger" type="button">Run the ablations</button>
+              <span id="ledger-progress" class="hint"></span>
+            </div>
+            <div id="ledger-result"></div>
+          </div>
+
+          <div class="tab-body" id="tab-camera" hidden>
+            <p class="hint">
+              One camera, watching a hand, exactly as described. Skin-tone segmentation — crude, and
+              shown to you so you can see when it is wrong. Nothing leaves this device.
+            </p>
+            <div class="controls controls-inline">
+              <button class="btn btn-primary" id="camera-start" type="button">Use the camera</button>
+              <button class="btn" id="camera-stop" type="button" disabled>Stop</button>
+            </div>
+            <div class="camera-stage">
+              <video id="camera-video" playsinline muted></video>
+              <canvas id="camera-canvas" aria-label="What the segmenter is actually seeing"></canvas>
+            </div>
+            <div class="controls controls-inline">
+              <button class="btn" id="calibrate-closed" type="button" disabled>Record closed fist</button>
+              <button class="btn" id="calibrate-open" type="button" disabled>Record open palm</button>
+            </div>
+            <div class="readout-grid" id="camera-stats"></div>
+          </div>
+
+          <div class="tab-body" id="tab-link" hidden>
+            <p class="warn">
+              Propellers cut. This app's own measurements say the control law here may fail without
+              warning, and the gesture input puts a hand in front of the aircraft. Bench it with the
+              propellers off unless it is inside a net.
+            </p>
+            <div class="controls">
+              <label>
+                <span>Bench state</span>
+                <select id="bench-state"></select>
+              </label>
+              <label>
+                <span>Throttle ceiling <em id="ceiling-out">45%</em></span>
+                <input id="ceiling" type="range" min="5" max="100" value="45" />
+              </label>
+            </div>
+            <div class="controls controls-inline">
+              <button class="btn" id="link-connect" type="button">Connect serial device</button>
+              <button class="btn btn-primary" id="link-arm" type="button">Arm</button>
+              <button class="btn" id="link-disarm" type="button">Disarm</button>
+            </div>
+            <div class="readout-grid" id="link-stats"></div>
+            <p class="hint" id="link-support"></p>
+          </div>
+
+          <div class="tab-body" id="tab-limits" hidden>
+            <h3>What this is</h3>
+            <p>
+              An apparatus for testing a claim: that a reconstructed fruit fly brain, fed nothing but
+              a camera watching a hand, flew a drone with no control logic of any kind. Every part of
+              that arrangement is built here, and every part can be removed while the rest keeps
+              running, which is the only way to find out what any of it was doing.
+            </p>
+            <h3>What it is not</h3>
+            <ul>
+              <li>
+                <strong>It is not a fly brain.</strong> No published connectome is shipped with this
+                app. The network is generated to match published summary statistics — size ratio,
+                excitatory fraction, degree tail, synaptic weight distribution. Nothing in it
+                corresponds to an identified neuron. A real edge list can be imported, and then the
+                provenance line says so instead.
+              </li>
+              <li>
+                <strong>It is not a real drone.</strong> The airframe is a rigid-body model with
+                motor lag, drag, gusts and an untrimmed centre of mass. It contains no stabilisation
+                whatsoever, which is checkable: constant throttle tumbles it in under half a second.
+              </li>
+              <li>
+                <strong>It cannot tell you what happened in someone else's video.</strong> It can
+                only establish what evidence such a video would need to carry before the claim in it
+                is worth believing — and none of that evidence is expensive to produce.
+              </li>
+            </ul>
+            <h3>The claim, as quoted</h3>
+            <blockquote id="claim-quote"></blockquote>
+            <h3>Where the numbers come from</h3>
+            <div id="sources"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

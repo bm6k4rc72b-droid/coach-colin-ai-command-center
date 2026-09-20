@@ -17,7 +17,14 @@
 </head>
 <body>
 
+<!-- The AR backdrop: the live camera, behind the renderer. Hidden until the
+     AR bench asks for it, and never recording. -->
+<video id="ar-video" playsinline muted aria-hidden="true"></video>
 <canvas id="lab" aria-hidden="true"></canvas>
+<!-- Drag surface for turning the compound, and the layer its data panels
+     live in. Both sit above the canvas and below the console. -->
+<div id="ar-surface" aria-hidden="true"></div>
+<div id="ar-layer" aria-label="Compound evidence panels"></div>
 <div id="grain" aria-hidden="true"></div>
 <div id="scanlines" aria-hidden="true"></div>
 <div id="vignette" aria-hidden="true"></div>
@@ -43,6 +50,7 @@
   <button class="deck-btn active" data-deck="engine" type="button"><span aria-hidden="true">◎</span>Engine</button>
   <button class="deck-btn" data-deck="graph" type="button"><span aria-hidden="true">⁂</span>Map</button>
   <button class="deck-btn" data-deck="decoder" type="button"><span aria-hidden="true">▤</span>Decoder</button>
+  <button class="deck-btn" data-deck="ar" type="button"><span aria-hidden="true">◇</span>AR</button>
   <button class="deck-btn" data-deck="compare" type="button"><span aria-hidden="true">⌬</span>Lab</button>
   <button class="deck-btn" data-deck="verify" type="button"><span aria-hidden="true">✓</span>Verify</button>
   <button class="deck-btn" data-deck="studio" type="button"><span aria-hidden="true">✧</span>Studio</button>

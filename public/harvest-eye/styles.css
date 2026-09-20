@@ -586,3 +586,73 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   #verdictLabel { font-size: 24px; }
   .verdict-days strong { font-size: 30px; }
 }
+
+/* ------------------------------------------------------- canopy mode */
+
+.chip.mode { background: var(--accent-dim); border-color: var(--accent); }
+
+.legend { display: grid; gap: 4px; }
+
+.legend-bar {
+  height: 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  /* Red is stressed, green is healthy — the convention every agronomy map
+     already uses, so a HarvestEye map can be read next to a drone map. */
+  background: linear-gradient(90deg, #7a1814, #d63c28 25%, #f0aa28 50%, #a8d63c 72%, #16803a);
+}
+
+.legend-axis {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.legend-axis span:nth-child(2) { color: var(--accent); font-weight: 600; }
+
+.index-list { display: grid; gap: 7px; margin-bottom: 6px; }
+
+.index-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 12px;
+  cursor: pointer;
+}
+
+.index-card[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-dim); }
+.index-card[disabled] { opacity: 0.45; cursor: not-allowed; }
+.index-card strong { display: block; font-size: 14px; }
+.index-card small { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; line-height: 1.45; }
+.index-card code {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.file-btn {
+  display: block;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 20px;
+}
+
+.field-canvas {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #000;
+  margin-bottom: 10px;
+}

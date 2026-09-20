@@ -191,7 +191,7 @@ async function main() {
   check('entering the facility reveals the console',
     await page.evaluate(() => document.body.classList.contains('entered')));
 
-  const decks = ['engine', 'graph', 'decoder', 'compare', 'verify', 'studio', 'command', 'profile', 'settings'];
+  const decks = ['engine', 'graph', 'decoder', 'ar', 'compare', 'verify', 'studio', 'command', 'profile', 'settings'];
   for (const deck of decks) {
     await page.evaluate((id) => globalThis.__astra.go(id), deck);
     await wait(520);
@@ -391,6 +391,103 @@ async function main() {
   check('the simulator reports power, false-positive risk and tier', simAfter.readouts === 4);
   check('raising the sample size changes the verdict',
     simAfter.level !== simBefore, `${simBefore} -> ${simAfter.level}`);
+
+  /* ----------------------------------------------------------- AR bench */
+
+  await page.evaluate(() => globalThis.__astra.go('ar'));
+  await wait(1100);
+
+  const arEnter = await page.evaluate(() => ({
+    mode: document.body.classList.contains('ar-mode'),
+    arOn: globalThis.__astra.lab.ar.on,
+    scene: globalThis.__astra.lab.scene,
+    panels: document.querySelectorAll('.ar-panel').length,
+    surface: getComputedStyle(document.getElementById('ar-surface')).display,
+  }));
+  check('entering AR switches the renderer into AR mode', arEnter.mode && arEnter.arOn, `scene ${arEnter.scene}`);
+  check('the compound is surrounded by data panels', arEnter.panels >= 8, `${arEnter.panels} panels`);
+  check('the drag surface is live in AR', arEnter.surface === 'block', arEnter.surface);
+
+  // Panels must be positioned by projection, not stacked at the origin.
+  const placement = await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll('.ar-panel')];
+    // A panel that has faded out is never positioned, which is the point —
+    // only the ones actually on screen need a transform.
+    const visible = nodes.filter((node) => Number(node.style.opacity) > 0.02);
+    const positioned = visible.filter((node) => /translate3d\((-?[\d.]+)px/.test(node.style.transform));
+    const xs = positioned.map((node) => Number(node.style.transform.match(/translate3d\((-?[\d.]+)px/)[1]));
+    return {
+      positioned: positioned.length,
+      visible: visible.length,
+      spread: xs.length ? Math.max(...xs) - Math.min(...xs) : 0,
+      hidden: nodes.length - visible.length,
+      offscreen: xs.filter((x) => x < 0 || x > window.innerWidth).length,
+    };
+  });
+  check('every visible panel is anchored in three dimensions',
+    placement.positioned === placement.visible && placement.visible >= 5,
+    `${placement.positioned}/${placement.visible} positioned`);
+  check('panels spread around the compound', placement.spread > 120, `${Math.round(placement.spread)}px spread`);
+  check('panels behind the compound fade out', placement.hidden > 0, `${placement.hidden} hidden`);
+  check('no visible panel drifts off screen', placement.offscreen === 0, `${placement.offscreen} off screen`);
+
+  // Rotating the compound must move the panels with it.
+  const beforeSpin = await page.evaluate(() => document.querySelector('.ar-panel').style.transform);
+  await page.evaluate(() => {
+    globalThis.__astra.ar.yaw += 1.2;
+  });
+  await wait(400);
+  const afterSpin = await page.evaluate(() => document.querySelector('.ar-panel').style.transform);
+  check('turning the compound carries its evidence round with it', beforeSpin !== afterSpin);
+
+  // The camera is optional: with a fake device it starts, and the scene is
+  // identical either way.
+  const camera = await page.evaluate(async () => {
+    const started = await globalThis.__astra.ar.startCamera();
+    return { started, live: document.getElementById('ar-video').classList.contains('live') };
+  });
+  check('the camera attaches as the AR backdrop', camera.started && camera.live, `started ${camera.started}`);
+
+  const capture = await page.evaluate(async () => {
+    const url = await globalThis.__astra.ar.capture();
+    return { ok: typeof url === 'string' && url.startsWith('data:image/png'), length: url ? url.length : 0 };
+  });
+  check('the AR view captures a shareable card', capture.ok, `${Math.round(capture.length / 1024)}KB`);
+
+  const panelDetail = await page.evaluate(() => {
+    const study = [...document.querySelectorAll('.ar-panel')].find((node) => node.className.includes('ar-study'));
+    study.click();
+    return new Promise((resolve) => setTimeout(() => resolve({
+      opened: Boolean(document.querySelector('.ar-detail-head')),
+      link: document.querySelector('.ar-detail .source-link')?.href || '',
+    }), 300));
+  });
+  check('a study panel opens its full record', panelDetail.opened);
+  check('the opened study links to the literature',
+    panelDetail.link.startsWith('https://pubmed.ncbi.nlm.nih.gov/'), panelDetail.link.slice(0, 48));
+
+  // Switching compounds rebuilds the orbit.
+  const swapped = await page.evaluate(() => {
+    const chip = [...document.querySelectorAll('.ar-picker .chip')].find((node) => node.textContent === 'Semaglutide');
+    chip.click();
+    return new Promise((resolve) => setTimeout(() => resolve({
+      compound: globalThis.__astra.ar.entry.id,
+      panels: document.querySelectorAll('.ar-panel').length,
+    }), 500));
+  });
+  check('changing the compound rebuilds its evidence orbit',
+    swapped.compound === 'semaglutide' && swapped.panels >= 8, `${swapped.panels} panels`);
+
+  // Leaving AR must release the camera and restore the vault.
+  await page.evaluate(() => globalThis.__astra.go('engine'));
+  await wait(700);
+  const arExit = await page.evaluate(() => ({
+    mode: document.body.classList.contains('ar-mode'),
+    arOn: globalThis.__astra.lab.ar.on,
+    live: document.getElementById('ar-video').classList.contains('live'),
+  }));
+  check('leaving AR restores the vault and releases the camera',
+    !arExit.mode && !arExit.arOn && !arExit.live);
 
   /* ------------------------------------------------------------ progress */
 

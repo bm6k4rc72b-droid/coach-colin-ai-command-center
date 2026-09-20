@@ -47,6 +47,188 @@ npm run qa:agent-swarm   # headless end-to-end run through the real console
 
 ---
 
+## Also in here: MakeCNS Fly
+
+A viral post described a reconstructed fruit fly brain flying a real drone from a
+single camera watching a hand, with "zero flight logic", self-stabilising within
+eleven seconds. [`public/makecns-fly/`](public/makecns-fly) builds that machine —
+spiking network, camera, quadrotor, the lot — and then **measures which part of it
+is actually flying**, by removing one part at a time and watching what changes.
+
+Locally it is `/makecns-fly/` (`http://localhost:4173/makecns-fly/` under
+`./start.sh`). It runs offline, fetches nothing, and discards every camera frame
+in the tick it was read.
+
+- **The stated sensor configuration cannot work, and needs no simulation to
+  refute.** If palm openness is the only input, nothing entering the network
+  depends on the drone's altitude or attitude. There is no error signal, so there
+  is nothing for any amount of downstream machinery to correct. The app carries a
+  permanent `LOOP OPEN` indicator for that configuration. Closing the loop takes
+  six proprioceptive channels — an IMU — that the account never mentions.
+- **The airframe is not flying itself.** Constant throttle reaches an
+  unrecoverable tilt in **165 ms** on the default seed — under 300 ms on every
+  seed tried — dominated by the centre-of-mass offset rather than rotor mismatch.
+  There is no stabilisation anywhere in the plant.
+- **One constant decides whether the network transmits or destroys information.**
+  At a tonic drive of 0.20 the pool is busy on its own and a linear readout of
+  motor rates recovers roll with an R-squared near zero; at 0.10 the same wiring
+  recovers it at about 0.66 and holds altitude perfectly. Identical network. Only
+  whether it was listening changed.
+- **A generous version does fly — after a lot of help that no telling of the
+  story includes.** Five things had to be added before anything flew: a
+  control-axis output basis, teacher gains placed from the airframe's constants,
+  persistent excitation during training, a gradual hand-over against covariate
+  shift, and two rate timescales so the readout can form a derivative. Each is a
+  measurable step and each is documented where it lives.
+- **The ledger does the attribution.** Eight flights, each removing one
+  component: the bare airframe, the PD controller, the intact network, the
+  network with recurrence cut, with every spike replaced by rate-matched noise,
+  frozen, with an unfitted readout, and with the demonstration's own sensors. On
+  the default settings the intact system holds altitude 100% of the window, the
+  PD controller 95%, and every network ablation collapses to a few percent — so
+  in this configuration the network really is load-bearing. The app prints the
+  caveat that qualifies it: those ablations are not refitted, so a readout out of
+  calibration is being counted as a computation removed, and the network's share
+  is an upper bound. The rows free of that confound are the ones that bear on the
+  original claim — an unfitted readout does not fly, and the demonstration's own
+  sensor configuration does not fly.
+- **Scoring runs to the end of the window, not to the crash**, which reverses
+  conclusions: scored only over the seconds it survived, the rate-matched-noise
+  condition reports a 70% hold; scored over the whole window, where a wreck counts
+  as not holding, it reports 2%.
+
+It also refuses to lie about its own network: it ships no connectome, generates
+one from published summary statistics, says so on a banner that never scrolls
+away, and reports what fraction of its neurons fired at all during the flight you
+are looking at.
+
+```bash
+npm run test:makecns-fly   # 58 unit tests
+npm run qa:makecns-fly     # end-to-end in a real browser
+```
+
+Full notes: [`docs/makecns-fly.md`](docs/makecns-fly.md).
+
+---
+
+## Also in here: Emberline
+
+A fire tracker at [`public/emberline/`](public/emberline) that fuses **satellite
+detections, camera cross-bearings and network node loss** into ranked fire
+hypotheses, projects each one forward with **Rothermel's surface spread model**,
+and draws every piece of it at the size its uncertainty actually is.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/emberline/>**
+— open it on a phone and add it to the home screen. Locally it is `/emberline/`
+(`http://localhost:4173/emberline/` under `./start.sh`). It opens on a scenario
+whose answers are known before it starts, so nothing on screen has to be taken
+on trust.
+
+- **A detection is a pixel, not a point.** VIIRS resolves 375 m at nadir and
+  about 800 m at the swath edge; MODIS runs from 1 km to nearly 5 km. FIRMS
+  publishes the real footprint per detection in its `scan` and `track` columns
+  and almost nothing draws them. The demo's three pixels are 14, 36 and 266
+  hectares — as dots they look identical.
+- **The spread projection is a band, not a line.** The whole Rothermel model is
+  run three times, at the expected inputs and at both ends of a stated plausible
+  range for wind and fuel moisture, because neither was measured. Arrival at a
+  place is a window — "21–81 minutes", never "51 minutes" — and past eight hours
+  it says why the number should not be planned against. Fuel model 1 at 2 m/s
+  midflame returns 25.3 m/min against BehavePlus's ~26.
+- **The network dying is a measurement.** A fire destroys the hardware on the
+  ground it crosses, so a mesh of surveyed nodes is a grid of fire sensors that
+  already exists — seconds old, no pixel size, no cloud in the way. It requires
+  spatial *and* temporal progression before it will say "front", because an
+  upstream switch failure takes every node down at once in no spatial order, and
+  simultaneity is the signature of a fault where progression is the signature of
+  a fire.
+- **Corroboration counts independent sources, not observations.** Forty VIIRS
+  pixels off one overpass share a pass, a calibration and a geolocation
+  solution — they are one look, and they score 0.27. A pixel plus a camera
+  bearing plus a destroyed node are three unrelated failure modes, and score
+  0.81.
+- **A camera fix carries the ellipse it earns.** Two bearings crossing at 80°
+  from 5 km give a few hundred metres; at 4° from 30 km they give a sliver 97 km
+  long. Both print as a latitude and a longitude. A grazing fix is marked
+  unusable and told where to put a third observer.
+- **It knows a camera sees smoke, not fire.** A column leans downwind as it
+  rises, so its visible top can be kilometres from the burning ground. The fix
+  is moved upwind and its error widened, rather than two observers on the same
+  side agreeing confidently and both pointing downwind.
+- **It refuses crown fire, spotting, and any single arrival time**, and it will
+  not sense through walls without hardware — no browser has a radio API, so that
+  panel names the four devices that would fill it and otherwise stays empty.
+
+Full write-up, including everything it refuses to do and why:
+[`docs/emberline.md`](docs/emberline.md). Tests: `npm run test:emberline`
+(38 unit tests — the physics against published BehavePlus values and physical
+invariants, the sensors against the cases where each must refuse to answer).
+
+---
+
+## Also in here: Vice Command
+
+A scroll-driven 1986 crime picture at [`public/vice/`](public/vice) with three
+real things inside it: **the apps, an outreach and automation swarm, and
+licensed in-person security**. Press start and a generated city drifts past over
+eight acts — the police arrive at a quarter of the way down, the army at half, a
+saucer detonates the skyline at three quarters, and a shield stops the front.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vice/>** — locally it is `/vice/`
+(`http://localhost:4173/vice/` under `./start.sh`).
+
+No build step, no framework, no video file, no audio file, no API key, and no
+signal after the first visit. The city is generated from a seed, the cast is
+drawn as vector paths, and the score is synthesised in Web Audio while you
+scroll.
+
+- **The set pieces land on the marks, at every width.** The brief put the chase
+  at 25%, the gunships at 50% and the detonation at 75%, and those are the spec.
+  Section heights are *solved* rather than chosen — every section is measured at
+  its natural height, the document's scroll distance is set to the smallest
+  value at which each one fits its act's share, and each is padded to exactly
+  that share — and progress is then interpolated between the measured section
+  tops rather than computed from the page height. So the gunships arrive when
+  the cavalry section does, on a laptop and on a phone, and the end-to-end
+  harness asserts all three marks at both sizes.
+- **Nothing can get stuck.** The film holds no state: every frame, the explosion
+  included, is a pure function of the scroll position, with the debris on
+  closed-form ballistics rather than an accumulating simulation. Scrub back up
+  and the fireball collapses, the rubble flies home and the five felony stars go
+  out one at a time. The suite asserts that the frame at any position is
+  identical whether you arrived going down or coming back up.
+- **The swarm console does the arithmetic that agency decks leave out.** Ten
+  agents across email, Instagram, Facebook, TikTok, YouTube, LinkedIn, X, SMS,
+  phone and reviews — and a planner that answers how many touches a week that
+  is, how many hours of *your* time approving them costs, and which channels
+  land above the volume that gets accounts restricted. Select everything at full
+  throttle and it refuses to call the plan ready: 3,620 touches a week, 10.9
+  hours of approvals against a five-hour budget, four channels over the line.
+  One button bisects for the highest throttle that clears every line.
+- **Every price says what it assumed.** Six protective services — open house,
+  private event, estate post, executive protection, ranch patrol, vacant listing
+  watch — with a live estimator whose rate card is a single constant, so the
+  page cannot quote two different numbers. When the four-hour minimum raises a
+  booking it says so, and says what you asked for. Licensing and insurance are
+  printed beside every figure.
+- **The fiction is labelled and the music is original.** The chase, the cavalry
+  and the detonation are a parody set piece, stated as such in the footer. The
+  two commercial recordings the brief named are not here — publishing a
+  copyrighted master on a marketing site is the owner's liability, not a
+  technical problem — so there are five original synthesised cues instead, and a
+  one-line hook that plays a licensed file per cue if the rights are ever
+  bought. No real person is depicted destroying the city.
+
+Full write-up, including the act table and what each module owns:
+[`docs/vice.md`](docs/vice.md). Tests: `npm run test:vice` (77 unit tests) and
+`npm run qa:vice` (57 end-to-end checks driving the real page in Chromium at
+1440px and 390px — act boundaries against the table, nothing pinned taller than
+the window, no sideways scroll, the rack laid out rather than stacked, the
+console refusing an over-committed plan, and the on-screen quote matching the
+module).
+
+---
+
 ## Also in here: Touchline
 
 A match-analysis app at [`public/touchline/`](public/touchline) that turns
@@ -304,7 +486,13 @@ in code and assert in CI.
   vertex generated from maths, no model files. Deck changes fly the camera
   between waypoints, device tilt parallaxes the volume, and each deck has its own
   chord in a synthesised score.
-- **Nine decks**: the intelligence engine and its eight-section dossier with
+- **An AR bench** — the compound stands in your room through the device camera,
+  turning on a plinth with its evidence orbiting it: each claim with its tier,
+  each study with its design, population, sample size and a live link to the
+  literature. Drag, tilt or let it rotate; capture a card with the citation and
+  disclosure baked in. Works on a laptop, an iPhone and an Android, and works
+  without a camera at all.
+- **Ten decks**: the intelligence engine and its eight-section dossier with
   "Show me the science" on every claim; the knowledge graph; a paper decoder that
   tells you what a study *doesn't* prove; a comparison lab, a four-reviewer
   debate room and a study-design simulator; a myth detector, social fact checker
@@ -317,8 +505,8 @@ in code and assert in CI.
   offered plainly rather than buried.
 
 Full write-up, including the evidence model and the known limits:
-[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (89 unit tests)
-and `npm run qa:astra` (66 end-to-end checks driving the real platform in
+[`docs/astra.md`](docs/astra.md). Tests: `npm run test:astra` (111 unit tests)
+and `npm run qa:astra` (81 end-to-end checks driving the real platform in
 Chromium).
 
 ---
@@ -387,6 +575,14 @@ What it does beyond drawing boxes on fruit:
   picking crew.
 - **Keeps a field ledger** — dated, geotagged, sorted by urgency, exportable as
   CSV or GeoJSON.
+- **Reads the canopy, not just the fruit** — a second mode scores leaves with
+  published visible-band vegetation indices (NGRDI, VARI, GLI, TGI, ExG), paints
+  a false-colour zone map over the live view, and reports canopy cover,
+  yellowing, necrosis and how far the weak zones sit below the best of the same
+  field. Real NDVI unlocks if you attach an IR-converted camera; a stock phone
+  cannot see near-infrared and the app says so rather than faking it.
+- **Turns a drone photo into a zone map** — the same index over a whole aerial
+  shot, with a numbered hotspot list and a CSV of every zone.
 
 Full write-up, including how the detector works and where it can be wrong:
 [`docs/harvest-eye.md`](docs/harvest-eye.md). Tests: `npm run test:harvest-eye`
@@ -435,6 +631,117 @@ constraint: [`docs/carrier.md`](docs/carrier.md). Tests: `npm run test:carrier`
 (49 unit tests, no browser needed) and `npm run qa:carrier`, which drives the
 real app in Chromium and checks on pixels that the host's chrome band is empty
 and the headline below it is not.
+
+---
+
+## Also in here: Black Optic 6
+
+A **ranch perimeter console** at [`public/black-optic-6/`](public/black-optic-6),
+built around one rule: no number appears on screen without a badge saying where
+it came from, and only measured numbers may raise an alarm.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6/>** — locally it is `/black-optic-6/`
+(`http://localhost:4173/black-optic-6/` under `./start.sh`).
+
+Fourteen decks: optics with every thermal palette a thermal camera offers, a
+Reolink Argus / IP camera setup that writes your relay config, tells you whether
+frames will be *measurable* as well as visible, and reaches the camera through a
+same-origin proxy so they are, a camera picker that takes a DJI Pocket in
+USB webcam mode like any other camera, and a detection chain that reports metres
+once calibrated; contacts, an event log and a pan-tilt loop that keeps a subject
+centred, plus colour and appearance trackers that follow one specific thing even
+when it stops moving; an acoustic watch; harvest tracking with a finish window
+rather than a promised time; airborne contacts measured in angles with what they
+are consistent with; a geofence that refuses to call a crossing the
+satellite fix cannot support; vegetation indices with the bare alleys masked out
+and the worst cells ranked; sonar occupancy mapping with an honest drift
+estimate; a Bluetooth wearable link; real NASA imagery over your coordinates with
+the next overpass times; an evidence vault that keeps the thirty seconds *before*
+an event and hashes the clip; links for external sensors; a world deck carrying
+the feeds from off the property — USGS earthquakes with a range and bearing from
+your gate, public traffic cameras on the roads out, active-fire points and
+regional headlines; and a capability ledger.
+
+The ledger is the point. Every capability on the specification is answered with
+one of six states — measured here, measured by a device you link, modelled with
+its error, blocked by the platform, needs hardware, or **unsound**. That last
+group is thirteen rows the console will not build at any price: an autonomous turret
+with a firing mechanism, identifying a drone from one camera, calling a palette
+over a visible camera thermal, naming a nutrient from a spectrum, intent and aggression
+scoring, threat percentages, concealed-object detection, gait identification,
+mass from a silhouette, heartbeats through walls at perimeter range, and magnetic
+firearm detection. Each says what is actually true and what the console does
+instead — the turret row's alternative, a pan-tilt loop with no notion of where a
+subject will be, is enforced by a test rather than by a comment.
+
+Nothing was rewritten to build it: the detection chain, the ironbow view and the
+external-sensor link come from Sentry, the overpass prediction and geodesy from
+Emberline. One implementation of each number, so two panels cannot disagree
+about how fast something was moving.
+
+Full write-up, including the refusals in detail:
+[`docs/black-optic-6.md`](docs/black-optic-6.md). Tests:
+`npm run test:black-optic-6` (213 unit tests) and `npm run qa:black-optic-6`,
+which drives the real console in Chromium with a synthetic camera and microphone.
+
+Of the world feeds, exactly one works on the static deploy with no setup at all:
+USGS sends the CORS header a browser needs, so the seismic panel reads it
+directly. The other three need the same free relay the fence cameras already
+use, and the deck says which is which in place rather than failing quietly. The
+seismic panel will not compute what the shaking was *at the ranch* — it reports
+the intensity USGS published, prefers what people actually reported over what
+ShakeMap modelled, and where neither exists it says so instead of estimating one
+from magnitude and distance.
+
+---
+
+## And its film: the Black Optic 6 showcase
+
+A scroll-driven cinematic site for the console at
+[`public/black-optic-6-site/`](public/black-optic-6-site) — anamorphic WebGL
+backdrop, parallax plates, a 3D card reveal, an operator who walks toward the
+lens as you scroll, an interactive demo, a ballistics trainer, and a different
+synthesised voice explaining each of the eleven acts.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/black-optic-6-site/>**
+— locally `/black-optic-6-site/` under `./start.sh`.
+
+Its one rule is the same as the console's, pointed at marketing: **every feature
+claim is read out of the capability ledger at load time, wearing whatever state
+that ledger gives it.** There is no second copy of the text to sweeten later. A
+row the ledger calls UNSOUND appears on the site as UNSOUND, in the section about
+the thing it sits next to — the turret row is in the marksmanship act, the Apple
+Watch row is beside the strap that does work. The title card's counts come from
+`tally()`, the thirteen palettes from the renderer that draws them, the five
+satellites from the orbital panel. A typo in a capability id throws at load
+rather than rendering a confident blank card.
+
+The operator is a photographic plate, feathered into the page at every edge
+rather than cut out — the plate is graded cold, so the white hat reads bluer than
+the sky behind it and the leather coat is the same pixel value as the dark frame
+corners, and no matte pullable from it avoids either eating the hat or leaving a
+blue rim. Kept whole and feathered, it lands on the near-black page with no
+visible edge and keeps the Earth and console panels that were always part of the
+artwork. The approach is a push-in at a constant rate of growth, with a small bob
+at the footfall rate, and each act declares which side the plate takes so it
+always clears the text column. A vector figure drawn from a joint rig carries the
+first frames of every load and the whole film if the plates never arrive.
+
+The voices are the browser's own speech engine, offline and free, reading
+sentences composed from the ledger; a test walks all 88 of them and fails if any
+contains copy that exists nowhere in the catalogue.
+
+The range act is a ballistics trainer against static steel — drop, lag-time wind
+drift, holdover, and a solver that turns its own rows amber past transonic where
+it stops being trustworthy. It is not a targeting system, and it says so on the
+page.
+
+Write-up: [`docs/black-optic-6-site.md`](docs/black-optic-6-site.md). Tests:
+`npm run test:black-optic-6-site` (95 unit tests) and
+`npm run qa:black-optic-6-site` (40 checks), which drives the real page in
+Chromium and checks that the shader paints, the operator moves, both plates
+decode and reach the canvas, the feather still reaches zero on every edge, the
+demo runs without a camera, and the honest rows survived onto the rendered page.
 
 ---
 

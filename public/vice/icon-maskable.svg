@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vice Command">
+  <defs>
+    <linearGradient id="m-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a0b3a"/>
+      <stop offset="1" stop-color="#5d1050"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#m-sky)"/>
+  <g transform="translate(256 256)">
+    <circle r="118" fill="#f6c945"/>
+    <circle r="95" fill="#0e0e12"/>
+    <circle r="73" fill="#f6c945"/>
+    <circle r="51" fill="#0e0e12"/>
+    <path d="M30 -30 A42 42 0 1 0 30 30" fill="none" stroke="#f6c945" stroke-width="19"/>
+  </g>
+</svg>

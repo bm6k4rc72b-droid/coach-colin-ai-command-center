@@ -271,6 +271,75 @@ async function main() {
     check(/Block A/.test(ledgerText), 'logged scan appears in the field ledger');
     check(/scan/.test(ledgerText), 'ledger shows the scan-count basis line');
 
+    // ---- canopy mode: the index map, its statistics, and a logged reading.
+    await page.evaluate(() => document.querySelectorAll('.sheet').forEach((s) => { s.hidden = true; }));
+    await page.evaluate(() => document.getElementById('modeChip').click());
+    await page.waitForFunction(
+      () => document.getElementById('statCover').textContent !== '—',
+      { timeout: 10000 },
+    );
+    await new Promise((resolve) => { setTimeout(resolve, 800); });
+
+    const canopy = await page.evaluate(() => ({
+      headline: document.getElementById('canopyLabel').textContent,
+      detail: document.getElementById('canopySub').textContent,
+      value: document.getElementById('canopyValue').textContent,
+      cover: document.getElementById('statCover').textContent,
+      legend: document.getElementById('legendName').textContent,
+      fruitHidden: document.getElementById('fruitReadout').hidden,
+      // The false-colour map must actually reach the overlay canvas.
+      mapPixels: (() => {
+        const canvas = document.getElementById('overlay');
+        const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        let painted = 0;
+        for (let i = 3; i < data.length; i += 4) if (data[i] > 0) painted += 1;
+        return painted;
+      })(),
+    }));
+    console.log(canopy);
+
+    check(canopy.fruitHidden, 'switching mode hides the fruit readout');
+    check(parseFloat(canopy.cover) > 30, `canopy cover measured on the vine fixture (${canopy.cover})`);
+    check(Number.isFinite(Number(canopy.value)), `index value is numeric (${canopy.value})`);
+    check(canopy.legend === 'NGRDI', `legend names the active index (${canopy.legend})`);
+    check(canopy.mapPixels > 5000, `index map painted over the canopy (${canopy.mapPixels} px)`);
+
+    // NDVI must stay locked to cameras that can see near-infrared.
+    const indexSheet = await page.evaluate(() => {
+      document.getElementById('indexBtn').click();
+      const cards = [...document.querySelectorAll('#indexList .index-card')];
+      return {
+        count: cards.length,
+        ndviDisabled: cards.some((card) => /NDVI/.test(card.textContent) && card.disabled),
+        cameras: document.querySelectorAll('#cameraList .index-card').length,
+      };
+    });
+    check(indexSheet.count >= 5, `index picker lists the visible-band indices (${indexSheet.count})`);
+    check(indexSheet.ndviDisabled, 'NDVI is disabled for a standard camera');
+    check(indexSheet.cameras === 3, `camera types offered (${indexSheet.cameras})`);
+
+    const canopyLogged = await page.evaluate(() => {
+      document.querySelectorAll('.sheet').forEach((s) => { s.hidden = true; });
+      document.getElementById('canopySaveBtn').click();
+      const rows = JSON.parse(localStorage.getItem('harvesteye.scans.v1') || '[]');
+      const canopyRow = rows.find((row) => row.kind === 'canopy');
+      document.getElementById('ledgerBtn').click();
+      return {
+        stored: Boolean(canopyRow),
+        indexId: canopyRow?.indexId,
+        ledger: document.getElementById('ledgerBody').textContent,
+      };
+    });
+    check(canopyLogged.stored, 'the canopy reading reached the ledger');
+    check(canopyLogged.indexId === 'ngrdi', `the reading records its index (${canopyLogged.indexId})`);
+    check(/Canopy/.test(canopyLogged.ledger), 'the ledger grows a canopy section');
+    check(/Block A/.test(canopyLogged.ledger) && /m 0\./.test(canopyLogged.ledger),
+      'the fruit cards survive alongside it');
+
+    await page.evaluate(() => {
+      document.querySelectorAll('.sheet').forEach((s) => { s.hidden = true; });
+      document.getElementById('modeChip').click();
+    });
     await page.evaluate(() => document.querySelectorAll('.sheet').forEach((s) => { s.hidden = true; }));
     // Let the confirmation toast clear so the screenshot shows the plain readout.
     await page.waitForFunction(

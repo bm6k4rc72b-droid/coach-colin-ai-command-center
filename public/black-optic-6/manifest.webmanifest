@@ -1,0 +1,15 @@
+{
+  "name": "Black Optic 6 — perimeter console",
+  "short_name": "Black Optic 6",
+  "description": "A perimeter security console that states where every number came from.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#04060a",
+  "theme_color": "#04060a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

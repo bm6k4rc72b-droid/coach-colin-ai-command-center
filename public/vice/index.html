@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>Vice Command — Coach Colin</title>
+<meta name="description" content="Apps, AI agents and licensed in-person security, delivered through a scroll-driven 1986 crime film. FireHazmat, Artifact Broker Ranch, God's Eye View, an outreach and automation swarm, and open-house protection.">
+<meta name="theme-color" content="#0a0614">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vice Command">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- The film runs on one fixed canvas behind everything. -->
+<canvas id="film" aria-hidden="true"></canvas>
+<div id="scanline" aria-hidden="true"></div>
+
+<!-- PRESS START. Browsers require a gesture before audio, and a crime picture
+     deserves a title card anyway. -->
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate-inner">
+    <p class="gate-eyebrow">Coach Colin Command Center presents</p>
+    <h1 id="gate-title" class="gate-title"><span>VICE</span><b>COMMAND</b></h1>
+    <p class="gate-sub">Apps · AI agents · licensed protection · 1986</p>
+    <p class="gate-copy">
+      Eight acts, one scroll. A cop chase, an air-cavalry response, a saucer,
+      and a shield. Everything real is on the other side of it — the apps, the
+      outreach swarm, and the officers who stand at your open house.
+    </p>
+    <div class="gate-actions">
+      <button id="enter" class="btn primary xl" type="button">Press start — with sound</button>
+      <button id="enter-quiet" class="btn ghost" type="button">Start silently</button>
+    </div>
+    <p class="gate-fine">
+      Original synthesised score. Audio only after you ask for it, and the
+      motion respects your reduced-motion setting.
+    </p>
+  </div>
+</div>
+
+<!-- Fixed chrome ------------------------------------------------------- -->
+<header id="topbar">
+  <a class="brand" href="#top">
+    <span class="brand-mark" aria-hidden="true">C</span>
+    <span class="brand-text">VICE<b>COMMAND</b></span>
+  </a>
+  <div id="rail" aria-hidden="true"></div>
+  <div class="top-actions">
+    <span id="chapter" class="chapter">ARRIVAL</span>
+    <button id="btn-sound" class="icon-btn" type="button" title="Score" aria-label="Toggle the score" aria-pressed="false">♪</button>
+    <a class="btn small" href="#hire">Hire the desk</a>
+  </div>
+</header>
+
+<div id="hud" aria-live="off">
+  <div class="hud-top">
+    <div id="stars" class="stars"></div>
+    <div class="speed"><b id="speed">0</b><span>MPH</span></div>
+  </div>
+  <canvas id="radar" width="132" height="132" aria-hidden="true"></canvas>
+  <p id="mission" class="mission">VICE CITY — 1986. WELCOME BACK.</p>
+</div>
+
+<div id="announce" aria-hidden="true">
+  <span class="announce-chapter"></span>
+  <span class="announce-line"></span>
+</div>
+
+<main id="top">
+
+<!-- ACT 1 — ARRIVAL ---------------------------------------------------- -->
+<section class="act" id="arrival" data-act="arrival">
+  <div class="act-stage">
+    <div class="hero">
+      <p class="kicker" data-reveal>Est. 1986 · still working</p>
+      <h1 class="hero-title" data-reveal>
+        <span data-parallax="0.18">SOFTWARE,</span>
+        <span data-parallax="0.1">SWARM,</span>
+        <b data-parallax="0.04">SECURITY.</b>
+      </h1>
+      <p class="hero-sub" data-reveal>
+        Three things, one desk. Apps that field crews and brokerages actually
+        open. AI agents that run outreach and every social channel without you
+        touching a keyboard. And licensed officers who stand at the door of
+        your open house.
+      </p>
+      <div class="hero-actions" data-reveal>
+        <a class="btn primary" href="#fleet">See the apps</a>
+        <a class="btn ghost" href="#security">Book protection</a>
+      </div>
+      <p class="scroll-cue" data-reveal>Scroll. It gets worse before it gets better.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 2 — THE BRIEF -------------------------------------------------- -->
+<section class="act" id="brief" data-act="brief">
+  <div class="act-stage flow">
+    <div class="panel wide">
+      <p class="eyebrow" data-reveal>Mission brief</p>
+      <h2 data-reveal>One operator. Three fronts. No wasted motion.</h2>
+      <div class="brief-grid">
+        <article class="brief-card" data-reveal style="--accent:#ff2e88">
+          <h3>Build</h3>
+          <p>
+            Eleven shipped applications, from an offline hazmat reference used
+            on live scenes to a LiDAR property platform that measures a ranch
+            rather than estimating it. Every one of them runs in a browser or a
+            pocket, and every one of them shows its working.
+          </p>
+        </article>
+        <article class="brief-card" data-reveal style="--accent:#38d6ff">
+          <h3>Reach</h3>
+          <p>
+            Ten agents covering prospecting, first touch, follow-up, social DMs,
+            booking, reel production, distribution, inbox triage, reviews and
+            the Monday numbers — with a planner that tells you when you have
+            selected more swarm than one person can approve.
+          </p>
+        </article>
+        <article class="brief-card" data-reveal style="--accent:#f6c945">
+          <h3>Protect</h3>
+          <p>
+            Licensed, insured officers for open houses, private events, estates,
+            executive details, ranch patrol and vacant listings. Visitor logs,
+            written reports, and a certificate of insurance before the first
+            shift.
+          </p>
+        </article>
+      </div>
+      <div class="stat-row">
+        <div class="stat" data-reveal><b data-counter="11">0</b><span>apps shipped</span></div>
+        <div class="stat" data-reveal><b data-counter="3541">0</b><span>hazmat materials, offline</span></div>
+        <div class="stat" data-reveal><b data-counter="10">0</b><span>agents on the roster</span></div>
+        <div class="stat" data-reveal><b data-counter="6">0</b><span>protective services</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 3 — WANTED. A short card is pinned so it holds still while the chase
+     plays behind it; the detail follows in normal flow, because anything taller
+     than the viewport inside a pinned stage can never be scrolled to. -->
+<section class="act" id="chase" data-act="chase" data-share="0.42">
+  <div class="act-stage">
+    <div class="wanted-frame">
+      <p class="eyebrow alarm" data-reveal>Wanted level — five stars</p>
+      <h2 data-reveal>Every siren in the city, and none of them catch you.</h2>
+      <p class="lead" data-reveal>
+        Heat is a scroll position here, not a state. Roll back up and the stars
+        go out one at a time. Nothing on this page gets stuck.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="act" id="chase-detail" data-act="chase-detail" data-share="0.58">
+  <div class="act-stage flow">
+    <div class="panel">
+      <p class="eyebrow alarm" data-reveal>Vehicle sheet</p>
+      <div class="spec-grid">
+        <article class="spec" data-reveal style="--accent:#f4f1ea">
+          <span class="spec-tag">The car</span>
+          <h3>White Rolls · red rims</h3>
+          <ul>
+            <li>Black enforcer bumper, straight off the front</li>
+            <li>Wide black splitter, low enough to scrape the causeway</li>
+            <li>Full-length side skirts</li>
+            <li>Rear diffuser with no business being on a saloon</li>
+          </ul>
+        </article>
+        <article class="spec" data-reveal style="--accent:#2a7bff">
+          <span class="spec-tag">The pursuit</span>
+          <h3>Armoured Chargers · ×3</h3>
+          <ul>
+            <li>Push bars, plated flanks, grilled glass</li>
+            <li>Alternating bar, blue left, red right</li>
+            <li>They are faster in a straight line</li>
+            <li>The causeway is not a straight line</li>
+          </ul>
+        </article>
+      </div>
+      <p class="aside" data-reveal>
+        Both vehicles are drawn as vector paths rather than shipped as artwork,
+        which is why the car is lit by a sunset in this act and by a fireball in
+        the last one without a second asset being downloaded.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 4 — THE FLEET (3D rack) ---------------------------------------- -->
+<section class="act" id="fleet" data-act="fleet" data-share="1.85">
+  <div class="act-stage">
+    <div class="rack-head">
+      <p class="eyebrow">The fleet</p>
+      <h2>Eleven apps. Drag the rack, or keep scrolling.</h2>
+      <p class="rack-count"><span id="rack-label">01 / 11</span> · <span id="rack-name">FireHazmat</span></p>
+    </div>
+    <div class="rack-viewport">
+      <div id="rack" class="rack"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Flagship plates ---------------------------------------------------- -->
+<section class="act plates" id="flagships" data-act="fleet-plates" data-share="1">
+  <div class="plate" data-reveal>
+    <div class="plate-media" data-parallax="0.12">
+      <img src="media/firehazmat-map.avif" width="600" height="1298" alt="FireHazmat showing ammonia isolation and protective action zones over San Francisco" decoding="async">
+      <img class="plate-media-alt" src="media/firehazmat-search.avif" width="600" height="1298" alt="FireHazmat search screen with hazard classes and ERG Table 3 shortcuts" decoding="async">
+    </div>
+    <div class="plate-copy">
+      <p class="eyebrow" style="--accent:#ff4a2b">Flagship · first responders</p>
+      <h2>FireHazmat</h2>
+      <p class="lead">
+        The whole 2024 Emergency Response Guidebook in a pocket, with no signal
+        required: 3,541 materials, 62 guides, placard scan, and a response
+        wizard. On scene it draws the isolation ring and the protective-action
+        zone on a live map, folds in wind and weather, and switches between day
+        and night, small and large spill while you are looking at it.
+      </p>
+      <ul class="ticks">
+        <li>Offline-first — the guidebook works when the network does not</li>
+        <li>Live PAZ and plume geometry over real streets</li>
+        <li>Table 3 TIH shortcuts one tap from the home screen</li>
+        <li>Built by someone who has stood on the hot side of the tape</li>
+      </ul>
+      <a class="btn small" href="https://www.instagram.com/firehazmatapp/" target="_blank" rel="noopener">See it on Instagram</a>
+    </div>
+  </div>
+
+  <div class="plate reverse" data-reveal>
+    <div class="plate-media" data-parallax="0.12">
+      <img src="media/artifact-broker-ranch.avif" width="760" height="1140" alt="Artifact luxury property management console showing a 3D LiDAR scan of an estate" decoding="async">
+    </div>
+    <div class="plate-copy">
+      <p class="eyebrow" style="--accent:#38d6ff">Platform · property</p>
+      <h2>Artifact — Broker Ranch</h2>
+      <p class="lead">
+        Scan. Plan. Value. LiDAR and photogrammetry build a live twin of a
+        house and its land — front, plan and side on one screen — with square
+        footage, acreage, elevation, boundary and material detection measured
+        rather than estimated, WiFi mesh planned across the whole parcel, and a
+        satellite feed beside it.
+      </p>
+      <ul class="ticks">
+        <li>Live 3D rotation at 99%+ mesh coverage</li>
+        <li>House and lot measured to a number you can put in a listing</li>
+        <li>Patrol reports that name the gate, not "the north side"</li>
+        <li>Enterprise security layer for the properties that need one</li>
+      </ul>
+      <a class="btn small" href="https://broker-ranch-ops.higgsfield.app" target="_blank" rel="noopener">Open Broker Ranch Ops</a>
+    </div>
+  </div>
+
+  <div class="plate" data-reveal>
+    <div class="plate-media" data-parallax="0.12">
+      <img src="media/broker-ranch-ops.avif" width="600" height="1298" alt="God's Eye View described on the Broker Ranch operations site" decoding="async">
+    </div>
+    <div class="plate-copy">
+      <p class="eyebrow" style="--accent:#7ce38b">Platform · situational awareness</p>
+      <h2>God's Eye View</h2>
+      <p class="lead">
+        Everything above the ranch on one globe you can talk to: live aircraft,
+        vessels and orbital contacts, with seismic activity, active fires and
+        weather fronts layered over the top. Voice command to the map, hands
+        free. Public sources only, presented like a cockpit.
+      </p>
+      <ul class="ticks">
+        <li>Aircraft, ships and satellites on a photoreal Earth</li>
+        <li>Fires, quakes and weather as toggleable layers</li>
+        <li>Say where to go — it flies there</li>
+        <li>Every feed cited on screen</li>
+      </ul>
+      <a class="btn small" href="../">Launch the globe</a>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 5 — AIR CAVALRY -->
+<section class="act" id="cavalry" data-act="cavalry" data-share="0.42">
+  <div class="act-stage">
+    <div class="panel">
+      <p class="eyebrow alarm" data-reveal>Escalation</p>
+      <h2 data-reveal>When it stops being a police problem.</h2>
+      <p class="lead" data-reveal>
+        Gunships on the causeway is a joke. The thing underneath it is not: most
+        operations have a plan for the ordinary day and nothing at all for the
+        day it escalates. The desk covers both.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="act" id="cavalry-detail" data-act="cavalry-detail" data-share="0.58">
+  <div class="act-stage flow">
+    <div class="panel wide">
+      <p class="eyebrow" data-reveal>Both halves of the day</p>
+      <div class="brief-grid">
+        <article class="brief-card" data-reveal style="--accent:#7ce38b">
+          <h3>Know first</h3>
+          <p>God's Eye View and Sentry: what is in the air, on the road and inside the perimeter, cited and timestamped.</p>
+        </article>
+        <article class="brief-card" data-reveal style="--accent:#f6c945">
+          <h3>Decide fast</h3>
+          <p>FireHazmat and Baseline: the guidebook answer and the readiness number, offline, in seconds.</p>
+        </article>
+        <article class="brief-card" data-reveal style="--accent:#ff2e88">
+          <h3>Stand a post</h3>
+          <p>Officers on site, briefed, insured and logging — the part no application has ever done.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 6 — THE SWARM -------------------------------------------------- -->
+<section class="act" id="agents" data-act="agents">
+  <div class="act-stage flow">
+    <div class="panel wide">
+      <p class="eyebrow" data-reveal>Deployment console</p>
+      <h2 data-reveal>Ten agents. Pick a swarm, and it will tell you if it is too much.</h2>
+      <p class="lead" data-reveal>
+        Every agency will sell you agents. What they will not do is tell you
+        that the selection you just made puts 386 emails a day through one
+        mailbox and needs eleven hours a week of your approval. This console
+        does the arithmetic in front of you, and refuses to call an
+        over-committed plan ready.
+      </p>
+
+      <div class="console">
+        <div class="console-roster">
+          <div class="roster-head">
+            <h3>Outreach</h3>
+            <button class="btn tiny ghost" type="button" data-select="outreach">Select all</button>
+          </div>
+          <div id="roster-outreach" class="roster"></div>
+          <div class="roster-head">
+            <h3>Automation</h3>
+            <button class="btn tiny ghost" type="button" data-select="automation">Select all</button>
+          </div>
+          <div id="roster-automation" class="roster"></div>
+        </div>
+
+        <aside class="console-readout" aria-live="polite">
+          <div class="dial">
+            <label for="throttle">Throttle</label>
+            <input id="throttle" type="range" min="10" max="100" value="100" step="5">
+            <output id="throttle-out">100%</output>
+          </div>
+          <div class="dial">
+            <label for="review">Your approval time</label>
+            <input id="review" type="range" min="1" max="25" value="5" step="1">
+            <output id="review-out">5 h/week</output>
+          </div>
+          <div class="readout-figures">
+            <div><b id="fig-weekly">0</b><span>touches / week</span></div>
+            <div><b id="fig-review">0.0</b><span>hours to approve</span></div>
+          </div>
+          <div id="channel-load" class="channel-load"></div>
+          <div id="plan-warnings" class="warnings"></div>
+          <div class="console-actions">
+            <button id="deploy" class="btn primary" type="button">Deploy the swarm</button>
+            <button id="auto-throttle" class="btn ghost small" type="button">Find a safe throttle</button>
+          </div>
+          <p id="deploy-note" class="fine"></p>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 7 — DETONATION -->
+<section class="act" id="detonation" data-act="detonation" data-share="0.45">
+  <div class="act-stage">
+    <div class="detonation-copy">
+      <p class="eyebrow alarm" data-reveal>Act seven</p>
+      <h2 data-reveal>The city goes up. Somebody has to be standing over you.</h2>
+      <p class="lead" data-reveal>
+        A gold truck, a saucer with a sticker on it, and the whole skyline in one
+        frame. It is the loudest thing on this page and it is entirely fiction —
+        a parody set piece, not a depiction of any real person or company. What
+        survives it is the point.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="act" id="detonation-detail" data-act="detonation-detail" data-share="0.55">
+  <div class="act-stage flow">
+    <div class="colin" data-reveal>
+      <figure class="colin-portrait">
+        <img src="media/captain-colin.avif" width="760" height="1374" alt="Captain Colin — a cyborg coach in a white lab coat over black and gold plate, arms folded" decoding="async">
+      </figure>
+      <div class="colin-copy">
+        <p class="eyebrow" style="--accent:#f6c945">Captain Colin</p>
+        <h3>The shield is the whole business model.</h3>
+        <p>
+          Software tells you what is happening. Agents make sure the right people
+          hear about you. Neither one puts a body between a client and a problem.
+          That is what the third front is for, and it is the part that gets called
+          at 2am.
+        </p>
+        <a class="btn small" href="#security">See what the desk covers</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 8 — AFTERMATH: SECURITY --------------------------------------- -->
+<section class="act" id="security" data-act="aftermath">
+  <div class="act-stage flow tall">
+    <div class="panel wide">
+      <p class="eyebrow" data-reveal>In-person protection</p>
+      <h2 data-reveal>Licensed officers. Open houses a speciality.</h2>
+      <p class="lead" data-reveal>
+        The realtor problem, stated plainly: an empty luxury home, an open front
+        door, and strangers walking in alone. An officer at the entry changes
+        that for the price of a couple of hours' billing — and every visitor is
+        logged, so you know who was in the house.
+      </p>
+
+      <div id="services" class="services"></div>
+
+      <div class="quote" id="quote">
+        <h3>Estimate a detail</h3>
+        <div class="quote-form">
+          <label>Service
+            <select id="q-service"></select>
+          </label>
+          <label>Officers
+            <input id="q-officers" type="number" min="1" max="20" value="1">
+          </label>
+          <label>Hours
+            <input id="q-hours" type="number" min="1" max="24" value="4">
+          </label>
+          <label>Days
+            <input id="q-days" type="number" min="1" max="30" value="1">
+          </label>
+          <label>Tier
+            <select id="q-tier">
+              <option value="unarmed">Unarmed</option>
+              <option value="armed">Armed</option>
+              <option value="executive">Executive protection</option>
+            </select>
+          </label>
+          <label class="check"><input id="q-vehicle" type="checkbox"> Marked vehicle on site</label>
+          <fieldset class="uplifts">
+            <legend>Applies to this detail</legend>
+            <label class="check"><input type="checkbox" data-uplift="overnight"> Overnight</label>
+            <label class="check"><input type="checkbox" data-uplift="weekend"> Weekend</label>
+            <label class="check"><input type="checkbox" data-uplift="holiday"> Public holiday</label>
+            <label class="check"><input type="checkbox" data-uplift="shortNotice"> Inside 48 hours</label>
+          </fieldset>
+        </div>
+        <div class="quote-out" aria-live="polite">
+          <p class="quote-total"><b id="q-total">$0</b><span>estimated</span></p>
+          <ul id="q-assumptions" class="quote-assumptions"></ul>
+          <p id="q-disclaimer" class="fine"></p>
+          <a id="q-mail" class="btn primary" href="#hire">Send this enquiry</a>
+        </div>
+      </div>
+
+      <p class="licensing fine" id="licensing"></p>
+    </div>
+
+    <div class="panel" id="hire">
+      <p class="eyebrow" data-reveal>The desk</p>
+      <h2 data-reveal>Tell it what you need.</h2>
+      <p class="lead" data-reveal>
+        A date and a property for protection. A channel and a target list for
+        the swarm. A problem and a deadline for software. All three go to the
+        same person.
+      </p>
+      <div class="hire-actions" data-reveal>
+        <a class="btn primary xl" id="hire-mail" href="mailto:coachcolinc@icloud.com?subject=Vice%20Command%20enquiry">Email the desk</a>
+        <a class="btn ghost" href="../">Open the command center</a>
+      </div>
+      <p class="fine">
+        Every price on this page is an indicative estimate, confirmed in writing
+        before an officer is scheduled. Licence numbers and a certificate of
+        insurance go out with the contract.
+      </p>
+    </div>
+
+    <footer class="foot">
+      <p><b>VICE COMMAND</b> — a set piece for the Coach Colin Command Center.</p>
+      <p class="fine">
+        Fiction: the chase, the cavalry, the saucer and the detonation are a
+        parody sequence. No real person, vehicle, agency or company is depicted,
+        endorsed or involved. The score is original and synthesised in the
+        browser; no commercial recording is used or reproduced.
+      </p>
+      <p class="fine">
+        <a href="../">Command center</a> ·
+        <a href="../sentry/">Sentry</a> ·
+        <a href="../touchline/">Touchline</a> ·
+        <a href="../carrier/">Carrier</a> ·
+        <a href="../jose-montes/">Montes &amp; Co.</a>
+      </p>
+    </footer>
+  </div>
+</section>
+
+</main>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -7748,6 +7748,60 @@ export default defineConfig(({ mode }) => {
       allowedHosts: (env.HOST === '0.0.0.0' || env.HOST === '::')
         ? true
         : ['localhost', '127.0.0.1', '.local'],
+      proxy: {
+        // Camera relay, for Black Optic 6.
+        //
+        // A browser will not let a page read pixels back off a cross-origin
+        // image, and every measurement in that console does exactly that — so a
+        // camera stream fetched straight from the local network displays and
+        // measures nothing. Serving the relay from this origin removes the
+        // problem entirely rather than working around it: same origin, no CORS
+        // preflight, no tainted canvas, and no mixed-content block when the
+        // console is opened over plain HTTP on the ranch network.
+        //
+        // Defaults to go2rtc's own port. Point CAMERA_RELAY_URL somewhere else
+        // for MediaMTX, Frigate, or a relay on another machine.
+        // World feeds, in front of the camera relay because Vite matches these
+        // in order and '/relay' would otherwise swallow them.
+        //
+        // Both exist for the same reason and only that reason: the upstreams do
+        // not send CORS headers, so a browser refuses to let the console *read*
+        // them. Proxying makes them same-origin, which also means a traffic
+        // camera frame stops tainting the canvas and becomes measurable rather
+        // than merely visible. Note what is NOT here: USGS earthquakes. That
+        // feed does send CORS, so the console fetches it directly and the
+        // seismic panel keeps working on a static host with no server at all.
+        '/relay/caltrans': {
+          target: 'https://cwwp2.dot.ca.gov',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (requestPath) => {
+            const tail = requestPath.replace(/^\/relay\/caltrans/, '');
+            // The console asks for a district catalog by a tidy name; the
+            // agency publishes it at a less tidy one.
+            const district = /^\/d(\d{1,2})\/cctv\.json/.exec(tail);
+            if (district) {
+              const id = Number(district[1]);
+              return `/data/d${id}/cctv/cctvStatusD${String(id).padStart(2, '0')}.json`;
+            }
+            return tail;
+          },
+        },
+        '/relay/gdelt': {
+          target: 'https://api.gdeltproject.org',
+          changeOrigin: true,
+          secure: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/relay\/gdelt/, ''),
+        },
+        '/relay': {
+          target: env.CAMERA_RELAY_URL || 'http://localhost:1984',
+          changeOrigin: true,
+          // go2rtc signals WebRTC over a websocket; without this the low-latency
+          // path silently falls back to HLS and picks up seconds of delay.
+          ws: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/relay/, ''),
+        },
+      },
     },
     // Expose selected API keys to the browser via import.meta.env.*
     define: {

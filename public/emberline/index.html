@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Emberline — where the fire goes, and how sure that is</title>
+    <meta
+      name="description"
+      content="A fire tracker that fuses satellite detections, camera cross-bearings and network node loss, projects spread with Rothermel, and shows the uncertainty at the size it actually is."
+    />
+    <meta name="theme-color" content="#0a0d12" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Emberline" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="bar">
+        <div class="brand">
+          <span class="mark" aria-hidden="true"></span>
+          <div>
+            <h1>Emberline</h1>
+            <p class="tagline">Where it goes, and how sure that is</p>
+          </div>
+        </div>
+        <div class="bar-status">
+          <span class="chip" id="status-chip">Loading…</span>
+        </div>
+      </header>
+
+      <main class="stage">
+        <section class="viewport" aria-label="God's eye view">
+          <canvas id="map" aria-label="Fire situation map"></canvas>
+
+          <div class="map-legend" id="legend" hidden>
+            <span><i class="sw sw-sat"></i>Satellite pixel</span>
+            <span><i class="sw sw-cam"></i>Camera bearing</span>
+            <span><i class="sw sw-fix"></i>Fused fix</span>
+            <span><i class="sw sw-lost"></i>Node destroyed</span>
+            <span><i class="sw sw-exp"></i>Front, expected</span>
+            <span><i class="sw sw-fast"></i>Front, fast case</span>
+            <span class="legend-note">No basemap — coordinate grid only</span>
+          </div>
+
+          <div class="map-tools">
+            <button class="tool" id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button class="tool" id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button class="tool" id="recentre" type="button" aria-label="Recentre on the fire">⊙</button>
+          </div>
+
+          <div class="horizon-bar">
+            <label for="horizon">Project forward</label>
+            <input id="horizon" type="range" min="0" max="240" step="15" value="60" />
+            <output id="horizon-out">60 min</output>
+          </div>
+
+          <div class="readout" id="readout"></div>
+        </section>
+
+        <section class="panel" aria-label="Analysis">
+          <nav class="tabs" role="tablist">
+            <button role="tab" class="tab tab-on" data-tab="fires" type="button">Fires</button>
+            <button role="tab" class="tab" data-tab="spread" type="button">Spread</button>
+            <button role="tab" class="tab" data-tab="sensors" type="button">Sensors</button>
+            <button role="tab" class="tab" data-tab="about" type="button">Limits</button>
+          </nav>
+
+          <div class="tab-body" id="tab-fires">
+            <div id="fires-list" class="cards"></div>
+          </div>
+
+          <div class="tab-body" id="tab-spread" hidden>
+            <div class="controls">
+              <label>
+                <span>Fuel model</span>
+                <select id="fuel"></select>
+              </label>
+              <label>
+                <span>Wind at 10 m <output id="wind-out"></output></span>
+                <input id="wind" type="range" min="0" max="25" step="0.5" />
+              </label>
+              <label>
+                <span>Wind from <output id="dir-out"></output></span>
+                <input id="dir" type="range" min="0" max="355" step="5" />
+              </label>
+              <label>
+                <span>Canopy shelter</span>
+                <select id="shelter">
+                  <option value="open">Open — no overstory</option>
+                  <option value="sparse">Scattered overstory</option>
+                  <option value="moderate">Part sheltered</option>
+                  <option value="dense">Closed canopy</option>
+                </select>
+              </label>
+              <label>
+                <span>1-hour fuel moisture <output id="moist-out"></output></span>
+                <input id="moist" type="range" min="1" max="30" step="0.5" />
+              </label>
+              <label>
+                <span>Slope <output id="slope-out"></output></span>
+                <input id="slope" type="range" min="0" max="45" step="1" />
+              </label>
+            </div>
+            <div id="spread-readout" class="cards"></div>
+          </div>
+
+          <div class="tab-body" id="tab-sensors" hidden>
+            <div id="sensors-readout" class="cards"></div>
+          </div>
+
+          <div class="tab-body" id="tab-about" hidden>
+            <div id="about-readout" class="cards"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

@@ -381,6 +381,61 @@ export function buildVials(count = 4, { radius = 2.1 } = {}) {
 }
 
 /**
+ * The augmented-reality plinth.
+ *
+ * Two concentric rings with tick marks between them, lying in the plane the
+ * compound turns inside. In AR there is no room to give the object a sense of
+ * place, so the ring does that job on its own: it stays fixed in world space
+ * while the molecule rotates, which is the cue that reads as "this thing is
+ * sitting on your desk" rather than "this thing is painted on your screen".
+ *
+ * @param {object} [options] Options.
+ * @param {number} [options.radius] Outer radius.
+ * @param {number} [options.y] Height below the compound's centre.
+ * @returns {object} A line list.
+ */
+export function buildArRing({ radius = 3.1, y = -2.4 } = {}) {
+  const segments = [];
+  const steps = 72;
+
+  for (const [r, intensity] of [[radius, 0.95], [radius * 0.86, 0.4]]) {
+    for (let i = 0; i < steps; i += 1) {
+      const a = (i / steps) * Math.PI * 2;
+      const b = ((i + 1) / steps) * Math.PI * 2;
+      segments.push([
+        [Math.cos(a) * r, y, Math.sin(a) * r],
+        [Math.cos(b) * r, y, Math.sin(b) * r],
+        intensity,
+      ]);
+    }
+  }
+
+  // Ticks around the rim, longer every fourth, like an instrument bezel.
+  for (let i = 0; i < 32; i += 1) {
+    const a = (i / 32) * Math.PI * 2;
+    const inner = radius * (i % 4 === 0 ? 0.7 : 0.8);
+    segments.push([
+      [Math.cos(a) * inner, y, Math.sin(a) * inner],
+      [Math.cos(a) * radius * 0.86, y, Math.sin(a) * radius * 0.86],
+      i % 4 === 0 ? 0.7 : 0.28,
+    ]);
+  }
+
+  // Four uprights connecting the plinth to the compound's own plane, so the
+  // ring reads as supporting something rather than floating on its own.
+  for (let i = 0; i < 4; i += 1) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    segments.push([
+      [Math.cos(a) * radius, y, Math.sin(a) * radius],
+      [Math.cos(a) * radius * 0.94, y + 0.55, Math.sin(a) * radius * 0.94],
+      0.34,
+    ]);
+  }
+
+  return lines(segments);
+}
+
+/**
  * Ambient motes: the dust that makes a volume read as a volume.
  *
  * @param {number} [count] How many.
