@@ -275,7 +275,14 @@ corrupts a number rather than merely losing one.
 
 Speed is measured over a one-second window rather than frame to frame, and the
 reported peak is the median of seven consecutive windows, so a peak has to be
-held to be believed. Fitting a line through the window instead of measuring it
+held to be believed. The window also holds a minimum number of samples, so that
+the figure means the same thing on a fast device and a slow one — without it the
+same sprint read 3% high at 25 frames a second and 8% high at nine.
+
+The cost of that is worth knowing before you wonder about it: on a slow device
+the window takes a couple of seconds to fill, so a player's top speed starts low
+and climbs to its real value over the first few seconds of tracking them. It is
+not ramping up; the measurement is. Fitting a line through the window instead of measuring it
 end to end was tried and is *worse*: the positions have already been through the
 tracker's filter, so consecutive samples share most of their error, and a
 least-squares slope over correlated samples has a wider tail than the chord.
@@ -406,7 +413,7 @@ its denominator, and rating any player.
 
 ```bash
 npm run test:touchline   # 97 unit tests, both sports
-npm run qa:touchline     # 57 end-to-end checks driving the real app in Chromium
+npm run qa:touchline     # 59 end-to-end checks driving the real app in Chromium
 ```
 
 The unit suite renders scenes through the app's own demo generator — a real
@@ -417,11 +424,13 @@ green threshold, a mean-based turf model, and any segmentation that forgets the
 lines.
 
 The end-to-end harness drives the shipped app in a browser against the built-in
-demo, whose choreography is a break at 7 m/s, a covering run at 3 m/s, and five
-players who never move. It checks the numbers on screen against those, not
-merely that numbers appeared: the break comes back at 25.9 km/h against a
-choreographed 25.2, over 31.8 m against 32.2, and the five who stood still log
-exactly zero.
+demos, whose choreography is written in metres and seconds: a football break at
+7.5 m/s with a covering run at 3 m/s and five players who never move, and a
+gridiron go route at 9.6 m/s with four linemen who never move. It checks the
+numbers on screen against those, not merely that numbers appeared: the break
+comes back at 27.5 km/h against a choreographed 27.0 over 32.6 m against 32.3,
+the route at 35.2 km/h against 34.6, the painted yard numbers never join the
+team sheet, and everyone who stood still logs exactly zero.
 
 ---
 

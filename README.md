@@ -121,9 +121,9 @@ correctly reporting that its metres were stale.
 
 Full write-up, including what it refuses to do and why:
 [`docs/touchline.md`](docs/touchline.md). Tests: `npm run test:touchline`
-(97 unit tests) and `npm run qa:touchline` (57 end-to-end checks driving the
-real app in Chromium against both sports — a 7 m/s football break returns
-25.9 km/h against a true 25.2, a 9.6 m/s route returns 34.3 against 34.6, the
+(97 unit tests) and `npm run qa:touchline` (59 end-to-end checks driving the
+real app in Chromium against both sports — a 7.5 m/s football break returns
+27.5 km/h against a true 27.0, a 9.6 m/s route returns 35.2 against 34.6, the
 painted numbers never join the team sheet, and the players who never move log
 exactly zero).
 

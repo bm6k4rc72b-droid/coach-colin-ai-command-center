@@ -127,6 +127,23 @@ const SPEED_WINDOW_MS = 1000;
 const MIN_SPEED_SAMPLES = 20;
 
 /**
+ * Longest the speed window may grow, milliseconds.
+ *
+ * The minimum sample count above fights noise on a slow device by letting the
+ * window stretch. Left unbounded it stretches too far: at eight frames a second
+ * twenty samples is two and a half seconds of window, and a peak is only
+ * reported once seven consecutive windows agree — so a player has to hold their
+ * speed for well over three seconds before it appears. A football sprint lasts
+ * that long. An American football play often does not, and the top speed of a
+ * four-second route would simply never be reported.
+ *
+ * So the window is capped in time as well as floored in samples, and the cap
+ * wins. The cost is a slightly noisier reading on a slow device, which the
+ * median across windows absorbs.
+ */
+const MAX_SPEED_WINDOW_MS = 2000;
+
+/**
  * Speed above which a player is running hard, metres per second (~19.8 km/h).
  *
  * Football's convention, and the default. Thresholds like this are convention
@@ -442,9 +459,11 @@ export class Tracker {
 
     track.samples.push({ t: timeMs, x: track.x, y: track.y });
     while (
-      track.samples.length > MIN_SPEED_SAMPLES &&
-      timeMs - track.samples[0].t > SPEED_WINDOW_MS
+      (track.samples.length > MIN_SPEED_SAMPLES &&
+        timeMs - track.samples[0].t > SPEED_WINDOW_MS) ||
+      timeMs - track.samples[0].t > MAX_SPEED_WINDOW_MS
     ) {
+      if (track.samples.length <= 2) break;
       track.samples.shift();
     }
     // Speed over a window rather than frame to frame: a single frame of

@@ -320,11 +320,19 @@ export const DEMO_SECONDS = 12;
  * pixels to panel.
  */
 export const DEMO_TRUTH = Object.freeze({
-  /** The break: 7 m/s, held for 4.6 s, from x = 8 m to x = 40.2 m. */
-  runnerSpeedMps: 7,
-  runSeconds: 4.6,
-  runDistanceM: 7 * 4.6,
-  runnerLabel: 'the home player breaking from 8 m to 40.2 m along the pitch',
+  /**
+   * The break: 7.5 m/s, held for 4.3 s, from x = 8 m to x = 40.3 m.
+   *
+   * Deliberately clear of the 7 m/s sprint threshold rather than sitting on it.
+   * At exactly the threshold, whether the run counts as a sprint comes down to
+   * which side of it the measurement noise falls on — so the fixture would
+   * assert a coin flip, and every change to the speed window would appear to
+   * break it.
+   */
+  runnerSpeedMps: 7.5,
+  runSeconds: 4.3,
+  runDistanceM: 7.5 * 4.3,
+  runnerLabel: 'the home player breaking from 8 m to 40.3 m along the pitch',
   /** The covering run across the pitch. */
   joggerSpeedMps: 3,
   /**
@@ -360,7 +368,7 @@ export const DEMO_TRUTH = Object.freeze({
 export function choreography(t) {
   const loop = t % DEMO_SECONDS;
   const players = [
-    { id: 'runner', x: 8 + 7 * Math.min(loop, 4.6), y: 26, kit: KITS.home },
+    { id: 'runner', x: 8 + 7.5 * Math.min(loop, 4.3), y: 26, kit: KITS.home },
     { id: 'tracker', x: 30 - 3 * Math.min(loop, 4.6), y: 44, kit: KITS.away },
     { id: 'holder-a', x: 20, y: 16, kit: KITS.home },
     { id: 'holder-b', x: 26, y: 52, kit: KITS.away },
@@ -376,7 +384,7 @@ export function choreography(t) {
   const ball =
     loop < 1.2
       ? { x: 9 + 14 * loop, y: 27.5 }
-      : { x: Math.min(8 + 7 * Math.min(loop, 4.6) + 1.4, 42), y: 26.6 };
+      : { x: Math.min(8 + 7.5 * Math.min(loop, 4.3) + 1.4, 42), y: 26.6 };
   return { players, ball };
 }
 
@@ -659,26 +667,23 @@ export function startDemo(options = {}) {
   canvas.height = spec.height;
   const ctx = canvas.getContext('2d');
   const image = ctx.createImageData(canvas.width, canvas.height);
+  const startedAt = performance.now();
   let frame = 0;
   let timer = 0;
 
   const paint = () => {
-    // Content time comes from the frame counter, not from the clock.
+    // Content time comes from the clock, and it has to.
     //
-    // The painter and the analysis share a thread, and analysing a gridiron
-    // frame costs most of a tenth of a second — so the painter is starved and
-    // fires late. Driving the choreography from `performance.now()` then
-    // advances the players by however long the analysis took, while the stream
-    // hands the app exactly one frame with one frame's worth of media time on
-    // it. The receiver covers three metres and is stamped as having covered
-    // one frame: past what a human can run, so the tracker refuses the
-    // association, and the route breaks in the middle on a busy machine and
-    // not on an idle one.
-    //
-    // Counting frames instead makes content time and media time the same
-    // quantity. A loaded machine plays the clip slowly rather than jerkily,
-    // which is exactly what a fixture should do.
-    const t = frame / fps;
+    // Counting painted frames instead looks tidier — a loaded machine would
+    // play the clip in slow motion rather than jerkily — and it is wrong here,
+    // measurably. The app timestamps each frame with the media time the stream
+    // puts on it, and a canvas capture stamps frames by the wall clock whether
+    // or not the canvas was repainted in between. Advancing the players by a
+    // frame while the stream advances the clock by however long the analysis
+    // took makes every player appear to move slower than they were told to: a
+    // 9.6 m/s route came back at 6.1. The two clocks have to be the same clock,
+    // and the stream's is the wall.
+    const t = (performance.now() - startedAt) / 1000;
     const scene = play(t);
     renderScene({
       ...field,

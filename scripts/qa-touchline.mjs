@@ -457,13 +457,27 @@ async function main() {
             // stands at the end of the route keeps drifting by a few tens of
             // centimetres a second, so a maximum taken over a whole session
             // eventually exceeds the route it is measuring.
-            if (globalThis.__route) return;
             const tracks = globalThis.touchline?.state?.tracker?.tracks ?? [];
+            if (globalThis.__route) {
+              // Keep following the same player. The distance is frozen at the
+              // moment the route finished — a track standing at the end of it
+              // drifts by a few tens of centimetres a second — but the top
+              // speed is still settling: it is a median over a run of windows,
+              // and at eight frames a second that takes a couple of seconds to
+              // fill. Reading it the instant the distance crosses the line
+              // catches it half-formed.
+              const same = tracks.find((track) => track.id === globalThis.__route.id);
+              if (same && same.topSpeedMps > globalThis.__route.topSpeedMps) {
+                globalThis.__route.topSpeedMps = same.topSpeedMps;
+              }
+              return;
+            }
             for (const track of tracks) {
               if (!track.confirmed) continue;
               if (Math.hypot(track.x - end.x, track.y - end.y) > 3) continue;
               if (track.distanceM < goal) continue;
               globalThis.__route = {
+                id: track.id,
                 distanceM: track.distanceM,
                 topSpeedMps: track.topSpeedMps,
               };
@@ -480,6 +494,8 @@ async function main() {
         .catch(() => {
           /* asserted below with whatever the sampler actually saw */
         });
+      // Let the speed window finish filling on the player just measured.
+      await wait(3000);
       const route = await page.evaluate(() => {
         clearInterval(globalThis.__routeTimer);
         return globalThis.__route;
