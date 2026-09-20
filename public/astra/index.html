@@ -76,6 +76,10 @@
   <p class="lens-hint">Point at a label or a QR code. Nothing is recorded or uploaded.</p>
 </aside>
 
+<!-- The printable QR sheet. Lives at body level so print media can show it
+     alone, and it is built from the live URL rather than baked into the repo. -->
+<div id="qr-sheet" class="qr-sheet" hidden role="dialog" aria-label="Printable QR sheet"></div>
+
 <div id="reward" class="reward" role="status" aria-live="polite"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 

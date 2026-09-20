@@ -31,7 +31,17 @@ export function el(tag, props = {}, children = []) {
     else if (key === 'html') node.innerHTML = value;
     else if (key.startsWith('on') && typeof value === 'function') {
       node.addEventListener(key.slice(2).toLowerCase(), value);
-    } else if (key === 'style' && typeof value === 'object') Object.assign(node.style, value);
+    } else if (key === 'style' && typeof value === 'object') {
+      // Object.assign silently ignores CSS custom properties — assigning
+      // `style['--accent']` sets a JavaScript expando, not a variable — so
+      // every `--accent`, `--band` and `--tier` in the app fell back to its
+      // `:root` default and the per-compound colour never appeared. Custom
+      // properties have to go through setProperty.
+      for (const [property, setting] of Object.entries(value)) {
+        if (property.startsWith('--')) node.style.setProperty(property, setting);
+        else node.style[property] = setting;
+      }
+    }
     else node.setAttribute(key, value === true ? '' : String(value));
   }
   for (const child of [].concat(children)) {

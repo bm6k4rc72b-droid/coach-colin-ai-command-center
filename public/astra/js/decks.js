@@ -22,6 +22,7 @@ import { arrivalProfile, executiveDashboard, proposeCampaign } from './command.j
 import { UNLOCKS, summary as progressSummary } from './progress.js';
 import { ago, copyText, download, el, fill, pct, richText } from './dom.js';
 import { buildPanels } from './ar.js';
+import { qrSvg } from './qr.js';
 
 /* ------------------------------------------------------------------ shared */
 
@@ -1280,6 +1281,79 @@ export function renderProfile(ctx) {
   ].filter(Boolean));
 }
 
+/**
+ * The base URL a scanned card should open.
+ *
+ * Taken from wherever the platform is actually being served, so the printed
+ * codes are correct on localhost, on GitHub Pages, and on any domain this ends
+ * up on. Baking a URL into the repository would produce codes that work in
+ * exactly one deployment and fail silently everywhere else.
+ *
+ * @returns {string} The base URL, without a trailing `index.html`.
+ */
+export function sheetBase() {
+  const path = location.pathname.replace(/index\.html$/, '');
+  return `${location.origin}${path}`;
+}
+
+/**
+ * The URL a compound's card should carry.
+ *
+ * @param {string} id Compound id.
+ * @param {string} [base] Base URL.
+ * @returns {string} The deep link.
+ */
+export function cardUrl(id, base = sheetBase()) {
+  return `${base}?compound=${encodeURIComponent(id)}#ar`;
+}
+
+/**
+ * Build the printable QR sheet: one code per compound.
+ *
+ * @param {object} ctx App context.
+ */
+export function openQrSheet(ctx) {
+  const host = document.getElementById('qr-sheet');
+  const base = sheetBase();
+
+  const cards = comparable().map((option) => {
+    const entry = findAny(option.id);
+    const url = cardUrl(option.id, base);
+    const reading = entryReading(entry);
+    return el('article.qr-card', { style: { '--accent': entry.accent } }, [
+      el('div.qr-code', { html: qrSvg(url, { scale: 4, quiet: 3 }) }),
+      el('div.qr-meta', {}, [
+        el('h4', { text: entry.name }),
+        el('p.qr-class', { text: entry.klass }),
+        el('p.qr-band', { style: { '--band': reading.band.accent }, text: `${reading.band.label} · ${pct(reading.score)}` }),
+        el('p.qr-url', { text: url }),
+      ]),
+    ]);
+  });
+
+  fill(host, [
+    el('header.qr-head', {}, [
+      el('div', {}, [
+        el('h2', { text: 'ASTRA — scan to open the AR bench' }),
+        el('p.quiet', { text: `Each code opens that compound on ${base} with the camera bench ready. Print at any size; the codes are vector. Point a phone camera at one — no app needed.` }),
+      ]),
+      el('div.qr-actions', {}, [
+        el('button.btn.primary', { type: 'button', onclick: () => window.print() }, ['Print']),
+        el('button.btn.ghost', {
+          type: 'button',
+          onclick: () => { host.hidden = true; document.body.classList.remove('sheet-open'); },
+        }, ['Close']),
+      ]),
+    ]),
+    el('div.qr-grid', {}, cards),
+    el('p.qr-foot', { text: 'Educational research platform. Not medical advice. No diagnosis, no dosing, no treatment plans.' }),
+  ]);
+
+  host.hidden = false;
+  document.body.classList.add('sheet-open');
+  ctx.award('graph-explore', {});
+}
+
 /* --------------------------------------------------------------- 09 · AR */
 
 /**
@@ -1424,6 +1498,9 @@ export function renderAR(ctx) {
       el('button.btn.ghost', {
         type: 'button', onclick: () => ctx.go('engine', { subject: state.compound }),
       }, ['Open the full dossier →']),
+      el('button.btn.ghost', {
+        type: 'button', onclick: () => openQrSheet(ctx),
+      }, ['⊞ Printable QR sheet']),
     ]),
     el('p.fine', { text: 'Camera frames are read on this device and discarded — nothing is recorded, uploaded or stored. The captured card carries the compound, its evidence level and the disclosure.' }),
   ]);
