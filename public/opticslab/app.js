@@ -214,12 +214,7 @@ const ringX = (g) => g.rotateY(Math.PI / 2); // torus/ring axis z → x
     scene.add(frame);
   });
 
-  // CinematicX neon rings + light
-  [[7.6, 4.2, 0.9], [9.6, 4.0, 0.7], [11.2, 3.9, 0.55]].forEach(([x, y, r]) => {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.045, 12, 64), M.pinkGlow);
-    ring.position.set(x, y, -5.85); scene.add(ring);
-  });
-  const pink = new THREE.PointLight(0xff5fb4, 18, 14, 1.6); pink.position.set(9, 4, -4.5); scene.add(pink);
+  const pink = new THREE.PointLight(0xff5fb4, 18, 14, 1.6); pink.position.set(10.5, 4, -3.8); scene.add(pink);
 
   // Floating crystal shards (CinematicX motif)
   const shardMat = new THREE.MeshPhysicalMaterial({ color: 0xffd6ec, roughness: 0.08, metalness: 0.1, transmission: 0.6, thickness: 0.4, ior: 1.6, emissive: 0x3a0a22, envMapIntensity: 1.2 });
@@ -246,11 +241,105 @@ const ringX = (g) => g.rotateY(Math.PI / 2); // torus/ring axis z → x
   rail.geometry.rotateY(0); rail.position.set(-0.7, 0.06, 0); scene.add(rail);
   const railSide = mesh(new THREE.BoxGeometry(13.2, 0.06, 0.02), M.brass);
   railSide.position.set(-0.7, 0.06, 0.19); scene.add(railSide);
-  // Control dial on the bench (decorative, CinematicX style)
-  const dial = mesh(alongX(new THREE.CylinderGeometry(0.42, 0.46, 0.12, 48)).rotateZ(Math.PI / 2), M.metalLight);
-  dial.position.set(-5.8, 0.06, 1.35); scene.add(dial);
-  const dialRing = new THREE.Mesh(new THREE.TorusGeometry(0.44, 0.015, 8, 64).rotateX(Math.PI / 2), M.pinkGlow);
-  dialRing.position.set(-5.8, 0.13, 1.35); scene.add(dialRing);
+}
+
+// ---------------------------------------------------------------- bench console: 3D filmstrip + dials
+const consoleG = new THREE.Group();
+consoleG.position.set(0.5, -0.62, 2.2);
+consoleG.rotation.x = -0.45; // tilted up toward the viewer
+scene.add(consoleG);
+const THUMB_W = 0.98, THUMB_H = 0.55, THUMB_GAP = 1.07, THUMB_X0 = 0.4;
+const thumbMeshes = [];
+const consoleUI = {};
+{
+  const body = mesh(new THREE.BoxGeometry(16.6, 1.25, 0.26), M.benchTop);
+  consoleG.add(body);
+  const bezel = mesh(new THREE.BoxGeometry(10.4, 1.02, 0.04), new THREE.MeshStandardMaterial({ color: 0x08090c, roughness: 0.4, metalness: 0.6 }), false, false);
+  bezel.position.set(THUMB_X0, 0.02, 0.14); consoleG.add(bezel);
+  const faceZ = 0.165;
+  const thumbFrameMat = new THREE.MeshBasicMaterial({ color: 0x1a1d26 });
+  for (let i = 0; i < 9; i++) {
+    const x = THUMB_X0 + (i - 4) * THUMB_GAP;
+    const frame = new THREE.Mesh(new THREE.PlaneGeometry(THUMB_W + 0.05, THUMB_H + 0.05), thumbFrameMat);
+    frame.position.set(x, 0.1, faceZ - 0.003); consoleG.add(frame);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(THUMB_W, THUMB_H), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
+    m.position.set(x, 0.1, faceZ); m.userData.shot = i;
+    consoleG.add(m); thumbMeshes.push(m);
+  }
+  // selection border
+  const sel = new THREE.Group();
+  const bw = THUMB_W + 0.1, bh = THUMB_H + 0.1, t = 0.022;
+  [[0, bh / 2, bw, t], [0, -bh / 2, bw, t], [bw / 2, 0, t, bh], [-bw / 2, 0, t, bh]].forEach(([x, y, w, h]) => {
+    const e = new THREE.Mesh(new THREE.PlaneGeometry(w, h), M.glow); e.position.set(x, y, 0.004); sel.add(e);
+  });
+  sel.position.set(THUMB_X0, 0.1, faceZ); consoleG.add(sel); consoleUI.sel = sel;
+  // arrows
+  const tri = new THREE.Shape([new THREE.Vector2(0.09, 0.14), new THREE.Vector2(-0.09, 0), new THREE.Vector2(0.09, -0.14)]);
+  const arrowMat = new THREE.MeshBasicMaterial({ color: 0x9fe4ff });
+  const left = new THREE.Mesh(new THREE.ShapeGeometry(tri), arrowMat);
+  left.position.set(THUMB_X0 - 4.5 * THUMB_GAP - 0.12, 0.1, faceZ); left.userData.step = -1;
+  const right = new THREE.Mesh(new THREE.ShapeGeometry(tri).rotateZ(Math.PI), arrowMat);
+  right.position.set(THUMB_X0 + 4.5 * THUMB_GAP + 0.12, 0.1, faceZ); right.userData.step = 1;
+  consoleG.add(left, right); consoleUI.arrows = [left, right];
+  // progress rail
+  const railLen = 9 * THUMB_GAP;
+  const rail = new THREE.Mesh(new THREE.PlaneGeometry(railLen, 0.02), new THREE.MeshBasicMaterial({ color: 0x2c3444 }));
+  rail.position.set(THUMB_X0, -0.36, faceZ); consoleG.add(rail);
+  const fill = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.03).translate(0.5, 0, 0), M.glow);
+  fill.position.set(THUMB_X0 - railLen / 2, -0.36, faceZ + 0.001); consoleG.add(fill);
+  const knob = new THREE.Mesh(new THREE.CircleGeometry(0.045, 24), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  knob.position.set(THUMB_X0 - railLen / 2, -0.36, faceZ + 0.002); consoleG.add(knob);
+  for (let i = 0; i <= 90; i++) {
+    const tick = new THREE.Mesh(new THREE.PlaneGeometry(0.008, i % 10 === 0 ? 0.07 : 0.035), new THREE.MeshBasicMaterial({ color: 0x4a5366 }));
+    tick.position.set(THUMB_X0 - railLen / 2 + (i / 90) * railLen, -0.44, faceZ); consoleG.add(tick);
+  }
+  Object.assign(consoleUI, { fill, knob, railLen });
+
+  // left: speaker dial with a warm ring
+  const spk = mesh(new THREE.CylinderGeometry(0.44, 0.48, 0.14, 48).rotateX(Math.PI / 2), M.metalLight, false, false);
+  spk.position.set(-6.9, 0.02, 0.14); consoleG.add(spk);
+  const cone = mesh(new THREE.ConeGeometry(0.34, 0.12, 48, 1, true).rotateX(-Math.PI / 2), M.metal, false, false);
+  cone.position.set(-6.9, 0.02, 0.17); consoleG.add(cone);
+  const warmRing = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.018, 8, 64), new THREE.MeshBasicMaterial({ color: 0xffb35c }));
+  warmRing.position.set(-6.9, 0.02, 0.22); consoleG.add(warmRing); consoleUI.warmRing = warmRing;
+  // right: three knobs in a recessed panel
+  const panel = mesh(new THREE.BoxGeometry(2.0, 0.8, 0.04), new THREE.MeshStandardMaterial({ color: 0x0c0d11, roughness: 0.5, metalness: 0.5 }), false, false);
+  panel.position.set(6.85, 0.05, 0.14); consoleG.add(panel);
+  consoleUI.knobs = [];
+  [[6.25, 0xeeeeee], [6.85, 0x8a8f9c], [7.45, 0x8a8f9c]].forEach(([x, col], i) => {
+    const k = mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.12, 40).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: col, roughness: 0.3, metalness: 0.8 }), false, false);
+    k.position.set(x, 0.08, 0.2); consoleG.add(k);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.012, 8, 48), i === 0 ? M.glow : new THREE.MeshBasicMaterial({ color: 0x3a4050 }));
+    ring.position.set(x, 0.08, 0.265); consoleG.add(ring);
+    const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.02, 0.12), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+    mark.position.set(0, 0.1, 0.061); k.add(mark);
+    consoleUI.knobs.push(k);
+  });
+  const led = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.02), M.pinkGlow);
+  led.position.set(6.25, -0.25, 0.165); consoleG.add(led);
+}
+
+// ---------------------------------------------------------------- CinematicX wall monitor
+const MON_W = 1280, MON_H = 800;
+const monCanvas = document.createElement("canvas");
+monCanvas.width = MON_W; monCanvas.height = MON_H;
+const monTex = new THREE.CanvasTexture(monCanvas);
+monTex.colorSpace = THREE.SRGBColorSpace;
+monTex.anisotropy = 8;
+const monitor = new THREE.Group();
+monitor.position.set(11.6, 3.75, -3.8);
+monitor.rotation.y = -0.62;
+scene.add(monitor);
+{
+  const back = mesh(new THREE.BoxGeometry(6.1, 3.9, 0.12), M.metal, false, false);
+  back.position.z = -0.07; monitor.add(back);
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(5.84, 3.65), new THREE.MeshBasicMaterial({ map: monTex, toneMapped: false }));
+  monitor.add(screen);
+  const t = 0.03, w = 6.1, h = 3.9;
+  [[0, h / 2, w, t], [0, -h / 2, w, t], [w / 2, 0, t, h], [-w / 2, 0, t, h]].forEach(([x, y, ww, hh]) => {
+    const e = new THREE.Mesh(new THREE.BoxGeometry(ww, hh, 0.03), M.pinkGlow); e.position.set(x, y, 0.01); monitor.add(e);
+  });
+  const arm = mesh(new THREE.BoxGeometry(0.3, 0.3, 0.5), M.metal, false, false); arm.position.z = -0.35; monitor.add(arm);
 }
 
 // ---------------------------------------------------------------- sensor / image plane
@@ -426,9 +515,9 @@ const objects = []; // named subjects with x extents, for the story + CX
   mountain(6.5, -1.2, 0.75, 1.6);
   objects.push({ name: "the peak", x0: 5.35, x1: 6.7, anchor: new THREE.Vector3(5.9, 2.7, -0.3) });
   // sky backdrop
-  const sky = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.6).rotateY(-Math.PI / 2), D.sky);
+  const sky = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 4.6).rotateY(-Math.PI / 2), D.sky);
   sky.position.set(7.4, 2.5, 0); scene.add(sky);
-  const skyFrame = mesh(new THREE.BoxGeometry(0.06, 4.7, 9.1), M.metal); skyFrame.position.set(7.44, 2.5, 0); scene.add(skyFrame);
+  const skyFrame = mesh(new THREE.BoxGeometry(0.06, 4.7, 6.7), M.metal); skyFrame.position.set(7.44, 2.5, 0); scene.add(skyFrame);
 }
 
 // ---------------------------------------------------------------- lights
@@ -514,7 +603,10 @@ float cocAt(vec2 uv){
   float d = texture2D(tDepth, uv).x;
   if (d >= 1.0) return maxR;
   vec3 w = worldAt(uv, d);
-  float mask = smoothstep(maskStart - 0.25, maskStart + 0.25, w.x);
+  float mask = smoothstep(maskStart - 0.25, maskStart + 0.25, w.x)
+             * (1.0 - smoothstep(7.7, 8.0, w.x))
+             * smoothstep(-0.2, 0.02, w.y)
+             * (w.x > 7.2 ? 1.0 : 1.0 - smoothstep(1.75, 2.05, abs(w.z)));
   float persp = clamp(refDist / max(distance(w, camPos), 0.3), 0.25, 2.5);
   return min(max(abs(w.x - focusX) - halfZone, 0.0) * blurK * mask * persp, maxR);
 }
@@ -767,6 +859,9 @@ const SHOTS = [
   { name: "Viewfinder", sub: "Sensor POV · peaking", dur: 8, viewfinder: true,
     cam: path(V(1.0, 1.35, 0), V(1.1, 1.35, 0), V(7, 1.05, 0), V(7, 1.05, 0), 38),
     lens: (t) => ({ focus: t < 0.5 ? 60 : 100, fstop: t < 0.75 ? 2 : 16, explode: 0 }) },
+  { name: "CinematicX", sub: "Analytics wall", dur: 7,
+    cam: path(V(7.9, 2.9, 5.2), V(8.3, 3.6, 1.9), V(11.0, 3.5, -3.5), V(11.6, 3.75, -3.8), 46, 42),
+    lens: (t) => ({ focus: 60, fstop: 2, explode: 0 }) },
   { name: "Crane out", sub: "Pull back · assemble", dur: 7,
     cam: path(V(-3.5, 2.2, 5.5), V(-5.5, 7.5, 13.5), V(-1.2, 0.8, 0), V(0.8, 0.8, 0), 40),
     lens: (t) => ({ focus: 38, fstop: t < 0.3 ? 16 : 2, explode: 0 }) },
@@ -819,17 +914,42 @@ function setPlaying(p) {
 }
 function userTookOver() { if (director.playing) setPlaying(false); }
 
-// ---------------------------------------------------------------- filmstrip
-const film = $("#film");
-const shotEls = SHOTS.map((s, i) => {
-  const b = document.createElement("button");
-  b.className = "shot";
-  b.setAttribute("aria-label", `Shot ${i + 1}: ${s.name}`);
-  b.innerHTML = `<canvas width="192" height="108"></canvas><span class="prog"></span><span class="score"></span><span class="meta"><b>${String(i + 1).padStart(2, "0")}</b>${s.name}</span>`;
-  b.addEventListener("click", () => { cutTo(i, { keepPlaying: false }); if (!director.playing) { poseCamera(s, 0.5); applyShotLens(s, 0.5); controls.target.copy(camTarget); } });
-  film.appendChild(b);
-  return b;
+// ---------------------------------------------------------------- filmstrip (on the bench console)
+const TW = 320, TH = 180;
+const thumbs = SHOTS.map((s, i) => {
+  const base = document.createElement("canvas"); base.width = TW; base.height = TH;
+  const bg = base.getContext("2d");
+  const gr = bg.createLinearGradient(0, 0, TW, TH); gr.addColorStop(0, "#1b2233"); gr.addColorStop(1, "#0b0d14");
+  bg.fillStyle = gr; bg.fillRect(0, 0, TW, TH);
+  const cv = document.createElement("canvas"); cv.width = TW; cv.height = TH;
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  if (thumbMeshes[i]) { thumbMeshes[i].material.map = tex; thumbMeshes[i].material.needsUpdate = true; }
+  return { base, cv, tex, score: "" };
 });
+// the console has one slot per shot; hide spare slots
+thumbMeshes.forEach((m, i) => { if (i >= SHOTS.length) m.visible = false; });
+function drawThumb(i) {
+  const th = thumbs[i], g = th.cv.getContext("2d");
+  const cur = i === director.idx;
+  g.drawImage(th.base, 0, 0);
+  if (!cur) { g.fillStyle = "rgba(4,6,10,.35)"; g.fillRect(0, 0, TW, TH); }
+  const gr = g.createLinearGradient(0, TH * 0.55, 0, TH);
+  gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,.85)");
+  g.fillStyle = gr; g.fillRect(0, TH * 0.5, TW, TH * 0.5);
+  g.font = "500 17px JetBrains Mono, monospace"; g.fillStyle = "#7fd8ff";
+  g.fillText(String(i + 1).padStart(2, "0"), 12, TH - 14);
+  g.font = "600 19px Space Grotesk, system-ui, sans-serif"; g.fillStyle = "#fff";
+  g.fillText(SHOTS[i].name, 46, TH - 14);
+  if (th.score) {
+    g.fillStyle = "rgba(255,95,180,.92)"; g.beginPath(); g.roundRect(TW - 86, 10, 76, 26, 6); g.fill();
+    g.fillStyle = "#1a0510"; g.font = "700 15px JetBrains Mono, monospace"; g.fillText(th.score, TW - 78, 29);
+  }
+  if (cur) {
+    g.fillStyle = "rgba(255,255,255,.15)"; g.fillRect(0, 0, TW, 5);
+    g.fillStyle = "#ff5fb4"; g.fillRect(0, 0, TW * clamp(director.t / SHOTS[i].dur, 0, 1), 5);
+  }
+  th.tex.needsUpdate = true;
+}
 const scrub = $("#cx-scrub");
 SHOTS.forEach((s) => { const m = document.createElement("i"); m.style.left = (s.start / TOTAL) * 100 + "%"; scrub.appendChild(m); });
 scrub.addEventListener("click", (e) => {
@@ -840,13 +960,16 @@ scrub.addEventListener("click", (e) => {
   if (!director.playing) setPlaying(true);
 });
 function updateFilm() {
-  shotEls.forEach((el, i) => {
-    el.setAttribute("aria-current", i === director.idx ? "true" : "false");
-    el.querySelector(".prog").style.width = i === director.idx ? (director.t / SHOTS[i].dur) * 100 + "%" : "0";
-  });
-  const cur = shotEls[director.idx];
-  const tr = film.getBoundingClientRect(), cr = cur.getBoundingClientRect();
-  if (cr.left < tr.left || cr.right > tr.right) film.scrollLeft += cr.left - tr.left - tr.width / 2 + cr.width / 2;
+  SHOTS.forEach((_, i) => drawThumb(i));
+  consoleUI.sel.position.x = thumbMeshes[director.idx].position.x;
+  $("#dock-num").textContent = String(director.idx + 1).padStart(2, "0");
+  $("#dock-name").textContent = SHOTS[director.idx].name;
+}
+function updateRail(gt) {
+  const f = clamp(gt / TOTAL, 0, 1);
+  consoleUI.fill.scale.x = Math.max(0.001, consoleUI.railLen * f);
+  consoleUI.knob.position.x = THUMB_X0 - consoleUI.railLen / 2 + consoleUI.railLen * f;
+  $("#dock-prog").style.width = clamp(director.t / SHOTS[director.idx].dur, 0, 1) * 100 + "%";
 }
 function renderThumbs() {
   const saved = { pos: camera.position.clone(), fov: camera.fov, tgt: camTarget.clone(), f: S.focusCm, ft: S.focusTarget, n: S.fstop, ns: S.fstopShown, e: S.explode, et: S.explodeTarget };
@@ -858,7 +981,7 @@ function renderThumbs() {
     const lbl = S.labels; S.labels = false;
     renderFrame();
     S.labels = lbl;
-    const c = shotEls[i].querySelector("canvas");
+    const c = thumbs[i].base;
     const g = c.getContext("2d");
     const src = renderer.domElement;
     const sw = src.width, sh = src.height, want = sw / sh > 16 / 9 ? [sh * 16 / 9, sh] : [sw, sw * 9 / 16];
@@ -945,9 +1068,7 @@ const CX = (() => {
       lastBin = bin;
       const sc = shotScores[director.idx];
       sc.n++; sc.a += (val.attention + val.emotion + val.reward + val.memory + val.purchase - val.effort * 0.5) / 4.5;
-      const scoreEl = shotEls[director.idx].querySelector(".score");
-      scoreEl.textContent = "CX " + Math.round(sc.a / sc.n);
-      scoreEl.classList.add("on");
+      thumbs[director.idx].score = "CX " + Math.round(sc.a / sc.n);
       drawHeat(gt);
     }
   }
@@ -955,6 +1076,7 @@ const CX = (() => {
     if (samples.length) lastTake = samples;
     samples = []; heat = new Array(BINS).fill(null); lastBin = -1;
     shotScores.forEach((s) => { s.n = 0; s.a = 0; });
+    thumbs.forEach((t) => { t.score = ""; });
   }
   function draw() {
     for (const m of METRICS) {
@@ -968,35 +1090,139 @@ const CX = (() => {
       t.delta.className = "delta " + (d >= 0 ? "up" : "down");
     }
   }
-  function drawHeat(gt = 0) {
-    const W = hc.width, H = hc.height, left = 118, top = 6, bottom = 22;
+  function heatTo(g, X, Y, W, H, gt, fs = 15) {
+    const left = fs * 7.9, top = 6, bottom = fs * 1.5;
     const rowH = (H - top - bottom) / METRICS.length;
-    hg.clearRect(0, 0, W, H);
-    hg.font = "600 15px JetBrains Mono, monospace"; hg.textBaseline = "middle";
+    g.save(); g.translate(X, Y);
+    g.font = `600 ${fs}px JetBrains Mono, monospace`; g.textBaseline = "middle";
     METRICS.forEach((m, r) => {
-      hg.fillStyle = "#f4cfe2";
-      hg.fillText("• " + (m.key === "purchase" ? "INTENT" : m.name.toUpperCase()), 0, top + rowH * r + rowH / 2);
-      hg.fillStyle = "rgba(255,255,255,.04)";
-      hg.fillRect(left, top + rowH * r + 2, W - left, rowH - 4);
+      g.fillStyle = "#f4cfe2";
+      g.fillText("• " + (m.key === "purchase" ? "INTENT" : m.name.toUpperCase()), 0, top + rowH * r + rowH / 2);
+      g.fillStyle = "rgba(255,255,255,.04)";
+      g.fillRect(left, top + rowH * r + 2, W - left, rowH - 4);
     });
     const bw = (W - left) / BINS;
     heat.forEach((h, b) => {
       if (!h) return;
       METRICS.forEach((m, r) => {
         const v = h[m.key] / 100;
-        hg.fillStyle = `rgba(255, ${Math.round(95 + v * 120)}, ${Math.round(180 + v * 40)}, ${0.15 + v * v * 0.95})`;
-        hg.fillRect(left + b * bw, top + rowH * r + 3, Math.max(1, bw - 0.6), rowH - 6);
+        g.fillStyle = `rgba(255, ${Math.round(95 + v * 120)}, ${Math.round(180 + v * 40)}, ${0.15 + v * v * 0.95})`;
+        g.fillRect(left + b * bw, top + rowH * r + 3, Math.max(1, bw - 0.6), rowH - 6);
       });
     });
-    // shot boundaries + playhead + axis
-    hg.fillStyle = "rgba(255,255,255,.18)";
-    SHOTS.forEach((s) => hg.fillRect(left + (s.start / TOTAL) * (W - left), top, 1, H - top - bottom));
-    hg.fillStyle = "#ffffff";
-    hg.fillRect(left + (gt / TOTAL) * (W - left), top, 2, H - top - bottom);
-    hg.fillStyle = "#b7a3b0"; hg.font = "500 13px JetBrains Mono, monospace"; hg.textAlign = "center";
-    for (let s = 0; s <= TOTAL; s += 9) hg.fillText(s + "s", left + (s / TOTAL) * (W - left - 14) + 7, H - 9);
-    hg.textAlign = "left";
+    g.fillStyle = "rgba(255,255,255,.18)";
+    SHOTS.forEach((s) => g.fillRect(left + (s.start / TOTAL) * (W - left), top, 1, H - top - bottom));
+    g.fillStyle = "#ffffff";
+    g.fillRect(left + (gt / TOTAL) * (W - left), top, 2, H - top - bottom);
+    g.fillStyle = "#b7a3b0"; g.font = `500 ${fs * 0.87}px JetBrains Mono, monospace`; g.textAlign = "center";
+    for (let s = 0; s <= TOTAL; s += 10) g.fillText(s + "s", left + (s / TOTAL) * (W - left - 14) + 7, H - fs * 0.6);
+    g.textAlign = "left";
+    g.restore();
   }
+  function drawHeat(gt = 0) {
+    hg.clearRect(0, 0, hc.width, hc.height);
+    heatTo(hg, 0, 0, hc.width, hc.height, gt);
+  }
+
+  // The same dashboard, drawn onto the monitor on the lab wall.
+  const mg = monCanvas.getContext("2d");
+  const brain = document.createElement("canvas"); brain.width = 520; brain.height = 300;
+  {
+    const b = brain.getContext("2d");
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    b.translate(260, 150);
+    b.shadowColor = "#ff5fb4"; b.shadowBlur = 18;
+    b.strokeStyle = "rgba(255,190,225,.95)"; b.lineWidth = 3;
+    b.beginPath(); b.ellipse(-8, -10, 150, 108, 0, 0, Math.PI * 2); b.stroke();
+    b.lineWidth = 2; b.strokeStyle = "rgba(255,160,210,.8)";
+    b.save(); b.beginPath(); b.ellipse(-8, -10, 146, 104, 0, 0, Math.PI * 2); b.clip();
+    // gyri: nested, wavy contours
+    for (let k = 0; k < 7; k++) {
+      const f = 0.25 + k * 0.11, freq = 6 + k * 2, ph = rnd() * 6, amp = 3.5 + k * 0.5;
+      b.beginPath();
+      for (let a = 0; a <= Math.PI * 2 + 0.01; a += 0.02) {
+        const w = amp * Math.sin(a * freq + ph) + amp * 0.5 * Math.sin(a * freq * 2.3 + ph);
+        const x = -8 + Math.cos(a) * (150 * f + w), y = -10 + Math.sin(a) * (108 * f + w);
+        a === 0 ? b.moveTo(x, y) : b.lineTo(x, y);
+      }
+      b.stroke();
+    }
+    b.restore();
+    b.beginPath(); b.moveTo(-8, -118); b.bezierCurveTo(-20, -40, 10, 20, -8, 98); b.stroke(); // fissure
+    b.beginPath(); b.ellipse(70, 95, 55, 30, 0.3, 0, Math.PI * 2); b.stroke(); // cerebellum
+    b.beginPath(); b.moveTo(30, 100); b.lineTo(40, 145); b.lineWidth = 8; b.stroke(); // stem
+    b.shadowBlur = 8; b.lineWidth = 1.5; b.strokeStyle = "rgba(200,235,255,.8)";
+    for (let i = 0; i < 9; i++) { // crystal shards
+      const x = (rnd() - 0.5) * 480, y = (rnd() - 0.5) * 260, h = 20 + rnd() * 50;
+      if (Math.abs(x) < 170 && Math.abs(y) < 120) continue;
+      b.beginPath(); b.moveTo(x, y - h); b.lineTo(x + h * 0.3, y); b.lineTo(x, y + h * 0.4); b.lineTo(x - h * 0.3, y); b.closePath(); b.stroke();
+    }
+  }
+  const box = (x, y, w, h, r = 14) => {
+    mg.beginPath(); mg.roundRect(x, y, w, h, r);
+    mg.fillStyle = "rgba(0,0,0,.45)"; mg.fill();
+    mg.shadowColor = "#ff5fb4"; mg.shadowBlur = 16; mg.strokeStyle = "rgba(255,120,195,.85)"; mg.lineWidth = 2; mg.stroke(); mg.shadowBlur = 0;
+  };
+  function drawMonitor(live, time) {
+    const W = MON_W, H = MON_H;
+    const bg = mg.createRadialGradient(W * 0.7, H * 0.25, 40, W * 0.6, H * 0.4, W * 0.8);
+    bg.addColorStop(0, "#3a0f2a"); bg.addColorStop(1, "#07050a");
+    mg.fillStyle = bg; mg.fillRect(0, 0, W, H);
+    // header
+    box(20, 18, W - 40, 88);
+    const tg = mg.createLinearGradient(80, 0, 420, 0); tg.addColorStop(0, "#ffd6ec"); tg.addColorStop(0.5, "#ff5fb4"); tg.addColorStop(1, "#7fd8ff");
+    mg.fillStyle = tg; mg.font = "600 50px Space Grotesk, system-ui, sans-serif"; mg.textBaseline = "alphabetic";
+    mg.fillText("CinematicX", 92, 72);
+    mg.fillStyle = "#ff9fd2"; mg.font = "400 20px Space Grotesk, system-ui, sans-serif"; mg.fillText("by Colin", 94, 96);
+    mg.strokeStyle = tg; mg.lineWidth = 3;
+    mg.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3 - Math.PI / 2; mg.lineTo(56 + Math.cos(a) * 24, 62 + Math.sin(a) * 24); } mg.closePath(); mg.stroke();
+    mg.fillStyle = "#ffc4e4"; mg.font = "500 18px JetBrains Mono, monospace"; mg.textAlign = "right";
+    mg.fillText("NEURO-CINEMATIC ANALYTICS", W - 48, 70); mg.textAlign = "left";
+    // now playing with a live feed
+    box(20, 122, 720, 300);
+    mg.fillStyle = "#ffd6ec"; mg.font = "500 20px Space Grotesk, system-ui, sans-serif"; mg.fillText("Now Playing", 44, 156);
+    mg.fillStyle = "#000"; mg.fillRect(44, 170, 672, 190);
+    if (live && live.width) {
+      const sw = live.width, sh = live.height, r = 672 / 190;
+      const cw = Math.min(sw, sh * r), ch = cw / r;
+      mg.drawImage(live, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 44, 170, 672, 190);
+    }
+    const gt = SHOTS[director.idx].start + Math.min(director.t, SHOTS[director.idx].dur);
+    mg.fillStyle = "#fff"; mg.font = "500 26px JetBrains Mono, monospace";
+    mg.fillText(`${gt.toFixed(1)}s / ${TOTAL.toFixed(1)}s`, 60, 348);
+    mg.font = "500 18px Space Grotesk, system-ui, sans-serif"; mg.fillStyle = "#ffd6ec"; mg.textAlign = "right";
+    mg.fillText(`${String(director.idx + 1).padStart(2, "0")} · ${SHOTS[director.idx].name}`, 700, 348); mg.textAlign = "left";
+    mg.fillStyle = "rgba(255,255,255,.12)"; mg.fillRect(44, 382, 672, 8);
+    mg.fillStyle = "#ff5fb4"; mg.shadowColor = "#ff5fb4"; mg.shadowBlur = 12; mg.fillRect(44, 382, 672 * (gt / TOTAL), 8); mg.shadowBlur = 0;
+    // brain
+    mg.globalAlpha = 0.75 + 0.25 * Math.sin(time * 2.2);
+    mg.drawImage(brain, 740, 122);
+    mg.globalAlpha = 1;
+    // tiles
+    METRICS.forEach((m, i) => {
+      const x = 20 + (i % 3) * 418, y = 438 + Math.floor(i / 3) * 108, w = 404, h = 96;
+      box(x, y, w, h, 12);
+      const v = val[m.key];
+      mg.fillStyle = "#f4d9e8"; mg.font = "500 20px Space Grotesk, system-ui, sans-serif"; mg.textAlign = "center";
+      mg.fillText(m.name, x + w / 2, y + 28);
+      mg.fillStyle = "#ffb8dd"; mg.shadowColor = "#ff5fb4"; mg.shadowBlur = 14;
+      mg.font = "700 38px Space Grotesk, system-ui, sans-serif"; mg.fillText(`${Math.round(v)}/100`, x + w / 2, y + 66); mg.shadowBlur = 0;
+      mg.textAlign = "left";
+      mg.fillStyle = "rgba(255,255,255,.1)"; mg.fillRect(x + 60, y + 78, w - 170, 6);
+      mg.fillStyle = "#ff7cc4"; mg.fillRect(x + 60, y + 78, (w - 170) * v / 100, 6);
+      mg.fillStyle = "#ffd6ec"; mg.font = "500 15px JetBrains Mono, monospace";
+      mg.fillText(Math.round(v) + "%", x + 14, y + 86);
+      const avg = sums[m.key] / Math.max(1, nSum), d = ((v - avg) / Math.max(1, avg)) * 100;
+      mg.fillStyle = d >= 0 ? "#8ff0c6" : "#ff9a9a";
+      mg.fillText(`${d >= 0 ? "+" : ""}${d.toFixed(1)}%`, x + w - 96, y + 86);
+    });
+    // heatmap
+    box(20, 656, W - 40, 128);
+    mg.fillStyle = "#ffd0e8"; mg.font = "600 14px JetBrains Mono, monospace"; mg.fillText("SIGNAL TIMELINE · HEATMAP", 40, 678);
+    heatTo(mg, 40, 684, W - 80, 96, gt, 10);
+    monTex.needsUpdate = true;
+  }
+
   function download(name, text, type) {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([text], { type }));
@@ -1029,7 +1255,7 @@ const CX = (() => {
     download(`${session}-optics-lab-report.md`, md, "text/markdown");
   });
   drawHeat();
-  return { tick, onCut: () => { novelty = 1; }, drawHeat };
+  return { tick, onCut: () => { novelty = 1; }, drawHeat, drawMonitor };
 })();
 
 // ---------------------------------------------------------------- UI wiring
@@ -1042,9 +1268,11 @@ $("#focus").addEventListener("input", (e) => { userTookOver(); S.focusTarget = +
 document.querySelectorAll("[data-focus]").forEach((b) => b.addEventListener("click", () => { userTookOver(); S.focusTarget = +b.dataset.focus; syncButtons(); }));
 document.querySelectorAll("[data-fstop]").forEach((b) => b.addEventListener("click", () => { userTookOver(); S.fstop = +b.dataset.fstop; syncButtons(); }));
 document.querySelectorAll("[data-explode]").forEach((b) => b.addEventListener("click", () => { userTookOver(); S.explodeTarget = +b.dataset.explode; syncButtons(); }));
-$("#t-labels").addEventListener("change", (e) => { S.labels = e.target.checked; });
-$("#t-rays").addEventListener("change", (e) => { S.rays = e.target.checked; });
-$("#t-peak").addEventListener("change", (e) => { S.peaking = e.target.checked; });
+const flip = (id, key) => $(id).addEventListener("click", (e) => {
+  S[key] = !S[key]; e.currentTarget.setAttribute("aria-pressed", String(S[key]));
+});
+flip("#t-labels", "labels");
+flip("#t-rays", "rays");
 $("#play").addEventListener("click", () => setPlaying(!director.playing));
 $("#prev").addEventListener("click", () => cutTo(director.idx - 1, { keepPlaying: false }));
 $("#next").addEventListener("click", () => cutTo(director.idx + 1, { keepPlaying: false }));
@@ -1054,12 +1282,11 @@ const toggle = (btn, panel) => $(btn).addEventListener("click", () => {
   $(btn).setAttribute("aria-expanded", String(open));
 });
 toggle("#cx-toggle", "#cx");
-$("#cx-toggle").addEventListener("click", () => setTimeout(frameGap, 320));
+$("#cx-close").addEventListener("click", () => { $("#cx").classList.remove("open"); $("#cx-toggle").setAttribute("aria-expanded", "false"); });
 const setCinema = (on) => {
   document.body.classList.toggle("cinema", on);
   $("#cinema").setAttribute("aria-pressed", String(on));
-  $("#cinema").textContent = on ? "Show HUD" : "Hide HUD";
-  frameGap();
+  $("#cinema").textContent = on ? "Show HUD" : "HUD";
 };
 $("#cinema").addEventListener("click", () => setCinema(!document.body.classList.contains("cinema")));
 toggle("#ctl-toggle", "#controls");
@@ -1083,6 +1310,15 @@ canvas.addEventListener("pointerdown", (e) => {
   ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   ray.layers.set(0);
+  const ui = ray.intersectObjects([...thumbMeshes.filter((m) => m.visible), ...consoleUI.arrows], false)[0];
+  if (ui) {
+    const o = ui.object;
+    const to = o.userData.step ? director.idx + o.userData.step : o.userData.shot;
+    cutTo(to, { keepPlaying: director.playing });
+    if (!director.playing) { poseCamera(SHOTS[director.idx], 0.5); applyShotLens(SHOTS[director.idx], 0.5); controls.target.copy(camTarget); }
+    e.stopPropagation();
+    return;
+  }
   const hit = ray.intersectObjects([focusRing, gearRing], true)[0];
   if (hit) {
     userTookOver();
@@ -1097,10 +1333,11 @@ canvas.addEventListener("pointerdown", (e) => {
 }, { capture: true });
 canvas.addEventListener("pointermove", (e) => {
   if (!ringDrag) {
-    if (!director.playing && e.buttons === 0) {
+    if (e.buttons === 0) {
       ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
       ray.setFromCamera(ndc, camera);
-      canvas.style.cursor = ray.intersectObjects([focusRing, gearRing], true).length ? "ew-resize" : "";
+      canvas.style.cursor = ray.intersectObjects([focusRing, gearRing], true).length ? "ew-resize"
+        : ray.intersectObjects([...thumbMeshes, ...consoleUI.arrows], false).length ? "pointer" : "";
     }
     return;
   }
@@ -1124,31 +1361,15 @@ $("#seedance-btn").addEventListener("click", () => {
 $("#seedance-close").addEventListener("click", () => dlg.close());
 dlg.addEventListener("close", () => $("#seedance-video").pause());
 
-// Centre the 3D image in the clear gap between the HUD panels.
-function frameGap() {
-  const W = innerWidth, H = innerHeight;
-  const cinema = document.body.classList.contains("cinema");
-  const left = $(".col-left"), cx = $("#cx");
-  let l = 0, r = W;
-  if (!cinema && W > 760) {
-    l = left.getBoundingClientRect().right;
-    const cr = cx.getBoundingClientRect();
-    if (cr.left < W - 4 && cr.left > W / 2) r = cr.left;
-  }
-  const shift = Math.round((l + r) / 2 - W / 2);
-  if (shift) camera.setViewOffset(W, H, -shift, 0, W, H); else camera.clearViewOffset();
-  camera.updateProjectionMatrix();
-  document.documentElement.style.setProperty("--gap-l", l + "px");
-  document.documentElement.style.setProperty("--gap-r", W - r + "px");
-}
 addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight; frameGap();
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
   sizeMain();
 });
 
 // ---------------------------------------------------------------- loop
 const clock = new THREE.Clock();
+let hudClock = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.1);
   if (director.playing) {
@@ -1182,12 +1403,22 @@ function frame() {
   $("#cx-time").textContent = `${gt.toFixed(1)}s / ${TOTAL.toFixed(1)}s`;
   $("#cx-scrub-fill").style.width = (gt / TOTAL) * 100 + "%";
   $("#cx-shot").textContent = `${String(director.idx + 1).padStart(2, "0")} · ${SHOTS[director.idx].name}`;
-  shotEls[director.idx].querySelector(".prog").style.width = (director.t / SHOTS[director.idx].dur) * 100 + "%";
+  updateRail(gt);
+  // console + wall monitor refresh at a gentler rate than the render loop
+  hudClock += dt;
+  if (hudClock > 0.12) {
+    hudClock = 0;
+    drawThumb(director.idx);
+    CX.drawMonitor(renderer.domElement, time);
+  }
+  consoleUI.knobs[0].rotation.z = -S.focusCm / 30;
+  consoleUI.knobs[1].rotation.z = -S.fstopShown / 4;
+  consoleUI.knobs[2].rotation.z = -S.explode * 2.4;
+  consoleUI.warmRing.material.color.setHSL(0.08, 1, 0.5 + 0.12 * Math.sin(time * 3));
   requestAnimationFrame(frame);
 }
 
 // Boot: compile, draw the filmstrip thumbnails, then start the tour.
-frameGap();
 applyShotLens(SHOTS[0], 0, true);
 poseCamera(SHOTS[0], 0);
 applyLens(0);
@@ -1208,7 +1439,9 @@ if (STILL !== null) {
   $("#cx-shot").textContent = `${String(director.idx + 1).padStart(2, "0")} · ${shot.name}`;
   $("#cx-time").textContent = `${gt.toFixed(1)}s / ${TOTAL.toFixed(1)}s`;
   $("#cx-scrub-fill").style.width = (gt / TOTAL) * 100 + "%";
-  updateFilm();
+  updateFilm(); updateRail(gt);
+  CX.drawMonitor(null, 0);
+  renderFrame(); CX.drawMonitor(renderer.domElement, 0); renderFrame();
   $("#boot").classList.add("done");
   window.__lab = { renderer, scene, camera, rtMain, rtLensOut, THREE };
   window.__still = true;
