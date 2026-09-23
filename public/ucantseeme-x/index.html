@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UcantSeeMeX — by Coach Colin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Orbitron:wght@500;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="gate" id="gate">
+    <div class="gate-card">
+      <h2>UCANTSEEMEX</h2>
+      <p>
+        Privacy command center by Coach Colin. Real-time human segmentation,
+        pinch-to-vanish stealth, thermal overlay, motion radar, and multi-device
+        telemetry. This is a <strong>privacy creator</strong> tool — own your visibility.
+        It is not a surveillance-evasion kit.
+      </p>
+      <div class="btn-row">
+        <button class="primary" id="enterBtn">Enter Batcave · Enable camera</button>
+        <a class="btn" href="#tech">Read the tech stack</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3l7 4v5c0 5-3.2 8.4-7 9.5C8.2 20.4 5 17 5 12V7l7-4z" stroke="#7af0ff" stroke-width="1.4"/>
+            <path d="M8 12h8M12 8v8" stroke="#c08bff" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>UCANTSEEMEX</h1>
+          <small>by Coach Colin · v2.3.1 · encrypted · on-device</small>
+        </div>
+      </div>
+      <div class="device-row">
+        <button class="chip on" data-device>iPhone</button>
+        <button class="chip on" data-device>Android</button>
+        <button class="chip on" data-device>Laptop</button>
+        <button class="chip" data-device>Smart Glasses</button>
+        <button class="chip" data-device>Drone</button>
+      </div>
+      <div class="status-pill" id="stealthPill">STEALTH STANDBY</div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel receptionist">
+        <div class="colin-hero">
+          <img src="assets/colin-close.jpg" alt="Coach Colin in tactical armor" />
+        </div>
+        <div class="colin-meta">
+          <h2>Coach Colin</h2>
+          <p>Voice receptionist · Batcave ops. Pinch control, calibration, and stealth briefings.</p>
+        </div>
+        <div class="panel-b">
+          <div class="btn-row">
+            <button class="primary" id="briefBtn">Play briefing</button>
+            <button id="helpBtn">How to vanish</button>
+          </div>
+          <div class="voice-log" id="voiceLog" style="margin-top:12px"></div>
+        </div>
+      </aside>
+
+      <section class="panel stage">
+        <div class="panel-h">
+          <span>Live feed — Invisibility Mode</span>
+          <span id="camStatus" style="color:var(--muted);font-family:var(--mono);font-size:11px">STANDBY</span>
+        </div>
+        <div class="stage-frame" id="stageFrame">
+          <video id="video" playsinline muted></video>
+          <canvas id="output"></canvas>
+          <div class="hud">
+            <div class="hud-top">
+              <div class="tag rec">REC 00:LIVE</div>
+              <div class="tag" id="fpsTag">FPS — · 720p NV</div>
+            </div>
+            <div class="crosshair"></div>
+            <div class="hud-bot">
+              <div class="tag">Thermal Gain +12dB · Exposure Auto</div>
+              <div class="tag">Cal <span id="calStatus">NOT ARMED</span></div>
+            </div>
+          </div>
+          <div class="stealth-banner" id="stealthBanner">GHOST ACTIVE · PINCH TO RETURN</div>
+        </div>
+        <div class="controls">
+          <button class="primary" id="calBtn">1. Calibrate background</button>
+          <button id="stealthBtn">2. Toggle stealth</button>
+          <button id="thermalBtn">Thermal NV</button>
+          <button id="nightBtn">Night boost</button>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-h">Sensors</div>
+        <div class="panel-b">
+          <div class="metric">
+            <h3>Motion radar</h3>
+            <div class="radar" id="radar"></div>
+            <div class="legend">
+              <span>Hits <b id="motionCount">0</b></span>
+              <span>Dist <b id="motionDist">—</b></span>
+              <span>Conf <b id="motionConf">—</b></span>
+            </div>
+            <div class="sub">Last motion: <span id="motionAgo">—</span> · DeviceMotion + IMU</div>
+          </div>
+
+          <div class="metric">
+            <h3>Wi-Fi wave panel</h3>
+            <canvas class="wave" id="wave"></canvas>
+            <div class="legend">
+              <span>Nets <b id="wifiCount">5</b></span>
+              <span>RSSI <b id="rssi">-52 dBm</b></span>
+              <span>Band 5 GHz</span>
+            </div>
+            <div class="sub">Browser demo is visualized RF. Production CSI needs ESP32 / Nexmon.</div>
+          </div>
+
+          <div class="metric">
+            <h3>Stealth index</h3>
+            <div class="kpi-grid">
+              <div class="kpi"><span>Hands tracked</span><b id="handKpi">0</b></div>
+              <div class="kpi"><span>Mask engine</span><b>MP Seg</b></div>
+              <div class="kpi"><span>Latency target</span><b>0.2s</b></div>
+              <div class="kpi"><span>Data leaving device</span><b>0</b></div>
+            </div>
+          </div>
+
+          <div class="metric">
+            <h3>Palette</h3>
+            <div class="temp-bar"></div>
+            <div class="legend"><span>COLD</span><span>6°C — 39°C</span><span>HOT</span></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="docs" id="tech">
+      <article>
+        <h2>Software stack &amp; cited studies</h2>
+        <p>
+          UcantSeeMeX is a privacy-first visibility controller. The live demo in this page
+          runs entirely in the browser. Field hardware (thermal cores, CSI radios, drones)
+          is specified below so a production build can swap the simulated layers for real sensors.
+        </p>
+
+        <h3>1. Human segmentation + pinch control (core engine)</h3>
+        <p>
+          The invisibility effect is classic background replacement driven by a person mask.
+          On calibrate, the current frame is stored as a background plate. When stealth is on,
+          every person pixel in the MediaPipe mask is punched out and replaced with that plate,
+          so you disappear from <em>your own</em> camera feed.
+        </p>
+        <ul>
+          <li><code>@mediapipe/selfie_segmentation</code> — MobileNetV3-based person/background mask. General model 256×256; landscape model 144×256 (used here, modelSelection = 1). Designed for close-range selfie / conferencing (&lt; 2 m).</li>
+          <li><code>@mediapipe/hands</code> — 21-landmark hand tracker. Pinch = Euclidean distance between landmark 4 (thumb tip) and 8 (index tip) below 0.045 normalized units, debounced at 700 ms.</li>
+          <li>Canvas 2D compositing — <code>destination-out</code> with the mask, then <code>destination-over</code> with the stored background. No pixels leave the device.</li>
+        </ul>
+        <p class="cite">
+          MediaPipe Selfie Segmentation docs and model card (Google AI Edge). Hands solution:
+          Zhang et al., “MediaPipe Hands: On-device Real-time Hand Tracking,” 2020.
+          Open implementations of the same cloak pattern:
+          github.com/rakeshkattimani25/ghost-invisibility,
+          github.com/harshbhadani4597/ghost-invisibility-effect,
+          github.com/haripriya262007-blip/invisibility-mode,
+          github.com/khyathi-2006/invisibility-computer-vision,
+          github.com/tubakhxn/Invisibility-Computer-Vision.
+        </p>
+
+        <h3>2. Thermal + night-vision layer</h3>
+        <p>
+          This browser build applies an inferno-style luminance colormap (thermal) or a
+          contrast/teal night boost. That is a visualization, not a radiometric sensor.
+          Production pairing:
+        </p>
+        <ul>
+          <li>FLIR Lepton 3.5 / PureThermal or Seek Compact for true LWIR.</li>
+          <li>RGB + thermal fusion for segmentation when cloth texture matches the wall — the exact failure mode called out in the product notes.</li>
+          <li>Classic thermal detection: capture a background heat plate, subtract, threshold human-shaped blobs (connected components). RGB selfie-seg fills holes when IR contrast collapses.</li>
+        </ul>
+        <p class="cite">
+          Background-subtraction human detection is the standard baseline in infrared surveillance
+          literature (e.g. Davis &amp; Sharma multimodal IR/visible tracking). Fusion of thermal + RGB
+          for robust person masks is widely used in night-time ADAS and search-and-rescue stacks.
+        </p>
+
+        <h3>3. Motion sensor</h3>
+        <p>
+          In the web app, motion uses the browser <code>DeviceMotionEvent</code> IMU
+          (accelerometer magnitude vs ~9.8 m/s²). Spikes increment the radar hit counter.
+          On phone / glasses / drone firmware the same panel should read:
+        </p>
+        <ul>
+          <li>Hardware PIR + IMU fusion on wearables.</li>
+          <li>Optical flow on the camera pipeline as a second vote.</li>
+          <li>Wi-Fi CSI motion (below) as the through-wall channel.</li>
+        </ul>
+
+        <h3>4. Wi-Fi CSI presence (production radio, simulated here)</h3>
+        <p>
+          Browsers cannot expose raw Channel State Information. The waveform panel is an honest
+          visualization driven by motion energy. A shipping multi-device build should use:
+        </p>
+        <ul>
+          <li>ESP32 CSI (Espressif <code>esp-csi</code> / ESP-IDF) or Nexmon-patched Broadcom / Raspberry Pi.</li>
+          <li>Intel 5300 CSI tool for lab capture.</li>
+          <li>Pipeline: Hampel + Savitzky–Golay denoise → segment CSI streams → CNN / ResNet or SVM / LSTM classifier.</li>
+        </ul>
+        <p class="cite">
+          Published accuracies this stack is designed around:
+          device-free CSI presence + counting 98.75% presence / 97.78% 0–5 person count
+          (IEEE; Hampel + Savitzky–Golay + CNN/ResNet);
+          CSI presence methodology &gt;90% average (Sensors 2023, MDPI);
+          Amazon/UW home presence work targeting &gt;90% true-positive on commodity CSI;
+          activity + fall recognition with SVM and LSTM on 802.11n CSI
+          (Damodaran et al., CCF TPCI 2020).
+          RSSI-only upward spikes are a coarse fallback; CSI subcarriers are the real feature.
+        </p>
+
+        <h3>5. Voice receptionist — Coach Colin</h3>
+        <p>
+          Atlas multilingual neural TTS speaking as Coach Colin. Clips: welcome, calibrate,
+          stealth on/off, thermal, and how-to. Playback is local MP3. A native app would
+          swap this for on-device TTS or a cloned voice with the same scripted briefings.
+        </p>
+
+        <h3>6. Multi-device ecosystem</h3>
+        <p>
+          Target clients from the product art: iPhone (AVFoundation + MediaPipe iOS or
+          Vision person segmentation), Android (CameraX + MediaPipe Tasks), laptop dashboard
+          (this web app / Electron), smart glasses AR HUD (WebXR or vendor OS), drone thermal
+          gimbal (RTSP + LWIR), IoT camera (on-edge mask, MQTT events). Transport: encrypted
+          WebRTC or MQTT over TLS. No raw video leaves the originating device unless the
+          owner explicitly shares a processed feed.
+        </p>
+
+        <h3>7. What this is — and is not</h3>
+        <p>
+          Product line on the posters: “privacy creator concept · own your visibility ·
+          not surveillance evasion.” The cloak only rewrites <em>your</em> camera composite.
+          It does not jam radios, blind other people’s cameras, or defeat physical observers.
+          Use it for creator privacy, background replacement, and demos of on-device CV.
+        </p>
+      </article>
+    </section>
+
+    <footer>UcantSeeMeX v2.3.1 · Coach Colin · on-device models · pinch to vanish · privacy first</footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+</html>
