@@ -27,6 +27,33 @@ prescriptions. Voice clips live in [`public/supermanx/audio/`](public/supermanx/
 
 ---
 
+## Also in here: Optics Lab (CinematicX)
+
+An interactive optics lab at [`public/opticslab/`](public/opticslab). Turn the
+focusing ring (drag it, or use the slider) and the moving glass group shifts
+the **plane of focus** through a low-poly diorama. The blur is a real
+depth-of-field pass keyed to that plane, and the sensor screen shows what the
+lens actually sees.
+
+- **Director mode** tours eight camera perspectives: establishing, exploded
+  view, glass macro, top-down plan, fly-through, rack focus, viewfinder
+  (sensor POV with focus peaking) and crane out. Space pauses and switches to
+  free cam; ←/→ change shot; `1 2 3` focus presets; `E` explode; `F` aperture;
+  `H` hides the HUD.
+- **CinematicX panel**: Attention, Emotion, Reward, Memory, Effort and
+  Purchase intent scored live per shot, a signal heatmap across the tour,
+  CSV and Markdown report export. The signals are simulated from what is on
+  screen (motion, cuts, what the plane is holding, aperture, product time);
+  they are not biometric measurements.
+- **Seedance 2.5 cut**: a 10 s hero clip generated on Higgsfield plays from
+  the filmstrip. To host it locally, drop the file at
+  `public/opticslab/media/seedance-optics-lab.mp4`.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/opticslab/>**
+— locally it is `/opticslab/` (`http://localhost:4173/opticslab/` under `./start.sh`).
+
+---
+
 ## Also in here: TrackerX Command
 
 A single-page command dashboard at [`public/trackerx/`](public/trackerx) with its

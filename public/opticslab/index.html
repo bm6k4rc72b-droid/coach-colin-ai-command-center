@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Optics Lab — CinematicX by Colin</title>
+<meta name="description" content="An interactive optics lab. Turn the focus ring and the glass elements move the plane of focus through a miniature scene, while a director cam tours every perspective and CinematicX scores each shot." />
+<meta name="theme-color" content="#07080c" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='none' stroke='%23ff5fb4' stroke-width='6'/%3E%3Ccircle cx='32' cy='32' r='12' fill='%237fd8ff'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="gl" aria-label="Optics lab 3D view. Drag to orbit when the director is paused; drag the focusing ring to move the plane of focus." role="img"></canvas>
+<div id="labels" aria-hidden="true"></div>
+<div id="cut" aria-hidden="true"></div>
+
+<!-- Viewfinder overlay, shown on the sensor-POV shot -->
+<div id="viewfinder" aria-hidden="true">
+  <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+  <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+  <div class="vf-rec"><span class="dot"></span>REC</div>
+  <div class="vf-center"></div>
+  <div class="vf-read" id="vf-read">f/2 · 38 cm · peaking</div>
+</div>
+
+<div id="boot" role="status">
+  <div class="boot-ring"></div>
+  <p>Grinding glass…</p>
+</div>
+
+<div class="shell">
+  <!-- Left column -->
+  <div class="col-left">
+    <header class="card explainer">
+      <p class="eyebrow">The plane</p>
+      <h1>Of focus</h1>
+      <p class="lede">Everyone knows when a photo is blurry. Almost nobody has seen the exact plane where it turns sharp. Turn the focus ring and watch it move.</p>
+      <div class="readouts">
+        <div><span>Focus</span><b id="r-focus">38 cm</b></div>
+        <div><span>Aperture</span><b id="r-fstop">f/2</b></div>
+        <div><span>Sharp zone</span><b id="r-zone">0.8 cm</b></div>
+      </div>
+      <p class="story" id="story">Focused on 38 cm of empty air.</p>
+    </header>
+
+    <section class="card controls" id="controls" aria-label="Lens controls">
+      <div class="ctl-row">
+        <label for="focus" class="ctl-label">Focus <em>drag the ring · 1 2 3</em></label>
+        <span class="ctl-val" id="focus-val">38 cm</span>
+      </div>
+      <input id="focus" type="range" min="20" max="120" step="0.5" value="38" aria-label="Focus distance in centimetres" />
+      <div class="seg" role="group" aria-label="Focus presets">
+        <button data-focus="30">Foreground</button>
+        <button data-focus="60">Middle</button>
+        <button data-focus="100">Background</button>
+      </div>
+
+      <div class="ctl-row"><span class="ctl-label">Aperture</span></div>
+      <div class="seg" role="group" aria-label="Aperture">
+        <button data-fstop="2" aria-pressed="true">f/2</button>
+        <button data-fstop="5.6">f/5.6</button>
+        <button data-fstop="16">f/16</button>
+      </div>
+
+      <div class="ctl-row"><span class="ctl-label">Lens</span></div>
+      <div class="seg" role="group" aria-label="Lens layout">
+        <button data-explode="0" aria-pressed="true">Assembled</button>
+        <button data-explode="1">Exploded</button>
+      </div>
+
+      <div class="toggles">
+        <label><input type="checkbox" id="t-labels" checked /> Labels</label>
+        <label><input type="checkbox" id="t-rays" checked /> Light rays</label>
+        <label><input type="checkbox" id="t-peak" checked /> Focus peaking</label>
+      </div>
+    </section>
+  </div>
+
+  <!-- Right column: CinematicX -->
+  <aside class="cx" id="cx" aria-label="CinematicX neuro-cinematic analytics">
+    <div class="cx-head">
+      <div class="cx-brand">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="cxg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fd8ff"/><stop offset=".5" stop-color="#ff5fb4"/><stop offset="1" stop-color="#ffd27f"/></linearGradient></defs><path d="M20 3 35 11.5v17L20 37 5 28.5v-17Z" fill="none" stroke="url(#cxg)" stroke-width="2.4"/><path d="M20 3v34M5 11.5l30 17M35 11.5 5 28.5" stroke="url(#cxg)" stroke-width=".9" opacity=".6"/></svg>
+        <div><b>CinematicX</b><span>by Colin</span></div>
+      </div>
+      <span class="cx-tag">Neuro-cinematic analytics</span>
+    </div>
+
+    <div class="cx-now">
+      <div class="cx-now-top">
+        <span>Now playing</span>
+        <b id="cx-shot">01 · Establishing</b>
+      </div>
+      <div class="cx-time"><span id="cx-time">0.0s / 54.0s</span><span id="cx-mode">Director</span></div>
+      <div class="cx-scrub" id="cx-scrub"><div class="cx-scrub-fill" id="cx-scrub-fill"></div></div>
+    </div>
+
+    <div class="cx-grid" id="cx-grid"></div>
+
+    <div class="cx-heat">
+      <div class="cx-heat-head"><span>Signal timeline</span><span>Heatmap</span></div>
+      <canvas id="cx-heat" width="640" height="200" aria-label="Signal heatmap over the tour timeline"></canvas>
+    </div>
+
+    <div class="cx-foot">
+      <span>Model v2.1 · simulated from on-screen state, not biometric data · <span id="cx-session">CX-00000</span></span>
+      <span class="cx-links"><button id="cx-csv">Export CSV</button><button id="cx-report">Export Report</button></span>
+    </div>
+  </aside>
+
+  <!-- Bottom: director filmstrip -->
+  <nav class="film" aria-label="Camera perspectives">
+    <button class="film-btn" id="play" aria-label="Pause director">❚❚</button>
+    <button class="film-btn" id="prev" aria-label="Previous shot">‹</button>
+    <div class="film-track" id="film"></div>
+    <button class="film-btn" id="next" aria-label="Next shot">›</button>
+    <div class="film-side">
+      <button class="pill" id="cinema" aria-pressed="false" title="Hide the panels (H)">Hide HUD</button>
+      <button class="pill" id="seedance-btn" title="Seedance 2.5 render of this lab">▶ Seedance 2.5 cut</button>
+      <button class="pill mobile-only" id="cx-toggle" aria-expanded="false" aria-controls="cx">CX</button>
+      <button class="pill mobile-only" id="ctl-toggle" aria-expanded="false" aria-controls="controls">Lens</button>
+    </div>
+  </nav>
+</div>
+
+<dialog id="seedance">
+  <div class="dlg-head">
+    <div><b>Seedance 2.5 · hero cut</b><span>Generated on Higgsfield from a prompt describing this lab</span></div>
+    <button id="seedance-close" aria-label="Close">✕</button>
+  </div>
+  <video id="seedance-video" controls playsinline preload="none">
+    <source src="./media/seedance-optics-lab.mp4" type="video/mp4" />
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260923_210839_0b51ea0e-23cb-455b-ad56-ab50c80cd214.mp4" type="video/mp4" />
+  </video>
+  <p class="dlg-note" id="seedance-note"></p>
+</dialog>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
