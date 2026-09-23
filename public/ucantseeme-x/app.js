@@ -156,6 +156,7 @@ function applyThermal(imageData) {
 }
 
 function onSeg(results) {
+  lastSegAt = performance.now();
   lastMask = results.segmentationMask;
   lastImage = results.image;
   const w = canvas.width;
@@ -202,41 +203,85 @@ function onSeg(results) {
   }
 }
 
+let lastSegAt = 0;
+let pumping = false;
+
+// Size the canvas to the camera's real frame so portrait iPhone video isn't squashed.
+function sizeCanvas() {
+  const vw = video.videoWidth || 960;
+  const vh = video.videoHeight || 540;
+  const scale = Math.min(1, 960 / Math.max(vw, vh));
+  const w = Math.round(vw * scale);
+  const h = Math.round(vh * scale);
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+}
+
+// Until the models return a frame (or if they fail), show the raw mirrored feed.
+function drawRawFrame() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.save();
+  ctx.translate(w, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, w, h);
+  ctx.restore();
+}
+
+// Our own frame loop instead of camera_utils' Camera, which opens a second
+// camera stream — iOS Safari handles that badly.
+async function pump() {
+  if (!state.running) return;
+  if (!pumping && video.readyState >= 2) {
+    pumping = true;
+    sizeCanvas();
+    try {
+      if (selfieSeg) await selfieSeg.send({ image: video });
+    } catch (err) {
+      console.warn("Segmentation failed", err);
+    }
+    try {
+      if (hands) await hands.send({ image: video });
+    } catch (err) {
+      console.warn("Hand tracking failed", err);
+    }
+    if (performance.now() - lastSegAt > 500) drawRawFrame();
+    pumping = false;
+  }
+  requestAnimationFrame(pump);
+}
+
 async function startCamera() {
-  setupModels();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("This browser can't use the camera here. On iPhone, open the link in Safari (not an in-app browser).");
+  }
   const stream = await navigator.mediaDevices.getUserMedia({
     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
     audio: false,
   });
+  video.muted = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("autoplay", "");
   video.srcObject = stream;
   await video.play();
-  const resize = () => {
-    const rect = $(".stageFrame").getBoundingClientRect();
-    const ratio = 16 / 9;
-    let w = Math.floor(rect.width);
-    let h = Math.floor(w / ratio);
-    if (h > rect.height && rect.height > 120) {
-      h = Math.floor(rect.height);
-      w = Math.floor(h * ratio);
-    }
-    canvas.width = 960;
-    canvas.height = 540;
-  };
-  resize();
-  window.addEventListener("resize", resize);
+  sizeCanvas();
 
-  camera = new Camera(video, {
-    onFrame: async () => {
-      if (selfieSeg) await selfieSeg.send({ image: video });
-      if (hands) await hands.send({ image: video });
-    },
-    width: 960,
-    height: 540,
-  });
-  camera.start();
+  let modelsOk = true;
+  try {
+    setupModels();
+  } catch (err) {
+    modelsOk = false;
+    selfieSeg = null;
+    hands = null;
+    logLine("SYSTEM", "Vision models failed to load: " + err.message + ". Showing the raw feed.");
+  }
+
   state.running = true;
+  requestAnimationFrame(pump);
   $("#camStatus").textContent = "LIVE";
-  logLine("SYSTEM", "Camera pipeline live. MediaPipe Selfie Segmentation + Hands online.");
+  if (modelsOk) logLine("SYSTEM", "Camera pipeline live. MediaPipe Selfie Segmentation + Hands online.");
 }
 
 /* ---------- Sensors ---------- */
@@ -312,7 +357,9 @@ function enterApp() {
   speak("welcome", "Welcome to UcantSeeMeX. Coach Colin on comms.");
   startCamera().catch((err) => {
     logLine("SYSTEM", "Camera blocked: " + err.message);
-    alert("Camera permission is required for Invisibility Mode.");
+    alert(err.name === "NotAllowedError"
+      ? "Camera permission is required for Invisibility Mode. On iPhone: Settings > Safari > Camera > Allow."
+      : err.message);
   });
 }
 
