@@ -749,6 +749,43 @@ demo runs without a camera, and the honest rows survived onto the rendered page.
 
 ---
 
+## Also in here: MoneyPrinterTurbo
+
+[**MoneyPrinterTurbo**](https://github.com/harry0703/MoneyPrinterTurbo) by
+[Harry](https://github.com/harry0703) (MIT) is an AI short-video generator:
+give it a topic, and it writes the script, pulls stock footage, voices it,
+subtitles it, adds music and renders an HD vertical video.
+
+It is a separate Python 3.11 app, not part of the globe, so it lives as a git
+submodule at `vendor/MoneyPrinterTurbo`, pinned to upstream commit `3d5f4e4`.
+It is not copied in directly because it carries ~200 MB of bundled music and
+fonts. A plain clone of this repo leaves the folder empty; fetch it with:
+
+```sh
+git submodule update --init vendor/MoneyPrinterTurbo
+# or, cloning fresh:
+git clone --recurse-submodules <this repo>
+```
+
+Then run it with upstream's own tooling:
+
+```sh
+cd vendor/MoneyPrinterTurbo
+uv python install 3.11 && uv sync --frozen
+sh webui.sh                   # WebUI  → http://127.0.0.1:8501
+uv run python main.py         # API    → http://127.0.0.1:8080/docs
+# or with Docker:
+cp config.example.toml config.toml && docker compose -f docker-compose.release.yml up
+```
+
+It needs an LLM key (OpenAI, Claude, Gemini, DeepSeek and others) and a free
+[Pexels](https://www.pexels.com/api/) or [Pixabay](https://pixabay.com/api/docs/)
+key for footage, entered in the WebUI's basic settings. Those keys go in its own
+`config.toml`, not this repo's `.env`. To move to a newer upstream version:
+`git -C vendor/MoneyPrinterTurbo pull origin main`, then commit the new pointer.
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream
