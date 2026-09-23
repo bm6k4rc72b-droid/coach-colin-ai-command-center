@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackerX Command — by Coach Colin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: rgba(8, 16, 28, 0.78);
+      --cyan: #22d3ee;
+      --orange: #ff7a18;
+      --lime: #7cff6b;
+      --red: #ff3b5c;
+      --line: rgba(34, 211, 238, 0.18);
+      --text: #d7f6ff;
+      --muted: #7ea0b5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; min-height: 100%; }
+    body {
+      background-image:
+        radial-gradient(900px 400px at 10% -10%, rgba(255,122,24,.12), transparent 50%),
+        radial-gradient(700px 400px at 90% 0%, rgba(34,211,238,.10), transparent 50%),
+        linear-gradient(180deg, #05070d 0%, #07101c 100%);
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 22px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 20;
+      background: rgba(5,7,13,.72);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: conic-gradient(from 180deg, #22d3ee, #ff7a18, #22d3ee);
+      display: grid; place-items: center; font-family: Orbitron, sans-serif; font-weight: 800;
+      color: #041018; box-shadow: 0 0 24px rgba(34,211,238,.35);
+    }
+    .brand h1 { font-family: Orbitron, sans-serif; font-size: 22px; letter-spacing: 1.5px; }
+    .brand h1 span { color: var(--cyan); }
+    .brand p { font-size: 11px; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; }
+    .status { display: flex; gap: 16px; align-items: center; font-family: "Share Tech Mono", monospace; font-size: 12px; }
+    .pill { padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; }
+    .live { color: var(--lime); }
+    .live::before { content: ""; display: inline-block; width: 7px; height: 7px; background: var(--lime); border-radius: 50%; margin-right: 6px; box-shadow: 0 0 10px var(--lime); }
+    nav { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 22px; border-bottom: 1px solid var(--line); }
+    nav button {
+      background: transparent; color: var(--text); border: 1px solid var(--line);
+      padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: Orbitron, sans-serif;
+      font-size: 11px; letter-spacing: .08em;
+    }
+    nav button.active, nav button:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 18px rgba(34,211,238,.2); }
+    main { padding: 18px 22px 80px; max-width: 1400px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: 1.4fr .9fr; gap: 16px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 16px; backdrop-filter: blur(12px);
+    }
+    .panel h2 { font-family: Orbitron, sans-serif; font-size: 14px; letter-spacing: .14em; color: var(--cyan); margin-bottom: 10px; }
+    .hero-img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
+    .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; font-family: "Share Tech Mono", monospace; font-size: 12px; color: var(--muted); }
+    .chip { border: 1px solid var(--line); padding: 4px 8px; border-radius: 6px; }
+    .chip.hot { color: var(--orange); border-color: rgba(255,122,24,.4); }
+    .chip.ok { color: var(--lime); border-color: rgba(124,255,107,.35); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn {
+      background: linear-gradient(90deg, #ff3b5c, #ff7a18); border: 0; color: white;
+      padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px;
+    }
+    .btn.ghost { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }
+    .rex {
+      display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;
+    }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #7ee7ff, #0b3a4a);
+      border: 2px solid var(--cyan); flex-shrink: 0;
+      display: grid; place-items: center; font-family: Orbitron; font-size: 11px; color: #041018;
+    }
+    .bubble { background: rgba(10,22,36,.9); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    .bubble strong { color: var(--cyan); font-family: Orbitron; font-size: 11px; letter-spacing: .1em; }
+    .bubble p { font-size: 13px; line-height: 1.45; margin-top: 4px; }
+    audio { width: 100%; margin-top: 8px; height: 32px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+    .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+    .card h3 { font-family: Orbitron; font-size: 13px; margin: 8px 0 4px; }
+    .card p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--cyan); font-family: Orbitron; font-size: 11px; letter-spacing: .08em; }
+    a { color: var(--cyan); }
+    .view { display: none; }
+    .view.active { display: block; }
+    .footer {
+      position: fixed; bottom: 0; left: 0; right: 0; padding: 8px 22px;
+      background: rgba(5,7,13,.9); border-top: 1px solid var(--line);
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      font-family: "Share Tech Mono", monospace; font-size: 12px;
+    }
+    .stat { color: var(--muted); }
+    .stat b { color: var(--text); }
+    .cite { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">TX</div>
+      <div>
+        <h1>TRACKER<span>X</span></h1>
+        <p>by Coach Colin · Command Center</p>
+      </div>
+    </div>
+    <div class="status">
+      <div class="pill live">LIVE · SECURE</div>
+      <div class="pill">RAIN MODE ACTIVE</div>
+      <div class="pill" id="clock"></div>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" data-view="command">Command</button>
+    <button data-view="detect">YOLO + Thermal</button>
+    <button data-view="anpr">ANPR / OCR</button>
+    <button data-view="ghost">Invisible Ghost Sensor</button>
+    <button data-view="fleet">Stealth Fleet</button>
+    <button data-view="stack">Software & Studies</button>
+  </nav>
+
+  <main>
+    <section id="command" class="view active">
+      <div class="grid">
+        <div class="panel">
+          <h2>CAM-04 · NIGHT VISION / THERMAL · ZOOM 2.5×</h2>
+          <img class="hero-img" src="assets/hud_suv.jpg" alt="Thermal SUV track" />
+          <div class="meta">
+            <span class="chip hot">VEHICLE · SUV · 92%</span>
+            <span class="chip ok">PLATE ABC-1234 · 96.3%</span>
+            <span class="chip">SPEED 18 KM/H</span>
+            <span class="chip">GPS 37.7749°N 122.4194°W</span>
+          </div>
+          <div class="actions">
+            <button class="btn" onclick="rexSpeak('intro'); flagIncident()">FLAG & LOG INCIDENT</button>
+            <button class="btn ghost" onclick="exportLog()">EXPORT FOOTAGE LOG</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="rex">
+            <div class="avatar">REX</div>
+            <div class="bubble">
+              <strong>VOICE RECEPTIONIST · REX</strong>
+              <p id="rexText">High-energy British watch officer. Press play. I narrate every module: detection, plates, invisible sensors, and the stealth-wing fleet.</p>
+              <audio id="rexAudio" controls src="assets/trackerx_rex_intro.mp3"></audio>
+            </div>
+          </div>
+          <h2>DETECTIONS</h2>
+          <p class="cite">VEHICLE: SUV · CONF 92% · DIST 22.4m · SPEED 18km/h</p>
+          <p class="cite">PLATE: ABC-1234 · CONF 96% · MATCH DB · REGISTERED · NO FLAGS</p>
+          <h2 style="margin-top:14px">ENVIRONMENT</h2>
+          <p class="cite">HEAVY RAIN · 8°C · HUMIDITY 94% · VISIBILITY LOW</p>
+          <h2 style="margin-top:14px">SYSTEM</h2>
+          <p class="cite">ARMED · RECORDING · TRACKS ACTIVE 01 · ANAMORPHIC 2.39:1 · GAIN 18dB · IR LOCK ON</p>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <img src="assets/hud_truck.jpg" alt="Route lock" />
+          <h3>ROUTE + BLACKLIST</h3>
+          <p>Target 89C-04048 locked. Heat-aware path, geofence secured, ETA live.</p>
+        </div>
+        <div class="card">
+          <img src="assets/hud_ecosystem.jpg" alt="Device mesh" />
+          <h3>UNIFIED MESH</h3>
+          <p>iOS, Android, AR glasses, laptop dashboard, aerial thermal — one platform.</p>
+        </div>
+        <div class="card">
+          <img src="assets/hud_wifi.jpg" alt="Through-wall CSI" />
+          <h3>GHOST SENSOR</h3>
+          <p>WiFi CSI through concrete. No camera. Motion goes invisible to video.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="detect" class="view">
+      <div class="grid">
+        <div class="panel">
+          <h2>YOLO OBJECT + THERMAL FUSION</h2>
+          <img class="hero-img" src="assets/hud_suv.jpg" alt="Detection HUD" />
+        </div>
+        <div class="panel">
+          <div class="rex">
+            <div class="avatar">REX</div>
+            <div class="bubble">
+              <strong>REX · DETECTION BRIEF</strong>
+              <p>Ultralytics YOLO11 for boxes. ByteTrack keeps IDs when rain smears the frame. Thermal overlay when visible light dies.</p>
+              <audio controls src="assets/rex_yolo.mp3"></audio>
+              <audio controls src="assets/rex_thermal.mp3"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>BEST SOFTWARE IN THIS MODULE</h2>
+        <table>
+          <tr><th>Layer</th><th>Stack we ship</th><th>Why it wins</th></tr>
+          <tr><td>Detector</td><td>Ultralytics YOLO11 (fallback YOLO8-n on Edge TPU)</td><td>YOLO11 beat YOLOv5/v8 on occluded vehicles in day, night, rain and fog (AIR 2025 comparative study).</td></tr>
+          <tr><td>Tracker</td><td>ByteTrack + Kalman + optional DeepSORT / NvDCF on NVIDIA DeepStream</td><td>Persistent IDs for blacklist boxes; DeepStream path holds ~33 FPS on Xavier-class edge.</td></tr>
+          <tr><td>Thermal</td><td>FLIR-class LWIR + YOLO thermal fine-tune, RGB-T fusion (UOD-style single-weight detector)</td><td>Vo & Quach 2023: thermal + YOLOv5 for night DAS. Unified RGB/thermal detectors add ~5% mAP on FLIR-aligned sets.</td></tr>
+          <tr><td>Runtime</td><td>TensorRT / ONNX / CoreML / TFLite</td><td>Phone glasses get CoreML. Drone and Jetson get TensorRT. Cloud GPU gets full YOLO11-x.</td></tr>
+        </table>
+        <p class="cite">Cited: Srisuk et al., IWAIT 2026 (YOLO11 + optical flow traffic metrics, 96–98% counts). Vehicle counting comparison, Springer AIR 2025. IJACSA 14(6) 2023 thermal+YOLOv5. UOD RGB-thermal unification, Pattern Recognition 2026.</p>
+      </div>
+    </section>
+
+    <section id="anpr" class="view">
+      <div class="grid">
+        <div class="panel">
+          <h2>ANPR / OCR LICENSE PLATE</h2>
+          <img class="hero-img" src="assets/hud_truck.jpg" alt="Plate lock" />
+        </div>
+        <div class="panel">
+          <div class="rex">
+            <div class="avatar">REX</div>
+            <div class="bubble">
+              <strong>REX · PLATE BRIEF</strong>
+              <p>Detect plate box → enhance → OCR → syntax clean → digit fallback → blacklist hash.</p>
+              <audio controls src="assets/rex_anpr.mp3"></audio>
+            </div>
+          </div>
+          <p class="cite" style="margin-top:12px">DETECTED ABC-1234 · STATE CA · CONF 96.3% · REGISTERED · NO FLAGS</p>
+          <p class="cite">BLACKLIST FALLBACK DIGITS 04048 — same partial-match trick used in research pipelines when full syntax fails.</p>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>BEST SOFTWARE IN THIS MODULE</h2>
+        <table>
+          <tr><th>Layer</th><th>Stack we ship</th><th>Field numbers</th></tr>
+          <tr><td>Plate detect</td><td>YOLO11-plate head inside the same model as vehicle class</td><td>One forward pass, no second detector tax.</td></tr>
+          <tr><td>OCR</td><td>PaddleOCR v4 / Fast-ALPR + country syntax grammar (US, CA, VN, EU)</td><td>Commercial ANPR routinely 98–99.3% when plates are resolved. Phoenix Sky Harbor SmartLPR 98.4%; Innova OCR5 99.3% with no discarded frames; Milesight PlateXpert 98% / 0.1s.</td></tr>
+          <tr><td>Speed</td><td>TensorRT OCR &lt;5 ms after crop</td><td>Matches the marketing brief: production reads under 5 ms, highway-capable.</td></tr>
+          <tr><td>Fallback</td><td>Last-5-digit index (04048 style)</td><td>Survives dirt, rain and partial crops.</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section id="ghost" class="view">
+      <div class="grid">
+        <div class="panel">
+          <h2>INVISIBLE MOTION — WIFI CSI · NO CAMERA</h2>
+          <img class="hero-img" src="assets/hud_wifi.jpg" alt="Through wall CSI" />
+        </div>
+        <div class="panel">
+          <div class="rex">
+            <div class="avatar">REX</div>
+            <div class="bubble">
+              <strong>REX · GHOST BRIEF</strong>
+              <p>The sensor itself is the invisibility trick: radio, not glass. Walls stay up. No visual footage exists to leak.</p>
+              <audio controls src="assets/rex_ghost.mp3"></audio>
+            </div>
+          </div>
+          <p class="cite" style="margin-top:12px">STATUS: MOTION DETECTED · CONF 98.4% · 3.2m NE · WALKING 0.8 m/s · 1 HUMAN</p>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>HOW THE SENSOR GOES INVISIBLE</h2>
+        <p style="font-size:14px;line-height:1.55;color:#b7d3e2">
+          A 2.4/5 GHz CSI transceiver (ESP32-S3 or Wi-Fi 6 AP with CSI export) continuously illuminates the room.
+          A walking body perturbs multipath. Channel State Information across OFDM subcarriers is the fingerprint.
+          CNN + BiLSTM + attention classifies activity. Nothing is optically recorded — the “camera” is gone.
+          That is the privacy-first product claim for homes, elder care, and empty-property watch.
+        </p>
+        <table style="margin-top:12px">
+          <tr><th>Layer</th><th>Stack we ship</th><th>Study backing</th></tr>
+          <tr><td>Radio</td><td>ESP32-S3 CSI nodes + optional Intel 5300 / Wi-Fi 6 CSI AP</td><td>Strohmayer & Kampel, ICVS 2023, ESP32 through-wall HAR datasets.</td></tr>
+          <tr><td>Model</td><td>Wi-SensiNet style CNN–BiLSTM–attention; WiTWS path-separation when walls change</td><td>Wi-SensiNet: &gt;99% average accuracy on 7 through-wall activities (IEEE). WiTWS 2026: 99.23% in-domain, 97.13% unseen rooms, no site calibration.</td></tr>
+          <tr><td>On-device</td><td>Tiny models on the node; event-only uplink</td><td>No video stream. Alerts are presence, gait class, and optional respiration band (0.15–0.5 Hz).</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section id="fleet" class="view">
+      <div class="panel">
+        <h2>STEALTH BOMBER FLEET + SENSOR VARIETY</h2>
+        <div class="rex">
+          <div class="avatar">REX</div>
+          <div class="bubble" style="flex:1">
+            <strong>REX · FLEET BRIEF</strong>
+            <p>Flying-wing mothership, dart recon, hex ghost node, weather turret. Same mesh as phones and glasses.</p>
+            <audio controls src="assets/rex_fleet.mp3"></audio>
+          </div>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <img src="assets/bxDZy.jpg" alt="Spectre Wing" />
+          <h3>SPECTRE WING</h3>
+          <p>B-2-inspired flying wing. Conformal LWIR turret, rain-mode IR lock, anamorphic 2.39 capture, low-RCS planform.</p>
+        </div>
+        <div class="card">
+          <img src="assets/UfAdA.jpg" alt="Fleet family" />
+          <h3>STILETTO · HEX NODE · TURRET</h3>
+          <p>Dart recon for alleys. Wall hex for invisible CSI. Sealed turret for poles and gates.</p>
+        </div>
+        <div class="card">
+          <img src="assets/HWV1t.jpg" alt="Turret closeup" />
+          <h3>CHIN TURRET CAM</h3>
+          <p>Dual-band visible + thermal, focus lock, 2.5× digital, IP67 rain, gimbal stabilized.</p>
+        </div>
+        <div class="card">
+          <img src="assets/hud_ecosystem.jpg" alt="Devices" />
+          <h3>GROUND MESH</h3>
+          <p>iPhone live stream, Android live sync, AR glasses overlay, laptop analytics, drone feed.</p>
+        </div>
+        <div class="card">
+          <img src="assets/hud_map.jpg" alt="Global map" />
+          <h3>ROUTE MAPPER</h3>
+          <p>Satellite path, geofence, heat-avoidance routing, ETA and altitude fused on one glass.</p>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px">
+        <h2>FLEET SOFTWARE</h2>
+        <table>
+          <tr><th>Job</th><th>Best current stack</th></tr>
+          <tr><td>Autopilot / nav</td><td>PX4 + MAVSDK on the wing; ArduPilot fallback; RTK GNSS + visual-inertial (OpenVINS)</td></tr>
+          <tr><td>Onboard vision</td><td>NVIDIA Jetson Orin NX, TensorRT YOLO11 + thermal fusion</td></tr>
+          <tr><td>Mesh comms</td><td>5G + Wi-Fi 6E + optional Meshtastic / Silvus-class tactical IP for denied spectrum</td></tr>
+          <tr><td>App clients</td><td>Flutter (iOS/Android/desktop) + native ARKit/ARCore glasses overlay</td></tr>
+          <tr><td>Cloud</td><td>WebRTC low-latency video, encrypted object events on Postgres + PostGIS, map tiles via MapLibre</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section id="stack" class="view">
+      <div class="panel">
+        <h2>FULL SOFTWARE MAP — CITED</h2>
+        <table>
+          <tr><th>Feature from your boards</th><th>Production stack</th><th>Evidence</th></tr>
+          <tr>
+            <td>A. YOLO object detection / blacklist boxes</td>
+            <td>Ultralytics YOLO11, ByteTrack, OpenCV, CUDA optical flow for speed</td>
+            <td>AIR 2025: YOLO11 &gt; YOLOv8 &gt; YOLOv5 in rain/fog/night traffic. IWAIT 2026 YOLO11+flow: 96–98% vehicle counts, 1.9–3.1 km/h speed MAE.</td>
+          </tr>
+          <tr>
+            <td>B. Thermal night vision tracking</td>
+            <td>LWIR camera + YOLO thermal weights + RGB-T unified detector</td>
+            <td>Vo &amp; Quach, IJACSA 2023, “Advanced Night time Object Detection using Thermal Vision and YOLOv5”. Lightweight IR-YOLOv5 ~96.4% mAP50 on edge after TensorRT.</td>
+          </tr>
+          <tr>
+            <td>C. ANPR / OCR plates</td>
+            <td>YOLO plate head + PaddleOCR / Fast-ALPR + syntax grammar + 5-digit fallback</td>
+            <td>Quercus SmartLPR 98.25–99.8% site rates. Innova OCR5 99.3% no-discard test. Milesight PlateXpert 98% / 0.1s. OpenALPR commercial first-guess ~99% on clean benchmarks.</td>
+          </tr>
+          <tr>
+            <td>D. WiFi CSI motion — no camera</td>
+            <td>ESP32 CSI nodes, Wi-SensiNet / WiTWS models, event-only alerts</td>
+            <td>Wi-SensiNet IEEE: &gt;99% through-wall HAR. WiTWS IEEE TMC 2026: 99.23% / 97.13% cross-environment. ESP32 long-range NLOS datasets (Strohmayer 2023).</td>
+          </tr>
+          <tr>
+            <td>Route + geofence + heat zones</td>
+            <td>MapLibre, OSRM / Valhalla, PostGIS geofences, thermal-index overlay</td>
+            <td>Operational layer on top of detections — not a research claim, an integration claim.</td>
+          </tr>
+          <tr>
+            <td>Cross-device live sync</td>
+            <td>Flutter clients, WebRTC, end-to-end encrypted event bus</td>
+            <td>Matches the “one platform, every device” board: phone, glasses, laptop, drone.</td>
+          </tr>
+        </table>
+        <p class="cite">This command center is a product demo. Hardware flight and through-wall sensing require lawful deployment on property you control. CSI can infer occupancy and respiration — treat it as sensitive.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer">
+    <div class="stat">TRACKS <b id="tracks">01</b></div>
+    <div class="stat">TARGET SPEED <b>18 KM/H</b></div>
+    <div class="stat">GPS <b>37.7749°N, 122.4194°W</b></div>
+    <div class="stat">SYSTEM <b style="color:var(--lime)">ARMED · <span id="rec">00:12:44</span></b></div>
+  </div>
+
+  <script>
+    const views = document.querySelectorAll('.view');
+    const buttons = document.querySelectorAll('nav button');
+    const lines = {
+      intro: "Right then. Tracker X is live. Thermal lock hot. Ghost sensor invisible. Your move.",
+      detect: "YOLO eleven and thermal fusion. Rain does not save them.",
+      anpr: "Plate in the book. Syntax clean. Blacklist checked.",
+      ghost: "No camera. Radio only. The sensor is the invisibility cloak.",
+      fleet: "Spectre Wing on station. Stiletto and Hex Node green.",
+      stack: "Every module above is the current best open-plus-edge stack, cited."
+    };
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        views.forEach(v => v.classList.remove('active'));
+        document.getElementById(btn.dataset.view).classList.add('active');
+        document.getElementById('rexText').textContent = lines[btn.dataset.view] || lines.intro;
+      });
+    });
+    function tick() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toISOString().replace('T',' ').slice(0,19) + ' UTC';
+    }
+    tick(); setInterval(tick, 1000);
+    let rec = 12*60 + 44;
+    setInterval(() => {
+      rec += 1;
+      const h = String(Math.floor(rec/3600)).padStart(2,'0');
+      const m = String(Math.floor((rec%3600)/60)).padStart(2,'0');
+      const s = String(rec%60).padStart(2,'0');
+      document.getElementById('rec').textContent = `${h}:${m}:${s}`;
+    }, 1000);
+    function rexSpeak() {
+      const a = document.getElementById('rexAudio');
+      a.currentTime = 0; a.play();
+    }
+    function flagIncident() {
+      document.getElementById('rexText').textContent = "Incident flagged. Logged to the secure ledger. Blacklist watch stays hot.";
+      alert('INCIDENT LOGGED — TrackerX demo ledger (local only).');
+    }
+    function exportLog() {
+      const blob = new Blob([`TrackerX export ${new Date().toISOString()}\nTarget SUV 92%\nPlate ABC-1234 96.3%\nGPS 37.7749,-122.4194\n`], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'trackerx-export.txt'; a.click();
+    }
+  </script>
+</body>
+</html>

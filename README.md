@@ -16,6 +16,16 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: TrackerX Command
+
+A single-page command dashboard at [`public/trackerx/`](public/trackerx) with its
+HUD imagery and Rex voice-over clips in [`public/trackerx/assets/`](public/trackerx/assets).
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/trackerx/>**
+— locally it is `/trackerx/` (`http://localhost:4173/trackerx/` under `./start.sh`).
+
+---
+
 ## Also in here: the Agent Swarm
 
 A multi-agent orchestration console built on top of the globe. Press
