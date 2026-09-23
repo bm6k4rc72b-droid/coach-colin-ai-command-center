@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AngryLiarX — Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05070d;
+      --panel: rgba(8,14,28,.82);
+      --cyan: #2de8ff;
+      --orange: #ff7a18;
+      --amber: #ffb020;
+      --red: #ff3b4a;
+      --green: #2dff9a;
+      --line: rgba(45,232,255,.18);
+      --text: #e8f4ff;
+      --muted: #7f93ad;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: Rajdhani, sans-serif; overflow: hidden; }
+    body {
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(255,122,24,.12), transparent 50%),
+        radial-gradient(900px 500px at -10% 110%, rgba(45,232,255,.08), transparent 50%),
+        linear-gradient(180deg, #070b14 0%, #05070d 100%);
+    }
+    .scanlines { pointer-events: none; position: fixed; inset: 0; background: repeating-linear-gradient(180deg, transparent 0 2px, rgba(0,0,0,.12) 2px 3px); opacity: .25; z-index: 50; }
+    header {
+      height: 64px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 22px; border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(255,122,24,.08), rgba(45,232,255,.05));
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .fox {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: conic-gradient(from 200deg, #ff7a18, #ff3b4a, #ffb020, #ff7a18);
+      display: grid; place-items: center; font-weight: 800; font-family: Orbitron, sans-serif; font-size: 16px;
+      box-shadow: 0 0 18px rgba(255,122,24,.55);
+    }
+    h1 { font-family: Orbitron, sans-serif; font-size: 18px; letter-spacing: 1.5px; }
+    h1 span { color: var(--orange); }
+    .sub { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .live-pill {
+      display: flex; align-items: center; gap: 8px; font-family: Share Tech Mono, monospace; font-size: 12px;
+      color: var(--green);
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.4s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    nav { display: flex; gap: 6px; }
+    nav button {
+      background: transparent; border: 1px solid var(--line); color: var(--text); padding: 7px 12px;
+      border-radius: 6px; font-family: Rajdhani, sans-serif; font-weight: 600; letter-spacing: .6px; cursor: pointer;
+    }
+    nav button.active, nav button:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(45,232,255,.2); }
+    main { height: calc(100% - 64px); display: grid; grid-template-columns: 280px 1fr 320px; }
+    aside, .rail { border-color: var(--line); padding: 16px; overflow: auto; }
+    aside { border-right: 1px solid var(--line); }
+    .rail { border-left: 1px solid var(--line); }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+    }
+    .panel h3 { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: 1.4px; color: var(--cyan); margin-bottom: 10px; }
+    .subject { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .avatar {
+      width: 46px; height: 46px; border-radius: 8px;
+      background: radial-gradient(circle at 30% 30%, #ffb36a, #7a1400);
+      box-shadow: inset 0 0 0 1px rgba(255,122,24,.4);
+    }
+    .avatar.hot { background: radial-gradient(circle at 30% 30%, #ffe08a, #ff3b4a); }
+    .bar { height: 6px; background: #1a2433; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), var(--red)); }
+    .bar.ok > i { background: linear-gradient(90deg, #1bbf7a, var(--green)); }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-family: Share Tech Mono, monospace; font-size: 11px; color: var(--muted); }
+    .metrics b { color: var(--text); display: block; font-size: 16px; }
+    .stage { padding: 16px; overflow: auto; }
+    .grid-2 { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    canvas, video { width: 100%; border-radius: 10px; background: #000; display: block; }
+    .hud-label { font-family: Share Tech Mono, monospace; font-size: 11px; color: var(--cyan); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .stat {
+      text-align: center; padding: 12px 8px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,.25);
+    }
+    .stat em { font-style: normal; font-family: Orbitron, sans-serif; font-size: 26px; color: var(--orange); display: block; }
+    .stat.green em { color: var(--green); }
+    .stat.cyan em { color: var(--cyan); }
+    .stat.red em { color: var(--red); }
+    .stat span { color: var(--muted); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .log { font-family: Share Tech Mono, monospace; font-size: 11px; line-height: 1.55; color: #9fb4c9; max-height: 220px; overflow: auto; }
+    .log .warn { color: var(--orange); }
+    .log .crit { color: var(--red); }
+    .log .ok { color: var(--green); }
+    .rex {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .rex-face {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #7ad7ff, #123047);
+      border: 2px solid var(--cyan); flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(45,232,255,.35);
+    }
+    .rex-face.talk { animation: talk 0.3s infinite alternate; }
+    @keyframes talk { from { box-shadow: 0 0 8px rgba(45,232,255,.3);} to { box-shadow: 0 0 22px rgba(45,232,255,.8);} }
+    .rex p { font-size: 14px; line-height: 1.35; }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .btns button, .primary {
+      background: linear-gradient(180deg, rgba(45,232,255,.16), rgba(45,232,255,.04));
+      border: 1px solid var(--cyan); color: var(--cyan); padding: 7px 10px; border-radius: 6px; cursor: pointer;
+      font-family: Rajdhani, sans-serif; font-weight: 700;
+    }
+    .btns button.hot, .danger {
+      border-color: var(--orange); color: var(--orange);
+      background: linear-gradient(180deg, rgba(255,122,24,.2), rgba(255,122,24,.04));
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--cyan); font-family: Orbitron, sans-serif; font-size: 10px; letter-spacing: 1px; }
+    .page { display: none; }
+    .page.active { display: block; animation: fade .25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: none;} }
+    .glasses {
+      position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); min-height: 280px;
+      background: #0a0e16;
+    }
+    .glasses video { min-height: 280px; object-fit: cover; opacity: .85; }
+    .overlay { position: absolute; inset: 0; pointer-events: none; }
+    .tag {
+      position: absolute; border: 1px solid var(--orange); color: var(--orange); padding: 4px 8px;
+      font-family: Share Tech Mono, monospace; font-size: 11px; background: rgba(0,0,0,.45);
+    }
+    .footer-note { color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.4; }
+    .badge { display: inline-block; padding: 2px 7px; border-radius: 99px; border: 1px solid var(--line); font-size: 10px; letter-spacing: 1px; }
+    .boot {
+      position: fixed; inset: 0; z-index: 80; background: #03050a; display: grid; place-items: center;
+    }
+    .boot-card { width: min(560px, 92vw); text-align: center; }
+    .boot h2 { font-family: Orbitron, sans-serif; font-size: 34px; margin: 12px 0 6px; }
+    .boot h2 span { color: var(--orange); }
+    .progress { height: 6px; background: #1a2433; border-radius: 99px; overflow: hidden; margin: 18px 0; }
+    .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--orange)); }
+    .hidden { display: none !important; }
+    .csi { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+      aside, .rail { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanlines"></div>
+  <div class="boot" id="boot">
+    <div class="boot-card">
+      <div class="fox" style="margin:0 auto 8px;width:54px;height:54px;font-size:24px;">X</div>
+      <div class="sub">Coach Colin AI Engine</div>
+      <h2>Angry<span>Liar</span>X</h2>
+      <p style="color:var(--muted)">Real-time deception & emotion analytics · encrypted boot</p>
+      <div class="progress"><i id="bootbar"></i></div>
+      <p class="sub" id="bootmsg">INITIALISING REX RECEPTIONIST…</p>
+      <div class="btns" style="justify-content:center;margin-top:16px">
+        <button class="primary" onclick="finishBoot(true)">ENTER CONTROL CENTER</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="fox">X</div>
+      <div>
+        <h1>ANGRY<span>LIAR</span>X</h1>
+        <div class="sub">by Coach Colin · Session 0047</div>
+      </div>
+    </div>
+    <nav>
+      <button class="active" data-page="dash">Control Center</button>
+      <button data-page="ghost">Invisible Sensor</button>
+      <button data-page="glasses">Glasses + Drone</button>
+      <button data-page="livecam">Live Face</button>
+      <button data-page="science">Tech + Studies</button>
+    </nav>
+    <div class="live-pill"><span class="dot"></span> LIVE · ENC · 22ms · CLOUD SYNC</div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="panel">
+        <h3>SUBJECTS ACTIVE · 2</h3>
+        <div class="subject">
+          <div class="avatar"></div>
+          <div style="flex:1">
+            <strong>ID 01 · Frustrated</strong>
+            <div class="bar"><i style="width:88%"></i></div>
+            <small style="color:var(--muted)">88% · deception 88%</small>
+          </div>
+        </div>
+        <div class="subject">
+          <div class="avatar hot"></div>
+          <div style="flex:1">
+            <strong>ID 02 · Anger</strong>
+            <div class="bar"><i style="width:96%"></i></div>
+            <small style="color:var(--orange)">96% · deception 92% CRITICAL</small>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>DECEPTION ANALYTICS</h3>
+        <div class="metrics">
+          <div><b id="like">91%</b> Likelihood</div>
+          <div><b style="color:var(--green)" id="truth">12%</b> Truth score</div>
+          <div><b id="stress">94%</b> Stress</div>
+          <div><b id="blink">120</b> Blink / min</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>MICRO-EXPRESSION</h3>
+        <div class="metrics">
+          <div><b>22%</b> Brow raise</div>
+          <div><b>91%</b> Lip tighten</div>
+          <div><b>86%</b> Lip compression</div>
+          <div><b>94%</b> Jaw clench</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>DEVICES</h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7">
+          iPhone ✓ · Android ✓ · Laptop ✓ · Glasses ✓<br>
+          Drone-07 ✓ · Wi-Fi CSI node ✓
+        </p>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="page active" id="dash">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="hud-label"><span>THERMAL MOTION TRACKING</span><span>NIGHT VISION · 160×120 IR</span></div>
+            <canvas id="thermal" height="220"></canvas>
+            <div class="footer-note">Periorbital + forehead ROIs tracking sympathetic blood flow. Simulated FLIR-class overlay for this demo.</div>
+          </div>
+          <div class="panel">
+            <div class="hud-label"><span>ANGER SCORE OVER TIME</span><span>LAST 60s</span></div>
+            <canvas id="chart" height="220"></canvas>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:12px">
+          <div class="stat red"><em id="sAnger">78</em><span>Anger index</span></div>
+          <div class="stat"><em id="sHr">102</em><span>HR estimate BPM</span></div>
+          <div class="stat cyan"><em id="sTemp">38.2</em><span>Skin temp °C</span></div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <h3>SESSION LOG</h3>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+
+      <div class="page" id="ghost">
+        <div class="panel">
+          <h3>WIFI CSI · GHOST MODE · NO CAMERA</h3>
+          <p class="footer-note">Invisible sensor uses Channel State Information amplitude + phase on commodity radios. Through-wall presence, micro-fidgets, and chest displacement of 1–5 mm.</p>
+        </div>
+        <div class="csi">
+          <div class="panel">
+            <div class="hud-label"><span>CSI RADAR</span><span id="csiStatus">2 MOVING TARGETS</span></div>
+            <canvas id="radar" height="320"></canvas>
+          </div>
+          <div class="panel">
+            <div class="hud-label"><span>SUBCARRIER WATERFALL</span><span>-62 dBm · 15m</span></div>
+            <canvas id="waterfall" height="180"></canvas>
+            <div class="metrics" style="margin-top:12px">
+              <div><b id="resp">16.4</b> Resp / min</div>
+              <div><b id="fidget">HIGH</b> Micro-fidget</div>
+              <div><b>NLOS</b> Through-wall</div>
+              <div><b>ON</b> Ghost mode</div>
+            </div>
+            <div class="btns">
+              <button class="hot" onclick="rexSpeak('ghost_mode')">Engage ghost briefing</button>
+              <button onclick="toggleGhost()">Calibrate quiet baseline</button>
+            </div>
+            <p class="footer-note">Hardware path for production: ESP32-S3 / Wi-Fi 6E CSI nodes, not this browser demo. Browser simulates the aggregator UI.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="glasses">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="hud-label"><span>SMART GLASSES HUD</span><span>AR · SECURE LINK</span></div>
+            <div class="glasses" id="glassesView">
+              <div class="overlay">
+                <div class="tag" style="top:18%;left:22%">ID 02 · ANGER 96% · RISK CRITICAL</div>
+                <div class="tag" style="top:48%;left:58%;border-color:var(--amber);color:var(--amber)">ID 01 · FRUSTRATED 88%</div>
+                <svg width="100%" height="280" viewBox="0 0 800 280">
+                  <rect x="140" y="40" width="180" height="160" fill="none" stroke="#ff7a18" stroke-dasharray="4 3"/>
+                  <rect x="430" y="70" width="160" height="150" fill="none" stroke="#ffb020" stroke-dasharray="4 3"/>
+                </svg>
+              </div>
+            </div>
+            <p class="footer-note">Production target: XREAL / Meta / Snap Spectacles WebXR HUD with thermal + CSI fused labels.</p>
+          </div>
+          <div class="panel">
+            <div class="hud-label"><span>DRONE-07 CAMERA</span><span>ALT 42M · DIST 120M · REC</span></div>
+            <canvas id="drone" height="220"></canvas>
+            <div class="metrics" style="margin-top:10px">
+              <div><b>3</b> Heat targets</div>
+              <div><b>0.8 km²</b> Scan area</div>
+            </div>
+            <div class="btns">
+              <button class="hot" onclick="rexSpeak('hud_drone')">Rex drone brief</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="livecam">
+        <div class="panel">
+          <div class="hud-label"><span>LIVE RGB + LANDMARK OVERLAY</span><span>BROWSER CAMERA DEMO</span></div>
+          <div class="glasses">
+            <video id="cam" autoplay playsinline muted></video>
+            <canvas id="camOverlay" class="overlay"></canvas>
+          </div>
+          <div class="btns">
+            <button class="hot" onclick="startCam()">Enable camera</button>
+            <button onclick="stopCam()">Stop</button>
+          </div>
+          <p class="footer-note">This demo uses your webcam for HUD overlay only. No frames leave this device. Production stack would run MediaPipe Face Landmarker + MobileNetV2 emotion head + optional thermal camera.</p>
+        </div>
+      </div>
+
+      <div class="page" id="science">
+        <div class="panel">
+          <h3>HOW IT WORKS — BEST AVAILABLE STACK</h3>
+          <p class="footer-note">This control center is a high-fidelity product prototype. Sensor numbers in the HUD are simulated unless a browser sensor is enabled. Production hardware and model classes are listed below with the actual literature — including limits.</p>
+        </div>
+        <div class="panel">
+          <table>
+            <tr><th>Layer</th><th>Best software / hardware</th><th>What the studies actually show</th></tr>
+            <tr>
+              <td>Face / anger / AU</td>
+              <td>MediaPipe Face Landmarker → MobileNetV2 or Affdex-class AU model (AFFDEX 2.0). OpenFace 2.0 as open fallback. On-device TFLite / Core ML.</td>
+              <td>Affectiva Affdex tracks with facial EMG on posed happy/angry faces (Stöckli et al.). MobileNetV2 FER-2013 ~74% 7-class. AFFDEX 2.0 reports stronger in-the-wild AU accuracy than OpenFace on large frame sets. Posed ≠ spontaneous interrogation.</td>
+            </tr>
+            <tr>
+              <td>Thermal night vision</td>
+              <td>FLIR Lepton / Boson or Seek Thermal on glasses + drone gimbal. Periorbital + forehead ROI tracker (Pavlidis-style) + rPPG fusion.</td>
+              <td>Pavlidis et al., Nature 2002: 83% mock-crime vs 70% polygraph on n=20. Tsiamyrtzis 2007: 87.2% automated periorbital. Springer EURASIP 2024: 89–93% combining forehead + periorbital in lab video. Change onset ~300 ms from sympathetic flow. Lab, not courtroom.</td>
+            </tr>
+            <tr>
+              <td>Invisible motion (Wi-Fi CSI)</td>
+              <td>ESP32-S3 CSI nodes or Wi-Fi 6E CSI (Intel/Nexmon). Aggregator: amplitude+phase, EMD / MVDR beamform, EfficientNetV2 / Wi-SensiNet HAR. This is the “no camera” ghost sensor.</td>
+              <td>IEEE 2024: Wi-SensiNet through-wall HAR high accuracy on constrained 7-class sets; Wi-locind respiration error &lt;0.3 bpm with arrays; ICIP 2024 long-range NLOS HAR ~87–92% with directional ESP32-S3. Chest motion 1–5 mm is detectable in research setups. Environment-specific calibration required.</td>
+            </tr>
+            <tr>
+              <td>Voice</td>
+              <td>openSMILE eGeMAPS + wav2vec 2.0 / Whisper embeddings for arousal, jitter, shimmer, pause. NOT consumer “voice lie detectors”.</td>
+              <td>Classic VSA / CVSA / LVA gadgets perform at chance for deception (NRC 2003; DoD / NIJ evaluations). Voice is useful as an arousal channel in a fusion model — it is not a lie detector by itself.</td>
+            </tr>
+            <tr>
+              <td>Fusion / “lie score”</td>
+              <td>Calibrated gradient-boosted or transformer late fusion with uncertainty. Never a single percentage of “lying”.</td>
+              <td>Multimodal visual+thermal emotion nets report 90%+ in paper datasets. Deception is not an emotion. Combined thermal + polygraph lab figures near 92% do not transfer to open meetings without ground truth, countermeasures, or bias audit.</td>
+            </tr>
+            <tr>
+              <td>Glasses + drone + sync</td>
+              <td>WebXR / manufacturer SDK (XREAL, Meta). DJI Mobile SDK + thermal payload. Transport: WebRTC + MQTT, TLS 1.3, libsodium E2E. On-device first, cloud optional.</td>
+              <td>Product integration, not a detection paper. Latency target in mockups: 8–22 ms local; cloud adds more.</td>
+            </tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>CITED + ANCHOR STUDIES (PITCH-DECK SAFE WORDING)</h3>
+          <ul style="padding-left:18px;line-height:1.7;color:#c5d4e4;font-size:14px">
+            <li>Pavlidis, Eberhardt & Levine, Nature 2002 — thermal periorbital deception screening, 83% vs 70% polygraph, n=20 mock crime.</li>
+            <li>Tsiamyrtzis et al., IJCV 2007 — automated periorbital thermal tracker, 87.2%.</li>
+            <li>Gołaszewski, Zając & Widacki, European Polygraph 2015 — review: periorbital/nasal hottest regions; combo with polygraph strongest.</li>
+            <li>EURASIP JIVP 2024 — thermal interrogation video, SVM forehead+periorbital up to 92.86% in that set.</li>
+            <li>Stöckli et al. — Affdex vs EMG for posed anger/joy.</li>
+            <li>Bishwas et al., 2025 — MobileNetV2 FER-2013 73.82% / AUC 95% (resource-efficient on-device class).</li>
+            <li>IEEE WCNC 2024 Wi-locind — location-robust Wi-Fi CSI respiration.</li>
+            <li>IEEE ICBASE 2024 Wi-SensiNet — through-wall CSI activity recognition.</li>
+            <li>IEEE ICIP 2024 — ESP32-S3 directional through-wall HAR, Wallhack 1.8k dataset.</li>
+            <li>GLOBECOM 2024 — respiration sensing on commodity Wi-Fi 6E CSI.</li>
+            <li>National Research Council 2003 — no scientific basis for computer voice stress as deception detector.</li>
+          </ul>
+          <p class="footer-note">AngryLiarX marketing should say: multimodal stress, affect, and motion intelligence for coaching and safety — not “court-admissible lie detection.” Consent, notice, and local law (GDPR / state biometric rules) apply. Through-wall CSI is radio sensing; only use it in spaces you own or are authorised to monitor.</p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="rail">
+      <div class="panel">
+        <h3>REX · RECEPTIONIST</h3>
+        <div class="rex">
+          <div class="rex-face" id="rexFace"></div>
+          <div>
+            <p id="rexText">Rex standing by. High-energy British tactical receptionist. Press a line or wait for boot.</p>
+            <div class="badge">en-GB · male · live assist</div>
+          </div>
+        </div>
+        <div class="btns">
+          <button class="hot" onclick="rexSpeak('welcome')">Welcome</button>
+          <button onclick="rexSpeak('session_live')">Session live</button>
+          <button class="hot" onclick="rexSpeak('alert_anger')">Anger alert</button>
+          <button onclick="rexSpeak('ghost_mode')">Ghost mode</button>
+          <button onclick="rexSpeak('hud_drone')">Glasses + drone</button>
+          <button onclick="rexSpeak('whisper')">Whisper mode</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>COACH ACTIONS</h3>
+        <div class="btns">
+          <button onclick="logLine('ok','Coach marked ID01 as regulated. Truth score nudged.'); rexLine('Good. ID one is coming down. Keep the pace slow.')">Mark regulated</button>
+          <button class="hot" onclick="logLine('crit','Escalation protocol. ID02 critical.'); rexSpeak('alert_anger')">Call spike</button>
+          <button onclick="rexSpeak('whisper')">Rex whisper only</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>COMPLIANCE</h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5">Demo scores are synthetic. Do not use this prototype to accuse anyone of lying. Production must collect consent, store raw biometrics under policy, and show uncertainty — not a red “LIAR” stamp.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const logEl = $('#log');
+    function logLine(kind, msg) {
+      const t = new Date().toLocaleTimeString();
+      const d = document.createElement('div');
+      d.className = kind;
+      d.textContent = `[${t}] ${msg}`;
+      logEl.prepend(d);
+    }
+    document.querySelectorAll('nav button').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(btn.dataset.page).classList.add('active');
+      };
+    });
+
+    const clips = {};
+    ['welcome','alert_anger','ghost_mode','session_live','hud_drone','whisper'].forEach(id => {
+      clips[id] = new Audio('audio/' + id + '.mp3');
+    });
+    let currentAudio = null;
+    function rexSpeak(id) {
+      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+      const a = clips[id];
+      currentAudio = a;
+      $('#rexFace').classList.add('talk');
+      const captions = {
+        welcome: 'Right then, Coach Colin. AngryLiarX is online. Thermal, invisible Wi-Fi, face and voice are green.',
+        alert_anger: 'Alert. Subject two, anger ninety-six. Deception risk critical. Slow the room.',
+        ghost_mode: 'Invisible sensor online. Two targets through the wall. No camera. Ghost mode engaged.',
+        session_live: 'Session forty-seven live and encrypted. You coach. I keep score.',
+        hud_drone: 'Glasses locked. Drone zero-seven on station. I will only call the spikes.',
+        whisper: 'Whisper mode. Interrupt only on critical risk or a thermal spike.'
+      };
+      $('#rexText').textContent = captions[id] || '';
+      a.onended = () => $('#rexFace').classList.remove('talk');
+      a.play().catch(() => {
+        const u = new SpeechSynthesisUtterance(captions[id]);
+        const voices = speechSynthesis.getVoices();
+        u.voice = voices.find(v => /en-GB|Daniel|UK English Male|George/i.test(v.name + v.lang)) || voices.find(v => /en/.test(v.lang));
+        u.rate = 1.08; u.pitch = 0.92;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+        u.onend = () => $('#rexFace').classList.remove('talk');
+      });
+    }
+    function rexLine(text) {
+      $('#rexText').textContent = text;
+      const u = new SpeechSynthesisUtterance(text);
+      const voices = speechSynthesis.getVoices();
+      u.voice = voices.find(v => /en-GB|Daniel|UK English Male/i.test(v.name + v.lang)) || null;
+      u.rate = 1.08; u.pitch = 0.92;
+      speechSynthesis.speak(u);
+    }
+
+    function finishBoot(play) {
+      $('#boot').classList.add('hidden');
+      logLine('ok', 'AngryLiarX Control Center online. Rex receptionist armed.');
+      logLine('ok', 'Stacks: thermal sim · CSI ghost sim · face · voice · glasses HUD · drone-07.');
+      if (play) rexSpeak('welcome');
+    }
+    let bootP = 0;
+    const bootTimer = setInterval(() => {
+      bootP += Math.random() * 14;
+      if (bootP >= 100) { bootP = 100; clearInterval(bootTimer); $('#bootmsg').textContent = 'ALL SYSTEMS GREEN'; }
+      $('#bootbar').style.width = bootP + '%';
+    }, 180);
+
+    function drawThermal() {
+      const c = $('#thermal'); const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = 440;
+      const w = c.width, h = c.height;
+      const img = ctx.createImageData(w, h);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const nx = x / w - .5, ny = y / h - .42;
+          const body = Math.exp(-(nx*nx*18 + ny*ny*7));
+          const eyeL = Math.exp(-((nx+.07)**2*220 + (ny+.02)**2*180));
+          const eyeR = Math.exp(-((nx-.07)**2*220 + (ny+.02)**2*180));
+          const t = body * 0.55 + (eyeL + eyeR) * (0.7 + 0.15*Math.sin(Date.now()/400));
+          const v = Math.min(255, t * 255);
+          const i = (y*w + x) * 4;
+          img.data[i] = v; img.data[i+1] = v * 0.35; img.data[i+2] = 40; img.data[i+3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      ctx.strokeStyle = '#2de8ff'; ctx.strokeRect(w*0.38, h*0.28, w*0.24, h*0.16);
+      ctx.fillStyle = '#2de8ff'; ctx.font = '22px monospace';
+      ctx.fillText('PERIORBITAL ROI  38.2°C', w*0.36, h*0.26);
+    }
+    const angerHist = Array.from({length: 60}, () => 70 + Math.random()*10);
+    function drawChart() {
+      const c = $('#chart'); const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = 440;
+      const w = c.width, h = c.height;
+      ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle = 'rgba(45,232,255,.15)';
+      for (let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(0,h*i/5); ctx.lineTo(w,h*i/5); ctx.stroke(); }
+      ctx.beginPath(); ctx.strokeStyle = '#ff7a18'; ctx.lineWidth = 3;
+      angerHist.forEach((v,i) => {
+        const x = i/(angerHist.length-1)*w;
+        const y = h - (v/100)*h*0.85 - 20;
+        i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      });
+      ctx.stroke();
+    }
+    function drawRadar() {
+      const c = $('#radar'); const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = 640;
+      const w = c.width, h = c.height, cx = w/2, cy = h/2;
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+      ctx.strokeStyle = 'rgba(45,232,255,.35)';
+      for (let r=40;r<Math.min(cx,cy);r+=50){ ctx.beginPath(); ctx.arc(cx,cy,r,0,6.28); ctx.stroke(); }
+      const sweep = (Date.now()/800) % (Math.PI*2);
+      const grd = ctx.createRadialGradient(cx,cy,0,cx,cy,cy);
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,cy-10,sweep-0.5,sweep); ctx.closePath();
+      ctx.fillStyle = 'rgba(45,232,255,.18)'; ctx.fill();
+      const targets = [
+        { a: 0.7 + Math.sin(Date.now()/900)*0.1, r: 0.35 },
+        { a: 2.4 + Math.sin(Date.now()/700)*0.08, r: 0.58 }
+      ];
+      targets.forEach((t,i) => {
+        const x = cx + Math.cos(t.a)*t.r*(cy-20);
+        const y = cy + Math.sin(t.a)*t.r*(cy-20);
+        ctx.fillStyle = i? '#ff3b4a':'#ffb020';
+        ctx.beginPath(); ctx.arc(x,y,7,0,6.28); ctx.fill();
+        ctx.fillStyle = '#e8f4ff'; ctx.font = '20px monospace';
+        ctx.fillText('T'+(i+1), x+10, y);
+      });
+    }
+    const wf = [];
+    function drawWaterfall() {
+      const c = $('#waterfall'); const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = 360;
+      const row = [];
+      for (let i=0;i<128;i++) row.push(0.25 + Math.random()*0.2 + (i>40&&i<55?0.4+Math.sin(Date.now()/200)*0.2:0));
+      wf.unshift(row); if (wf.length>60) wf.pop();
+      wf.forEach((r,y) => r.forEach((v,x) => {
+        ctx.fillStyle = `rgb(${v*255},${v*80},40)`;
+        ctx.fillRect(x*(c.width/128), y*6, c.width/128+1, 6);
+      }));
+    }
+    function drawDrone() {
+      const c = $('#drone'); const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = 440;
+      const w=c.width,h=c.height;
+      ctx.fillStyle = '#071018'; ctx.fillRect(0,0,w,h);
+      for (let i=0;i<18;i++){
+        const x=40+i*42, bw=28+((i*17)%20), bh=80+((i*29)%120);
+        const heat = 80+((i*13)%140);
+        ctx.fillStyle = `rgb(${heat},${heat*0.45},20)`;
+        ctx.fillRect(x, h-bh-40, bw, bh);
+      }
+      ctx.strokeStyle = '#2de8ff'; ctx.strokeRect(w*0.55, h*0.35, 90, 70);
+      ctx.fillStyle = '#2de8ff'; ctx.font = '22px monospace';
+      ctx.fillText('TGT · HEAT', w*0.55, h*0.33);
+    }
+    function tick() {
+      angerHist.push(Math.max(55, Math.min(98, angerHist[angerHist.length-1] + (Math.random()-0.45)*4)));
+      angerHist.shift();
+      $('#sAnger').textContent = Math.round(angerHist[angerHist.length-1]);
+      $('#sHr').textContent = 96 + Math.round(Math.random()*12);
+      $('#sTemp').textContent = (37.6 + Math.random()*0.8).toFixed(1);
+      $('#stress').textContent = (88 + Math.random()*8).toFixed(0) + '%';
+      $('#resp').textContent = (15 + Math.random()*3).toFixed(1);
+      if ($('#thermal').getBoundingClientRect().height) drawThermal();
+      if ($('#chart').getBoundingClientRect().height) drawChart();
+      if ($('#radar').getBoundingClientRect().height) { drawRadar(); drawWaterfall(); }
+      if ($('#drone').getBoundingClientRect().height) drawDrone();
+      requestAnimationFrame(() => {});
+    }
+    setInterval(tick, 400);
+    setInterval(() => {
+      const events = [
+        ['ok','CSI amplitude stable. Baseline hold.'],
+        ['warn','ID02 lip compression 86% → 91%.'],
+        ['ok','Glasses link 8ms. Four devices synced.'],
+        ['warn','Periorbital delta +0.4°C on ID02.'],
+        ['ok','Ghost node RSSI -62 dBm.']
+      ];
+      const e = events[Math.floor(Math.random()*events.length)];
+      logLine(e[0], e[1]);
+    }, 5000);
+
+    let camStream = null;
+    async function startCam() {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        $('#cam').srcObject = camStream;
+        logLine('ok', 'Local camera armed. Frames stay on device.');
+      } catch (e) {
+        logLine('crit', 'Camera denied: ' + e.message);
+      }
+    }
+    function stopCam() {
+      if (camStream) camStream.getTracks().forEach(t => t.stop());
+      $('#cam').srcObject = null;
+    }
+    function toggleGhost() {
+      logLine('ok', 'Quiet-room CSI baseline captured. Adaptive threshold armed.');
+      rexLine('Baseline taken. If someone fidgets through that wall, I will know.');
+    }
+    window.addEventListener('resize', tick);
+    tick();
+    logLine('ok', 'Waiting on boot confirmation.');
+  </script>
+</body>
+</html>
