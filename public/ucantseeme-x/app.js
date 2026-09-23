@@ -65,23 +65,27 @@ let lastMask = null;
 let lastImage = null;
 
 function setupModels() {
-  selfieSeg = new SelfieSegmentation({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
-  });
-  selfieSeg.setOptions({ modelSelection: 1, selfieMode: true });
-  selfieSeg.onResults(onSeg);
-
-  hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-  });
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.5,
-    selfieMode: true,
-  });
-  hands.onResults(onHands);
+  if (typeof SelfieSegmentation === "function") {
+    selfieSeg = new SelfieSegmentation({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
+    });
+    selfieSeg.setOptions({ modelSelection: 1, selfieMode: true });
+    selfieSeg.onResults(onSeg);
+  }
+  if (typeof Hands === "function") {
+    hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+    });
+    // Lite hand model: keeps phones responsive.
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 0,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+      selfieMode: true,
+    });
+    hands.onResults(onHands);
+  }
 }
 
 function pinchDistance(lm) {
@@ -257,26 +261,41 @@ async function startCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error("This browser can't use the camera here. On iPhone, open the link in Safari (not an in-app browser).");
   }
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-    audio: false,
-  });
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+      audio: false,
+    });
+  } catch (err) {
+    if (err.name === "NotAllowedError") throw err;
+    // Some iPhones reject the size hints; retry with any camera.
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+  }
   video.muted = true;
   video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
   video.setAttribute("autoplay", "");
   video.srcObject = stream;
-  await video.play();
+  await new Promise((resolve) => {
+    if (video.readyState >= 1) resolve();
+    else video.onloadedmetadata = resolve;
+  });
+  try {
+    await video.play();
+  } catch (err) {
+    logLine("SYSTEM", "Tap the live feed once if the picture stays black.");
+  }
   sizeCanvas();
 
-  let modelsOk = true;
   try {
     setupModels();
   } catch (err) {
-    modelsOk = false;
     selfieSeg = null;
     hands = null;
-    logLine("SYSTEM", "Vision models failed to load: " + err.message + ". Showing the raw feed.");
   }
+  const modelsOk = Boolean(selfieSeg);
+  if (!modelsOk) logLine("SYSTEM", "Stealth mask didn't load. Showing the raw feed.");
 
   state.running = true;
   requestAnimationFrame(pump);
@@ -382,6 +401,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   $("#helpBtn").addEventListener("click", () => speak("help", "Briefing: calibrate empty frame, then pinch to vanish."));
   $("#briefBtn").addEventListener("click", () => speak("welcome", "Coach Colin standing by."));
+  $("#output").addEventListener("click", () => {
+    if (video.paused) video.play().catch(() => {});
+  });
   document.querySelectorAll("[data-device]").forEach((el) => {
     el.addEventListener("click", () => {
       el.classList.toggle("on");
