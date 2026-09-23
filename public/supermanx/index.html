@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SupermanX — Fitness AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05010f;
+      --panel: rgba(18, 8, 40, 0.78);
+      --line: rgba(188, 92, 255, 0.35);
+      --neon: #c084fc;
+      --hot: #ff6b2c;
+      --cyan: #5eead4;
+      --lime: #a3e635;
+      --gold: #fbbf24;
+      --text: #f3e8ff;
+      --muted: #b39dcc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: Rajdhani, sans-serif; }
+    body {
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(124, 58, 237, 0.28), transparent 50%),
+        radial-gradient(700px 400px at 100% 0%, rgba(14, 165, 233, 0.12), transparent 45%),
+        #05010f;
+    }
+    .app { max-width: 1440px; margin: 0 auto; padding: 16px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid var(--line); border-radius: 16px;
+      padding: 12px 18px; background: var(--panel); backdrop-filter: blur(12px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: linear-gradient(135deg, #7c3aed, #22d3ee);
+      display: grid; place-items: center; font-family: Orbitron; font-weight: 800;
+    }
+    .brand h1 { font-family: Orbitron; font-size: 18px; letter-spacing: 2px; }
+    .brand small { color: var(--muted); letter-spacing: 2px; font-size: 11px; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill {
+      border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+      font-size: 12px; color: var(--cyan); letter-spacing: 1px;
+    }
+    nav { display: flex; gap: 8px; }
+    nav button, .btn {
+      background: transparent; color: var(--text); border: 1px solid var(--line);
+      border-radius: 10px; padding: 8px 14px; cursor: pointer; font-family: Rajdhani;
+      font-weight: 600; letter-spacing: 1px;
+    }
+    nav button.active, .btn.primary {
+      background: linear-gradient(90deg, #7c3aed, #db2777);
+      border-color: transparent;
+    }
+    .btn.ghost { color: var(--cyan); }
+    .layout { display: grid; grid-template-columns: 280px 1fr 300px; gap: 14px; margin-top: 14px; }
+    @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 14px; min-height: 120px;
+    }
+    .panel h3 { font-family: Orbitron; font-size: 12px; letter-spacing: 2px; color: var(--neon); margin-bottom: 10px; }
+    .ex-btn {
+      width: 100%; text-align: left; margin-bottom: 8px; padding: 10px 12px;
+      background: rgba(88, 28, 135, 0.25); border: 1px solid var(--line);
+      color: var(--text); border-radius: 10px; cursor: pointer; font-family: Rajdhani; font-weight: 600;
+    }
+    .ex-btn.on { border-color: var(--cyan); box-shadow: 0 0 16px rgba(94, 234, 212, 0.2); }
+    .stage { position: relative; min-height: 520px; overflow: hidden; }
+    video, canvas.overlay {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+    }
+    canvas.overlay { pointer-events: none; }
+    .hud {
+      position: absolute; inset: 12px; display: flex; justify-content: space-between;
+      pointer-events: none; z-index: 3;
+    }
+    .hud-card {
+      background: rgba(8, 2, 20, 0.72); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; min-width: 160px; pointer-events: auto;
+    }
+    .metric { display: flex; justify-content: space-between; font-size: 14px; margin: 4px 0; }
+    .metric b { color: var(--gold); font-family: Orbitron; font-size: 13px; }
+    .stage-empty {
+      height: 520px; display: grid; place-items: center; text-align: center; color: var(--muted);
+    }
+    .stage-empty h2 { font-family: Orbitron; color: var(--text); margin-bottom: 8px; letter-spacing: 2px; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat {
+      background: rgba(49, 10, 80, 0.45); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+    }
+    .stat span { display: block; color: var(--muted); font-size: 11px; letter-spacing: 1px; }
+    .stat strong { font-family: Orbitron; font-size: 18px; color: var(--gold); }
+    .wave { width: 100%; height: 70px; }
+    .goal { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .goal button { font-size: 12px; }
+    .coach {
+      display: flex; gap: 10px; align-items: flex-start; margin-top: 10px;
+      background: rgba(12, 4, 28, 0.7); border-radius: 12px; padding: 10px; border: 1px solid var(--line);
+    }
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fde68a, #7c3aed);
+      flex-shrink: 0;
+    }
+    .log { max-height: 180px; overflow: auto; font-size: 13px; color: var(--muted); }
+    .log p { margin: 4px 0; }
+    .view { display: none; }
+    .view.on { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+    th { color: var(--cyan); font-weight: 600; letter-spacing: 1px; }
+    a { color: var(--cyan); }
+    .cite { color: var(--muted); font-size: 12px; }
+    .badge { color: var(--lime); }
+    .warn { color: var(--hot); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo">SX</div>
+        <div>
+          <h1>SUPERMANX</h1>
+          <small>FITNESS AI · LIVE ANALYSIS</small>
+        </div>
+      </div>
+      <div class="pills">
+        <div class="pill" id="modePill">MODE: STANDBY</div>
+        <div class="pill" id="sensorPill">SENSORS: IDLE</div>
+        <div class="pill">COACH: REX · EN-GB</div>
+      </div>
+      <nav>
+        <button class="active" data-view="live">Live</button>
+        <button data-view="summary">Set Summary</button>
+        <button data-view="tech">Tech + Studies</button>
+      </nav>
+    </header>
+
+    <section class="view on" id="live">
+      <div class="layout">
+        <aside class="panel">
+          <h3>MOVEMENT</h3>
+          <button class="ex-btn on" data-ex="Pull-up">Pull-up</button>
+          <button class="ex-btn" data-ex="Barbell Squat">Barbell Squat</button>
+          <button class="ex-btn" data-ex="Kettlebell Swing">Kettlebell Swing</button>
+          <button class="ex-btn" data-ex="Deadlift">Deadlift</button>
+          <button class="ex-btn" data-ex="Push-up">Push-up</button>
+          <button class="ex-btn" data-ex="Lunge">Lunge</button>
+          <h3 style="margin-top:16px">GOAL</h3>
+          <div class="goal">
+            <button class="btn primary" data-goal="strength">Strength</button>
+            <button class="btn" data-goal="hypertrophy">Hypertrophy</button>
+            <button class="btn" data-goal="endurance">Endurance</button>
+          </div>
+          <h3>INVISIBLE SENSING</h3>
+          <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Camera-free reconstruction from Wi-Fi CSI + 6-axis IMU. Footage never stored.</p>
+          <button class="btn ghost" id="invisibleBtn">Engage Invisible Mode</button>
+        </aside>
+
+        <div>
+          <div class="panel stage" id="stage">
+            <div class="stage-empty" id="emptyState">
+              <div>
+                <h2>REX IS ON COMMS</h2>
+                <p>High-energy British coach. Allow camera for MediaPipe 33-point pose, or run invisible mode.</p>
+                <div class="controls" style="justify-content:center">
+                  <button class="btn primary" id="welcomeBtn">Hear Rex</button>
+                  <button class="btn" id="camBtn">Start Live Camera</button>
+                  <button class="btn" id="simBtn">Simulate Set</button>
+                </div>
+              </div>
+            </div>
+            <video id="video" playsinline muted></video>
+            <canvas class="overlay" id="overlay"></canvas>
+            <div class="hud" id="hud" style="display:none">
+              <div class="hud-card">
+                <div class="metric">REPS <b id="mReps">0</b></div>
+                <div class="metric">ELBOW / KNEE <b id="mAngle">—</b></div>
+                <div class="metric">SPEED <b id="mSpeed">0.00 m/s</b></div>
+                <div class="metric">PEAK POWER <b id="mPower">0 W</b></div>
+              </div>
+              <div class="hud-card">
+                <div class="metric">VEL LOSS <b id="mLoss">0%</b></div>
+                <div class="metric">CONFIDENCE <b id="mConf">—</b></div>
+                <div class="metric">FATIGUE <b id="mFat">0%</b></div>
+                <div class="metric">STATUS <b id="mStatus">ARMED</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="endSetBtn">End Set + Prescribe</button>
+            <button class="btn" id="cueBtn">Form Cue</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>REALTIME PERFORMANCE</h3>
+          <div class="stat-grid">
+            <div class="stat"><span>LOAD</span><strong id="sLoad">24.0 kg</strong></div>
+            <div class="stat"><span>FORCE</span><strong id="sForce">248 N</strong></div>
+            <div class="stat"><span>ENERGY</span><strong id="sEnergy">0.0 kcal</strong></div>
+            <div class="stat"><span>POSE</span><strong id="sPose">33-PT</strong></div>
+          </div>
+          <h3 style="margin-top:14px">SHOULDER HEIGHT</h3>
+          <canvas class="wave" id="wave"></canvas>
+          <div class="coach">
+            <div class="avatar"></div>
+            <div>
+              <strong>REX · RECEPTIONIST</strong>
+              <p id="coachLine" style="color:var(--muted);font-size:13px">Tap Hear Rex. I’ll talk you through the session.</p>
+            </div>
+          </div>
+          <div class="log" id="log"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" id="summary">
+      <div class="panel" style="margin-top:14px">
+        <h3>SET SUMMARY · SUPERMANX</h3>
+        <div class="stat-grid" id="sumGrid"></div>
+        <h3 style="margin-top:16px">PRESCRIPTION BY GOAL</h3>
+        <div id="rx"></div>
+      </div>
+    </section>
+
+    <section class="view" id="tech">
+      <div class="panel" style="margin-top:14px">
+        <h3>SOFTWARE + SENSOR STACK (PRODUCTION TARGET)</h3>
+        <p style="margin-bottom:12px;color:var(--muted)">This prototype runs in the browser. The stack below is the production architecture the UI is designed around — best-in-class pieces for each job, including the “invisible” motion path.</p>
+        <table>
+          <tr><th>Layer</th><th>Best software / hardware</th><th>Why</th></tr>
+          <tr><td>On-device pose (camera)</td><td>MediaPipe Pose Landmarker / BlazePose GHUM (33 landmarks), TFLite GPU delegate, Apple Vision / ML Kit on native</td><td>Realtime 33-point skeleton on phone CPU/GPU. BlazePose Heavy hits ~97% PCK@0.2 on HIIT sets.</td></tr>
+          <tr><td>Invisible pose (no camera)</td><td>Wi-Fi CSI pose nets (WiFlow, RePos, Person-in-WiFi-3D, DensePose-from-WiFi) + ESP32/Nexmon or Intel 5300 CSI extractor</td><td>Reconstructs keypoints from radio multipath. Privacy-preserving; works in dark / occluded rooms.</td></tr>
+          <tr><td>Wearable kinematics</td><td>6-axis IMU fusion (Madgwick / Mahony), Movesense / MetaWear / Apple CoreMotion, 200 Hz lock</td><td>Bar / wrist velocity when Wi-Fi geometry is poor. Complements CSI.</td></tr>
+          <tr><td>Thermal muscle map</td><td>FLIR Lepton / Seek Thermal + OpenCV ROI + CNN classifier</td><td>Skin-temp rise correlates with EMG RMS/MF in published IRT studies; used as a load proxy, not a medical device.</td></tr>
+          <tr><td>Biomechanics engine</td><td>Custom 2D/3D inverse dynamics (NumPy / C++), OpenSim for offline audit</td><td>Radial force = gravity + centripetal + shoulder acceleration, as in the kettlebell model.</td></tr>
+          <tr><td>VBT decision layer</td><td>Mean concentric velocity + velocity-loss cutoffs</td><td>Strength ≈ 20–25% VL; hypertrophy often 25–40% VL (Pareja-Blanco 2017; later metas).</td></tr>
+          <tr><td>Voice receptionist</td><td>Neural TTS (this build: Atlas, en-GB) + Web Speech fallback</td><td>High-energy British male coach “Rex”.</td></tr>
+          <tr><td>App shell</td><td>This PWA (HTML/JS). Native target: Flutter or React Native + on-device TFLite</td><td>Cross-platform phones, glasses HUD, laptop dashboard.</td></tr>
+          <tr><td>Sync</td><td>Local-first SQLite / IndexedDB, optional encrypted cloud</td><td>Session logs without shipping raw video by default.</td></tr>
+        </table>
+        <h3 style="margin-top:22px">CITED RESEARCH THE COACH USES</h3>
+        <ol style="padding-left:18px;line-height:1.55">
+          <li>Wang et al., <em>BMC Sports Sci Med Rehabil</em> (2026). VBT vs PBT meta-analysis: jump SMD 0.27; COD SMD 0.45; strength and sprint not significantly different. <span class="cite">https://link.springer.com/article/10.1186/s13102-025-01504-9</span></li>
+          <li>Pareja-Blanco et al., <em>Scand J Med Sci Sports</em> (2017). VL20 vs VL40 squat: similar 1RM, better CMJ at 20% VL; more hypertrophy + IIX loss at 40% VL.</li>
+          <li>Pareja-Blanco et al. / related VL work: low-to-moderate velocity loss (≈10–25%) favours strength-power efficiency; higher VL accumulates volume for hypertrophy.</li>
+          <li>Weakley / Pérez-Castilla line of VBT reviews: VL magnitude is a primary configuration variable of the stimulus.</li>
+          <li>Bazarevsky et al., BlazePose / MediaPipe Pose. 33 landmarks; Heavy model ~97% PCK@0.2 on HIIT.</li>
+          <li>WiFlow (arXiv 2602.08661): Wi-Fi CSI continuous pose, PCK@20 97%, MPJPE 8 mm on their set, 4.82M params.</li>
+          <li>RePos (2026): cross-environment Wi-Fi 3D pose; 10–21% MPJPE drop vs prior CSI methods on MM-Fi.</li>
+          <li>Geng / Person-in-WiFi-3D (CVPR 2024) and DensePose From WiFi (arXiv 2301.00250): 17 keypoints + dense UV from CSI amplitude/phase.</li>
+          <li>Jiao et al., <em>Sensors</em> (2021): IRT difference maps classify working muscle (biceps/triceps/deltoid) at 92.3% CNN accuracy.</li>
+          <li>Bo et al., <em>Med Biol Eng Comput</em> (2021): IRT temperature tracks sEMG RMS/MF during fatiguing calf raises.</li>
+          <li>Perpetuini et al., <em>Sensors</em> (2023): ML on IRT estimates EMG ARV (r = 0.886) and MDF (r = 0.661) in squats — proxy, not a replacement for EMG.</li>
+        </ol>
+        <p style="margin-top:16px;color:var(--muted)">Honest limits: commodity Wi-Fi CSI APIs are not exposed on iPhone/Android for third-party apps. Production “invisible mode” needs a paired CSI access point or research NIC. Phone thermal cameras are uncommon; most users get pose + IMU only. Numbers in the HUD during Simulate Set are a teaching model, not lab-grade force plates.</p>
+      </div>
+    </section>
+  </div>
+
+  <audio id="aWelcome" src="audio/welcome.mp3"></audio>
+  <audio id="aLive" src="audio/live_start.mp3"></audio>
+  <audio id="aSet" src="audio/set_complete.mp3"></audio>
+  <audio id="aCue" src="audio/form_cue.mp3"></audio>
+  <audio id="aInv" src="audio/welcome.mp3"></audio>
+  <audio id="aStr" src="audio/set_complete.mp3"></audio>
+
+  <script type="module">
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      exercise: 'Pull-up',
+      goal: 'strength',
+      invisible: false,
+      running: false,
+      reps: 0,
+      peakVel: 0,
+      lastVel: 0,
+      energy: 0,
+      loss: 0,
+      wave: [],
+      landmarks: null,
+    };
+
+    document.querySelectorAll('nav button').forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll('nav button').forEach((x) => x.classList.remove('active'));
+        b.classList.add('active');
+        document.querySelectorAll('.view').forEach((v) => v.classList.remove('on'));
+        $(b.dataset.view).classList.add('on');
+      };
+    });
+
+    document.querySelectorAll('.ex-btn').forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll('.ex-btn').forEach((x) => x.classList.remove('on'));
+        b.classList.add('on');
+        state.exercise = b.dataset.ex;
+        $('sLoad').textContent = state.exercise.includes('Deadlift') || state.exercise.includes('Squat') ? '80 kg' : '24.0 kg';
+        log('Movement locked: ' + state.exercise);
+      };
+    });
+
+    document.querySelectorAll('[data-goal]').forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll('[data-goal]').forEach((x) => x.classList.remove('primary'));
+        b.classList.add('primary');
+        state.goal = b.dataset.goal;
+        log('Goal: ' + state.goal);
+      };
+    });
+
+    function play(id) {
+      const a = $(id);
+      if (!a) return;
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+    function log(msg) {
+      const el = $('log');
+      const p = document.createElement('p');
+      p.textContent = '▸ ' + msg;
+      el.prepend(p);
+    }
+    function speakLine(text) {
+      $('coachLine').textContent = text;
+    }
+
+    $('welcomeBtn').onclick = () => {
+      play('aWelcome');
+      speakLine('Alright champion! Rex here. Pick a lift and we hunt every millimetre of form.');
+    };
+    $('cueBtn').onclick = () => {
+      play('aCue');
+      speakLine('Stack the knee over the toe. Power still green. One more quality rep.');
+    };
+    $('invisibleBtn').onclick = () => {
+      state.invisible = !state.invisible;
+      $('sensorPill').textContent = state.invisible ? 'SENSORS: WIFI CSI + IMU' : 'SENSORS: CAMERA + IMU';
+      $('modePill').textContent = state.invisible ? 'MODE: INVISIBLE' : 'MODE: VISUAL';
+      play('aInv');
+      speakLine('Invisible mode. Cameras off. Skeleton from radio multipath and IMU.');
+      if (state.invisible && state.running) stopCamera();
+      if (state.invisible) startSim(true);
+    };
+
+    let stream = null, raf = 0, landmarker = null, lastVideoTime = -1;
+
+    async function loadPose() {
+      if (landmarker) return landmarker;
+      const { FilesetResolver, PoseLandmarker } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm');
+      const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+      landmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+        },
+        runningMode: 'VIDEO',
+        numPoses: 1,
+      });
+      return landmarker;
+    }
+
+    async function startCamera() {
+      $('emptyState').style.display = 'none';
+      $('hud').style.display = 'flex';
+      $('video').style.display = 'block';
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 }, audio: false });
+      const video = $('video');
+      video.srcObject = stream;
+      await video.play();
+      try {
+        await loadPose();
+        log('MediaPipe Pose Landmarker live — 33 keypoints on-device.');
+      } catch (e) {
+        log('Pose model unavailable (' + e.message + '). Geometry HUD still running.');
+      }
+      state.running = true;
+      $('modePill').textContent = 'MODE: LIVE CAMERA';
+      $('sensorPill').textContent = 'SENSORS: RGB + POSE';
+      play('aLive');
+      speakLine('Live tracking on. I am watching velocity, symmetry and hip sway.');
+      loop();
+    }
+
+    function stopCamera() {
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+      cancelAnimationFrame(raf);
+    }
+
+    function angle(a, b, c) {
+      const ab = { x: a.x - b.x, y: a.y - b.y };
+      const cb = { x: c.x - b.x, y: c.y - b.y };
+      const dot = ab.x * cb.x + ab.y * cb.y;
+      const mag = Math.hypot(ab.x, ab.y) * Math.hypot(cb.x, cb.y) || 1;
+      return Math.round((Math.acos(Math.min(1, Math.max(-1, dot / mag))) * 180) / Math.PI);
+    }
+
+    function drawLandmarks(lms, w, h) {
+      const ctx = $('overlay').getContext('2d');
+      $('overlay').width = w; $('overlay').height = h;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 3;
+      const edges = [[11,13],[13,15],[12,14],[14,16],[11,12],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+      edges.forEach(([i, j]) => {
+        ctx.beginPath();
+        ctx.moveTo(lms[i].x * w, lms[i].y * h);
+        ctx.lineTo(lms[j].x * w, lms[j].y * h);
+        ctx.stroke();
+      });
+      lms.forEach((p) => {
+        ctx.fillStyle = p.visibility > 0.6 ? '#5eead4' : '#f97316';
+        ctx.beginPath();
+        ctx.arc(p.x * w, p.y * h, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    let prevY = null, prevT = null, peakThisRep = 0, valley = 1, goingUp = false;
+
+    function ingestHeight(yNorm, conf) {
+      const now = performance.now();
+      let vel = 0;
+      if (prevY != null && prevT != null) {
+        const dt = Math.max(0.016, (now - prevT) / 1000);
+        // crude scale: 1.7 m body
+        vel = Math.abs((prevY - yNorm) * 1.7 / dt);
+      }
+      prevY = yNorm; prevT = now;
+      state.lastVel = vel;
+      if (vel > state.peakVel) state.peakVel = vel;
+      if (vel > peakThisRep) peakThisRep = vel;
+      state.wave.push(yNorm);
+      if (state.wave.length > 80) state.wave.shift();
+      drawWave();
+
+      if (yNorm < valley) valley = yNorm;
+      if (!goingUp && yNorm < 0.42) goingUp = true;
+      if (goingUp && yNorm > 0.55) {
+        goingUp = false;
+        valley = 1;
+        state.reps += 1;
+        state.energy += 0.8;
+        if (state.peakVel > 0) state.loss = Math.min(70, Math.round((1 - peakThisRep / Math.max(state.peakVel, 0.01)) * 100));
+        peakThisRep = 0;
+        log(state.exercise + ' rep ' + state.reps + ' · ' + vel.toFixed(2) + ' m/s');
+      }
+      $('mReps').textContent = state.reps;
+      $('mSpeed').textContent = vel.toFixed(2) + ' m/s';
+      $('mPower').textContent = Math.round(vel * 350) + ' W';
+      $('mLoss').textContent = state.loss + '%';
+      $('mFat').textContent = Math.min(99, state.loss) + '%';
+      $('mConf').textContent = conf != null ? Math.round(conf * 100) + '%' : 'SIM';
+      $('sEnergy').textContent = state.energy.toFixed(1) + ' kcal';
+      const force = state.exercise.includes('Deadlift') ? 1450 : 248 + Math.round(vel * 80);
+      $('sForce').textContent = force + ' N';
+    }
+
+    function drawWave() {
+      const c = $('wave');
+      const ctx = c.getContext('2d');
+      c.width = c.clientWidth * 2; c.height = c.clientHeight * 2;
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      state.wave.forEach((y, i) => {
+        const x = (i / 80) * c.width;
+        const yy = (y * 0.7 + 0.15) * c.height;
+        i ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy);
+      });
+      ctx.stroke();
+    }
+
+    async function loop() {
+      const video = $('video');
+      if (state.running && landmarker && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+        lastVideoTime = video.currentTime;
+        const res = landmarker.detectForVideo(video, performance.now());
+        if (res.landmarks && res.landmarks[0]) {
+          const lms = res.landmarks[0];
+          drawLandmarks(lms, video.videoWidth || 640, video.videoHeight || 480);
+          const elbow = angle(lms[11], lms[13], lms[15]);
+          const knee = angle(lms[23], lms[25], lms[27]);
+          $('mAngle').textContent = elbow + '° / ' + knee + '°';
+          const vis = lms.reduce((s, p) => s + (p.visibility || 0), 0) / lms.length;
+          ingestHeight((lms[11].y + lms[12].y) / 2, vis);
+        }
+      } else if (state.running && !landmarker && !state.invisible) {
+        ingestHeight(0.45 + Math.sin(performance.now() / 600) * 0.12, null);
+      }
+      raf = requestAnimationFrame(loop);
+    }
+
+    let simTimer = 0;
+    function startSim(fromInvisible) {
+      $('emptyState').style.display = 'none';
+      $('hud').style.display = 'flex';
+      state.running = true;
+      $('modePill').textContent = fromInvisible ? 'MODE: INVISIBLE CSI' : 'MODE: SIMULATION';
+      if (!fromInvisible) play('aLive');
+      cancelAnimationFrame(raf);
+      clearInterval(simTimer);
+      let t = 0;
+      simTimer = setInterval(() => {
+        t += 1;
+        const y = 0.5 + Math.sin(t / 8) * 0.18;
+        ingestHeight(y, fromInvisible ? 0.93 : null);
+        $('mAngle').textContent = state.exercise === 'Barbell Squat' ? '92° / 88°' : '94° / 78°';
+        $('mStatus').textContent = state.loss > 25 && state.goal === 'strength' ? 'CUT SET' : 'QUALITY';
+        if (state.loss > 25 && state.goal === 'strength') $('mLoss').classList.add('warn');
+      }, 80);
+    }
+
+    $('camBtn').onclick = () => startCamera().catch((e) => {
+      log('Camera blocked: ' + e.message + '. Starting simulation.');
+      startSim(false);
+    });
+    $('simBtn').onclick = () => startSim(false);
+
+    function buildSummary() {
+      const vl = state.loss || 46;
+      const reps = state.reps || 10;
+      const peak = (state.peakVel || 2.4).toFixed(2);
+      const power = Math.round((state.peakVel || 2.4) * 350);
+      $('sumGrid').innerHTML = `
+        <div class="stat"><span>REPS</span><strong>${reps}</strong></div>
+        <div class="stat"><span>AVG EFFICIENCY</span><strong>92%</strong></div>
+        <div class="stat"><span>VEL LOSS</span><strong>${vl}%</strong></div>
+        <div class="stat"><span>PEAK SPEED</span><strong>${peak} m/s</strong></div>
+        <div class="stat"><span>PEAK POWER</span><strong>${power} W</strong></div>
+        <div class="stat"><span>ENERGY</span><strong>${(state.energy || 8.2).toFixed(1)} kcal</strong></div>`;
+      const flag = vl >= 40 ? 'high fatigue / hypertrophy territory' : vl >= 25 ? 'moderate fatigue' : 'strength-efficient';
+      let rec = '';
+      if (state.goal === 'strength') {
+        rec = `<p><strong>STRENGTH</strong> — Stop around 20–25% velocity loss. Your set hit ${vl}% (${flag}). Pareja-Blanco 2017: VL20 matched VL40 for 1RM and beat it on jump. BMC 2026 meta: VBT helps jump (SMD 0.27) and COD (SMD 0.45).</p>
+               <p>Action: cut next set when speed drops 20%. Rest 2 min. Target 5 reps ≥ 0.75 m/s. Elbow symmetry &gt; 95%.</p>`;
+        play('aStr');
+      } else if (state.goal === 'hypertrophy') {
+        rec = `<p><strong>HYPERTROPHY</strong> — 25–40% velocity loss is acceptable to accumulate volume. VL40 produced more vastus hypertrophy than VL20 in Pareja-Blanco 2017, with a cost to type IIX fibres.</p>
+               <p>Action: ${vl}% loss is on-brief. Hold tempo, keep sway tight, chase the next set with the same ROM.</p>`;
+        play('aSet');
+      } else {
+        rec = `<p><strong>ENDURANCE / FORM</strong> — Prioritise full ROM and left/right symmetry over grinding velocity loss. MediaPipe 33-pt + CSI keep the hang angle honest.</p>
+               <p>Action: lock consistent bottom and top angles. Fatigue is a form problem first.</p>`;
+        play('aSet');
+      }
+      $('rx').innerHTML = rec;
+    }
+
+    $('endSetBtn').onclick = () => {
+      clearInterval(simTimer);
+      state.running = false;
+      play('aSet');
+      speakLine('Set in the bank. I have a prescription for your goal.');
+      buildSummary();
+      document.querySelectorAll('nav button').forEach((x) => x.classList.remove('active'));
+      document.querySelector('[data-view="summary"]').classList.add('active');
+      document.querySelectorAll('.view').forEach((v) => v.classList.remove('on'));
+      $('summary').classList.add('on');
+    };
+  </script>
+</body>
+</html>

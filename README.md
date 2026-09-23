@@ -16,6 +16,17 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: SupermanX
+
+A fitness-AI coaching prototype at [`public/supermanx/`](public/supermanx) — Rex
+voice lines, live camera pose tracking (MediaPipe), simulated sets and VBT-based
+prescriptions. Voice clips live in [`public/supermanx/audio/`](public/supermanx/audio).
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/supermanx/>**
+— locally it is `/supermanx/` (`http://localhost:4173/supermanx/` under `./start.sh`).
+
+---
+
 ## Also in here: TrackerX Command
 
 A single-page command dashboard at [`public/trackerx/`](public/trackerx) with its
