@@ -154,23 +154,47 @@ document.querySelectorAll(".card3d").forEach((card) => {
   card.addEventListener("mouseleave", () => { card.style.transform = ""; });
 });
 
-/* EMP discharge */
+/* EMP discharge: press and hold for HOLD_MS; a ring fills while charging */
+const HOLD_MS = 1200;
 let holdTimer = null;
+let holdStart = 0;
+let holdRaf = 0;
+const empLabel = empBtn.querySelector("small");
+
+// Non-passive so preventDefault stops iOS from selecting the label text,
+// which fires touchcancel and kills the hold.
+empBtn.addEventListener("touchstart", (e) => { e.preventDefault(); startHold(); }, { passive: false });
+empBtn.addEventListener("touchend", (e) => { e.preventDefault(); cancelHold(); });
+empBtn.addEventListener("touchcancel", cancelHold);
 empBtn.addEventListener("mousedown", startHold);
-empBtn.addEventListener("touchstart", startHold, { passive: true });
 empBtn.addEventListener("mouseup", cancelHold);
 empBtn.addEventListener("mouseleave", cancelHold);
-empBtn.addEventListener("touchend", cancelHold);
-empBtn.addEventListener("touchcancel", cancelHold);
 empBtn.addEventListener("contextmenu", (e) => e.preventDefault());
 
+function drawCharge() {
+  const p = Math.min(1, (performance.now() - holdStart) / HOLD_MS);
+  empBtn.style.setProperty("--charge", p);
+  if (p < 1) holdRaf = requestAnimationFrame(drawCharge);
+}
 function startHold() {
-  holdTimer = setTimeout(runEmp, 1200);
-  empBtn.style.filter = "brightness(1.4)";
+  if (holdTimer) return;
+  holdStart = performance.now();
+  empBtn.classList.add("charging");
+  empLabel.textContent = "CHARGING… KEEP HOLDING";
+  holdRaf = requestAnimationFrame(drawCharge);
+  holdTimer = setTimeout(() => { resetHold(); runEmp(); }, HOLD_MS);
 }
 function cancelHold() {
+  if (!holdTimer) return;
+  resetHold();
+}
+function resetHold() {
   clearTimeout(holdTimer);
-  empBtn.style.filter = "";
+  holdTimer = null;
+  cancelAnimationFrame(holdRaf);
+  empBtn.classList.remove("charging");
+  empBtn.style.setProperty("--charge", 0);
+  empLabel.textContent = "HOLD 1.2s · REVERSIBLE";
 }
 function runEmp() {
   overlay.hidden = false;
