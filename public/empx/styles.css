@@ -191,6 +191,19 @@ h2 {
   box-shadow: 0 0 60px rgba(255,42,42,.35), inset 0 0 40px rgba(0,0,0,.35);
   animation: pulsebtn 2.2s ease-in-out infinite;
 }
+.emp-btn {
+  position: relative; --charge: 0;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+.emp-btn::before {
+  content: ""; position: absolute; inset: -18px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(#fff calc(var(--charge) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+}
+.emp-btn.charging { animation: none; filter: brightness(1.35); transform: scale(0.97); }
+.emp-btn span, .emp-btn small { pointer-events: none; }
 .emp-btn small { display: block; font-size: 9px; letter-spacing: .16em; margin-top: 8px; font-weight: 500; }
 @keyframes pulsebtn { 50% { box-shadow: 0 0 90px rgba(255,42,42,.6), inset 0 0 40px rgba(0,0,0,.35); transform: scale(1.03); } }
 .center { text-align: center; }
