@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMPx // TOP SECRET — Field Test System by Coach Colin</title>
+  <meta name="theme-color" content="#02050a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="letterbox top"></div>
+  <div class="letterbox bot"></div>
+  <canvas id="grain" class="grain"></canvas>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+  <div class="flare"></div>
+
+  <!-- CLASSIFIED GATE -->
+  <div id="gate" class="gate">
+    <div class="gate-files" style="background-image:url('img/files.jpg')"></div>
+    <div class="gate-dossier wrap">
+      <img src="img/dossier.jpg" alt="Classified dossier" class="dossier-img" />
+      <div class="gate-copy">
+        <div class="stamp">TOP SECRET // SCI // NOFORN</div>
+        <p class="mono tiny">CASE FILE 23-CIA-EMP-0427 · CONTROLLED ACCESS PROGRAM</p>
+        <h1>EMPx</h1>
+        <p class="sub">ELECTROMAGNETIC PULSE IMMUNITY · FIELD TEST SYSTEM</p>
+        <p class="mono">Operator: Coach Colin · Clearance: TS/SCI · Mode: DEMO / REVERSIBLE</p>
+        <button id="enterBtn" class="enter">AUTHENTICATE &amp; ENTER</button>
+        <p class="hint mono">Audio briefing will initialize. Headphones recommended.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <header class="hud">
+    <div class="hud-l">
+      <span class="live"></span>
+      EMPx DEMO // LIVE · REC
+      <span class="dim">MODE: PULSE DETECT | SCAN: ACTIVE</span>
+    </div>
+    <div class="hud-c brand">EMP<span>x</span></div>
+    <div class="hud-r">
+      <span id="clock">00:00:00</span>
+      <span class="warn">LINK: MESH</span>
+      BAT 79%
+    </div>
+  </header>
+
+  <!-- COACH COLIN APPROACH LAYER -->
+  <aside class="colin-stage" id="colinStage" aria-hidden="true">
+    <img src="img/colin_far.jpg" class="colin c-far on" alt="Coach Colin approaching" />
+    <img src="img/colin_mid.jpg" class="colin c-mid" alt="" />
+    <img src="img/colin_near.jpg" class="colin c-near" alt="" />
+    <div class="colin-tag mono">COACH COLIN · VOICE RECEPTION · WALKING IN</div>
+  </aside>
+
+  <!-- RECEPTIONIST -->
+  <aside class="recv" id="recv">
+    <div class="recv-head">
+      <img src="img/colin_near.jpg" alt="" />
+      <div>
+        <strong>COACH COLIN</strong>
+        <span class="mono tiny">VOICE RECEPTIONIST · TS/SCI</span>
+      </div>
+      <button id="muteVo" class="icon-btn" title="Mute briefing">VO</button>
+    </div>
+    <p id="recvText" class="recv-text">Standing by for clearance…</p>
+    <div class="recv-wave" id="recvWave"></div>
+    <div class="recv-nav">
+      <button data-vo="intro">01 Brief</button>
+      <button data-vo="arch">02 Arch</button>
+      <button data-vo="sequence">03 Seq</button>
+      <button data-vo="devices">04 Nodes</button>
+      <button data-vo="stack">05 Stack</button>
+      <button data-vo="close">06 Close</button>
+    </div>
+  </aside>
+
+  <button id="musicBtn" class="music-btn" title="Toggle tactical score">♪ SCORE</button>
+
+  <main id="main">
+    <!-- 01 BRIEF -->
+    <section class="sec hero" data-vo="intro" id="brief">
+      <div class="hero-bg" style="background-image:url('img/files.jpg')"></div>
+      <div class="hero-inner">
+        <p class="eyebrow">SECTION 01 · CLASSIFIED BRIEFING</p>
+        <h2 class="glitch-title" data-text="SIMULATED EMP">SIMULATED EMP</h2>
+        <p class="lede">You can fake an EMP with software — no hardware needed. A choreographed blackout across the whole ecosystem. One detonator laptop. Every screen glitches, goes static, then dies in sync. One hundred percent reversible.</p>
+        <div class="file-row">
+          <img src="img/dossier.jpg" alt="Dossier" />
+          <img src="img/files.jpg" alt="Files" />
+          <img src="img/hero_devices.jpg" alt="Device mesh" />
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 ARCH -->
+    <section class="sec" data-vo="arch" id="arch">
+      <p class="eyebrow">SECTION 02 · CORE ARCHITECTURE</p>
+      <h2>THE DETONATOR</h2>
+      <p class="lede">Master controller: your laptop. A web app with a red EMP button. All devices join the same local Wi‑Fi and lock to the mesh.</p>
+      <div class="cards3d">
+        <article class="card3d">
+          <div class="card-face">
+            <span class="tag">SYNC</span>
+            <h3>Node + Sockets</h3>
+            <p>WebSockets / Firebase / Supabase Realtime. Instant sync under 50ms.</p>
+          </div>
+        </article>
+        <article class="card3d">
+          <div class="card-face">
+            <span class="tag">IOT</span>
+            <h3>MQTT Broker</h3>
+            <p>Broadcast to watches and glasses like a tactical IoT mesh.</p>
+          </div>
+        </article>
+        <article class="card3d">
+          <div class="card-face">
+            <span class="tag">CTRL</span>
+            <h3>Detonator Laptop</h3>
+            <p>Server. Big red EMP. One emit. Entire room answers.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 03 SEQUENCE -->
+    <section class="sec" data-vo="sequence" id="seq">
+      <p class="eyebrow">SECTION 03 · EMP SEQUENCE</p>
+      <h2>WARNING → PULSE → BLACKOUT</h2>
+      <div class="stages">
+        <div class="stage">
+          <div class="stage-num">01</div>
+          <h3>WARNING · 2s</h3>
+          <p>All devices: <span class="alert">CRITICAL ANOMALY DETECTED</span></p>
+        </div>
+        <div class="stage hot">
+          <div class="stage-num">02</div>
+          <h3>PULSE · 0.5s</h3>
+          <p>RGB split. Scanlines. White noise. Max haptics. Flashlight strobes. Signal Lost.</p>
+        </div>
+        <div class="stage">
+          <div class="stage-num">03</div>
+          <h3>BLACKOUT · 5–10s</h3>
+          <p>Pure black. One blinking cursor. Fake BIOS. <span class="ok">SYSTEM RESTORED</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 DEVICES - 3D SHOWCASE -->
+    <section class="sec showcase" data-vo="devices" id="devices">
+      <p class="eyebrow">SECTION 04 · NODE BEHAVIOR</p>
+      <h2>EVERY SCREEN. SAME PULSE.</h2>
+      <div class="screen-rail" id="screenRail">
+        <figure class="holo-screen s1">
+          <img src="img/phone_ui.jpg" alt="EMPx phone detonator UI" />
+          <figcaption>IPHONE / ANDROID · DETONATOR UI</figcaption>
+        </figure>
+        <figure class="holo-screen s2">
+          <img src="img/ar_office.jpg" alt="AR tracking lost overlay" />
+          <figcaption>SMART GLASSES · TRACKING LOST</figcaption>
+        </figure>
+        <figure class="holo-screen s3">
+          <img src="img/laptop_watch.jpg" alt="Laptop kernel panic and watch no signal" />
+          <figcaption>LAPTOP + WATCH · KERNEL TRAP</figcaption>
+        </figure>
+        <figure class="holo-screen s4">
+          <img src="img/hero_devices.jpg" alt="Device constellation" />
+          <figcaption>MESH CONSTELLATION</figcaption>
+        </figure>
+      </div>
+      <ul class="spec">
+        <li><b>Phone</b> Shader RGB split, scanlines, BZZT + haptics, torch strobe, fake system popups.</li>
+        <li><b>Laptop</b> CSS shake, blue screen / kernel panic, backlight flicker, audio ducked to EMP hum.</li>
+        <li><b>Glasses</b> Expanding EM wave bubble, HUD glitch, TRACKING LOST // RECALIBRATING, static then black.</li>
+        <li><b>Watch</b> HR 180 → 0, intense buzz then dead, glitch + // NO SIGNAL //</li>
+      </ul>
+    </section>
+
+    <!-- 05 STACK -->
+    <section class="sec" data-vo="stack" id="stack">
+      <p class="eyebrow">SECTION 05 · FASTEST BUILD</p>
+      <h2>WEEKEND STACK</h2>
+      <div class="stack-grid">
+        <div>
+          <h3>Fastest prototype</h3>
+          <p>All web. Every device opens <code>your-laptop.local:3000/emp</code>. Laptop emits <code>io.emit('EMP_PULSE')</code>. Full-screen canvas glitch. No App Store.</p>
+        </div>
+        <div>
+          <h3>Polished</h3>
+          <p>Flutter + vibration/torch/audio. Unity passthrough + glitch shader on glasses. Watch companion on Firebase.</p>
+        </div>
+        <div>
+          <h3>No-code pitch</h3>
+          <p>Figma + Loom. AirPlay / QuickTime mirror. One keyboard shortcut fires the room.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 LIVE DEMO -->
+    <section class="sec demo-sec" data-vo="close" id="demo">
+      <p class="eyebrow">SECTION 06 · LIVE DISCHARGE</p>
+      <h2>HOLD TO DISCHARGE</h2>
+      <p class="lede">This is what an integrated EMP defense simulation looks like. Isolated devices. Today they ride one mesh.</p>
+      <button id="empBtn" class="emp-btn">
+        <span>EMP</span>
+        <small>HOLD 1.2s · REVERSIBLE</small>
+      </button>
+      <p class="mono tiny center">DO NOT ACTIVATE UNLESS REQUIRED — CONTAINMENT BREACH RISK (SIMULATED)</p>
+      <img class="banner" src="img/hero_devices.jpg" alt="EMPx by Coach Colin" />
+    </section>
+
+    <footer class="foot">
+      <div>EMPx by Coach Colin · Electromagnetic Pulse Immunity · Field Test System</div>
+      <div class="mono tiny">UNCLASSIFIED WHEN DETACHED FROM ANNEX · DEMO BUILD</div>
+    </footer>
+  </main>
+
+  <div id="empOverlay" class="emp-overlay" hidden>
+    <div class="emp-msg">
+      <div class="alert">CRITICAL ANOMALY DETECTED</div>
+      <div class="big">PULSE</div>
+      <div class="mono">TRACKING LOST · SIGNAL DROPPED · REACQUIRING…</div>
+    </div>
+  </div>
+
+  <audio id="bgm" src="audio/tactical.mp3" loop preload="auto"></audio>
+  <audio id="vo" preload="auto"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
