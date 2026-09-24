@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>FOXHOUND // VIRTUAL ARMORY — SRS-L99 WORLDBREAKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#d4af37; --gold2:#f3e0a6; --cyan:#3ee0ff; --red:#ff3b3b;
+  --bg:#05070a; --panel:rgba(8,12,18,.82);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:#e8edf4;font-family:'Share Tech Mono',monospace;overflow-x:hidden}
+body{background:
+  radial-gradient(1200px 600px at 70% -10%, rgba(62,224,255,.08), transparent 50%),
+  radial-gradient(800px 500px at 10% 110%, rgba(212,175,55,.07), transparent 50%),
+  #05070a;}
+
+/* anamorphic letterbox */
+.letterbox{position:fixed;left:0;right:0;height:28px;z-index:80;background:#000;pointer-events:none}
+.letterbox.top{top:0} .letterbox.bot{bottom:0}
+
+nav{
+  position:fixed;top:28px;left:0;right:0;z-index:70;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 28px;background:linear-gradient(180deg,rgba(0,0,0,.75),transparent);
+  border-bottom:1px solid rgba(212,175,55,.25);
+}
+.brand{font-family:Orbitron,sans-serif;letter-spacing:.28em;font-size:12px;color:var(--gold)}
+.brand span{color:var(--cyan)}
+.nav-links{display:flex;gap:18px;font-size:11px;letter-spacing:.16em}
+.nav-links a{color:#c9d2de;text-decoration:none;opacity:.8}
+.nav-links a:hover{color:var(--gold);opacity:1}
+
+/* snake walker */
+#snake-layer{position:fixed;bottom:28px;left:0;width:140px;height:260px;z-index:60;pointer-events:none;transition:left .05s linear}
+#snake-layer svg{width:140px;height:260px;filter:drop-shadow(0 0 12px rgba(62,224,255,.35))}
+
+section{min-height:100vh;padding:110px 8vw 80px;position:relative}
+h1,h2{font-family:Cinzel,serif;font-weight:800;letter-spacing:.08em}
+h1{font-size:clamp(28px,5vw,64px);background:linear-gradient(90deg,var(--gold2),var(--gold),#fff);-webkit-background-clip:text;color:transparent}
+h2{font-size:clamp(20px,3vw,36px);color:var(--gold);margin-bottom:16px}
+.kicker{color:var(--cyan);letter-spacing:.4em;font-size:11px;margin-bottom:12px}
+
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}}
+.hero-art{width:100%;border:1px solid rgba(212,175,55,.35);box-shadow:0 0 60px rgba(62,224,255,.12);border-radius:4px}
+.cta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
+button,.btn{
+  font-family:Orbitron,sans-serif;letter-spacing:.14em;font-size:11px;
+  background:transparent;color:var(--gold);border:1px solid var(--gold);
+  padding:12px 18px;cursor:pointer;text-decoration:none;display:inline-block;
+}
+button:hover,.btn:hover{background:rgba(212,175,55,.15);box-shadow:0 0 18px rgba(212,175,55,.3)}
+
+/* exploded */
+.explode-wrap{position:relative}
+.explode-wrap img{width:100%;border:1px solid rgba(62,224,255,.2)}
+.hotspots button{
+  position:absolute;transform:translate(-50%,-50%);
+  background:rgba(5,7,10,.7);border-color:var(--cyan);color:var(--cyan);padding:6px 8px;font-size:9px
+}
+.part-card{
+  margin-top:18px;padding:16px;border:1px solid rgba(212,175,55,.25);background:var(--panel)
+}
+
+/* range */
+#range{
+  background:#020305;
+}
+.range-stage{
+  position:relative;height:72vh;min-height:420px;border:1px solid rgba(212,175,55,.3);
+  overflow:hidden;background:
+    linear-gradient(180deg,transparent 60%,rgba(0,0,0,.7)),
+    radial-gradient(circle at 50% 40%, #1a2430 0%, #05070a 70%);
+}
+.range-stage img.rifle{position:absolute;right:4%;bottom:8%;width:min(48%,520px);pointer-events:none;filter:drop-shadow(0 20px 40px #000)}
+.reticle{
+  position:absolute;width:84px;height:84px;margin:-42px 0 0 -42px;pointer-events:none;z-index:5;
+  border:1px solid var(--cyan);border-radius:50%;box-shadow:0 0 20px rgba(62,224,255,.4) inset;
+}
+.reticle:before,.reticle:after{content:"";position:absolute;background:var(--cyan)}
+.reticle:before{left:50%;top:8px;bottom:8px;width:1px}
+.reticle:after{top:50%;left:8px;right:8px;height:1px}
+.target{
+  position:absolute;width:46px;height:46px;border-radius:50%;
+  background:radial-gradient(circle,#fff 8%,#c0392b 9% 28%,#fff 29% 48%,#c0392b 49% 70%,#111 71%);
+  box-shadow:0 0 18px rgba(255,59,59,.4);transform:translate(-50%,-50%);
+}
+.muzzle{position:absolute;right:18%;bottom:28%;width:0;height:0;pointer-events:none}
+.flash{position:absolute;width:120px;height:40px;background:radial-gradient(circle,#fff,#ff9a3c 40%,transparent 70%);opacity:0;transform:translate(-40%,-50%)}
+.hud{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px
+}
+.hud .cell{padding:10px 12px;border:1px solid rgba(62,224,255,.2);background:rgba(0,10,16,.6);font-size:11px}
+.hud .cell b{display:block;color:var(--gold);font-family:Orbitron;font-size:16px;margin-top:4px}
+.hud .panic b{color:var(--red)}
+.math{margin-top:10px;font-size:11px;color:#9fb0c4;line-height:1.55;min-height:72px}
+
+.devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.devices div{border:1px solid rgba(212,175,55,.2);padding:16px;background:var(--panel);font-size:12px}
+.devices strong{color:var(--cyan);display:block;margin-bottom:6px;font-family:Orbitron;font-size:11px;letter-spacing:.12em}
+
+footer{padding:40px 8vw 80px;border-top:1px solid rgba(212,175,55,.2);font-size:11px;opacity:.7}
+
+#toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:90;
+  background:rgba(0,0,0,.85);border:1px solid var(--gold);padding:10px 16px;display:none;letter-spacing:.1em}
+#recv{position:fixed;right:18px;top:80px;z-index:70;width:260px;padding:12px;background:rgba(0,0,0,.72);
+  border:1px solid rgba(62,224,255,.35);font-size:11px;line-height:1.4}
+#recv .name{color:var(--gold);font-family:Orbitron;margin-bottom:6px;letter-spacing:.2em}
+</style>
+</head>
+<body>
+<div class="letterbox top"></div>
+<div class="letterbox bot"></div>
+<nav>
+  <div class="brand">FOXHOUND <span>//</span> VIRTUAL ARMORY</div>
+  <div class="nav-links">
+    <a href="#armory">ARMORY</a>
+    <a href="#explode">EXPLODED</a>
+    <a href="#range">RANGE</a>
+    <a href="#stack">STACK</a>
+  </div>
+</nav>
+
+<div id="recv">
+  <div class="name">RECEPTIONIST · CODEC</div>
+  <div id="recv-text">Tap ENABLE AUDIO to bring the colonel online.</div>
+</div>
+<div id="toast"></div>
+
+<div id="snake-layer" aria-hidden="true">
+  <svg viewBox="0 0 80 160">
+    <g id="snake" fill="none" stroke="#3ee0ff" stroke-width="1.6">
+      <ellipse cx="40" cy="22" rx="10" ry="12"/>
+      <path d="M36 18h8 M38 26h4"/>
+      <rect x="30" y="34" width="20" height="34" rx="3"/>
+      <path id="armL" d="M30 42 L16 62"/>
+      <path id="armR" d="M50 42 L64 62"/>
+      <path d="M34 68 L30 112 L26 148"/>
+      <path d="M46 68 L50 112 L54 148"/>
+      <path d="M28 50 h24"/>
+    </g>
+  </svg>
+</div>
+
+<section id="armory">
+  <div class="hero-grid">
+    <div>
+      <div class="kicker">CLASSIFIED · COG / UNSC JOINT</div>
+      <h1>SRS-L99<br>WORLDBREAKER</h1>
+      <p style="margin-top:18px;max-width:540px;line-height:1.7;color:#c5d0dc">
+        Luxury anamorphic virtual armory. Point at the glass to aim. Flick up to send an APFSDS dart.
+        Biometrics, trigger pressure, and shot-angle calculus are live on every round.
+        This is a simulator — no real firearm logic.
+      </p>
+      <div class="cta">
+        <button id="enable">ENABLE AUDIO + SENSORS</button>
+        <a class="btn" href="#range">ENTER RANGE</a>
+        <button id="speak">CODEC CALL</button>
+      </div>
+    </div>
+    <img class="hero-art" src="IMG_3211.jpg" alt="SRS99/S7 assembled Worldbreaker">
+  </div>
+</section>
+
+<section id="explode">
+  <div class="kicker">ORACLE-COG APFSDS PLATFORM</div>
+  <h2>EXPLODED INFORMATIVE VIEW</h2>
+  <p style="margin-bottom:18px;opacity:.8">Tap a labeled node. Pinch-drag metaphor on desktop = click part. Assemble mode snaps the mental model back together.</p>
+  <div class="explode-wrap" id="explode-wrap">
+    <img src="IMG_3210.jpg" alt="Exploded hybrid rifle">
+  </div>
+  <div class="part-card" id="part-card">Select a subsystem.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px">
+    <img src="821104092_1605873584516163_898158537512263790_n.jpg" alt="SRS-9F Longshot FR99" style="width:100%;border:1px solid rgba(212,175,55,.25)">
+    <img src="822077753_1398286151876275_6948253417530508029_n.jpg" alt="SRS-88 Hush exploded" style="width:100%;border:1px solid rgba(212,175,55,.25)">
+  </div>
+</section>
+
+<section id="range">
+  <div class="kicker">LIVE FIRE · SIMULATED</div>
+  <h2>SNIPER MODE</h2>
+  <p style="margin-bottom:10px;opacity:.85">Aim = pointer / finger on glass. Shoot = flick upward, swipe up, space, or release a hard press. Hold longer = higher trigger pressure.</p>
+  <div class="range-stage" id="stage">
+    <div class="target" id="target" style="left:38%;top:36%"></div>
+    <div class="reticle" id="reticle"></div>
+    <div class="muzzle"><div class="flash" id="flash"></div></div>
+    <img class="rifle" src="IMG_3211.jpg" alt="">
+  </div>
+  <div class="hud">
+    <div class="cell">HR / BODY LANG<b id="hr">62 BPM</b></div>
+    <div class="cell">CORE TEMP<b id="temp">36.6°C</b></div>
+    <div class="cell panic">PANIC INDEX<b id="panic">0.12</b></div>
+    <div class="cell">TRIGGER PRESS<b id="press">0.00 N</b></div>
+    <div class="cell">AIM ANGLE θ<b id="theta">0.00°</b></div>
+    <div class="cell">ROUNDS / ENERGY<b id="ammo">5 · 0 kJ</b></div>
+  </div>
+  <div class="math" id="math">θ = atan2(Δy, Δx) · E = ½ m v² · κ = press / (1 + panic)</div>
+</section>
+
+<section id="stack">
+  <div class="kicker">ONE CODEBASE · EVERY GLASS</div>
+  <h2>DEVICE INTEGRATION MAP</h2>
+  <div class="devices">
+    <div><strong>IPHONE</strong>CoreMotion 100Hz + ARKit 6DoF. Point + flick. Taptic recoil.</div>
+    <div><strong>ANDROID</strong>SensorManager + ARCore + ML Kit. High-pass flick filter.</div>
+    <div><strong>DJI</strong>Mobile SDK v5 feed becomes Oracle-Cog scope texture. Gimbal follows finger ray.</div>
+    <div><strong>LAPTOP</strong>MediaPipe Hands on webcam. No extra sensor. Radar station HUD.</div>
+    <div><strong>WATCH</strong>Haptic heartbeat + ammo. Wrist flick as secondary trigger.</div>
+    <div><strong>GLASSES</strong>visionOS / Meta XR HUD overlay. Native pinch assemble.</div>
+  </div>
+  <p style="margin-top:28px;max-width:720px;line-height:1.7;opacity:.8">
+    Production stack from the blueprint: Unity 6 + AR Foundation for native apps,
+    Three.js + WebXR + 8th Wall for the luxury web build you are inside now.
+    Photon Fusion for multi-glass sync. This page is the web slice — sensors are polyfilled
+    with pointer + DeviceOrientation where the browser allows it.
+  </p>
+</section>
+
+<footer>
+  FOXHOUND VIRTUAL ARMORY · EXPERIMENTAL / CLASSIFIED · SIMULATION ONLY<br>
+  Scroll walks the operative. Flick fires the Worldbreaker.
+</footer>
+
+<audio id="vo-intro" src="vo_intro.mp3" preload="auto"></audio>
+<audio id="vo-shot" src="vo_shot.mp3" preload="auto"></audio>
+<audio id="vo-scope" src="vo_scope.mp3" preload="auto"></audio>
+
+<script>
+const parts = {
+  scope: {title:'ORACLE-COG SMART SCOPE 5–12×', body:'Smart-link HUD. DJI / phone feed maps here as the glass. Anamorphic 6–24× available on FR99 variant.'},
+  barrel: {title:'HYBRID APFSDS BARREL', body:'14.5×114 class dart. Fin-stabilized. Cooling lattice from the Forerunner Hush line.'},
+  receiver: {title:'INDUSTRIAL RECEIVER', body:'COG bolted plate over Misriah gas system. Recoil capacitor sits in the left well.'},
+  stock: {title:'COG–UNSC MODULAR STOCK', body:'Skeletonized. Length of pull adjustable for Spartan or Gear frame.'},
+  mag: {title:'5-ROUND MAGWELL', body:'Oversized box. Simulated only — no live feed system.'},
+  iris: {title:'FORERUNNER ENERGY FOCUSER IRIS', body:'12 petal blades + spring physics. Center plasma core 3.2 MJ class on SRS-88.'}
+};
+const card = document.getElementById('part-card');
+['scope','barrel','receiver','stock','mag','iris'].forEach((k,i)=>{
+  const b=document.createElement('button');
+  b.textContent=k.toUpperCase();
+  b.style.left=(18+i*13)+'%'; b.style.top=(20+(i%2)*18)+'%';
+  b.onclick=()=>{card.innerHTML='<strong style="color:#d4af37">'+parts[k].title+'</strong><br>'+parts[k].body};
+  document.getElementById('explode-wrap').appendChild(b);
+});
+
+/* scroll snake */
+const snakeLayer=document.getElementById('snake-layer');
+window.addEventListener('scroll',()=>{
+  const max=document.body.scrollHeight-innerHeight;
+  const t=max?scrollY/max:0;
+  snakeLayer.style.left=(t*(innerWidth-160))+'px';
+  const swing=Math.sin(t*28)*10;
+  document.getElementById('armL').setAttribute('d',`M30 42 L${16+swing} ${62-swing/2}`);
+  document.getElementById('armR').setAttribute('d',`M50 42 L${64-swing} ${62+swing/2}`);
+});
+
+/* sensors + range */
+const stage=document.getElementById('stage');
+const reticle=document.getElementById('reticle');
+const target=document.getElementById('target');
+const flash=document.getElementById('flash');
+let aim={x:.5,y:.4}, pressStart=0, ammo=5, shots=0;
+let hr=62, temp=36.6, panic=0.12, lastMove=performance.now(), jitter=0;
+let audioCtx;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',1400)}
+function say(id){const a=document.getElementById(id); if(a){a.currentTime=0;a.play().catch(()=>{});}}
+
+document.getElementById('enable').onclick=async()=>{
+  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+  say('vo-intro');
+  document.getElementById('recv-text').textContent='Colonel online. Point. Flick up. Do not flinch.';
+  if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
+    try{await DeviceOrientationEvent.requestPermission()}catch(e){}
+  }
+  toast('SENSORS ARMED');
+};
+document.getElementById('speak').onclick=()=>{say('vo-intro');};
+
+function setAim(nx,ny){
+  aim.x=Math.min(.98,Math.max(.02,nx));
+  aim.y=Math.min(.98,Math.max(.02,ny));
+  reticle.style.left=(aim.x*100)+'%';
+  reticle.style.top=(aim.y*100)+'%';
+  const dx=aim.x-parseFloat(target.style.left)/100;
+  const dy=aim.y-parseFloat(target.style.top)/100;
+  const theta=Math.atan2(dy,dx)*180/Math.PI;
+  document.getElementById('theta').textContent=theta.toFixed(2)+'°';
+  jitter=Math.min(1,jitter+Math.hypot(dx,dy)*0.002);
+}
+
+stage.addEventListener('pointermove',e=>{
+  const r=stage.getBoundingClientRect();
+  setAim((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
+  if(e.pressure && e.pressure>0) document.getElementById('press').textContent=(e.pressure*18).toFixed(2)+' N';
+});
+stage.addEventListener('pointerdown',e=>{pressStart=performance.now(); stage.setPointerCapture(e.pointerId)});
+stage.addEventListener('pointerup',e=>{
+  const dt=performance.now()-pressStart;
+  const r=stage.getBoundingClientRect();
+  const ny=(e.clientY-r.top)/r.height;
+  if(aim.y-ny>0.08 || dt>280) fire(dt);
+});
+stage.addEventListener('touchstart',e=>{pressStart=performance.now();},{passive:true});
+let lastY=null;
+stage.addEventListener('touchmove',e=>{
+  const t=e.touches[0]; const r=stage.getBoundingClientRect();
+  setAim((t.clientX-r.left)/r.width,(t.clientY-r.top)/r.height);
+  if(lastY!==null && lastY-t.clientY>28) fire(performance.now()-pressStart);
+  lastY=t.clientY;
+},{passive:true});
+window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();fire(220)}});
+
+function bang(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const t=audioCtx.currentTime;
+  const noiseBuf=audioCtx.createBuffer(1,audioCtx.sampleRate*0.35,audioCtx.sampleRate);
+  const d=noiseBuf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.6);
+  const noise=audioCtx.createBufferSource(); noise.buffer=noiseBuf;
+  const nG=audioCtx.createGain(); nG.gain.setValueAtTime(0.9,t); nG.gain.exponentialRampToValueAtTime(0.001,t+0.28);
+  const bp=audioCtx.createBiquadFilter(); bp.type='highpass'; bp.frequency.value=900;
+  noise.connect(bp); bp.connect(nG); nG.connect(audioCtx.destination);
+  const osc=audioCtx.createOscillator(); osc.type='sawtooth'; osc.frequency.setValueAtTime(90,t); osc.frequency.exponentialRampToValueAtTime(28,t+0.22);
+  const oG=audioCtx.createGain(); oG.gain.setValueAtTime(0.7,t); oG.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+  osc.connect(oG); oG.connect(audioCtx.destination);
+  noise.start(t); osc.start(t); osc.stop(t+0.26); noise.stop(t+0.35);
+}
+
+function fire(holdMs){
+  if(ammo<=0){toast('MAG EMPTY');return}
+  ammo--; shots++;
+  const pressN=Math.min(24, 4 + holdMs/40);
+  const tx=parseFloat(target.style.left)/100, ty=parseFloat(target.style.top)/100;
+  const dx=aim.x-tx, dy=aim.y-ty;
+  const theta=Math.atan2(dy,dx);
+  const dist=Math.hypot(dx,dy);
+  panic=Math.min(1, panic*0.92 + jitter*0.35 + (dist>0.12?0.08:0));
+  hr=Math.round(58 + panic*55 + Math.random()*4);
+  temp=+(36.4 + panic*1.4 + Math.random()*0.05).toFixed(2);
+  jitter*=0.5;
+  const m=0.064, v=980*(1-panic*0.18)*(0.7+pressN/40);
+  const E=0.5*m*v*v/1000;
+  const kappa=pressN/(1+panic);
+  const hit=dist<0.055+ (0.02*(1-panic));
+  document.getElementById('hr').textContent=hr+' BPM';
+  document.getElementById('temp').textContent=temp+'°C';
+  document.getElementById('panic').textContent=panic.toFixed(2);
+  document.getElementById('press').textContent=pressN.toFixed(2)+' N';
+  document.getElementById('ammo').textContent=ammo+' · '+E.toFixed(1)+' kJ';
+  document.getElementById('math').innerHTML=
+    `θ = atan2(${dy.toFixed(3)}, ${dx.toFixed(3)}) = ${(theta*180/Math.PI).toFixed(2)}°<br>`+
+    `E = ½mv² = 0.5·${m}·${v.toFixed(0)}² = ${E.toFixed(2)} kJ &nbsp; κ = F/(1+π) = ${kappa.toFixed(2)}<br>`+
+    `body-lang jitter ${jitter.toFixed(3)} · ${hit?'HIT — CNS DROP':'MISS — CORRECT HOLD'} · press ${pressN.toFixed(1)}N over ${(holdMs/1000).toFixed(2)}s`;
+  bang();
+  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',80);
+  if(shots%3===1) say('vo-shot');
+  toast(hit?'HIT CONFIRMED':'OFF AXIS');
+  target.style.left=(18+Math.random()*60)+'%';
+  target.style.top=(22+Math.random()*40)+'%';
+}
+
+/* wander target slowly */
+setInterval(()=>{
+  if(document.hidden) return;
+  const l=parseFloat(target.style.left)||38;
+  target.style.left=(l + (Math.random()-0.5)*1.4)+'%';
+},900);
+
+if(location.hash==='#range') stage.scrollIntoView();
+</script>
+</body>
+</html>
