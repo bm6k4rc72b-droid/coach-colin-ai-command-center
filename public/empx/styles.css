@@ -217,6 +217,12 @@ h2 {
 
 @media (max-width: 900px) {
   .gate .wrap, .cards3d, .stages, .stack-grid, .file-row, .screen-rail { grid-template-columns: 1fr; }
+  .gate { overflow-y: auto; -webkit-overflow-scrolling: touch; place-items: start center; }
+  .gate-files, .gate::after { position: fixed; }
+  .gate .wrap { gap: 18px; padding: 44px 20px 40px; justify-items: center; }
+  .gate .dossier-img { max-height: 34vh; width: auto; }
+  .gate-copy { text-align: center; }
+  .gate h1 { font-size: 56px; }
   .colin-stage { width: 46vw; opacity: .55; }
   .recv { width: calc(100% - 24px); }
   .hud .dim { display: none; }
