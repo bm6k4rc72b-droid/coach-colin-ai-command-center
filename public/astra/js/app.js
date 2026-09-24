@@ -20,10 +20,11 @@ import { resolveNamed } from './engine.js';
 import { findAny } from './data/peptides.js';
 import { load as loadProgress, record as recordProgress, reset as resetProgress, save as saveProgress, summary as progressSummary } from './progress.js';
 import {
-  renderAR, renderCommand, renderCompare, renderDecoder, renderEngine,
+  renderAR, renderBodyfat, renderCommand, renderCompare, renderDecoder, renderEngine,
   renderGraph, renderProfile, renderSettings, renderStudio, renderVerify,
 } from './decks.js';
 import { ARScene } from './ar.js';
+import { frameQuality } from './bodyfat.js';
 import { el, fill } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -34,6 +35,7 @@ const DECK_TITLES = {
   graph: 'Knowledge Graph',
   decoder: 'Paper Decoder',
   ar: 'AR Bench',
+  bodyfat: 'Body Composition',
   compare: 'The Lab',
   verify: 'Verification',
   studio: 'Content Studio',
@@ -48,6 +50,7 @@ const RENDERERS = {
   graph: renderGraph,
   decoder: renderDecoder,
   ar: renderAR,
+  bodyfat: renderBodyfat,
   compare: renderCompare,
   verify: renderVerify,
   studio: renderStudio,
@@ -58,8 +61,9 @@ const RENDERERS = {
 
 /** Which lab waypoint each deck flies to. */
 const DECK_WAYPOINTS = {
-  engine: 'engine', graph: 'graph', decoder: 'decoder', ar: 'compound', compare: 'compare',
-  verify: 'verify', studio: 'studio', command: 'command', profile: 'command', settings: 'engine',
+  engine: 'engine', graph: 'graph', decoder: 'decoder', ar: 'compound', bodyfat: 'compare',
+  compare: 'compare', verify: 'verify', studio: 'studio', command: 'command',
+  profile: 'command', settings: 'engine',
 };
 
 const lab = new Lab($('lab'));
@@ -79,6 +83,10 @@ const ar = new ARScene({
   tilt,
   onFocus: (panel) => ctx.arFocus?.(panel),
 });
+
+/** The body bench's camera, and the loop that reads the light for it. */
+const bodyLens = new Lens($('body-video'));
+let bodyQualityTimer = null;
 
 const state = {
   deck: 'engine',
@@ -245,6 +253,37 @@ const ctx = {
     toast(result.granted ? 'Tilt parallax on — move the device.' : 'Motion access was not granted; pointer parallax stays on.');
   },
   toggleLens,
+  /**
+   * Start the body bench's camera.
+   *
+   * @returns {Promise<boolean>} Whether the stream started.
+   */
+  async startBodyLens() {
+    const started = await bodyLens.start('user');
+    document.getElementById('body-lens').hidden = !started;
+    return started;
+  },
+  /** Stop the body bench's camera and release the hardware. */
+  stopBodyLens() {
+    clearTimeout(bodyQualityTimer);
+    bodyQualityTimer = null;
+    bodyLens.stop();
+    document.getElementById('body-lens').hidden = true;
+  },
+  /**
+   * Read the light in the body bench's viewfinder, repeatedly.
+   *
+   * @param {(quality: object|null) => void} onReading Called with each reading.
+   */
+  pollFrameQuality(onReading) {
+    clearTimeout(bodyQualityTimer);
+    const tick = () => {
+      if (!bodyLens.stream) return;
+      onReading(frameQuality(bodyLens.frame(96)));
+      bodyQualityTimer = setTimeout(tick, 600);
+    };
+    tick();
+  },
 };
 
 /**
@@ -273,6 +312,12 @@ function go(deck, payload = {}) {
   } else if (document.body.classList.contains('ar-mode')) {
     document.body.classList.remove('ar-mode');
     ar.stop();
+  }
+  // A camera left running on a deck nobody is looking at is a privacy problem,
+  // not just a battery one.
+  if (deck !== 'bodyfat' && bodyLens.stream) {
+    ctx.stopBodyLens();
+    if (ctx.deckState.bodyfat) ctx.deckState.bodyfat.camera = false;
   }
   lab.goTo(DECK_WAYPOINTS[deck] || 'engine');
   // The console's panel sits on the right on a wide screen, so the subject is

@@ -264,8 +264,8 @@ export class Intro {
       inner.push(el('div.graph-legend', {}, [
         legend('#7fe6ff', 'Body system'),
         legend('#c08bff', 'Mechanism'),
-        legend('#2fe08a', 'Human RCT'),
-        legend('#f2b53b', 'Animal study'),
+        legend('#3ef0b4', 'Human RCT'),
+        legend('#ffb347', 'Animal study'),
       ]));
     }
 
@@ -352,13 +352,13 @@ export class Intro {
 
 /** The ladder rendered in the tiers chapter, mirroring `evidence.js`. */
 const TIER_ROWS = [
-  { label: 'Human RCT', ceiling: 96, accent: '#2fe08a' },
-  { label: 'Human trial', ceiling: 78, accent: '#5fd8ff' },
-  { label: 'Observational', ceiling: 62, accent: '#8fb4ff' },
-  { label: 'Animal model', ceiling: 45, accent: '#f2b53b' },
+  { label: 'Human RCT', ceiling: 96, accent: '#3ef0b4' },
+  { label: 'Human trial', ceiling: 78, accent: '#5ff0ff' },
+  { label: 'Observational', ceiling: 62, accent: '#a78bff' },
+  { label: 'Animal model', ceiling: 45, accent: '#ffb347' },
   { label: 'In vitro', ceiling: 34, accent: '#c08bff' },
-  { label: 'Mechanism', ceiling: 24, accent: '#ff9d5c' },
-  { label: 'Anecdote', ceiling: 12, accent: '#ff5c7a' },
+  { label: 'Mechanism', ceiling: 24, accent: '#ff8a5c' },
+  { label: 'Anecdote', ceiling: 12, accent: '#ff4d8f' },
 ];
 
 /**

@@ -26,8 +26,8 @@ import { dossier } from './engine.js';
 /** The panel. */
 export const REVIEWERS = [
   { id: 'scientist', name: 'Research Scientist', accent: '#2fe0c0', focus: 'Mechanism and biological plausibility' },
-  { id: 'clinical', name: 'Clinical Evidence Reviewer', accent: '#5fd8ff', focus: 'Population, endpoints and applicability' },
-  { id: 'sceptic', name: 'Sceptical Reviewer', accent: '#ff9d5c', focus: 'Replication, funding and publication incentives' },
+  { id: 'clinical', name: 'Clinical Evidence Reviewer', accent: '#5ff0ff', focus: 'Population, endpoints and applicability' },
+  { id: 'sceptic', name: 'Sceptical Reviewer', accent: '#ff8a5c', focus: 'Replication, funding and publication incentives' },
   { id: 'statistician', name: 'Statistics Reviewer', accent: '#c08bff', focus: 'Power, precision and the chance of a false positive' },
 ];
 

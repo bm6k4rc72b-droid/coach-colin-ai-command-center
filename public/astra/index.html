@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
 <title>ASTRA — Peptide Intelligence Platform</title>
 <meta name="description" content="A research facility for peptide science. Search, compare, verify and understand: every claim carries its evidence tier, every tier opens into its sources. Educational only — no diagnosis, no dosing, no protocols. Runs in the browser, works offline.">
-<meta name="theme-color" content="#03060c">
+<meta name="theme-color" content="#05030e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -51,6 +51,7 @@
   <button class="deck-btn" data-deck="graph" type="button"><span aria-hidden="true">⁂</span>Map</button>
   <button class="deck-btn" data-deck="decoder" type="button"><span aria-hidden="true">▤</span>Decoder</button>
   <button class="deck-btn" data-deck="ar" type="button"><span aria-hidden="true">◇</span>AR</button>
+  <button class="deck-btn" data-deck="bodyfat" type="button"><span aria-hidden="true">⬡</span>Body</button>
   <button class="deck-btn" data-deck="compare" type="button"><span aria-hidden="true">⌬</span>Lab</button>
   <button class="deck-btn" data-deck="verify" type="button"><span aria-hidden="true">✓</span>Verify</button>
   <button class="deck-btn" data-deck="studio" type="button"><span aria-hidden="true">✧</span>Studio</button>
@@ -74,6 +75,13 @@
 <aside id="lens-panel" class="lens-panel" hidden aria-label="Camera lens">
   <video id="lens-video" playsinline muted></video>
   <p class="lens-hint">Point at a label or a QR code. Nothing is recorded or uploaded.</p>
+</aside>
+
+<!-- The body bench's viewfinder. Its frames are read for light on this
+     device and never recorded, uploaded or stored. -->
+<aside id="body-lens" class="body-lens" hidden aria-label="Body composition viewfinder">
+  <video id="body-video" playsinline muted></video>
+  <div class="body-guide" aria-hidden="true"></div>
 </aside>
 
 <!-- The printable QR sheet. Lives at body level so print media can show it

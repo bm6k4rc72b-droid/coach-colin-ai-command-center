@@ -191,7 +191,7 @@ async function main() {
   check('entering the facility reveals the console',
     await page.evaluate(() => document.body.classList.contains('entered')));
 
-  const decks = ['engine', 'graph', 'decoder', 'ar', 'compare', 'verify', 'studio', 'command', 'profile', 'settings'];
+  const decks = ['engine', 'graph', 'decoder', 'ar', 'bodyfat', 'compare', 'verify', 'studio', 'command', 'profile', 'settings'];
   for (const deck of decks) {
     await page.evaluate((id) => globalThis.__astra.go(id), deck);
     await wait(520);
@@ -599,6 +599,118 @@ async function main() {
   await wait(400);
   check('selecting an interest reorganises the platform',
     await page.evaluate(() => document.querySelectorAll('.for-you .library-card').length > 0));
+
+  /* ------------------------------------------------------ body composition */
+
+  await page.evaluate(() => globalThis.__astra.go('bodyfat'));
+  await wait(400);
+  const bodyEmpty = await page.evaluate(() => {
+    globalThis.__astra.ctx.deckState.bodyfat.tab = 'reading';
+    globalThis.__astra.ctx.render();
+    return document.getElementById('panel-body').textContent;
+  });
+  check('with nothing measured the body bench shows no figure',
+    !/\d+\.\d%/.test(bodyEmpty) && /No equation has what it needs/.test(bodyEmpty));
+
+  const reading = await page.evaluate(() => {
+    const ctx = globalThis.__astra.ctx;
+    Object.assign(ctx.deckState.bodyfat.record.measures, {
+      sex: 'male', age: 34, height: 180, weight: 82, neck: 38, waist: 88, hip: 100,
+    });
+    ctx.deckState.bodyfat.tab = 'reading';
+    ctx.render();
+    const body = document.getElementById('panel-body');
+    return {
+      range: body.querySelector('.bf-range')?.textContent || '',
+      point: body.querySelector('.bf-point')?.textContent || '',
+      tiles: body.querySelectorAll('.bf-tile').length,
+      touched: body.querySelectorAll('.bf-band.touched').length,
+      methods: body.querySelectorAll('.bf-method').length,
+      cannot: body.querySelectorAll('.bf-cannot li').length,
+      text: body.textContent,
+    };
+  });
+  check('a measured body produces a range, not a single number',
+    /^\d+\.\d–\d+\.\d%$/.test(reading.range), reading.range);
+  check('the point estimate is shown below the range, not above it',
+    /Central estimate/.test(reading.point), reading.point);
+  check('every contributing method reports itself separately',
+    reading.methods === Number(reading.point.match(/from (\d+)/)?.[1]),
+    `${reading.methods} shown, headline claims ${reading.point.match(/from (\d+)/)?.[1]}`);
+  check('the reading names what it cannot see', reading.cannot >= 4, `${reading.cannot} limits`);
+  check('the error bar is shown against the population bands',
+    reading.touched >= 1, `${reading.touched} bands lit`);
+  check('the descriptive bands are not presented as targets',
+    /not health thresholds, not targets/.test(reading.text));
+  check('the deck refuses to advise',
+    /conversation with a clinician/.test(reading.text));
+
+  const ambiguous = await page.evaluate(() => {
+    const body = document.getElementById('panel-body');
+    return body.querySelector('.bf-verdict')?.textContent || '';
+  });
+  check('an error bar spanning several bands says so rather than naming one',
+    /bands at once|single band/.test(ambiguous), ambiguous.slice(0, 80));
+
+  const tracking = await page.evaluate(() => {
+    const ctx = globalThis.__astra.ctx;
+    const day = 86400000;
+    ctx.deckState.bodyfat.record.log = [
+      { at: Date.now() - 30 * day, percent: 19.4, methodId: 'navy', weight: 84 },
+      { at: Date.now(), percent: 18.9, methodId: 'navy', weight: 83 },
+    ];
+    ctx.deckState.bodyfat.tab = 'track';
+    ctx.render();
+    const body = document.getElementById('panel-body');
+    return {
+      verdict: body.querySelector('.bf-trend-verdict')?.textContent || '',
+      noise: Boolean(body.querySelector('.bf-trend.noise')),
+      rows: body.querySelectorAll('.bf-log-row').length,
+      table: body.querySelectorAll('.bf-table tbody tr').length,
+    };
+  });
+  check('a change inside the measurement error is called noise, not progress',
+    tracking.noise && /not yet distinguishable/.test(tracking.verdict), tracking.verdict.slice(0, 70));
+  check('the log lists what was recorded', tracking.rows === 2, `${tracking.rows} rows`);
+  check('every method publishes both its accuracy and its resolution',
+    tracking.table >= 4, `${tracking.table} rows`);
+
+  const levers = await page.evaluate(() => {
+    const ctx = globalThis.__astra.ctx;
+    ctx.deckState.bodyfat.tab = 'levers';
+    ctx.render();
+    const body = document.getElementById('panel-body');
+    return {
+      count: body.querySelectorAll('.bf-lever').length,
+      tiers: body.querySelectorAll('.bf-lever .tier-chip').length,
+      links: body.querySelectorAll('.bf-lever .source-link').length,
+      text: body.textContent,
+    };
+  });
+  check('what-moves-it is graded like every other claim',
+    levers.count >= 5 && levers.tiers === levers.count, `${levers.count} findings, ${levers.tiers} tiers`);
+  check('every finding there can be looked up', levers.links === levers.count);
+  check('the deck states its own boundary',
+    /does not tell you what your body fat should be/.test(levers.text));
+
+  const cameraHonesty = await page.evaluate(() => {
+    const ctx = globalThis.__astra.ctx;
+    ctx.deckState.bodyfat.tab = 'camera';
+    ctx.render();
+    return document.getElementById('panel-body').textContent;
+  });
+  check('the camera tab says outright that it does not estimate body fat',
+    /not estimating your body fat/.test(cameraHonesty));
+  check('the camera tab explains what it is actually for',
+    /comparable to the last one/.test(cameraHonesty));
+
+  check('the body bench stores nothing off the device',
+    /stored in this browser and nowhere else/.test(await page.evaluate(() => {
+      const ctx = globalThis.__astra.ctx;
+      ctx.deckState.bodyfat.tab = 'measure';
+      ctx.render();
+      return document.getElementById('panel-body').textContent;
+    })));
 
   /* ------------------------------------------------------------- offline */
 
