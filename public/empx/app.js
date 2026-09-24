@@ -174,6 +174,7 @@ function cancelHold() {
 }
 function runEmp() {
   overlay.hidden = false;
+  overlay.style.display = "";
   overlay.className = "emp-overlay";
   overlay.querySelector(".big").textContent = "WARNING";
   setTimeout(() => {
@@ -192,5 +193,5 @@ function runEmp() {
     overlay.querySelector(".big").textContent = "SYSTEM RESTORED";
     overlay.classList.remove("black");
   }, 3200);
-  setTimeout(() => { overlay.hidden = true; overlay.className = "emp-overlay"; }, 4600);
+  setTimeout(() => { overlay.hidden = true; overlay.style.display = "none"; overlay.className = "emp-overlay"; }, 4600);
 }
