@@ -161,6 +161,8 @@ empBtn.addEventListener("touchstart", startHold, { passive: true });
 empBtn.addEventListener("mouseup", cancelHold);
 empBtn.addEventListener("mouseleave", cancelHold);
 empBtn.addEventListener("touchend", cancelHold);
+empBtn.addEventListener("touchcancel", cancelHold);
+empBtn.addEventListener("contextmenu", (e) => e.preventDefault());
 
 function startHold() {
   holdTimer = setTimeout(runEmp, 1200);

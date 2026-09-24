@@ -202,6 +202,7 @@ h2 {
   position: fixed; inset: 0; z-index: 200; background: #000;
   display: grid; place-items: center; text-align: center;
 }
+.emp-overlay[hidden] { display: none; }
 .emp-overlay .big { font-family: Orbitron, sans-serif; font-size: 14vw; letter-spacing: .2em; color: #fff; mix-blend-mode: difference; }
 .emp-overlay.static {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8' /%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
@@ -218,6 +219,8 @@ h2 {
   .gate .wrap, .cards3d, .stages, .stack-grid, .file-row, .screen-rail { grid-template-columns: 1fr; }
   .colin-stage { width: 46vw; opacity: .55; }
   .recv { width: calc(100% - 24px); }
+  .hud .dim { display: none; }
+  .music-btn { top: 96px; }
   main { padding: 90px 20px 160px; }
   .sec { min-height: auto; padding: 10vh 0; }
 }
