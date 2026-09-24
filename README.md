@@ -16,6 +16,16 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: FOXHOUND Virtual Armory
+
+A single-page armory showcase at [`public/armory/`](public/armory) — armory,
+exploded view, range and stack sections with narrated voice-over. No build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/armory/>**
+— locally it is `/armory/` (`http://localhost:4173/armory/` under `./start.sh`).
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at
