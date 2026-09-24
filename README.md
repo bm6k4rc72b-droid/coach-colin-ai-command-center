@@ -16,6 +16,18 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: CinematicX · Revan-Class Energy Sword
+
+A motion-tracked, sound-reactive 3D lightsaber hilt at
+[`public/cinematicx/`](public/cinematicx) — a single-page Three.js app with
+ignite, exploded view, crystal colours (dual / purple / red) and phone motion
+control (hold the phone like a hilt and swing). No build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/cinematicx/>**
+— locally it is `/cinematicx/` (`http://localhost:4173/cinematicx/` under `./start.sh`).
+
+---
+
 ## Also in here: EMPx
 
 A classified-briefing style demo at [`public/empx/`](public/empx) — a simulated,

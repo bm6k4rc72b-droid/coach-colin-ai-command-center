@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>CinematicX · Revan-Class Energy Sword</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --gold: #d4af37;
+      --purple: #c44dff;
+      --red: #ff3355;
+      --cyan: #6ee7ff;
+      --muted: #8a90a8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); font-family: "SF Pro Display", "Segoe UI", system-ui, sans-serif; color: #eef1f8; }
+    #c { display: block; width: 100%; height: 100%; touch-action: none; }
+    .hud {
+      position: fixed; inset: 0; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    header, footer { pointer-events: auto; padding: 16px 18px; }
+    header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      background: linear-gradient(180deg, rgba(5,6,10,.85), transparent);
+    }
+    .brand { letter-spacing: .28em; font-size: 11px; color: var(--gold); text-transform: uppercase; }
+    .title { font-size: 15px; font-weight: 650; margin-top: 4px; }
+    .spec { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: .08em; }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      pointer-events: auto;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(212,175,55,.35);
+      color: #f3e6b8;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    button.active { background: rgba(196,77,255,.22); border-color: var(--purple); color: #fff; }
+    button:active { transform: scale(.97); }
+    footer {
+      background: linear-gradient(0deg, rgba(5,6,10,.9), transparent);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .meters { display: flex; gap: 12px; align-items: center; }
+    .meter { flex: 1; height: 4px; background: #1a1d28; border-radius: 4px; overflow: hidden; }
+    .meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--purple), var(--red)); }
+    .hint { font-size: 11px; color: var(--muted); }
+    .toast {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      background: rgba(8,8,14,.78); border: 1px solid rgba(212,175,55,.4);
+      padding: 16px 22px; border-radius: 14px; text-align: center; max-width: 280px;
+      pointer-events: none; opacity: 0; transition: opacity .3s;
+    }
+    .toast.show { opacity: 1; }
+    .serial { font-variant-numeric: tabular-nums; color: var(--cyan); font-size: 10px; }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="hud">
+    <header>
+      <div>
+        <div class="brand">CinematicX Lightsaber</div>
+        <div class="title">Revan-Class Energy Sword Hilt</div>
+        <div class="spec">DUAL KYBER · 1.2MW · SITH/JEDI HYBRID · REV-X7</div>
+      </div>
+      <div class="serial">SERIAL REV-X7</div>
+    </header>
+    <footer>
+      <div class="pills">
+        <button id="btnIgnite">Ignite</button>
+        <button id="btnExplode">Explode</button>
+        <button id="btnMotion">Enable Motion</button>
+        <button id="btnCrystal">Crystal: Dual</button>
+      </div>
+      <div class="meters">
+        <div style="font-size:10px;color:var(--muted);width:64px;">SWING</div>
+        <div class="meter"><span id="swingBar"></span></div>
+        <div style="font-size:10px;color:var(--muted);width:64px;">PLASMA</div>
+        <div class="meter"><span id="plasmaBar"></span></div>
+      </div>
+      <div class="hint">Drag to orbit · swipe/gyro to swing · tap Ignite. Best on phone with motion permission.</div>
+    </footer>
+  </div>
+  <div class="toast" id="toast">Hold phone like a hilt and swing.</div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const canvas = document.getElementById('c');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05060a);
+    scene.fog = new THREE.FogExp2(0x05060a, 0.045);
+
+    const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.05, 80);
+    camera.position.set(0.9, 0.35, 2.4);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.minDistance = 1.1;
+    controls.maxDistance = 6;
+    controls.target.set(0, 0.15, 0);
+
+    scene.add(new THREE.AmbientLight(0x334466, 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.4);
+    key.position.set(2, 3, 2);
+    scene.add(key);
+    const rimP = new THREE.PointLight(0xc44dff, 2.2, 8);
+    rimP.position.set(-1.2, 0.4, 1);
+    scene.add(rimP);
+    const rimR = new THREE.PointLight(0xff3355, 1.6, 8);
+    rimR.position.set(1.4, -0.2, -1);
+    scene.add(rimR);
+
+    const grid = new THREE.GridHelper(8, 40, 0x1c2233, 0x12151f);
+    grid.position.y = -1.15;
+    scene.add(grid);
+
+    const chrome = new THREE.MeshStandardMaterial({
+      color: 0xc9d0dc, metalness: 0.95, roughness: 0.18
+    });
+    const black = new THREE.MeshStandardMaterial({
+      color: 0x111318, metalness: 0.7, roughness: 0.35
+    });
+    const copper = new THREE.MeshStandardMaterial({
+      color: 0xb87333, metalness: 0.9, roughness: 0.28
+    });
+    const glass = new THREE.MeshPhysicalMaterial({
+      color: 0x88ccff, metalness: 0.1, roughness: 0.05, transmission: 0.7, thickness: 0.2, transparent: true
+    });
+    const kyberP = new THREE.MeshStandardMaterial({
+      color: 0xc44dff, emissive: 0xaa22ff, emissiveIntensity: 2.4, roughness: 0.2, metalness: 0.1
+    });
+    const kyberR = new THREE.MeshStandardMaterial({
+      color: 0xff3355, emissive: 0xff1133, emissiveIntensity: 2.4, roughness: 0.2, metalness: 0.1
+    });
+
+    const hilt = new THREE.Group();
+    scene.add(hilt);
+
+    function cyl(rTop, rBot, h, mat, y) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, 32), mat);
+      m.position.y = y;
+      return m;
+    }
+
+    const parts = {};
+    // Pommel
+    parts.pommel = new THREE.Group();
+    parts.pommel.add(cyl(0.09, 0.11, 0.12, black, 0));
+    const pommelCap = new THREE.Mesh(new THREE.SphereGeometry(0.09, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), chrome);
+    pommelCap.rotation.x = Math.PI;
+    pommelCap.position.y = -0.06;
+    parts.pommel.add(pommelCap);
+    const pommelGlow = new THREE.Mesh(new THREE.SphereGeometry(0.035, 16, 16), kyberR);
+    pommelGlow.position.y = -0.02;
+    parts.pommel.add(pommelGlow);
+    parts.pommel.userData.home = new THREE.Vector3(0, -0.92, 0);
+    parts.pommel.userData.explode = new THREE.Vector3(0, -1.55, 0);
+
+    // Grip
+    parts.grip = new THREE.Group();
+    parts.grip.add(cyl(0.075, 0.08, 0.42, black, 0));
+    for (let i = 0; i < 8; i++) {
+      const ring = cyl(0.082, 0.082, 0.012, chrome, -0.16 + i * 0.045);
+      parts.grip.add(ring);
+    }
+    const switchBox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.08, 0.03), chrome);
+    switchBox.position.set(0.08, 0.08, 0);
+    parts.grip.add(switchBox);
+    parts.grip.userData.home = new THREE.Vector3(0, -0.58, 0);
+    parts.grip.userData.explode = new THREE.Vector3(-0.55, -0.7, 0.15);
+
+    // Power cell
+    parts.power = new THREE.Group();
+    parts.power.add(cyl(0.085, 0.085, 0.22, chrome, 0));
+    const cellWin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.02), kyberP);
+    cellWin.position.set(0.08, 0, 0);
+    parts.power.add(cellWin);
+    parts.power.userData.home = new THREE.Vector3(0, -0.24, 0);
+    parts.power.userData.explode = new THREE.Vector3(0.55, -0.28, -0.12);
+
+    // Plasma gate
+    parts.gate = new THREE.Group();
+    parts.gate.add(cyl(0.095, 0.09, 0.16, black, 0));
+    const gateRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 12, 32), copper);
+    gateRing.rotation.x = Math.PI / 2;
+    parts.gate.add(gateRing);
+    const plasmaCore = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 16), kyberP);
+    parts.gate.add(plasmaCore);
+    parts.gate.userData.home = new THREE.Vector3(0, -0.02, 0);
+    parts.gate.userData.explode = new THREE.Vector3(-0.15, 0.05, 0.55);
+
+    // Crystal chamber
+    parts.chamber = new THREE.Group();
+    const cage = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.14), new THREE.MeshStandardMaterial({
+      color: 0x8899aa, metalness: 0.8, roughness: 0.25, wireframe: false, transparent: true, opacity: 0.35
+    }));
+    parts.chamber.add(cage);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.17, 0.15), chrome);
+    frame.material = new THREE.MeshStandardMaterial({ color: 0x8899aa, metalness: 0.9, roughness: 0.2, wireframe: true });
+    parts.chamber.add(frame);
+    const c1 = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), kyberP);
+    c1.position.set(-0.04, 0, 0);
+    const c2 = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), kyberR);
+    c2.position.set(0.04, 0, 0);
+    parts.chamber.add(c1, c2);
+    parts.chamber.userData.crystals = [c1, c2];
+    parts.chamber.userData.home = new THREE.Vector3(0, 0.16, 0);
+    parts.chamber.userData.explode = new THREE.Vector3(0.05, 0.55, -0.45);
+
+    // Focusing lens
+    parts.lens = new THREE.Group();
+    parts.lens.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 32), glass));
+    const lens2 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.02, 24), glass);
+    lens2.position.y = 0.04;
+    parts.lens.add(lens2);
+    parts.lens.userData.home = new THREE.Vector3(0, 0.30, 0);
+    parts.lens.userData.explode = new THREE.Vector3(-0.4, 0.72, 0.1);
+
+    // Emitter shroud
+    parts.emitter = new THREE.Group();
+    parts.emitter.add(cyl(0.07, 0.11, 0.22, chrome, 0));
+    const fins = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.08, 6, 1, true), chrome);
+    fins.position.y = 0.12;
+    parts.emitter.add(fins);
+    parts.emitter.userData.home = new THREE.Vector3(0, 0.46, 0);
+    parts.emitter.userData.explode = new THREE.Vector3(0, 1.15, 0);
+
+    Object.values(parts).forEach(p => {
+      p.position.copy(p.userData.home);
+      hilt.add(p);
+    });
+
+    // Blade
+    const bladeGroup = new THREE.Group();
+    bladeGroup.position.y = 0.58;
+    hilt.add(bladeGroup);
+
+    const bladeMat = new THREE.MeshBasicMaterial({
+      color: 0xe8c0ff, transparent: true, opacity: 0.95
+    });
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0xc44dff, transparent: true, opacity: 0.28
+    });
+    const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.85, 20), bladeMat);
+    blade.position.y = 0.92;
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 1.85, 20), glowMat);
+    glow.position.y = 0.92;
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.08, 16), bladeMat);
+    tip.position.y = 1.88;
+    bladeGroup.add(blade, glow, tip);
+    bladeGroup.scale.set(1, 0.001, 1);
+    bladeGroup.visible = false;
+
+    const bladeLight = new THREE.PointLight(0xc44dff, 0, 6);
+    bladeLight.position.y = 1.1;
+    bladeGroup.add(bladeLight);
+
+    // Trail
+    const trailPositions = [];
+    const TRAIL_N = 40;
+    for (let i = 0; i < TRAIL_N; i++) trailPositions.push(new THREE.Vector3());
+    const trailGeo = new THREE.BufferGeometry();
+    const trailArr = new Float32Array(TRAIL_N * 3);
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(trailArr, 3));
+    const trail = new THREE.Line(
+      trailGeo,
+      new THREE.LineBasicMaterial({ color: 0xe8b0ff, transparent: true, opacity: 0.55 })
+    );
+    scene.add(trail);
+
+    // Audio
+    let audioCtx = null;
+    let humOsc, humGain, whooshGain, filter;
+    function ensureAudio() {
+      if (audioCtx) return audioCtx;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1800;
+      filter.connect(audioCtx.destination);
+
+      humOsc = audioCtx.createOscillator();
+      humOsc.type = 'sawtooth';
+      humOsc.frequency.value = 92;
+      const humOsc2 = audioCtx.createOscillator();
+      humOsc2.type = 'sine';
+      humOsc2.frequency.value = 184;
+      humGain = audioCtx.createGain();
+      humGain.gain.value = 0;
+      humOsc.connect(humGain);
+      humOsc2.connect(humGain);
+      humGain.connect(filter);
+      humOsc.start();
+      humOsc2.start();
+
+      whooshGain = audioCtx.createGain();
+      whooshGain.gain.value = 0;
+      const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 1, audioCtx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuf;
+      noise.loop = true;
+      const nFilter = audioCtx.createBiquadFilter();
+      nFilter.type = 'bandpass';
+      nFilter.frequency.value = 900;
+      noise.connect(nFilter);
+      nFilter.connect(whooshGain);
+      whooshGain.connect(filter);
+      noise.start();
+      return audioCtx;
+    }
+
+    function playClash() {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      o.frequency.value = 220;
+      g.gain.value = 0.18;
+      o.connect(g); g.connect(filter);
+      o.start();
+      o.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.18);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+      o.stop(audioCtx.currentTime + 0.23);
+    }
+
+    let ignited = false;
+    let explodeT = 0;
+    let explodeTarget = 0;
+    let crystalMode = 'dual'; // dual | purple | red
+    let swingSpeed = 0;
+    let lastQuat = new THREE.Quaternion();
+    let motionEnabled = false;
+    let deviceAlpha = 0, deviceBeta = 0, deviceGamma = 0;
+    let lastAcc = new THREE.Vector3();
+    let plasma = 0;
+
+    const tipWorld = new THREE.Vector3();
+    let trailIdx = 0;
+
+    function setCrystal(mode) {
+      crystalMode = mode;
+      const [c1, c2] = parts.chamber.userData.crystals;
+      if (mode === 'purple') {
+        c2.visible = false; c1.visible = true;
+        bladeMat.color.set(0xe8c0ff);
+        glowMat.color.set(0xc44dff);
+        bladeLight.color.set(0xc44dff);
+        document.getElementById('btnCrystal').textContent = 'Crystal: Purple';
+      } else if (mode === 'red') {
+        c1.visible = false; c2.visible = true;
+        bladeMat.color.set(0xffd0d8);
+        glowMat.color.set(0xff3355);
+        bladeLight.color.set(0xff3355);
+        document.getElementById('btnCrystal').textContent = 'Crystal: Red';
+      } else {
+        c1.visible = true; c2.visible = true;
+        bladeMat.color.set(0xf0d4ff);
+        glowMat.color.set(0xd060ff);
+        bladeLight.color.set(0xc44dff);
+        document.getElementById('btnCrystal').textContent = 'Crystal: Dual';
+      }
+    }
+
+    function ignite() {
+      ensureAudio();
+      audioCtx.resume();
+      ignited = !ignited;
+      document.getElementById('btnIgnite').classList.toggle('active', ignited);
+      document.getElementById('btnIgnite').textContent = ignited ? 'Retract' : 'Ignite';
+      bladeGroup.visible = true;
+      const toast = document.getElementById('toast');
+      toast.textContent = ignited ? 'Blade online · REV-X7' : 'Blade retracted';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+
+    document.getElementById('btnIgnite').onclick = ignite;
+    document.getElementById('btnExplode').onclick = () => {
+      explodeTarget = explodeTarget > 0.5 ? 0 : 1;
+      document.getElementById('btnExplode').classList.toggle('active', explodeTarget > 0.5);
+      document.getElementById('btnExplode').textContent = explodeTarget > 0.5 ? 'Assemble' : 'Explode';
+    };
+    document.getElementById('btnCrystal').onclick = () => {
+      setCrystal(crystalMode === 'dual' ? 'purple' : crystalMode === 'purple' ? 'red' : 'dual');
+    };
+
+    async function enableMotion() {
+      ensureAudio();
+      try {
+        if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) {
+          const p = await DeviceMotionEvent.requestPermission();
+          if (p !== 'granted') throw new Error('denied');
+        }
+        if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+          await DeviceOrientationEvent.requestPermission();
+        }
+      } catch (e) {}
+      motionEnabled = true;
+      document.getElementById('btnMotion').classList.add('active');
+      document.getElementById('btnMotion').textContent = 'Motion Live';
+      window.addEventListener('deviceorientation', (e) => {
+        deviceAlpha = e.alpha || 0;
+        deviceBeta = e.beta || 0;
+        deviceGamma = e.gamma || 0;
+      });
+      window.addEventListener('devicemotion', (e) => {
+        const a = e.accelerationIncludingGravity;
+        if (!a) return;
+        const v = new THREE.Vector3(a.x || 0, a.y || 0, a.z || 0);
+        const jerk = v.clone().sub(lastAcc).length();
+        lastAcc.copy(v);
+        if (jerk > 18 && ignited) playClash();
+      });
+    }
+    document.getElementById('btnMotion').onclick = enableMotion;
+
+    // Pointer swing fallback
+    let dragging = false, lastPX = 0, lastPY = 0;
+    canvas.addEventListener('pointerdown', (e) => { dragging = true; lastPX = e.clientX; lastPY = e.clientY; });
+    window.addEventListener('pointerup', () => { dragging = false; });
+    window.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastPX;
+      const dy = e.clientY - lastPY;
+      lastPX = e.clientX; lastPY = e.clientY;
+      swingSpeed = Math.min(1, swingSpeed + Math.hypot(dx, dy) * 0.004);
+      hilt.rotation.z -= dx * 0.006;
+      hilt.rotation.x -= dy * 0.006;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const t = clock.elapsedTime;
+
+      explodeT += (explodeTarget - explodeT) * Math.min(1, dt * 4);
+      for (const p of Object.values(parts)) {
+        p.position.lerpVectors(p.userData.home, p.userData.explode, explodeT);
+      }
+      parts.chamber.userData.crystals.forEach((c, i) => {
+        c.rotation.y = t * (1.2 + i * 0.4);
+        c.rotation.x = t * 0.7;
+      });
+
+      if (motionEnabled) {
+        const rx = THREE.MathUtils.degToRad((deviceBeta - 40) * 0.6);
+        const rz = THREE.MathUtils.degToRad(deviceGamma * 0.7);
+        const ry = THREE.MathUtils.degToRad(deviceAlpha * 0.15);
+        hilt.rotation.x += (rx - hilt.rotation.x) * 0.18;
+        hilt.rotation.z += (rz - hilt.rotation.z) * 0.18;
+        hilt.rotation.y += (ry - hilt.rotation.y) * 0.08;
+      } else {
+        if (!dragging && explodeTarget < 0.5) {
+          hilt.rotation.y += dt * 0.15;
+        }
+      }
+
+      const q = hilt.quaternion;
+      const dq = q.angleTo(lastQuat) / Math.max(dt, 0.0001);
+      lastQuat.copy(q);
+      const targetSwing = THREE.MathUtils.clamp(dq / 12, 0, 1);
+      swingSpeed += (targetSwing - swingSpeed) * 0.2;
+      swingSpeed *= 0.96;
+
+      const bladeTarget = ignited && explodeTarget < 0.4 ? 1 : 0.001;
+      const cur = bladeGroup.scale.y;
+      const next = cur + (bladeTarget - cur) * Math.min(1, dt * 6);
+      bladeGroup.scale.y = next;
+      bladeGroup.visible = next > 0.01;
+      bladeLight.intensity = ignited ? 3.5 + swingSpeed * 4 : 0;
+      plasma += ((ignited ? 0.55 + swingSpeed * 0.45 : 0) - plasma) * 0.12;
+
+      glow.material.opacity = 0.18 + swingSpeed * 0.35;
+      if (humGain && audioCtx) {
+        const targetHum = ignited ? 0.035 + swingSpeed * 0.05 : 0;
+        humGain.gain.value += (targetHum - humGain.gain.value) * 0.15;
+        humOsc.frequency.value = 88 + swingSpeed * 40 + Math.sin(t * 8) * 2;
+        whooshGain.gain.value = swingSpeed * 0.12;
+        filter.frequency.value = 1400 + swingSpeed * 2200;
+      }
+
+      // trail
+      tip.getWorldPosition(tipWorld);
+      trailIdx = (trailIdx + 1) % TRAIL_N;
+      trailPositions[trailIdx].copy(tipWorld);
+      for (let i = 0; i < TRAIL_N; i++) {
+        const p = trailPositions[(trailIdx + 1 + i) % TRAIL_N];
+        trailArr[i * 3] = p.x;
+        trailArr[i * 3 + 1] = p.y;
+        trailArr[i * 3 + 2] = p.z;
+      }
+      trail.geometry.attributes.position.needsUpdate = true;
+      trail.material.opacity = ignited ? 0.15 + swingSpeed * 0.7 : 0;
+
+      document.getElementById('swingBar').style.width = `${Math.round(swingSpeed * 100)}%`;
+      document.getElementById('plasmaBar').style.width = `${Math.round(plasma * 100)}%`;
+
+      rimP.intensity = 1.6 + Math.sin(t * 3) * 0.4;
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
