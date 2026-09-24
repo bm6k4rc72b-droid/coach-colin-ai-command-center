@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: EMPx
+
+A classified-briefing style demo at [`public/empx/`](public/empx) — a simulated,
+fully reversible software EMP: Coach Colin voice receptionist, six narrated
+sections (brief, architecture, sequence, nodes, stack, close), a tactical score
+and a hold-to-discharge EMP button. Voice clips live in
+[`public/empx/audio/`](public/empx/audio).
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/empx/>**
+— locally it is `/empx/` (`http://localhost:4173/empx/` under `./start.sh`).
+
+---
+
 ## Also in here: SupermanX
 
 A fitness-AI coaching prototype at [`public/supermanx/`](public/supermanx) — Rex
