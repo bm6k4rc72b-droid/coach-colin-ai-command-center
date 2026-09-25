@@ -22,6 +22,10 @@ import { arrivalProfile, executiveDashboard, proposeCampaign } from './command.j
 import { UNLOCKS, summary as progressSummary } from './progress.js';
 import { ago, copyText, download, el, fill, pct, richText } from './dom.js';
 import { buildPanels } from './ar.js';
+import {
+  BANDS as BF_BANDS, FIELDS, LEVERS, METHODS, bandsTouched, changeThreshold,
+  clearRecord, composition, estimate, loadRecord, method, saveRecord, trend,
+} from './bodyfat.js';
 import { qrSvg } from './qr.js';
 
 /* ------------------------------------------------------------------ shared */
@@ -1597,3 +1601,378 @@ export function renderSettings(ctx) {
 
 /** Re-exported so the app can render bands without a second import. */
 export { BANDS, SYSTEMS, corpusVerdict, search };
+
+/* ------------------------------------------------- 11 · body composition */
+
+/**
+ * The Body Composition bench.
+ *
+ * The deck that most wanted to become a body scanner, and deliberately did
+ * not. It collects measurements, runs four published equations, and shows the
+ * reader how far apart those equations land on their own body — which is the
+ * only honest way to present a field body-fat estimate, and happens to teach
+ * the platform's central lesson better than any compound in the library.
+ *
+ * @param {object} ctx App context.
+ * @returns {HTMLElement} The deck.
+ */
+export function renderBodyfat(ctx) {
+  const state = ctx.deckState.bodyfat || (ctx.deckState.bodyfat = {
+    record: loadRecord(),
+    tab: 'measure',
+    camera: false,
+    quality: null,
+  });
+  const { record } = state;
+  const measures = record.measures;
+
+  /**
+   * Store a measurement and re-read the body.
+   *
+   * @param {string} key Field id.
+   * @param {string} raw The raw input value.
+   */
+  const set = (key, raw) => {
+    const value = raw === '' ? undefined : Number(raw);
+    if (value === undefined) delete measures[key];
+    else measures[key] = value;
+    saveRecord(record);
+    ctx.render();
+  };
+
+  const result = estimate(measures);
+  const usable = result.readings.filter((reading) => reading.ready);
+
+  /** The measurement form. */
+  const measureTab = () => el('div.bf-measure', {}, [
+    el('div.bf-sex', {}, [
+      el('span.bf-sex-label', { text: 'Equations differ by sex' }),
+      ...['male', 'female'].map((sex) => el('button.chip', {
+        type: 'button',
+        class: measures.sex === sex ? 'on' : '',
+        onclick: () => { measures.sex = sex; saveRecord(record); ctx.render(); },
+      }, [sex === 'male' ? 'Male equations' : 'Female equations'])),
+    ]),
+    el('p.quiet.bf-sex-note', { text: 'Every equation here was fitted separately on male and female samples, so this selects which published coefficients apply. It is a property of the equations, not a judgement about you.' }),
+
+    el('div.bf-fields', {}, FIELDS.map((field) => el('label.bf-field', {}, [
+      el('span.bf-field-label', {}, [field.label, el('span.bf-unit', { text: field.unit })]),
+      el('input', {
+        type: 'number',
+        inputmode: 'decimal',
+        min: String(field.min),
+        max: String(field.max),
+        step: String(field.step),
+        value: Number.isFinite(measures[field.id]) ? String(measures[field.id]) : '',
+        placeholder: '—',
+        onchange: (event) => set(field.id, event.target.value),
+      }),
+      field.hint ? el('span.bf-hint', { text: field.hint }) : null,
+    ].filter(Boolean)))),
+
+    result.problems.length ? el('div.bf-problems', {}, [
+      el('h5', { text: 'These will not be estimated from' }),
+      el('ul', {}, result.problems.map((problem) => el('li', { text: `${problem.label} ${problem.message}.` }))),
+    ]) : null,
+
+    el('div.bf-methods', {}, result.readings.map((reading) => methodRow(reading, ctx))),
+
+    el('p.bf-privacy', { text: 'These measurements are stored in this browser and nowhere else. There is no account and no server to send them to.' }),
+    record.log.length || Object.keys(measures).length > 1 ? el('button.btn.ghost.sm', {
+      type: 'button',
+      onclick: () => {
+        state.record = clearRecord();
+        ctx.toast('Measurements and log erased from this device.');
+        ctx.render();
+      },
+    }, ['Erase everything stored here']) : null,
+  ].filter(Boolean));
+
+  /** The reading, with its band and everything it cannot tell you. */
+  const readingTab = () => {
+    if (!result.pooled) {
+      return el('div.bf-empty', {}, [
+        el('p', { text: 'No equation has what it needs yet. The shortest route to a reading is height and waist, which runs Relative Fat Mass on its own; adding neck and weight brings in two more and lets them disagree with each other, which is the useful part.' }),
+        el('button.btn.primary', { type: 'button', onclick: () => { state.tab = 'measure'; ctx.render(); } }, ['Take measurements']),
+      ]);
+    }
+    const { pooled } = result;
+    const touched = bandsTouched(pooled, measures.sex);
+    const split = composition(pooled.percent, measures.weight);
+    const confidencePct = Math.round(result.confidence * 100);
+
+    return el('div.bf-reading', {}, [
+      el('div.bf-headline', { style: { '--band': result.confidence > 0.6 ? 'var(--good)' : result.confidence > 0.35 ? 'var(--warn)' : 'var(--bad)' } }, [
+        el('span.bf-range', { text: `${pooled.low.toFixed(1)}–${pooled.high.toFixed(1)}%` }),
+        el('span.bf-range-label', { text: 'body fat — the whole range this reading supports' }),
+        el('span.bf-point', { text: `Central estimate ${pooled.percent.toFixed(1)}%, from ${pooled.methods} ${pooled.methods === 1 ? 'equation' : 'equations'}` }),
+      ]),
+
+      el('div.bf-tiles', {}, [
+        bfTile(`${confidencePct}%`, 'Confidence', result.confidence > 0.6
+          ? 'The equations broadly agree.'
+          : result.confidence > 0.35
+            ? 'The equations disagree enough to matter.'
+            : 'The equations disagree badly. Treat the figure as a rough bracket only.'),
+        bfTile(`${result.spread.toFixed(1)} pts`, 'Spread between methods',
+          'Highest minus lowest, measuring the same body on the same day.'),
+        split ? bfTile(`${split.fat.toFixed(1)} kg`, 'Fat mass at the central estimate',
+          `${split.lean.toFixed(1)} kg is everything else — muscle, bone, organs and water together.`) : null,
+        split ? bfTile(`±${(measures.weight * pooled.margin / 100).toFixed(1)} kg`, 'What the error bar is worth',
+          'The same error, expressed as kilograms of fat mass.') : null,
+      ].filter(Boolean)),
+
+      el('div.bf-bandstrip', {}, [
+        el('h5', { text: 'Where that range sits in the population' }),
+        el('div.bf-ladder', {}, BF_BANDS[measures.sex === 'female' ? 'female' : 'male'].map((entry) => el('div.bf-band', {
+          class: touched.includes(entry) ? 'touched' : '',
+          title: entry.note,
+        }, [
+          el('span.bf-band-label', { text: entry.label }),
+          el('span.bf-band-range', { text: entry.max === Infinity ? 'above' : `to ${entry.max}%` }),
+        ]))),
+        touched.length > 1
+          ? el('p.bf-verdict.warn', { text: `This reading's error bar covers ${touched.length} of these bands at once — ${touched.map((entry) => entry.label.toLowerCase()).join(', ')}. Naming one of them as "your" category would be claiming precision the measurement does not have.` })
+          : el('p.bf-verdict', { text: `This reading sits inside a single band, ${touched[0].label.toLowerCase()}, across its whole error bar. That is unusual, and it is the only circumstance in which naming a category is honest.` }),
+        el('p.quiet', { text: 'These ranges are fitness-industry descriptive conventions drawn from population distributions. They are not health thresholds, not targets, and no trial has shown that moving between two of them changes an outcome by itself.' }),
+      ]),
+
+      el('div.bf-cannot', {}, [
+        el('h5', { text: 'What this reading cannot tell you' }),
+        el('ul', {}, [
+          'Where the fat is. Visceral and subcutaneous fat carry very different associations with metabolic outcomes, and no tape measure or equation here separates them. That needs imaging.',
+          'How much muscle you have. Everything that is not fat is reported as one lump — muscle, bone, organs and water together — because a two-compartment model has no way to divide it.',
+          'Whether the number is healthy. Body fat percentage is a description, not a diagnosis, and its relationship to any outcome is confounded by fitness, distribution, age and a dozen other things.',
+          'What to do about it. That is a conversation with a clinician who can examine you, not an output of four regression equations.',
+        ].map((line) => el('li', { text: line }))),
+      ]),
+
+      el('div.bf-methods', {}, usable.map((reading) => methodRow(reading, ctx))),
+    ]);
+  };
+
+  /** The camera: framing and comparability, and nothing more. */
+  const cameraTab = () => el('div.bf-camera', {}, [
+    el('div.bf-camera-note', {}, [
+      el('h5', { text: 'What the camera is doing here' }),
+      el('p', { text: 'It is not estimating your body fat. No published, validated equation turns a photograph into a body-fat percentage, so this deck does not pretend to have one — a number produced that way would be exactly the confident-looking invention the rest of this facility exists to argue against.' }),
+      el('p', { text: 'What a photograph is genuinely good for is being comparable to the last one. The thing that most often destroys that comparability is lighting: a lamp moved two metres changes apparent definition more than a month of training does. So the camera measures the light, and tells you whether this shot can be compared to the next one.' }),
+    ]),
+    el('div.bf-camera-controls', {}, [
+      el('button.btn.primary', {
+        type: 'button',
+        onclick: async () => {
+          const started = await ctx.startBodyLens();
+          state.camera = started;
+          ctx.toast(started
+            ? 'Camera on. Frames are read on this device and never uploaded.'
+            : 'No camera available, or access was declined.');
+          if (started) ctx.pollFrameQuality((quality) => {
+            state.quality = quality;
+            const host = document.querySelector('.bf-quality');
+            if (host) fill(host, qualityReadout(quality));
+          });
+          ctx.render();
+        },
+      }, [state.camera ? '⊙ Camera on' : '⊙ Use camera']),
+      state.camera ? el('button.btn.ghost', {
+        type: 'button',
+        onclick: () => { ctx.stopBodyLens(); state.camera = false; state.quality = null; ctx.render(); },
+      }, ['Stop camera']) : null,
+    ].filter(Boolean)),
+    el('div.bf-quality', {}, qualityReadout(state.quality)),
+    el('div.bf-guide', {}, [
+      el('h5', { text: 'Making two photographs comparable' }),
+      el('ul', {}, [
+        'Same room, same time of day, same lamp, same distance from the wall. Mark where your feet go.',
+        'Even light from the front. Side light sculpts shadow that reads as definition and is not.',
+        'Same posture, arms in the same place, at the end of a normal breath out — not held in, not pushed out.',
+        'Same phone, same height, same zoom. A phone held lower makes a torso look different, and it is a large effect.',
+      ].map((line) => el('li', { text: line }))),
+      el('p.quiet', { text: 'Photographs taken this way are the most sensitive progress record available outside a lab, because they record fat distribution — which no percentage does — and your eye is good at spotting change in a repeated frame. They are also not a measurement, and they do not belong in the log above.' }),
+    ]),
+  ].filter(Boolean));
+
+  /** The log, and whether anything in it is a real change. */
+  const trackTab = () => {
+    const history = trend(record.log);
+    // The method to log is chosen on repeatability, not accuracy — a log
+    // exists to detect change, and change is governed by `tem`. And if the
+    // log already runs on one method, that one continues: switching methods
+    // mid-series destroys exactly the comparison this tab is for, which is
+    // the module's own argument turned into a default.
+    const established = record.log.length
+      ? usable.find((reading) => reading.method.id === record.log[record.log.length - 1].methodId)
+      : null;
+    const best = established || usable.slice().sort((a, b) => a.method.tem - b.method.tem)[0];
+    return el('div.bf-track', {}, [
+      best ? el('div.bf-log-add', {}, [
+        el('p', { text: established
+          ? `Log today's reading from ${best.method.name}, at ${best.percent.toFixed(1)}% — the method this log already runs on. Keeping to it is what makes the series comparable.`
+          : `Log today's reading from ${best.method.name}, at ${best.percent.toFixed(1)}% — the most repeatable method your current measurements can feed, which is the one that can see the smallest real change. It is not the most accurate one, and for tracking that is the right trade.` }),
+        el('button.btn.primary', {
+          type: 'button',
+          onclick: () => {
+            record.log.push({
+              at: Date.now(),
+              percent: best.percent,
+              methodId: best.method.id,
+              weight: measures.weight,
+            });
+            saveRecord(record);
+            ctx.award('bodyfat-log', {});
+            ctx.toast('Logged on this device.');
+            ctx.render();
+          },
+        }, ['Log this reading']),
+      ]) : el('p.quiet', { text: 'Nothing to log yet — no equation has the measurements it needs.' }),
+
+      history ? el('div.bf-trend', { class: history.real ? 'real' : 'noise' }, [
+        el('span.bf-trend-value', { text: `${history.change > 0 ? '+' : ''}${history.change.toFixed(1)} pts` }),
+        el('span.bf-trend-span', { text: `across ${history.span} days and ${history.count} readings` }),
+        el('p.bf-trend-verdict', { text: history.reason }),
+        el('p.quiet', { text: history.sameMethod
+          ? 'A change within one method is judged against its repeatability, not its accuracy — the part of the error that comes from the equation not fitting your particular body is the same on both days and cancels when you subtract. That only holds while the method, the tape and the person holding it stay the same.'
+          : 'Two different methods carry two different systematic errors, and neither cancels. That is why the threshold above is so much larger.' }),
+      ]) : null,
+
+      record.log.length ? el('ul.bf-log', {}, record.log.slice().sort((a, b) => b.at - a.at).map((entry) => el('li.bf-log-row', {}, [
+        el('span.bf-log-value', { text: `${entry.percent.toFixed(1)}%` }),
+        el('span.bf-log-method', { text: method(entry.methodId)?.short || entry.methodId }),
+        el('span.bf-log-when', { text: ago(entry.at) }),
+        entry.weight ? el('span.bf-log-weight', { text: `${entry.weight} kg` }) : null,
+      ].filter(Boolean)))) : null,
+
+      el('div.bf-thresholds', {}, [
+        el('h5', { text: 'What each method can and cannot detect' }),
+        el('table.bf-table', {}, [
+          el('thead', {}, [el('tr', {}, [
+            el('th', { text: 'Method' }),
+            el('th', { text: 'How wrong the figure probably is' }),
+            el('th', { text: 'Smallest change it can see' }),
+          ])]),
+          el('tbody', {}, METHODS.map((entry) => el('tr', {}, [
+            el('td', { text: entry.short }),
+            el('td', { text: `±${entry.see.toFixed(1)} pts` }),
+            el('td', { text: `${changeThreshold(entry).toFixed(1)} pts` }),
+          ]))),
+        ]),
+        el('p.quiet', { text: 'The two columns answer different questions, and the gap between them is the single most misunderstood thing about field body-composition measurement. A method can be four points wrong about where you are and still reliably see a two-point move — as long as it is wrong in the same direction every time, which it is.' }),
+      ]),
+    ].filter(Boolean));
+  };
+
+  /** What the literature says moves this, cited and tiered. */
+  const leversTab = () => el('div.bf-levers', {}, [
+    el('p.deck-lede', { text: 'What the published literature reports about changing body composition, graded the same way every other claim in this facility is graded. These are findings in populations. None of them is a plan, and none of them knows anything about you.' }),
+    ...LEVERS.map((lever) => el('article.bf-lever', { style: { '--tier': tier(lever.tier).accent } }, [
+      el('header.bf-lever-head', {}, [
+        tierChip(lever.tier),
+        el('h4', { text: lever.title }),
+      ]),
+      el('p', { text: lever.finding }),
+      el('p.bf-lever-caveat', {}, [el('b', { text: 'Caveat: ' }), lever.caveat]),
+      el('div.bf-lever-links', {}, [
+        lever.compound ? el('button.btn.ghost.sm', {
+          type: 'button',
+          onclick: () => ctx.go('engine', { subject: lever.compound }),
+        }, [`Read ${findAny(lever.compound).name}'s full record →`]) : null,
+        el('a.source-link', {
+          href: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(lever.search)}`,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          onclick: () => ctx.award('pubmed-open', { study: `bf-${lever.id}` }),
+        }, ['Search the literature →']),
+      ].filter(Boolean)),
+    ])),
+    el('p.bf-boundary', { text: 'This deck describes methods and reports findings. It does not tell you what your body fat should be, whether to change it, or how — including with any compound in this library. Those are questions for a clinician who can examine you, and they are deliberately outside what this platform will do.' }),
+  ]);
+
+  return el('div.deck.bodyfat', {}, [
+    el('div.deck-head', {}, [
+      el('p.kicker', { text: 'Body composition bench' }),
+      el('h2', { text: 'Measure it, and measure the error too' }),
+      el('p.deck-lede', { text: 'Four published equations, run on measurements you take, each reporting the error its own validation study found. They will disagree with each other by several points on the same body — that disagreement is the most useful thing on this screen, and it is the reason a single confident body-fat number is almost always a lie.' }),
+    ]),
+    tabs([
+      { id: 'measure', label: 'Measure', render: measureTab },
+      { id: 'reading', label: 'Reading', render: readingTab },
+      { id: 'camera', label: 'Camera', render: cameraTab },
+      { id: 'track', label: 'Track', render: trackTab },
+      { id: 'levers', label: 'What moves it', render: leversTab },
+    ], state.tab, (id) => { state.tab = id; ctx.render(); }),
+  ]);
+}
+
+/**
+ * One method's row: its reading, its error, and what it cannot see.
+ *
+ * @param {object} reading A reading from `estimate`.
+ * @param {object} ctx App context.
+ * @returns {HTMLElement} The row.
+ */
+function methodRow(reading, ctx) {
+  const entry = reading.method;
+  return el('article.bf-method', {
+    class: reading.ready ? 'ready' : 'idle',
+    style: { '--tier': tier(entry.tier).accent },
+  }, [
+    el('header.bf-method-head', {}, [
+      tierChip(entry.tier),
+      el('h4', { text: entry.name }),
+      reading.ready
+        ? el('span.bf-method-value', { text: `${reading.low.toFixed(1)}–${reading.high.toFixed(1)}%` })
+        : el('span.bf-method-value.idle', { text: reading.outOfRange ? 'out of range' : 'needs more' }),
+    ]),
+    el('p.bf-method-blurb', { text: entry.blurb }),
+    reading.ready
+      ? el('p.bf-method-point', { text: `Central estimate ${reading.percent.toFixed(1)}%, with the ±${entry.see.toFixed(1)}-point standard error its validation study reported.` })
+      : el('p.bf-method-missing', { text: reading.outOfRange
+        ? 'The measurements push this equation outside the bodies it was fitted on, where it returns a number that means nothing. It is withheld rather than shown.'
+        : `Needs ${reading.missing.join(', ')}.` }),
+    el('details.bf-method-limits', {}, [
+      el('summary', { text: 'What this method cannot see' }),
+      el('ul', {}, entry.limits.map((limit) => el('li', { text: limit }))),
+      el('p.bf-method-source', {}, [el('b', { text: 'Source: ' }), entry.source]),
+      el('a.source-link', {
+        href: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(entry.search)}`,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        onclick: () => ctx.award('pubmed-open', { study: `bf-${entry.id}` }),
+      }, ['Find the validation study →']),
+    ]),
+  ]);
+}
+
+/**
+ * A single figure with a label and a line of explanation.
+ *
+ * @param {string} value The figure.
+ * @param {string} label What it is.
+ * @param {string} note Why it matters.
+ * @returns {HTMLElement} The tile.
+ */
+function bfTile(value, label, note) {
+  return el('div.bf-tile', {}, [
+    el('span.bf-tile-value', { text: value }),
+    el('span.bf-tile-label', { text: label }),
+    el('span.bf-tile-note', { text: note }),
+  ]);
+}
+
+/**
+ * The camera's verdict on the current frame.
+ *
+ * @param {object|null} quality A reading from `frameQuality`.
+ * @returns {Array<Node>} The readout.
+ */
+function qualityReadout(quality) {
+  if (!quality) return [el('p.quiet', { text: 'No frame yet. Start the camera to read the light.' })];
+  return [
+    el('div.bf-quality-row', { class: quality.ok ? 'ok' : 'poor' }, [
+      el('span.bf-quality-verdict', { text: quality.ok ? 'Comparable' : 'Not comparable' }),
+      el('span.bf-quality-nums', { text: `light ${Math.round(quality.luminance * 100)}% · contrast ${Math.round(quality.contrast * 100)}% · evenness ${Math.round(quality.evenness * 100)}%` }),
+    ]),
+    ...quality.notes.map((note) => el('p.bf-quality-note', { text: note })),
+  ];
+}

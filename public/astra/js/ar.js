@@ -142,7 +142,7 @@ export function buildPanels(subject) {
     lines: isStack
       ? [entry.evidenceNote]
       : [entry.regulatory.detail, `In sport: ${entry.regulatory.sport}`],
-    accent: entry.regulatory?.status === 'approved' ? '#2fe08a' : '#ff9d5c',
+    accent: entry.regulatory?.status === 'approved' ? '#3ef0b4' : '#ff8a5c',
   });
 
   const uncertainty = (entry.uncertainties || [])[0];
@@ -153,7 +153,7 @@ export function buildPanels(subject) {
       label: 'Open question',
       title: 'What is not settled',
       lines: [uncertainty],
-      accent: '#f2b53b',
+      accent: '#ffb347',
     });
   }
 
@@ -543,7 +543,7 @@ export class ARScene {
         const ctx = out.getContext('2d');
         ctx.scale(scale, scale);
 
-        ctx.fillStyle = '#03060c';
+        ctx.fillStyle = '#05030e';
         ctx.fillRect(0, 0, width, height);
 
         if (this.cameraOn && this.video.videoWidth) {

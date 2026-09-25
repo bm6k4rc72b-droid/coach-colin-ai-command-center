@@ -442,7 +442,7 @@ export function qrMatrix(text) {
  * @param {string} [options.light] Background colour.
  * @returns {string} An SVG document.
  */
-export function qrSvg(text, { scale = 4, quiet = 4, dark = '#03060c', light = '#ffffff' } = {}) {
+export function qrSvg(text, { scale = 4, quiet = 4, dark = '#000000', light = '#ffffff' } = {}) {
   const { modules, size } = qrMatrix(text);
   const total = (size + quiet * 2) * scale;
 

@@ -48,6 +48,7 @@ export const ACTIONS = {
   'simulator-run': { xp: 24, label: 'Ran the study-design simulator' },
   'campaign-generate': { xp: 20, label: 'Generated a campaign package' },
   'radar-read': { xp: 12, label: 'Reviewed the research radar' },
+  'bodyfat-log': { xp: 10, label: 'Logged a body-composition reading with its error' },
 };
 
 /**

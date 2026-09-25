@@ -231,7 +231,7 @@ export class Lab {
     this.ok = false;
     this.running = false;
     this.scene = 'vault';
-    this.accent = hexToRgb('#5fd8ff');
+    this.accent = hexToRgb('#9d7bff');
     this.accentTarget = [...this.accent];
     this.pulse = 0;
     this.tilt = { x: 0, y: 0 };
@@ -725,15 +725,17 @@ export class Lab {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);
 
-    const cool = [0.32, 0.62, 0.95];
-    const gold = [0.85, 0.71, 0.34];
+    // The facility's two structural colours, matching `--holo-2` and
+    // `--holo-3` in the sheet. Per-compound accent stays on `this.accent`.
+    const iris = [0.55, 0.42, 1.0];
+    const magenta = [1.0, 0.44, 0.88];
 
     if (this.scene === 'graph' && this.graphGeo) {
-      this.#drawLines(this.graphGeo.edges, viewProjection, { color: cool, alpha: 0.42, sweep: 0.4 });
+      this.#drawLines(this.graphGeo.edges, viewProjection, { color: iris, alpha: 0.42, sweep: 0.4 });
       this.#drawNodes(viewProjection, 0.95);
     } else {
-      this.#drawLines(this.geo.vault, viewProjection, { color: cool, alpha: 0.52, sweep: 1 });
-      this.#drawPoints(this.geo.motes, viewProjection, { color: cool, alpha: 0.3, size: 46, drift: 0.4 });
+      this.#drawLines(this.geo.vault, viewProjection, { color: iris, alpha: 0.52, sweep: 1 });
+      this.#drawPoints(this.geo.motes, viewProjection, { color: iris, alpha: 0.3, size: 46, drift: 0.4 });
 
       if (this.scene === 'molecule') {
         // The molecule floats where the helix normally stands.
@@ -753,7 +755,7 @@ export class Lab {
         this.#drawPoints(this.geo.helixAtoms, mvp, { color: [1, 1, 1], alpha: 0.7, size: 96, drift: 0.3 });
       }
 
-      this.#drawLines(this.geo.vialGlass, viewProjection, { color: gold, alpha: 0.85, sweep: 0.5 });
+      this.#drawLines(this.geo.vialGlass, viewProjection, { color: magenta, alpha: 0.85, sweep: 0.5 });
       this.#drawPoints(this.geo.vialFill, viewProjection, { color: this.accent, alpha: 0.42, size: 190, drift: 0.5 });
       this.#drawPoints(this.geo.vialFill, viewProjection, { color: this.accent, alpha: 0.7, size: 62, drift: 0.5 });
     }
@@ -807,7 +809,7 @@ export class Lab {
     this.#drawPoints(this.geo.molecule.atoms, mvp, { color: [1, 1, 1], alpha: 0.85, size: 130, drift: 0.3 });
     // The orbit ring sits in world space so it reads as a fixed plinth the
     // compound turns inside, which is what sells the object as *placed*.
-    this.#drawLines(this.geo.arRing, viewProjection, { color: [0.85, 0.71, 0.34], alpha: 0.5, sweep: 0.8 });
+    this.#drawLines(this.geo.arRing, viewProjection, { color: [1.0, 0.44, 0.88], alpha: 0.5, sweep: 0.8 });
 
     this.lastViewProjection = viewProjection;
     this.lastMVP = mvp;
