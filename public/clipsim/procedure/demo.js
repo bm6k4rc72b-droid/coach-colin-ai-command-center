@@ -116,7 +116,10 @@ export class Demo {
 
   update(dt) {
     if (!this.running) return;
-    if (this.track) { const q = this.track().clone().project(this.ctx.camera); this.#setCursor(q.x, q.y); }
+    if (this.track) {
+      // A target can disappear under the cursor (a released clip, a cut membrane); then stop following it.
+      try { const q = this.track().clone().project(this.ctx.camera); this.#setCursor(q.x, q.y); } catch { this.track = null; }
+    }
     this.holdFn?.(dt);
     const now = this.ctx.state.time;
     for (let i = this.waiters.length - 1; i >= 0; i--) if (now >= this.waiters[i].until) this.waiters.splice(i, 1)[0].res();
@@ -271,7 +274,8 @@ export class Demo {
     const tc = c.tools.byId.tempClip;
     if (tc.placed) {
       this.select('tempClip');
-      await this.moveTo(() => tc.placed.mesh.position, 0.8);
+      const at = tc.placed.mesh.position.clone();   // the clip is about to disappear, so track a fixed point
+      await this.moveTo(() => at, 0.8);
       this.click({ part: 'tempclip', object: tc.placed.mesh });
     }
     await this.wait(1);
