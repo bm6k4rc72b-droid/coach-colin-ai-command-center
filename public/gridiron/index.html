@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIDIRON IQ · by Coach Colin</title>
+  <meta name="description" content="GRIDIRON IQ by Coach Colin: an educational quarterback read simulator and a weight-room form coach (Iron Lab) in the browser. Not coaching or medical advice." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='16' rx='13' ry='8' transform='rotate(-30 16 16)' fill='none' stroke='%233ff3ff' stroke-width='3'/%3E%3Cpath d='M12 15l8 2' stroke='%23ff4fd8' stroke-width='2.5'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- Three.js is vendored (r168), so the app runs offline with no CDN or build step. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.min.js",
+        "three/addons/": "./vendor/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div id="hovertip"></div>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel">
+        <span class="logo">◈</span>
+        <span class="brand-name">GRIDIRON IQ</span>
+        <span class="brand-by" data-i18n="app.by"></span>
+      </div>
+      <div class="chip panel mono" id="mode-chip"></div>
+      <div class="actions">
+        <button class="btn panel demo" id="btn-demo"><span data-i18n="app.demo"></span></button>
+        <button class="btn panel" id="btn-switch"><span data-i18n="app.switch"></span></button>
+        <button class="btn panel" id="btn-end"><span data-i18n="app.end"></span></button>
+        <button class="btn panel" id="btn-home"><span data-i18n="app.home"></span></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+
+    <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="app.demoOn"></span></div>
+    <div id="banner"><div class="b-kicker mono"></div><div class="b-title"></div></div>
+
+    <aside id="checklist" class="panel">
+      <div class="cl-head"><span class="cl-title"></span><span class="cl-total mono">0%</span></div>
+      <ol class="cl-list"></ol>
+    </aside>
+
+    <section id="live" class="panel"></section>
+
+    <section id="mentor" class="panel">
+      <header class="m-head"><span class="m-kicker mono"></span><span class="m-pct mono">0%</span><span class="m-chev">▾</span></header>
+      <div class="m-bar"><i></i></div>
+      <div class="m-body">
+        <h3 class="m-title"></h3>
+        <p class="m-text"></p>
+        <ul class="m-tasks"></ul>
+        <div class="m-hint"></div>
+      </div>
+    </section>
+
+    <section id="chooser" class="panel hidden">
+      <div class="ch-head"><span class="ch-title"></span><button class="ch-x" aria-label="Close">✕</button></div>
+      <div class="ch-body"></div>
+    </section>
+
+    <div id="toolcard" class="panel hidden">
+      <div class="tc-name"></div>
+      <div class="tc-rule"></div>
+    </div>
+    <nav id="toolbar" class="panel"></nav>
+
+    <footer class="hint mono" id="hud-hint"></footer>
+  </div>
+
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">FOOTBALL IQ · STRENGTH · EDU</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+
+      <div class="disclaimer">
+        <h2>⚠ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+
+      <h3 class="pick-h" data-i18n="app.pick"></h3>
+      <div class="modes">
+        <button class="mode-card" data-mode="field" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><ellipse cx="12" cy="12" rx="9" ry="5.5" transform="rotate(-30 12 12)"/><path d="M8.5 11l7 2.2M10 13.2l1-3.2M13 14l1-3.2"/></svg>
+          <div class="mc-kick">MODE 01</div>
+          <h3 data-i18n="app.mode.field"></h3>
+          <p data-i18n="app.mode.fieldSub"></p>
+          <span class="mc-go"><span data-i18n="app.mode.fieldGo"></span> →</span>
+        </button>
+        <button class="mode-card" data-mode="iron" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4"><path d="M3 12h18M6 8v8M18 8v8M4 10v4M20 10v4"/></svg>
+          <div class="mc-kick">MODE 02</div>
+          <h3 data-i18n="app.mode.iron"></h3>
+          <p data-i18n="app.mode.ironSub"></p>
+          <span class="mc-go"><span data-i18n="app.mode.ironGo"></span> →</span>
+        </button>
+      </div>
+
+      <div class="start-actions">
+        <button class="btn panel demo" id="btn-start-demo" disabled data-i18n="app.demo"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="debrief" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div>
+          <div class="start-kicker mono">DEBRIEF</div>
+          <h2 class="db-title"></h2>
+          <p class="db-sub"></p>
+        </div>
+        <div class="db-ring"><b class="db-score mono">0</b><small>SCORE</small></div>
+      </div>
+      <div class="db-grid mono"></div>
+      <div class="db-cols">
+        <div><h3 data-i18n="db.checks"></h3><ul class="db-checks"></ul></div>
+        <div><h3 data-i18n="db.tips"></h3><ol class="db-tips"></ol></div>
+      </div>
+      <div class="start-actions">
+        <button class="btn primary db-again" data-i18n="db.again"></button>
+        <button class="btn panel db-close" data-i18n="db.close"></button>
+      </div>
+      <p class="db-disclaimer" data-i18n="app.disclaimer"></p>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">LOADING…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

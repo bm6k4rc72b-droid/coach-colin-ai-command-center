@@ -38,6 +38,27 @@ demonstration only, not clinical training or medical advice. No build step.
 
 ---
 
+## Also in here: GRIDIRON IQ · QB reads + Iron Lab
+
+A football-IQ and strength trainer by Coach Colin at
+[`public/gridiron/`](public/gridiron), with two modes:
+
+- **Field**: a quarterback read simulator. Read the coverage (Cover 0–4), set the
+  protection, call the concept that beats it, snap, look off the safety and
+  throw to the open receiver, then watch the All-22 film. A drive has 5 plays
+  and ends in a debrief.
+- **Weight Room (Iron Lab)**: a form coach for the squat, deadlift and bench
+  press. A side-view biomechanics model shows joint torques, bar path, bar speed
+  and muscle activation live, and flags faults as fatigue builds.
+
+It has EN/日本語 text and a demo mode. It is for education only, not coaching or
+medical advice. No build step; it is fully separate from CLIPSIM.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/gridiron/>**
+— locally it is `/gridiron/` (`http://localhost:4173/gridiron/` under `./start.sh`).
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at
