@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { endoscopeModel } from './models.js';
 import { sfx } from '../audio/engine.js';
 import { bus } from '../procedure/bus.js';
+import { MICROSCOPE } from '../config/anatomy.js';
 
 // Endoscope (key 9): selecting it inserts a 2.7 mm, 30° endoscope into the
 // corridor beneath the aneurysm. A picture-in-picture view shows what the
@@ -10,20 +11,24 @@ import { bus } from '../procedure/bus.js';
 // withdraw or re-insert it. The view stays open while you use other tools.
 export function endoscope(ctx) {
   const g = ctx.anatomy.aneurysm.geometry;
-  const cam = new THREE.PerspectiveCamera(72, 1, 0.3, 200);
-  // The scope tip passes medial to the ICA, under the optic nerve (the
-  // opticocarotid window), and looks laterally at the medial and back side of
-  // the neck, where the PCom arises.
-  const tip = new THREE.Vector3(-10.5, -4.5, -37.5);
+  const cam = new THREE.PerspectiveCamera(74, 1, 0.3, 200);
+  // The scope tip is passed beyond the neck, on the far side from the
+  // microscope, and looks back at the neck. This shows what the microscope
+  // can't: whether the blade tips cross the whole neck, and the PCom origin.
+  const W = g.wall;
+  const yaw = THREE.MathUtils.degToRad(MICROSCOPE.startYawDeg), tilt = THREE.MathUtils.degToRad(MICROSCOPE.startTiltDeg);
+  const scopeFwd = new THREE.Vector3(-Math.sin(tilt) * Math.sin(yaw), Math.sin(tilt) * Math.cos(yaw), -Math.cos(tilt));
+  const look = W.center(0.6);
+  const tip = W.center(0).addScaledVector(W.n, 4.5).addScaledVector(scopeFwd, 5);
   cam.position.copy(tip);
-  cam.up.set(0, 0, 1);
-  cam.lookAt(g.neckPlane.clone().lerp(g.domeCenter, 0.25));
+  cam.up.copy(W.n);
+  cam.lookAt(look);
   const light = new THREE.PointLight('#e8f4ff', 0, 0, 0);
   light.position.copy(tip);
   ctx.scene.add(light);
 
   const shaft = endoscopeModel();
-  const inDir = new THREE.Vector3(0.1, 0.35, 1).normalize(); // out through the corridor toward the surgeon
+  const inDir = new THREE.Vector3(1, -0.1, 0.45).normalize(); // out laterally along the fissure floor, clear of the dome
   shaft.position.copy(tip);
   shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), inDir);
   shaft.visible = false;

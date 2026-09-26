@@ -45,7 +45,7 @@ export class Vitals {
     if (f.at('AChA') < 0.2) lower(32, 'AChA');
     if (f.at('perforator') < 0.2) lower(58, 'perforator');
     if (!f.tempClip && f.patency.ICA < 0.7) lower(62, 'ica');
-    if (!f.tempClip && f.patency.M1 < 0.5) lower(45, 'm1');
+    if (!f.tempClip && f.at('M1') < 0.5) lower(45, 'm1');
     if (s.tempClipOn) {
       // Ischaemic tolerance: little change for the first few minutes, then a steady fall.
       const occl = s.time - s.tempClipStart;

@@ -33,3 +33,14 @@ That file documents the coordinate frame.
 Add `?fx=low` to the URL to turn off depth of field and bloom on slower GPUs.
 
 See [`PLAN.md`](PLAN.md) for the milestone plan.
+
+## How clipping is graded
+
+`physics/clipEval.js` tests each applied clip's closed blade line against the anatomy:
+
+- **Neck closure.** The neck is graded as a footprint on the ICA wall, an ellipse elongated along the ICA. The blades must span it at 0.3–1.2 mm above the wall.
+- **Residual neck.** Blades placed up on the sac, tips short of the far edge, or a clip across the ICA (dog ears) all leave a residual neck.
+- **ICA narrowing.** Blades that bite into the lumen, or a misaligned clip that kinks the wall, narrow the parent artery.
+- **Branches.** A blade on the PCom origin (at the proximal edge of the neck) or on the AChA kinks or occludes it.
+
+The result drives `Flow`. ICG fill, Doppler, MEP and bleeding all follow from it, and the grade itself appears only in the debrief.

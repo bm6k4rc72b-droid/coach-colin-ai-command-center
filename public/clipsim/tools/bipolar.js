@@ -46,7 +46,7 @@ export function bipolar(ctx) {
       } else if (PROTECTED.includes(p) && onVessel > 0.5 && !reported.has(p)) {
         // Coagulating a perforator, the AChA or the PCom occludes it (an ischaemic injury).
         reported.add(p);
-        ctx.flow.patency[p] = 0;
+        ctx.flow.injured[p] = true;
         ctx.stats.injuries.push({ part: p, by: 'bipolar' });
         bus.emit('injury', { part: p, by: 'bipolar', severity: 'major' });
         ctx.feed.push('feed.vesselCoagulated', 'bad', { part: ctx.i18n.t('part.' + p) });

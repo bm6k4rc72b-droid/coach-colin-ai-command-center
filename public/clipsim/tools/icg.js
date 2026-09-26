@@ -42,6 +42,7 @@ export function icg(ctx) {
     for (const [m, s] of saved) { m.emissive.copy(s.c); m.emissiveIntensity = s.i; }
     saved.clear();
     ctx.lights.setICG(false);
+    (ctx.state.icgExtras || []).forEach((x) => { x.mesh.visible = false; });
     const filled = Object.keys(PHASE).filter((p) => p !== 'SSV').map((p) => ({ part: p, flow: ctx.flow.at(p) }));
     bus.emit('icg:done', { filled });
   }
@@ -59,6 +60,11 @@ export function icg(ctx) {
       if (!running) return;
       const e = t - t0;
       const fade = 1 - THREE.MathUtils.smoothstep(e, DURATION - 3, DURATION);
+      for (const x of ctx.state.icgExtras || []) {
+        const fill = THREE.MathUtils.smoothstep(e, x.phase, x.phase + 1.4) * fade * x.flow();
+        x.mesh.visible = fill > 0.03;
+        x.mesh.material.emissiveIntensity = fill * 2.6;
+      }
       for (const { mesh, part } of targets) {
         const flow = part === 'SSV' ? 0.8 : ctx.flow.at(part);
         const fill = THREE.MathUtils.smoothstep(e, PHASE[part], PHASE[part] + 1.4) * fade * flow;

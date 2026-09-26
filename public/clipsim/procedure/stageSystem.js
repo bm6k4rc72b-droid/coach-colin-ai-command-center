@@ -98,6 +98,13 @@ export class StageSystem {
     if (c.bleeding.activeSources.length) return 'hint.oozeBipolar';
     if (c.risk.value > 0.45) return 'hint.riskHigh';
     if (c.flow.tempClip && c.state.tempClipOn && c.state.time - c.state.tempClipStart > 240) return 'hint.tempLong';
+    // After clipping, what ICG and the Doppler reveal about the clip.
+    if (this.lastClipTime !== null) {
+      const after = (k) => this.facts[k] !== undefined && this.facts[k] >= this.lastClipTime;
+      if (after('dopplerNoFlow:PCom')) return 'hint.pcomLost';
+      if (after('dopplerNoFlow:AChA')) return 'hint.achaLost';
+      if (after('icg') && c.flow.at('aneurysm') > 0.08) return 'hint.domeFilling';
+    }
     const ts = this.taskState[this.index];
     const next = this.current.tasks.find((t, k) => !ts[k].ok);
     return next ? 'hint.' + next.id : null;

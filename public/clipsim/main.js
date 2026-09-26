@@ -168,7 +168,7 @@ function boot() {
       $('ro-neck').textContent = Math.round(anatomy.adhesions.progress * 100);
       const cp = state.clipPose;
       $('ro-clip-row').classList.toggle('hidden', tools.active?.id !== 'clip');
-      if (cp) $('ro-clip').textContent = `${cp.roll.toFixed(0)}° · ${cp.depth >= 0 ? '+' : ''}${cp.depth.toFixed(1)} mm${cp.locked ? ' · LOCK' : ''}`;
+      if (cp) $('ro-clip').textContent = `${cp.snap || cp.locked ? '◎ ' : ''}∠ICA ${cp.angICA.toFixed(0)}° · h ${cp.height >= 0 ? '+' : ''}${cp.height.toFixed(1)} · tilt ${cp.tilt.toFixed(0)}°${cp.locked ? ' · LOCK' : ''}`;
     }
 
     fx.render(state.time);

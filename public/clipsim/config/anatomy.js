@@ -59,10 +59,11 @@ export const VESSELS = {
   M2i: { radius: 1.0, points: [[27, 6, -9], [31, 3, -6], [36, -1, -4], [44, -4, -3]] },
   // A1: the first segment of the anterior cerebral artery, running medially above the optic nerve.
   A1:  { radius: 1.1, points: [[2, 4, -20], [-3, 6, -21], [-9, 8, -22], [-16, 9, -22.5], [-26, 9.5, -22]] },
-  // Posterior communicating artery: leaves the POSTERIOR wall of the ICA and
-  // runs posteromedially above the oculomotor nerve to join the PCA.
-  // It must stay open after clipping.
-  PCom: { radius: 0.65, points: [[-4.4, -6.2, -32.2], [-7, -9.5, -35], [-10, -14.5, -37], [-12.5, -22, -38.5]] },
+  // Posterior communicating artery: leaves the posteromedial wall of the ICA
+  // right at the PROXIMAL edge of the aneurysm neck, then runs posteromedially
+  // above the oculomotor nerve to join the PCA. Blade tips that overshoot the
+  // proximal edge of the neck catch its origin, so it must be seen and kept free.
+  PCom: { radius: 0.65, points: [[-2.67, -10.05, -38.03], [-4.6, -12.8, -38.8], [-8, -16.5, -39.0], [-12.5, -22, -39.2]] },
   // Anterior choroidal artery: arises just DISTAL to the PCom and runs
   // posterolaterally. It is small, but occluding it can cause hemiplegia, so
   // always confirm its flow.

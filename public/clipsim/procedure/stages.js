@@ -16,7 +16,7 @@ const identified = (s, part) => (s.hover[part] || 0) >= IDENTIFY_SECONDS || !!s.
 const dry = (c) => c.bleeding.activeSources.length === 0 && c.bleeding.volume < 1;
 const cut = (c, layer) => c.anatomy.arachnoid.filter((m) => m.userData.layer === layer && m.userData.cut).length;
 const total = (c, layer) => c.anatomy.arachnoid.filter((m) => m.userData.layer === layer).length;
-const afterClip = (s, key) => s.facts[key] !== undefined && s.lastClipTime !== null && s.facts[key] > s.lastClipTime;
+const afterClip = (s, key) => s.facts[key] !== undefined && s.lastClipTime !== null && s.facts[key] >= s.lastClipTime;
 
 export const STAGES = [
   {

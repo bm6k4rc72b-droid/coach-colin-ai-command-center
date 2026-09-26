@@ -16,7 +16,7 @@ export function buildAneurysm(icaCurve) {
   const axis = new THREE.Vector3(...ANEURYSM.direction).normalize();
 
   // The neck starts inside the ICA wall so the two surfaces blend.
-  const hNeck = 1.5;
+  const hNeck = 1.8;
   const hc = hNeck + Math.sqrt(rd * rd - rn * rn); // height of the dome centre along the axis
   const profile = [
     new THREE.Vector2(rn * 1.08, 0),
@@ -61,13 +61,33 @@ export function buildAneurysm(icaCurve) {
 
   // Place the group on the ICA wall at the PCom origin.
   const base = icaCurve.getPointAt(ANEURYSM.neckParam);
-  const neckCenter = base.clone().addScaledVector(axis, VESSELS.ICA.radius * 0.35);
+  const neckCenter = base.clone().addScaledVector(axis, VESSELS.ICA.radius * 0.6);
   group.position.copy(neckCenter);
   group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis);
   group.updateMatrixWorld(true);
 
   const domeCenter = neckCenter.clone().addScaledVector(axis, hc);
   const neckPlaneCenter = neckCenter.clone().addScaledVector(axis, hNeck);
+
+  // The neck as the surgeon clips it: a footprint on the ICA wall. The clip
+  // blades should lie just above the wall surface, parallel to it. Because the
+  // sac leaves the wall obliquely, the footprint is an ellipse elongated along
+  // the ICA, which is why the blades go parallel to the parent artery.
+  const t = icaCurve.getTangentAt(ANEURYSM.neckParam).normalize();
+  const wn = axis.clone().addScaledVector(t, -axis.dot(t)).normalize();  // outward wall normal at the neck
+  const cosA = axis.dot(wn);
+  const u1 = axis.clone().addScaledVector(wn, -cosA).normalize();         // long axis, along the ICA
+  const u2 = new THREE.Vector3().crossVectors(wn, u1).normalize();        // short axis, around the ICA
+  const wallPoint = base.clone().addScaledVector(wn, VESSELS.ICA.radius);
+  const wall = {
+    n: wn, u1, u2, point: wallPoint, cosA,
+    A: rn / cosA, B: rn,
+    // Centre of the neck footprint on a plane h mm above the wall surface.
+    center(h) {
+      const s = wallPoint.clone().addScaledVector(wn, h).sub(neckCenter).dot(wn) / cosA;
+      return neckCenter.clone().addScaledVector(axis, s);
+    },
+  };
   return {
     group, dome, bleb,
     geometry: {
@@ -75,6 +95,7 @@ export function buildAneurysm(icaCurve) {
       neckBase: neckCenter,          // inside the ICA wall
       neckPlane: neckPlaneCenter,    // where the blades should close
       domeCenter,
+      wall,
       blebWorld: bleb.getWorldPosition(new THREE.Vector3()),
     },
   };
