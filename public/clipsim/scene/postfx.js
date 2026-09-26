@@ -83,11 +83,15 @@ export function createPostFX(renderer, scene, camera) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
 
+  // ?fx=low skips depth of field and bloom, for slower GPUs.
+  const low = new URLSearchParams(location.search).get('fx') === 'low';
   const bokeh = new BokehPass(scene, camera, { focus: MICROSCOPE.distance, aperture: MICROSCOPE.aperture, maxblur: MICROSCOPE.maxBlur });
+  bokeh.enabled = !low;
   composer.addPass(bokeh);
 
   const b = MICROSCOPE.bloom;
   const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), b.strength, b.radius, b.threshold);
+  bloom.enabled = !low;
   composer.addPass(bloom);
 
   composer.addPass(new OutputPass());

@@ -10,8 +10,8 @@ const pialVessel = new THREE.Color('#a3172b');
 // A lobe is a superellipsoid, |x/a|^n + |y/b|^n + |z/c|^n = 1, with ridged
 // noise on top: the crests are gyri and the grooves are sulci. Sulci are
 // shaded darker because they sit in shadow and carry small pial vessels.
-function buildLobe({ center, radii, exponent: n }, seed) {
-  const geo = new THREE.SphereGeometry(1, 260, 160);
+function lobeGeometry({ center, radii, exponent: n }, seed, segW, segH) {
+  const geo = new THREE.SphereGeometry(1, segW, segH);
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   const [a, b, c] = radii;
@@ -47,17 +47,36 @@ function buildLobe({ center, radii, exponent: n }, seed) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
+  return geo;
+}
 
-  const mesh = new THREE.Mesh(geo, Materials.cortex(HEART.pulse.brain));
-  mesh.position.set(...center);
+// Raycasting a 100k-triangle lobe every frame is slow, so hover and picking
+// test a coarse copy of the same surface instead. The hit is reported on the
+// visible mesh.
+function withPickProxy(mesh, proxyGeo) {
+  const proxy = new THREE.Mesh(proxyGeo, new THREE.MeshBasicMaterial());
+  proxy.visible = false;
+  proxy.userData.pickProxy = true;
+  mesh.add(proxy);
+  mesh.raycast = (raycaster, intersects) => {
+    const n = intersects.length;
+    THREE.Mesh.prototype.raycast.call(proxy, raycaster, intersects);
+    for (let i = n; i < intersects.length; i++) intersects[i].object = mesh;
+  };
   return mesh;
+}
+
+function buildLobe(cfg, seed) {
+  const mesh = new THREE.Mesh(lobeGeometry(cfg, seed, 220, 136), Materials.cortex(HEART.pulse.brain));
+  mesh.position.set(...cfg.center);
+  return withPickProxy(mesh, lobeGeometry(cfg, seed, 90, 56));
 }
 
 // The deepest visible layer: an arachnoid-lined floor standing in for the
 // basal cisterns and the tentorial edge, seen past the neurovascular structures.
-function buildFloor() {
-  const { z, size } = BRAIN.floor;
-  const geo = new THREE.PlaneGeometry(size, size, 140, 140);
+function floorGeometry(seg) {
+  const { size } = BRAIN.floor;
+  const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   const pos = geo.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   const base = new THREE.Color(COLORS.floor), hi = new THREE.Color('#8a3a3e'), col = new THREE.Color();
@@ -70,9 +89,13 @@ function buildFloor() {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, Materials.floor());
-  mesh.position.set(0, -6, z);
-  return mesh;
+  return geo;
+}
+
+function buildFloor() {
+  const mesh = new THREE.Mesh(floorGeometry(120), Materials.floor());
+  mesh.position.set(0, -6, BRAIN.floor.z);
+  return withPickProxy(mesh, floorGeometry(40));
 }
 
 export function buildBrain() {

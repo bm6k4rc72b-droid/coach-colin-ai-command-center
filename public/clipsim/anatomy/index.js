@@ -32,7 +32,7 @@ export function buildAnatomy() {
   // Every mesh that can be hovered or picked, tagged with a part id (children inherit it).
   const pickables = [];
   root.traverse((o) => {
-    if (!o.isMesh) return;
+    if (!o.isMesh || o.userData.pickProxy) return;
     let p = o;
     while (p && !p.userData.part) p = p.parent;
     if (p) { o.userData.pickPart = p.userData.part; pickables.push(o); }
