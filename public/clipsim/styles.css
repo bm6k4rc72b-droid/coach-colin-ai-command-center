@@ -185,7 +185,8 @@ kbd { font-family: var(--mono); font-size: 10px; color: var(--cyan); border: 1px
 #pip .pip-head { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .16em; color: var(--cyan); margin-bottom: 8px; padding: 7px 10px; }
 #pip .rec { color: var(--red); animation: blink 1.4s steps(2) infinite; }
 /* The endoscope image is drawn by WebGL underneath; this element only masks it into a circle. */
-#pip .pip-view { width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, transparent 69%, var(--bg) 70.7%); box-shadow: 0 0 0 1px rgba(63,243,255,.5), 0 0 34px rgba(63,243,255,.18); }
+#pip .pip-view { position: relative; width: 250px; height: 250px; background: radial-gradient(circle closest-side, transparent 98.5%, var(--bg) 100%); }
+#pip .pip-view::after { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 1px rgba(63,243,255,.55), 0 0 34px rgba(63,243,255,.2); }
 @keyframes blink { 50% { opacity: .2; } }
 
 @media (max-width: 900px) {

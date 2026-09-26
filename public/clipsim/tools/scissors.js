@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { scissorsModel } from './models.js';
 import { partRoot } from './index.js';
 import { sfx } from '../audio/engine.js';
@@ -23,7 +24,13 @@ export function scissors(ctx) {
     ctx.feed.push('feed.arachnoidCut', 'ok', { n: done, total: arachnoidTotal });
     // Arachnoid carries tiny bridging vessels: every so often a cut starts an ooze.
     if (done % 4 === 2 || (mesh.userData.layer === 'deep' && done % 3 === 0)) {
-      ctx.bleeding.addSource(hit.point.clone(), 'ooze', hit.normal);
+      // The bleeding comes from the pial surface under the membrane, so find the tissue behind the cut.
+      const ray = new THREE.Raycaster(ctx.camera.position, hit.point.clone().sub(ctx.camera.position).normalize());
+      const under = ray.intersectObjects(ctx.anatomy.pickables, false)
+        .find((h) => h.object.visible && !['arachnoid', 'blood', 'ooze', 'char', 'adhesion', 'clip', 'tempclip'].includes(h.object.userData.pickPart));
+      if (!under) return;
+      const n = under.face ? under.face.normal.clone().transformDirection(under.object.matrixWorld) : hit.normal;
+      ctx.bleeding.addSource(under.point.clone(), 'ooze', n);
       ctx.feed.push('feed.oozeStarted', 'warn');
     }
   }

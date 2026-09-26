@@ -24,8 +24,12 @@ That file documents the coordinate frame.
 | `config/` | anatomy and microscope parameters |
 | `scene/` | renderer, microscope camera controls, scope lighting, post-FX grade |
 | `anatomy/` | lobes, vessels, nerves, aneurysm, arachnoid, spatulas, tissue materials |
-| `physics/` | heart clock and pulse waveform (later: flow, bleeding, rupture risk) |
-| `ui/` | i18n (EN/日本語), hover inspector, anatomy labels |
-| `tools/`, `procedure/`, `audio/` | arriving in milestones M2–M5 |
+| `physics/` | heart clock, bleeding and blood pool, rupture risk, vessel flow |
+| `tools/` | tool manager plus one file per instrument (keys 1–0), instrument and clip models |
+| `audio/` | synthesised suction, bipolar, Doppler and UI sounds |
+| `procedure/` | event bus (stages arrive in M3) |
+| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed |
+
+Add `?fx=low` to the URL to turn off depth of field and bloom on slower GPUs.
 
 See [`PLAN.md`](PLAN.md) for the milestone plan.

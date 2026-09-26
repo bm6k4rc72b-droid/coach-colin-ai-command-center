@@ -22,24 +22,36 @@ export function clip(ctx) {
   const placed = [];
   ctx.state.clips = placed;
 
+  // A faint holographic outline drawn through tissue, so you can still place
+  // the clip when the neck is hidden behind the ICA.
+  const ghostMat = new THREE.MeshBasicMaterial({ color: '#3ff3ff', transparent: true, opacity: 0.28, depthTest: false, depthWrite: false });
   function rebuild() {
     if (model) root.remove(model);
     model = buildClip(type);
     model.userData.setOpening(3.6);
+    const meshes = [];
+    model.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    meshes.forEach((o) => { const g = new THREE.Mesh(o.geometry, ghostMat); g.renderOrder = 20; o.add(g); });
     root.add(model);
     ctx.state.clipType = type;
   }
   rebuild();
-  root.add(applier);
 
-  // The clip frame from the current pose: blades along the microscope's
-  // viewing axis, the jaws opening across it, rotated by `roll`.
+  // The clip frame from the current pose. The blades point down the
+  // microscope axis, tilted 30° so you see them in profile. `roll` spins the
+  // whole clip about the view axis, which sets the blade direction on screen
+  // (aim for parallel to the ICA).
+  const TILT = THREE.MathUtils.degToRad(30);
   function frame() {
     const cam = ctx.camera;
-    const z = new THREE.Vector3(); cam.getWorldDirection(z);
+    const fwd = new THREE.Vector3(); cam.getWorldDirection(fwd);
     const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
-    const x = right.applyAxisAngle(z, pose.roll).normalize();
+    const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+    const q = new THREE.Quaternion().setFromAxisAngle(fwd, pose.roll);
+    const z = fwd.clone().multiplyScalar(Math.cos(TILT)).addScaledVector(up, -Math.sin(TILT)).applyQuaternion(q).normalize();
+    const x = right.applyQuaternion(q).normalize();
     const y = new THREE.Vector3().crossVectors(z, x).normalize();
+    x.crossVectors(y, z).normalize();
     const L = CLIP_SPECS[type].length;
     const origin = pose.anchor.clone().addScaledVector(z, -L * 0.55 + pose.depth);
     return { x, y, z, origin };
@@ -79,6 +91,7 @@ export function clip(ctx) {
 
   const tool = {
     id: 'clip', model: root, placesOwnModel: true, usesWheel: true,
+    extraModels: [applier],
     get type() { return type; },
     setType(t) { type = t; rebuild(); ctx.feed.push('feed.clipType', 'ok', { type: ctx.i18n.t('clip.' + t) }); bus.emit('clip:type', { type }); },
     validate(hit) {
@@ -114,10 +127,15 @@ export function clip(ctx) {
     update(dt, hit) {
       if (!pose.locked && hit) pose.anchor.copy(hit.point);
       root.visible = pose.locked || !!hit;
-      place(root, frame());
+      const f = frame();
+      place(root, f);
+      // The applier grips the clip head (just behind the blades) and leads out to the right hand.
+      if (!applier.parent) ctx.scene.add(applier);
+      applier.visible = root.visible;
+      ctx.tools.aim(applier, f.origin.clone().addScaledVector(f.z, -2.2), 1);
       ctx.state.clipPose = { roll: THREE.MathUtils.radToDeg(pose.roll), depth: pose.depth, locked: pose.locked, type };
     },
-    deactivate() { pose.locked = false; },
+    deactivate() { pose.locked = false; applier.visible = false; },
   };
   return tool;
 }

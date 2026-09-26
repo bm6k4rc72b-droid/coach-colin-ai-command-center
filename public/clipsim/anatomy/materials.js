@@ -77,5 +77,5 @@ export const Materials = {
     clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide, depthWrite: false,
     envMapIntensity: 0.7,
   }),
-  metal: () => new THREE.MeshPhysicalMaterial({ color: COLORS.spatula, metalness: 0.55, roughness: 0.3, clearcoat: 0.6, envMapIntensity: 4 }),
+  metal: () => new THREE.MeshPhysicalMaterial({ color: COLORS.spatula, metalness: 0.55, roughness: 0.3, clearcoat: 0.6, envMapIntensity: 8 }),
 };

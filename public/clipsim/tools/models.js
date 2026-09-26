@@ -4,8 +4,8 @@ import * as THREE from 'three';
 // shaft running up +Y toward the surgeon's hand. The tool manager aims +Y back
 // toward the microscope, offset to the side the instrument enters from.
 
-const steel = () => new THREE.MeshPhysicalMaterial({ color: '#d7dde8', metalness: 0.75, roughness: 0.22, clearcoat: 0.6, envMapIntensity: 3 });
-const darkSteel = () => new THREE.MeshPhysicalMaterial({ color: '#7d8594', metalness: 0.8, roughness: 0.35, envMapIntensity: 2.5 });
+const steel = () => new THREE.MeshPhysicalMaterial({ color: '#d7dde8', metalness: 0.75, roughness: 0.22, clearcoat: 0.6, envMapIntensity: 8 });
+const darkSteel = () => new THREE.MeshPhysicalMaterial({ color: '#7d8594', metalness: 0.8, roughness: 0.35, envMapIntensity: 8 });
 const insulation = (c) => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.35, clearcoat: 1, envMapIntensity: 1.5 });
 
 function cyl(r0, r1, len, mat, y0 = 0, seg = 16) {

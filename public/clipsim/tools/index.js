@@ -98,6 +98,7 @@ export class ToolManager {
     if (this.down) { this.active?.onUp?.(this.hit); this.down = false; }
     this.active?.deactivate?.();
     if (this.active?.model) this.active.model.visible = false;
+    this.active?.extraModels?.forEach((m) => { m.visible = false; });
     this.active = next;
     this.highlighter.clear();
     this.ctx.controls.wheelEnabled = !next?.usesWheel;

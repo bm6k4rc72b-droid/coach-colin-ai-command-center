@@ -11,8 +11,10 @@ import { bus } from '../procedure/bus.js';
 export function endoscope(ctx) {
   const g = ctx.anatomy.aneurysm.geometry;
   const cam = new THREE.PerspectiveCamera(72, 1, 0.3, 200);
-  // Scope tip sits below and behind the dome, looking up at the neck.
-  const tip = new THREE.Vector3(-1.5, -12.8, -39.2);
+  // The scope tip passes medial to the ICA, under the optic nerve (the
+  // opticocarotid window), and looks laterally at the medial and back side of
+  // the neck, where the PCom arises.
+  const tip = new THREE.Vector3(-10.5, -4.5, -37.5);
   cam.position.copy(tip);
   cam.up.set(0, 0, 1);
   cam.lookAt(g.neckPlane.clone().lerp(g.domeCenter, 0.25));
@@ -21,7 +23,7 @@ export function endoscope(ctx) {
   ctx.scene.add(light);
 
   const shaft = endoscopeModel();
-  const inDir = new THREE.Vector3(0.25, 0.55, 1).normalize(); // out through the corridor toward the surgeon
+  const inDir = new THREE.Vector3(0.1, 0.35, 1).normalize(); // out through the corridor toward the surgeon
   shaft.position.copy(tip);
   shaft.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), inDir);
   shaft.visible = false;

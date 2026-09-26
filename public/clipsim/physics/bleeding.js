@@ -82,11 +82,13 @@ export class Bleeding {
 
   addSource(position, kind = 'ooze', normal = new THREE.Vector3(0, 0, 1)) {
     const blob = new THREE.Mesh(
-      new THREE.SphereGeometry(kind === 'arterial' ? 1.1 : 0.75, 18, 12),
+      new THREE.SphereGeometry(kind === 'arterial' ? 1.1 : 0.7, 18, 12),
       new THREE.MeshPhysicalMaterial({ color: '#7a0010', roughness: 0.1, clearcoat: 1, emissive: '#300004' }),
     );
-    blob.scale.set(1, 1, 0.55);
-    blob.position.copy(position);
+    // A flat, glistening clot lying on the tissue surface.
+    blob.scale.set(1, 1, 0.35);
+    blob.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize());
+    blob.position.copy(position).addScaledVector(normal.clone().normalize(), 0.15);
     blob.userData = { part: 'ooze', pickPart: 'ooze', kind: 'blood' };
     this.scene.add(blob);
     this.pickables.push(blob);
@@ -175,7 +177,7 @@ export class Bleeding {
       s.emitAcc -= n;
       this.#emit(s, n, s.kind === 'arterial' ? 55 * pulsatile * this.pressure : 3);
       const pulse = 1 + 0.12 * Math.sin(t * 7 + s.id);
-      s.blob.scale.set(pulse, pulse, 0.55 * pulse);
+      s.blob.scale.set(pulse, pulse, 0.35 * pulse);
     }
 
     // Integrate droplets: gravity plus heavy drag, since blood runs along

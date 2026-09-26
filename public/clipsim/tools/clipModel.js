@@ -29,7 +29,7 @@ function bladeGeometry(length, curve) {
 
 export function buildClip(type = 'straight') {
   const spec = CLIP_SPECS[type];
-  const mat = new THREE.MeshPhysicalMaterial({ color: spec.color, metalness: 0.85, roughness: 0.2, clearcoat: 0.8, envMapIntensity: 4 });
+  const mat = new THREE.MeshPhysicalMaterial({ color: spec.color, metalness: 0.85, roughness: 0.2, clearcoat: 0.8, envMapIntensity: 8 });
   const g = new THREE.Group();
   const { geo, path } = bladeGeometry(spec.length, spec.curve);
   const blades = [-1, 1].map((side) => {
@@ -63,16 +63,16 @@ export function buildClip(type = 'straight') {
   return g;
 }
 
-// A long, thin applier that holds the clip head, pointing back toward the surgeon.
+// A slim bayonet applier holding the clip head. Built like the other
+// instruments (grip at the origin, shaft up +Y); the tool aims it toward the
+// surgeon's right hand so it never blocks the view down the clip.
 export function buildApplier() {
   const g = new THREE.Group();
-  const mat = new THREE.MeshPhysicalMaterial({ color: '#9aa4b5', metalness: 0.8, roughness: 0.3, envMapIntensity: 3 });
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.1, 90, 14), mat);
-  shaft.rotation.x = Math.PI / 2;
-  shaft.position.z = -4.2 - 45;
-  g.add(shaft);
-  const jaw = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.6, 1.4), mat);
-  jaw.position.z = -3.2;
+  const mat = new THREE.MeshPhysicalMaterial({ color: '#c3cad6', metalness: 0.75, roughness: 0.25, clearcoat: 0.6, envMapIntensity: 8 });
+  const jaw = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.9, 1.3), mat);
   g.add(jaw);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.8, 70, 14), mat);
+  shaft.position.y = 35.5;
+  g.add(shaft);
   return g;
 }
