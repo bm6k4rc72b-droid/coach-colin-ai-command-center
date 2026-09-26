@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IC-PC Clipping Simulator · by Coach Colin</title>
+  <meta name="description" content="Educational browser simulator of microsurgical clipping of a right IC-PC aneurysm via a pterional transsylvian approach. By Coach Colin. Not clinical training or medical advice." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%233ff3ff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ff4fd8'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- Three.js is vendored (r168), so the app runs offline with no CDN or build step. -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.min.js",
+        "three/addons/": "./vendor/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <div id="labels"></div>
+  <div id="inspector"><div class="name"></div><div class="note"></div></div>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel">
+        <span class="logo">◉</span>
+        <span class="brand-name">CLIPSIM</span>
+        <span class="brand-by" data-i18n="app.by"></span>
+      </div>
+      <div class="chip panel mono" data-i18n="hud.milestone"></div>
+      <div class="actions">
+        <button class="btn panel" id="btn-labels"><span data-i18n="hud.labels"></span> <kbd>L</kbd></button>
+        <button class="btn panel" id="btn-reset"><span data-i18n="hud.reset"></span> <kbd>R</kbd></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+
+    <div class="readout panel mono">
+      <div><span data-i18n="hud.focus"></span> <b id="ro-focus">—</b> mm</div>
+      <div><span data-i18n="hud.zoom"></span> <b id="ro-wd">—</b> mm</div>
+      <div>× <b id="ro-mag">—</b></div>
+    </div>
+
+    <footer class="hint mono" data-i18n="hud.hint"></footer>
+  </div>
+
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">NEUROVASCULAR · MICROSURGERY · EDU</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+
+      <div class="disclaimer">
+        <h2>⚠ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+
+      <div class="controls-help">
+        <h3 data-i18n="app.controls.h"></h3>
+        <p data-i18n="app.controls"></p>
+      </div>
+
+      <div class="start-actions">
+        <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">INITIALISING OPTICS…</div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

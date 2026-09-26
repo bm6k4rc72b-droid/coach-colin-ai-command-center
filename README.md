@@ -26,6 +26,18 @@ exploded view, range and stack sections with narrated voice-over. No build step.
 
 ---
 
+## Also in here: CLIPSIM · IC-PC Aneurysm Clipping Simulator
+
+An educational simulator of microsurgical clipping of a right IC-PC aneurysm
+through a pterional, transsylvian approach, viewed through an operating
+microscope, at [`public/clipsim/`](public/clipsim). It is for education and
+demonstration only, not clinical training or medical advice. No build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/clipsim/>**
+— locally it is `/clipsim/` (`http://localhost:4173/clipsim/` under `./start.sh`).
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at

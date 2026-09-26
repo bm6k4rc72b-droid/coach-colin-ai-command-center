@@ -27,8 +27,8 @@ Deploy: the existing Pages workflow already copies `public/`, so the app goes li
 `…github.io/coach-colin-ai-command-center/clipsim/`. Locally it runs at
 `http://localhost:4173/clipsim/` under `./start.sh`, or with `npx vite` / any static server.
 
-If you'd rather have real Vite + TypeScript, I can move it to its own `clipsim/`
-package with `vite.config.ts`. The module layout stays the same.
+**Decided:** no-build (Coach Colin delegated the call). Three.js r168 is vendored in
+`vendor/`, so the app needs no CDN and works offline.
 
 ## 2. Module layout
 
@@ -178,7 +178,6 @@ temporary occlusion ran 7:40; aim for under 5 minutes."
 After each milestone I serve the app, check the console in headless Chromium for
 errors, fix what I find, push, and send you a short "what to test" list.
 
-## Questions for you
+## Open question
 
-1. Is the no-build `public/clipsim/` approach OK, or do you want the full Vite + TS package?
-2. Should I spend Higgsfield credits on a title backdrop and loop (optional)?
+- Should I spend Higgsfield credits on a title backdrop and loop (optional)? Currently skipped.
