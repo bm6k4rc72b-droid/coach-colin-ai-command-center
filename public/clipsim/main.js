@@ -204,6 +204,7 @@ function boot() {
   function tick() {
     const raw = clock.getDelta();
     adapt(raw);
+    if (state.renderPaused) { requestAnimationFrame(tick); return; }   // automated checks drive step() themselves
     simulate(Math.min(raw, 0.05));
     fx.render(state.time);
     tools.byId.endoscope.renderPiP(renderer, scene);
