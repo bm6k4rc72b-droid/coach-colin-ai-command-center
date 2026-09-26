@@ -12,6 +12,24 @@ transsylvian approach. There is no build step: native ES modules and a vendored 
 - `./start.sh` at the repo root, then open <http://localhost:4173/clipsim/>
 - or any static server pointed at `public/`, e.g. `python3 -m http.server -d public 8000` → `/clipsim/`
 
+## Use it
+
+1. Tick the disclaimer, then **Enter the microscope**, or **Watch the demo**.
+2. Follow the checklist (left) and the mentor (bottom right). Tools are on keys **1–0**.
+3. **▶ Demo** plays the case from the current stage. Any click or key hands control back to you.
+4. **End case** (or finishing stage 6) opens the debrief: time, blood loss, temporary occlusion,
+   rupture, the clip result checked point by point, a score, and specific tips.
+
+| Key | Tool | Key | Tool |
+|---|---|---|---|
+| 1 | Suction | 6 | Aneurysm clip (C straight/curved, Q/E rotate, A/D tilt, Z/X depth, Enter apply) |
+| 2 | Micro scissors | 7 | ICG videoangiography |
+| 3 | Bipolar | 8 | Micro Doppler |
+| 4 | Dissector | 9 | Endoscope (picture-in-picture) |
+| 5 | Brain spatula | 0 | Temporary clip (proximal ICA) |
+
+Microscope controls: right-drag tilts, middle-drag or Shift+right-drag pans, the wheel zooms, **F** focuses, **R** resets, and **L** shows labels.
+
 ## Tune the anatomy
 
 Every size, position and colour is in [`config/anatomy.js`](config/anatomy.js), in millimetres.
@@ -27,10 +45,10 @@ That file documents the coordinate frame.
 | `physics/` | heart clock, vitals (HR, BP, SpO₂, MEP), bleeding and blood pool, rupture risk and rupture, vessel flow, clip evaluation |
 | `tools/` | tool manager plus one file per instrument (keys 1–0), instrument and clip models |
 | `audio/` | synthesised suction, bipolar, Doppler and UI sounds |
-| `procedure/` | event bus, the six stage definitions (`stages.js`) and the stage engine |
-| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed, checklist, mentor, vitals monitor |
+| `procedure/` | event bus, the six stage definitions (`stages.js`), the stage engine, and the demo director |
+| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed, checklist, mentor, vitals monitor, debrief |
 
-Add `?fx=low` to the URL to turn off depth of field and bloom on slower GPUs.
+Quality adapts automatically: slow frames turn off depth of field, then bloom. Add `?fx=low` to force the light mode.
 
 See [`PLAN.md`](PLAN.md) for the milestone plan.
 

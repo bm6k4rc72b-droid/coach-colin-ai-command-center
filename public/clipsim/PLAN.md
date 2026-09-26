@@ -166,7 +166,7 @@ The debrief shows:
 It ends with 3–5 specific tips drawn from what happened. For example: "Your
 temporary occlusion ran 7:40; aim for under 5 minutes."
 
-## 10. Milestones (each one runnable)
+## 10. Milestones (each one runnable). All six are done.
 
 - **M1** Scene, microscope camera, post-FX grade, procedural anatomy, config file, start screen with disclaimer, EN/JA toggle.
 - **M2** Toolbar with keys 1–0, cursor models, hover highlight, all tool interactions (placeholder effects where later systems are needed).

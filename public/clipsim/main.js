@@ -26,6 +26,8 @@ import { Vitals } from './physics/vitals.js';
 import { Rupture } from './physics/rupture.js';
 import { installClipEval } from './physics/clipEval.js';
 import { VitalsPanel } from './ui/vitalsPanel.js';
+import { Demo } from './procedure/demo.js';
+import { Debrief } from './ui/debrief.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -76,6 +78,11 @@ function boot() {
   const stages = new StageSystem(ctx);
   const checklist = new Checklist($('checklist'), stages, state);
   const mentor = new Mentor($('mentor'), stages);
+  const demo = new Demo(ctx);
+  const debrief = new Debrief($('debrief'), ctx);
+  ctx.demo = demo;
+  bus.on('demo:start', () => { state.demoUsed = true; });
+  bus.on('procedure:complete', () => setTimeout(() => debrief.show(), 3200));
 
   // Cinematic stage-complete banner.
   const banner = (kicker, title) => {
@@ -95,7 +102,10 @@ function boot() {
   // ── UI wiring ────────────────────────────────────
   i18n.apply();
   $('btn-lang').onclick = $('btn-lang-start').onclick = () => i18n.toggle();
-  $('ack').onchange = (e) => { $('btn-start').disabled = !e.target.checked; };
+  $('ack').onchange = (e) => { $('btn-start').disabled = $('btn-start-demo').disabled = !e.target.checked; };
+  $('btn-start-demo').onclick = () => { $('btn-start').onclick(); setTimeout(() => demo.start(), 600); };
+  $('btn-demo').onclick = (e) => { e.stopPropagation(); demo.running ? demo.stop(true) : demo.start(); };
+  $('btn-end').onclick = () => { demo.stop(false); debrief.show(); };
   $('btn-start').onclick = () => {
     initAudio();
     state.started = true;
@@ -121,8 +131,26 @@ function boot() {
   const clock = new THREE.Clock();
   const center = new THREE.Vector2(0, 0);
   let frame = 0;
-  function tick() {
-    const dt = Math.min(clock.getDelta(), 0.05);
+  // Adaptive quality: if frames are slow for the first seconds of the case,
+  // turn off depth of field, then bloom, and lower the pixel ratio.
+  const perf = { t: 0, n: 0, level: 0 };
+  function adapt(raw) {
+    if (!state.started || perf.level >= 2 || /fx=/.test(location.search)) return;
+    perf.t += raw; perf.n++;
+    if (perf.t < 4) return;
+    const avg = perf.t / perf.n;
+    perf.t = 0; perf.n = 0;
+    if (avg > 0.034) {
+      perf.level++;
+      if (perf.level === 1) fx.bokeh.enabled = false;
+      else { fx.bloom.enabled = false; renderer.setPixelRatio(1); fx.composer.setPixelRatio?.(1); }
+      console.info(`[clipsim] adaptive quality level ${perf.level} (avg ${(avg * 1000).toFixed(0)} ms/frame)`);
+    } else perf.level = 2;   // fast enough: stop checking
+  }
+
+  // One simulation step (everything except drawing). The render loop calls it
+  // every frame; automated checks can call it directly via __clipsim.step().
+  function simulate(dt) {
     state.time += dt;
     frame++;
 
@@ -136,6 +164,7 @@ function boot() {
     if (state.started) {
       inspector.update();
       tools.update(dt, state.time);
+      demo.update(dt);
       stages.update(dt);
       vitals.update(dt);
       rupture.update(dt);
@@ -170,7 +199,12 @@ function boot() {
       $('ro-clip-row').classList.toggle('hidden', tools.active?.id !== 'clip');
       if (cp) $('ro-clip').textContent = `${cp.snap || cp.locked ? '◎ ' : ''}∠ICA ${cp.angICA.toFixed(0)}° · h ${cp.height >= 0 ? '+' : ''}${cp.height.toFixed(1)} · tilt ${cp.tilt.toFixed(0)}°${cp.locked ? ' · LOCK' : ''}`;
     }
+  }
 
+  function tick() {
+    const raw = clock.getDelta();
+    adapt(raw);
+    simulate(Math.min(raw, 0.05));
     fx.render(state.time);
     tools.byId.endoscope.renderPiP(renderer, scene);
     requestAnimationFrame(tick);
@@ -179,7 +213,7 @@ function boot() {
   $('boot').classList.add('done');
 
   // A debugging handle for the console and automated checks.
-  window.__clipsim = { ...ctx, tools, stages, vitals, rupture };
+  window.__clipsim = { ...ctx, tools, stages, vitals, rupture, demo, debrief, step: (secs, dt = 0.05) => { for (let t = 0; t < secs; t += dt) simulate(dt); } };
 }
 
 try {

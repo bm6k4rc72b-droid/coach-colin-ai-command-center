@@ -40,6 +40,8 @@
       <div class="chip panel mono" data-i18n="hud.milestone"></div>
       <button class="btn panel" id="btn-tool-none"><span data-i18n="hud.hand"></span> <kbd>Esc</kbd></button>
       <div class="actions">
+        <button class="btn panel demo" id="btn-demo"><span data-i18n="hud.demo"></span></button>
+        <button class="btn panel" id="btn-end"><span data-i18n="hud.end"></span></button>
         <button class="btn panel" id="btn-labels"><span data-i18n="hud.labels"></span> <kbd>L</kbd></button>
         <button class="btn panel" id="btn-reset"><span data-i18n="hud.reset"></span> <kbd>R</kbd></button>
         <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
@@ -47,6 +49,7 @@
     </header>
 
     <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="demo.bar"></span></div>
     <div id="banner"><div class="b-kicker mono"></div><div class="b-title"></div></div>
 
     <aside id="checklist" class="panel">
@@ -120,7 +123,41 @@
 
       <div class="start-actions">
         <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel" id="btn-start-demo" disabled data-i18n="app.demo"></button>
         <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="debrief" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div>
+          <div class="start-kicker mono" data-i18n="db.kicker"></div>
+          <h2 data-i18n="db.title"></h2>
+          <p class="db-sub"><span data-i18n="app.title"></span> · <span data-i18n="app.by"></span></p>
+        </div>
+        <div class="db-ring" id="db-ring"><b id="db-score" class="mono">0</b><small data-i18n="db.score"></small></div>
+      </div>
+      <p id="db-demo" class="db-note hidden" data-i18n="db.demoNote"></p>
+      <div class="db-grid mono">
+        <div><label data-i18n="db.time"></label><b id="db-time"></b></div>
+        <div><label data-i18n="db.ebl"></label><b id="db-ebl"></b></div>
+        <div><label data-i18n="db.occl"></label><b id="db-occl"></b></div>
+        <div><label data-i18n="db.rupture"></label><b id="db-rupture"></b></div>
+        <div><label data-i18n="db.clip"></label><b id="db-clip"></b></div>
+        <div><label data-i18n="db.mep"></label><b id="db-mep"></b></div>
+        <div><label data-i18n="db.map"></label><b id="db-map"></b></div>
+        <div><label data-i18n="db.stages"></label><b id="db-stages"></b></div>
+      </div>
+      <div class="db-cols">
+        <div><h3 data-i18n="db.clipCheck"></h3><ul id="db-clipdetail" class="db-checks"></ul></div>
+        <div><h3 data-i18n="db.tips"></h3><ol id="db-tips" class="db-tips"></ol></div>
+      </div>
+      <p class="db-disclaimer" data-i18n="db.disclaimer"></p>
+      <div class="start-actions">
+        <button class="btn primary" id="db-restart" data-i18n="db.restart"></button>
+        <button class="btn panel" id="db-close" data-i18n="db.continue"></button>
       </div>
     </div>
   </section>
