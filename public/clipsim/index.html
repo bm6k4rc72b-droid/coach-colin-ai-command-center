@@ -65,17 +65,20 @@
       </div>
     </section>
 
-    <div class="readout panel mono">
-      <div><span data-i18n="hud.focus"></span> <b id="ro-focus">—</b> mm</div>
-      <div><span data-i18n="hud.zoom"></span> <b id="ro-wd">—</b> mm</div>
-      <div>× <b id="ro-mag">—</b></div>
-      <hr />
-      <div><span data-i18n="hud.pool"></span> <b id="ro-pool">0.0</b> ml</div>
-      <div><span data-i18n="hud.ebl"></span> <b id="ro-ebl">0</b> ml</div>
-      <div><span data-i18n="hud.neck"></span> <b id="ro-neck">0</b> %</div>
-      <div><span data-i18n="hud.temp"></span> <b id="ro-temp">—</b></div>
-      <div id="ro-clip-row" class="hidden"><span data-i18n="hud.clip"></span> <b id="ro-clip">—</b></div>
-    </div>
+    <section id="vitals" class="panel" data-alarm="0">
+      <header class="v-head mono"><span data-i18n="v.title"></span><span id="v-alarm" class="v-alarm"></span><button id="v-mute" class="v-mute" title="Mute monitor">♪</button></header>
+      <div class="v-row hr"><canvas id="ecg"></canvas><div class="v-num"><label>HR</label><b id="v-hr" class="mono">72</b></div></div>
+      <div class="v-row art"><canvas id="art"></canvas><div class="v-num"><label>ART</label><b id="v-art" class="mono">114/70</b><small id="v-map" class="mono">(85)</small></div></div>
+      <div class="v-grid mono">
+        <div class="v-cell spo2"><label>SpO₂</label><b id="v-spo2">99</b><small>%</small></div>
+        <div class="v-cell mep"><label>MEP</label><b id="v-mep">100</b><small>%</small><div class="v-bar"><i id="v-mepbar"></i></div></div>
+        <div class="v-cell"><label data-i18n="v.optime"></label><b id="v-op">00:00</b></div>
+        <div class="v-cell occl"><label data-i18n="v.occl"></label><b id="v-occl">--:--</b></div>
+        <div class="v-cell"><label data-i18n="v.ebl"></label><b id="v-ebl">0</b><small>ml</small></div>
+        <div class="v-cell"><label data-i18n="v.pool"></label><b id="v-pool">0.0</b><small>ml</small></div>
+      </div>
+      <footer class="v-foot mono">× <b id="ro-mag">6.0</b> · WD <b id="ro-wd">86</b> · <span data-i18n="hud.neck"></span> <b id="ro-neck">0</b>%<span id="ro-clip-row" class="hidden"> · <span data-i18n="hud.clip"></span> <b id="ro-clip"></b></span></footer>
+    </section>
 
     <div id="pip" class="hidden">
       <div class="pip-head panel mono"><span data-i18n="pip.title"></span><span class="rec">● LIVE</span></div>

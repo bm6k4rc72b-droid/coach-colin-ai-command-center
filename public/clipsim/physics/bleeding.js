@@ -18,6 +18,10 @@ export const BLEED = {
   mmPerMl: 1.5,            // how fast the pool surface rises per ml collected
   poolMaxZ: -6,
   suctionRate: 1.6,        // ml/s the suction clears when submerged in blood
+  // Only part of an arterial haemorrhage stays in the small field of view: the
+  // rest runs off or goes straight to the suction canister. So each ml seen
+  // arterially counts as more than 1 ml of systemic blood loss.
+  arterialLossFactor: 4,
 };
 
 function dropletTexture() {
@@ -40,7 +44,8 @@ export class Bleeding {
     this.sources = [];
     this.volume = 0;          // ml currently pooled in the field
     this.totalLoss = 0;       // ml lost in total (estimated blood loss)
-    this.pressure = 1;        // multiplier fed by vitals and the temporary clip
+    this.pressure = 1;        // perfusion pressure multiplier (MAP / baseline), set by the vitals
+    this.arterialFlow = 1;    // flow into the aneurysm (falls with a temporary clip), set each frame
     this.floorZ = BRAIN.floor.z + 1;
     this.#buildPool();
     this.#buildParticles();
@@ -77,6 +82,7 @@ export class Bleeding {
     this.scene.add(this.points);
   }
 
+  get maxVolume() { return (BLEED.poolMaxZ - this.floorZ) / BLEED.mmPerMl; }
   get poolZ() { return Math.min(BLEED.poolMaxZ, this.floorZ + this.volume * BLEED.mmPerMl); }
   get activeSources() { return this.sources.filter((s) => s.active); }
 
@@ -169,13 +175,14 @@ export class Bleeding {
     for (const s of this.sources) {
       if (!s.active) continue;
       const pulsatile = s.kind === 'arterial' ? 0.35 + 1.3 * heartPressure : 1;
-      const rate = (s.kind === 'arterial' ? BLEED.arterialRate : BLEED.oozeRate) * this.pressure * pulsatile;
-      this.volume += rate * dt;
-      this.totalLoss += rate * dt;
+      const rate = (s.kind === 'arterial' ? BLEED.arterialRate * this.arterialFlow : BLEED.oozeRate) * this.pressure * pulsatile;
+      // The fissure can only hold so much: beyond the brim, blood overflows the field.
+      this.volume = Math.min(this.maxVolume, this.volume + rate * dt);
+      this.totalLoss += rate * dt * (s.kind === 'arterial' ? BLEED.arterialLossFactor : 1);
       s.emitAcc += rate * dt * (s.kind === 'arterial' ? 120 : 260);
       const n = Math.floor(s.emitAcc);
       s.emitAcc -= n;
-      this.#emit(s, n, s.kind === 'arterial' ? 55 * pulsatile * this.pressure : 3);
+      this.#emit(s, n, s.kind === 'arterial' ? 55 * pulsatile * this.pressure * Math.sqrt(this.arterialFlow) : 3);
       const pulse = 1 + 0.12 * Math.sin(t * 7 + s.id);
       s.blob.scale.set(pulse, pulse, 0.35 * pulse);
     }

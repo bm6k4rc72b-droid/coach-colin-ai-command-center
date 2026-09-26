@@ -55,6 +55,7 @@ export function scissors(ctx) {
       if (p === 'aneurysm' || p === 'bleb') {
         ctx.risk.add(0.7, 'scissorsDome');
         ctx.feed.push('feed.domeCut', 'bad');
+        ctx.rupture?.trigger(hit.point.clone());
         bus.emit('injury', { part: p, by: 'scissors', severity: 'critical' });
         return;
       }

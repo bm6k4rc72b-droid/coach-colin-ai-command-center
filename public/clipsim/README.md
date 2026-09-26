@@ -24,11 +24,11 @@ That file documents the coordinate frame.
 | `config/` | anatomy and microscope parameters |
 | `scene/` | renderer, microscope camera controls, scope lighting, post-FX grade |
 | `anatomy/` | lobes, vessels, nerves, aneurysm, arachnoid, spatulas, tissue materials |
-| `physics/` | heart clock, bleeding and blood pool, rupture risk, vessel flow |
+| `physics/` | heart clock, vitals (HR, BP, SpO₂, MEP), bleeding and blood pool, rupture risk and rupture, vessel flow, clip evaluation |
 | `tools/` | tool manager plus one file per instrument (keys 1–0), instrument and clip models |
 | `audio/` | synthesised suction, bipolar, Doppler and UI sounds |
 | `procedure/` | event bus, the six stage definitions (`stages.js`) and the stage engine |
-| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed, checklist, mentor |
+| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed, checklist, mentor, vitals monitor |
 
 Add `?fx=low` to the URL to turn off depth of field and bloom on slower GPUs.
 

@@ -257,3 +257,37 @@ kbd { font-family: var(--mono); font-size: 10px; color: var(--cyan); border: 1px
 @media (max-width: 1360px) { #mentor { bottom: 100px; width: 270px; } }
 @media (max-height: 820px) { #pip { width: 190px; } #pip .pip-view { width: 190px; height: 190px; } #checklist #cl-list li { padding: 4px 6px; } }
 @media (max-width: 900px) { #checklist, #mentor { width: calc(50vw - 24px); } #mentor { bottom: 150px; } #checklist { top: 110px; } }
+
+/* ── M4: vitals monitor ─────────────────────────── */
+#vitals { position: absolute; right: 16px; top: 66px; width: 312px; padding: 9px 12px 10px; }
+#vitals .v-head { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 10px; letter-spacing: .22em; color: var(--muted); text-transform: uppercase; }
+#vitals .v-alarm { margin-left: auto; font-size: 10px; letter-spacing: .08em; padding: 2px 6px; border-radius: 4px; }
+#vitals .v-alarm:empty { display: none; }
+#vitals .v-mute { background: none; border: 1px solid rgba(141,151,179,.35); color: var(--muted); border-radius: 5px; font-size: 11px; width: 22px; height: 20px; cursor: pointer; padding: 0; }
+#vitals .v-mute.muted { color: var(--red); border-color: var(--red); text-decoration: line-through; }
+#vitals[data-alarm="1"] .v-alarm { background: rgba(63,243,255,.15); color: var(--cyan); }
+#vitals[data-alarm="2"] .v-alarm { background: rgba(255,184,107,.2); color: var(--amber); animation: blink 1.2s steps(2) infinite; }
+#vitals[data-alarm="3"] .v-alarm { background: var(--red); color: #fff; animation: blink .6s steps(2) infinite; }
+#vitals[data-alarm="3"] { box-shadow: 0 0 34px rgba(255,68,102,.45); }
+#vitals .v-row { display: grid; grid-template-columns: 1fr 88px; align-items: center; gap: 6px; margin-top: 6px; }
+#vitals canvas { width: 100%; height: 50px; display: block; background: linear-gradient(rgba(255,255,255,.015), rgba(255,255,255,.03)); border-radius: 4px;
+  background-image: linear-gradient(rgba(141,151,179,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(141,151,179,.07) 1px, transparent 1px); background-size: 10px 10px; }
+#vitals .v-num { text-align: right; line-height: 1; }
+#vitals .v-num label, #vitals .v-cell label { display: block; font-size: 9.5px; letter-spacing: .14em; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; font-family: var(--mono); }
+#vitals .v-num b { font-size: 26px; font-weight: 600; }
+#vitals .hr b { color: #5dffa8; text-shadow: 0 0 14px rgba(93,255,168,.5); }
+#vitals .art b { color: #ff5b7a; font-size: 20px; text-shadow: 0 0 14px rgba(255,68,102,.45); }
+#vitals .art small { display: block; color: #ff8aa0; font-size: 11px; margin-top: 2px; }
+#vitals .v-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(141,151,179,.18); }
+#vitals .v-cell b { font-size: 17px; font-weight: 600; color: #e8eefc; }
+#vitals .v-cell small { font-size: 10px; color: var(--muted); margin-left: 3px; }
+#vitals .spo2 b { color: var(--cyan); text-shadow: 0 0 12px rgba(63,243,255,.45); }
+#vitals .mep b { color: #c9a2ff; text-shadow: 0 0 12px rgba(139,92,255,.5); }
+#vitals .v-bar { height: 3px; margin-top: 4px; background: rgba(141,151,179,.2); border-radius: 2px; overflow: hidden; }
+#vitals .v-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #8b5cff, #ff4fd8); transition: width .4s; }
+#vitals .v-bar i.low { background: var(--red); }
+#vitals .occl b.running { color: var(--amber); }
+#vitals b.alert { color: var(--red) !important; text-shadow: 0 0 12px rgba(255,68,102,.7) !important; animation: blink 1s steps(2) infinite; }
+#vitals .v-foot { margin-top: 8px; font-size: 10px; color: var(--muted); letter-spacing: .04em; }
+#vitals .v-foot b { color: var(--cyan); font-weight: 600; }
+@media (max-width: 900px) { #vitals { width: 230px; } #vitals canvas { height: 36px; } #vitals .v-num b { font-size: 20px; } }

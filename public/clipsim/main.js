@@ -22,6 +22,10 @@ import { initAudio } from './audio/engine.js';
 import { StageSystem } from './procedure/stageSystem.js';
 import { Checklist } from './ui/checklist.js';
 import { Mentor } from './ui/mentor.js';
+import { Vitals } from './physics/vitals.js';
+import { Rupture } from './physics/rupture.js';
+import { installClipEval } from './physics/clipEval.js';
+import { VitalsPanel } from './ui/vitalsPanel.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -64,6 +68,11 @@ function boot() {
   const ctx = { THREE, scene, camera, canvas, renderer, anatomy, controls, lights, fx, heart, inspector, labels, bleeding, risk, flow, feed, geo, animate, stats, state, i18n, bus };
   const tools = new ToolManager(ctx);
   new Toolbar($('toolbar'), $('toolcard'), tools);
+  const vitals = new Vitals(ctx);
+  const rupture = new Rupture(ctx);
+  ctx.vitals = vitals; ctx.rupture = rupture;
+  installClipEval(ctx);
+  const vitalsPanel = new VitalsPanel($('vitals'), ctx, vitals);
   const stages = new StageSystem(ctx);
   const checklist = new Checklist($('checklist'), stages, state);
   const mentor = new Mentor($('mentor'), stages);
@@ -79,6 +88,8 @@ function boot() {
     const last = index === stages.stages.length - 1;
     banner(i18n.t(last ? 'banner.all' : 'banner.stage').replace('{n}', index + 1), i18n.t('stage.' + id));
   });
+  bus.on('rupture', () => banner('⚠', i18n.t('banner.rupture')));
+  bus.on('mep:cause', ({ cause }) => feed.push('feed.mep.' + cause, 'bad'));
   bus.on('risk:warn', ({ reason }) => feed.push('risk.' + reason, reason.includes('Bleb') || reason.includes('bleb') || reason === 'scissorsDome' ? 'bad' : 'warn'));
 
   // ── UI wiring ────────────────────────────────────
@@ -88,6 +99,7 @@ function boot() {
   $('btn-start').onclick = () => {
     initAudio();
     state.started = true;
+    state.startTime = state.time;
     stages.start();
     $('start').classList.add('hidden');
     $('hud').classList.remove('hidden');
@@ -125,6 +137,9 @@ function boot() {
       inspector.update();
       tools.update(dt, state.time);
       stages.update(dt);
+      vitals.update(dt);
+      rupture.update(dt);
+      vitalsPanel.update(dt, frame % 6 === 0);
     }
     bleeding.update(dt, state.time, heart.pressure);
     risk.update(dt);
@@ -148,15 +163,9 @@ function boot() {
     if (state.started && frame % 6 === 0) {
       checklist.update();
       mentor.update();
-      $('ro-focus').textContent = fx.bokeh.uniforms.focus.value.toFixed(1);
       $('ro-wd').textContent = controls.cur.distance.toFixed(0);
       $('ro-mag').textContent = (MICROSCOPE.distance * 6 / controls.cur.distance).toFixed(1);
-      $('ro-pool').textContent = bleeding.volume.toFixed(1);
-      $('ro-ebl').textContent = bleeding.totalLoss.toFixed(0);
       $('ro-neck').textContent = Math.round(anatomy.adhesions.progress * 100);
-      const occl = (state.tempClipOn ? state.time - state.tempClipStart : 0);
-      $('ro-temp').textContent = state.tempClipOn ? `${String(Math.floor(occl / 60)).padStart(2, '0')}:${String(Math.floor(occl % 60)).padStart(2, '0')}` : '—';
-      $('ro-temp').classList.toggle('alert', occl > 300);
       const cp = state.clipPose;
       $('ro-clip-row').classList.toggle('hidden', tools.active?.id !== 'clip');
       if (cp) $('ro-clip').textContent = `${cp.roll.toFixed(0)}° · ${cp.depth >= 0 ? '+' : ''}${cp.depth.toFixed(1)} mm${cp.locked ? ' · LOCK' : ''}`;
@@ -170,7 +179,7 @@ function boot() {
   $('boot').classList.add('done');
 
   // A debugging handle for the console and automated checks.
-  window.__clipsim = { ...ctx, tools, stages };
+  window.__clipsim = { ...ctx, tools, stages, vitals, rupture };
 }
 
 try {

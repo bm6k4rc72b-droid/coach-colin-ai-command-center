@@ -109,3 +109,29 @@ export const sfx = {
   warn: () => { blip({ freq: 520, dur: 0.14, gain: 0.1, type: 'square' }); },
   deny: () => blip({ freq: 220, dur: 0.1, gain: 0.08, type: 'sawtooth' }),
 };
+
+// Monitor sounds.
+let muted = false;
+export const monitorAudio = {
+  get muted() { return muted; },
+  toggle() { muted = !muted; return muted; },
+};
+
+// The pulse-oximeter beep on every heartbeat. Its pitch falls as saturation falls,
+// so the room hears desaturation without looking at the screen.
+export function pulseBeep(spo2) {
+  if (muted) return;
+  const f = 440 + (Math.max(80, Math.min(100, spo2)) - 80) * 22;
+  blip({ freq: f, dur: 0.09, gain: 0.045, type: 'sine' });
+}
+
+// Alarm tones loosely modelled on IEC 60601-1-8: high priority is a fast
+// 5-note burst, medium is a 3-note chime, low is two soft notes.
+function burst(notes, gap, gain) {
+  notes.forEach((f, i) => setTimeout(() => blip({ freq: f, dur: 0.13, gain, type: 'triangle' }), i * gap));
+}
+export const alarmSound = {
+  high: () => { if (!muted) { burst([988, 784, 659, 988, 784], 110, 0.13); } },
+  medium: () => { if (!muted) burst([659, 523, 440], 190, 0.09); },
+  low: () => { if (!muted) burst([523, 440], 260, 0.05); },
+};
