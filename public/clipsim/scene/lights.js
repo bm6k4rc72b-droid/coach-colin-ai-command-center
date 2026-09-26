@@ -20,8 +20,11 @@ export function createLights(scene, camera) {
   warmFill.position.set(40, 30, 20);
   scene.add(warmFill);
 
+  const base = [[scope, scope.intensity], [hemi, hemi.intensity], [rim, rim.intensity], [warmFill, warmFill.intensity]];
   return {
     scope,
+    // Near-infrared (ICG) view: the white light is filtered out, so only dye glows.
+    setICG(on) { base.forEach(([l, i]) => { l.intensity = on ? i * 0.05 : i; }); scene.environmentIntensity = on ? 0.01 : 0.16; },
     update(target) {
       scope.position.copy(camera.position);
       scope.target.position.copy(target);

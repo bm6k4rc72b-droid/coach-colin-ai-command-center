@@ -68,7 +68,7 @@ kbd { font-family: var(--mono); font-size: 10px; color: var(--cyan); border: 1px
 
 .readout { position: absolute; left: 16px; bottom: 50px; padding: 10px 12px; font-size: 11px; color: var(--muted); display: grid; gap: 4px; min-width: 150px; }
 .readout b { color: var(--cyan); font-weight: 600; }
-.hint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: .14em; color: var(--muted); white-space: nowrap; opacity: .8; }
+.hint { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: .14em; color: var(--muted); white-space: nowrap; opacity: .8; }
 
 /* ── Inspector + labels ──────────────────────────── */
 #inspector {
@@ -123,3 +123,78 @@ kbd { font-family: var(--mono); font-size: 10px; color: var(--cyan); border: 1px
   .topbar { flex-wrap: wrap; }
   .start-card { padding: 22px 18px; }
 }
+
+/* ── M2: toolbar, tool card, reticle, feed, PiP ──── */
+.readout hr { border: 0; border-top: 1px solid rgba(141,151,179,.25); margin: 4px 0; }
+#toolbar {
+  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 4px; padding: 6px; border-radius: 14px;
+}
+#toolbar .tool {
+  position: relative; width: 66px; height: 60px; border: 0; border-radius: 10px; cursor: pointer;
+  background: rgba(255,255,255,.02); color: #b9c3dc; display: grid; place-items: center; align-content: center; gap: 3px;
+  font: 500 9.5px/1.1 var(--sans); letter-spacing: .02em; transition: background .15s, color .15s, transform .12s;
+}
+#toolbar .tool svg { width: 22px; height: 22px; }
+#toolbar .tool .tname { max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#toolbar .tool kbd { position: absolute; top: 3px; right: 4px; margin: 0; padding: 0 3px; font-size: 8.5px; border-color: rgba(141,151,179,.3); color: #8d97b3; }
+#toolbar .tool:hover { background: rgba(63,243,255,.07); color: #fff; transform: translateY(-2px); }
+#toolbar .tool.active {
+  color: #06070c;
+  background: var(--holo); background-size: 300% 100%; animation: holo-shift 6s linear infinite;
+  box-shadow: 0 0 22px rgba(63,243,255,.35), 0 0 40px rgba(255,79,216,.2);
+}
+#toolbar .tool.active kbd { color: #06070c; border-color: rgba(0,0,0,.35); }
+
+#toolcard { position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%); width: min(560px, calc(100vw - 32px)); padding: 10px 14px; text-align: center; }
+#toolcard .tc-name { font-weight: 700; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); }
+#toolcard .tc-rule { font-size: 12.5px; color: #dfe6f7; margin-top: 4px; line-height: 1.45; }
+#toolcard .tc-ctrl { font-size: 10.5px; color: var(--muted); margin-top: 5px; letter-spacing: .04em; }
+#toolcard .tc-clip { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 8px; }
+.btn.seg { background: rgba(255,255,255,.04); border: 1px solid rgba(141,151,179,.35); padding: 6px 12px; }
+.btn.seg.active { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 14px rgba(63,243,255,.25); }
+
+#reticle { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; z-index: 6; opacity: 0; }
+#reticle.on { opacity: 1; }
+#reticle svg { position: absolute; left: -20px; top: -20px; width: 40px; height: 40px; overflow: visible; }
+#reticle .ring { fill: none; stroke: var(--rc, #8d97b3); stroke-width: 1.2; opacity: .9; }
+#reticle .cross { stroke: var(--rc, #8d97b3); stroke-width: 1.2; opacity: .75; }
+#reticle .prog { fill: none; stroke: var(--rc); stroke-width: 2.4; stroke-dasharray: 113; stroke-dashoffset: 113; transform: rotate(-90deg); transform-origin: 20px 20px; opacity: 0; }
+#reticle.busy .prog { opacity: 1; filter: drop-shadow(0 0 4px var(--rc)); }
+#reticle .act {
+  position: absolute; left: 0; top: -40px; transform: translateX(-50%); white-space: nowrap;
+  font: 600 10.5px/1 var(--sans); letter-spacing: .06em; color: var(--rc); padding: 4px 8px; border-radius: 6px;
+  background: rgba(4,6,12,.72); border: 1px solid color-mix(in srgb, var(--rc) 45%, transparent);
+}
+#reticle .act:empty { display: none; }
+#reticle[data-state="ok"] { --rc: #3ff3ff; }
+#reticle[data-state="warn"] { --rc: #ffb86b; }
+#reticle[data-state="bad"] { --rc: #ff4466; }
+#reticle[data-state="idle"] { --rc: #8d97b3; }
+
+#feed { position: absolute; top: 66px; left: 50%; transform: translateX(-50%); display: grid; gap: 5px; justify-items: center; width: min(520px, 90vw); pointer-events: none; }
+.feed-row {
+  font-size: 12px; padding: 6px 12px; border-radius: 8px; background: rgba(5,8,14,.78); border-left: 2px solid var(--cyan);
+  color: #e9f4ff; transition: opacity .7s, transform .7s; backdrop-filter: blur(6px);
+}
+.feed-row.warn { border-color: var(--amber); color: #ffe3c4; }
+.feed-row.bad { border-color: var(--red); color: #ffd0da; box-shadow: 0 0 20px rgba(255,68,102,.2); }
+.feed-row.out { opacity: 0; transform: translateY(-6px); }
+
+#pip { position: absolute; right: 16px; top: 330px; width: 250px; pointer-events: none; }
+#pip .pip-head { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .16em; color: var(--cyan); margin-bottom: 8px; padding: 7px 10px; }
+#pip .rec { color: var(--red); animation: blink 1.4s steps(2) infinite; }
+/* The endoscope image is drawn by WebGL underneath; this element only masks it into a circle. */
+#pip .pip-view { width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, transparent 69%, var(--bg) 70.7%); box-shadow: 0 0 0 1px rgba(63,243,255,.5), 0 0 34px rgba(63,243,255,.18); }
+@keyframes blink { 50% { opacity: .2; } }
+
+@media (max-width: 900px) {
+  #toolbar { bottom: 8px; max-width: calc(100vw - 16px); overflow-x: auto; }
+  #toolbar .tool { width: 52px; height: 52px; }
+  #toolbar .tool .tname { display: none; }
+  #toolcard { bottom: 72px; }
+  #pip { top: auto; bottom: 160px; width: 170px; }
+  #pip .pip-view { width: 170px; height: 170px; }
+}
+
+.readout b.alert { color: var(--red); }

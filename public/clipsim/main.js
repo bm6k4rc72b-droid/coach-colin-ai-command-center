@@ -11,6 +11,14 @@ import { Heart } from './physics/heart.js';
 import { i18n } from './ui/i18n.js';
 import { Inspector } from './ui/inspector.js';
 import { Labels } from './ui/labels.js';
+import { Feed } from './ui/feed.js';
+import { Toolbar } from './ui/toolbar.js';
+import { ToolManager } from './tools/index.js';
+import { Bleeding } from './physics/bleeding.js';
+import { RuptureRisk } from './physics/risk.js';
+import { Flow } from './physics/flow.js';
+import { bus } from './procedure/bus.js';
+import { initAudio } from './audio/engine.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -28,12 +36,39 @@ function boot() {
   const labels = new Labels(camera, anatomy);
 
   const state = { started: false, time: 0 };
+  const bleeding = new Bleeding(scene, anatomy.pickables);
+  const risk = new RuptureRisk();
+  const flow = new Flow();
+  const feed = new Feed($('feed'));
+
+  // Geometry helpers shared by the tools (all distances in mm).
+  const g = anatomy.aneurysm.geometry;
+  const blebR = anatomy.aneurysm.bleb.geometry.parameters.radius;
+  const geo = {
+    neckRadius: g.neckRadius,
+    distToDome: (p) => p.distanceTo(g.domeCenter) - g.domeRadius,
+    distToBleb: (p) => p.distanceTo(g.blebWorld) - blebR,
+    distToNeck: (p) => p.distanceTo(g.neckPlane),
+  };
+
+  // Minimal tween runner for short tool animations.
+  const tweens = [];
+  const animate = (dur, fn, done) => tweens.push({ t: 0, dur, fn, done });
+
+  // Running tallies for the debrief.
+  const stats = { arachnoidCut: 0, suctionTime: 0, bipolarTime: 0, roughTime: 0, injuries: [], tempOcclusion: 0, icgRuns: 0, endoscopeUses: 0 };
+
+  const ctx = { THREE, scene, camera, canvas, renderer, anatomy, controls, lights, fx, heart, inspector, labels, bleeding, risk, flow, feed, geo, animate, stats, state, i18n, bus };
+  const tools = new ToolManager(ctx);
+  new Toolbar($('toolbar'), $('toolcard'), tools);
+  bus.on('risk:warn', ({ reason }) => feed.push('risk.' + reason, reason.includes('Bleb') || reason.includes('bleb') || reason === 'scissorsDome' ? 'bad' : 'warn'));
 
   // ── UI wiring ────────────────────────────────────
   i18n.apply();
   $('btn-lang').onclick = $('btn-lang-start').onclick = () => i18n.toggle();
   $('ack').onchange = (e) => { $('btn-start').disabled = !e.target.checked; };
   $('btn-start').onclick = () => {
+    initAudio();
     state.started = true;
     $('start').classList.add('hidden');
     $('hud').classList.remove('hidden');
@@ -41,6 +76,7 @@ function boot() {
   };
   $('btn-labels').onclick = () => labels.toggle();
   $('btn-reset').onclick = () => controls.reset();
+  $('btn-tool-none').onclick = () => tools.select(null);
 
   window.addEventListener('keydown', (e) => {
     if (!state.started || e.target.tagName === 'INPUT') return;
@@ -66,7 +102,19 @@ function boot() {
     controls.update(dt);
     heart.update(dt);
     lights.update(controls.target);
-    if (state.started) inspector.update();
+    if (state.started) {
+      inspector.update();
+      tools.update(dt, state.time);
+    }
+    bleeding.update(dt, state.time, heart.pressure);
+    risk.update(dt);
+    for (let i = tweens.length - 1; i >= 0; i--) {
+      const tw = tweens[i];
+      tw.t += dt;
+      const k = Math.min(1, tw.t / tw.dur);
+      tw.fn(k);
+      if (k >= 1) { tweens.splice(i, 1); tw.done?.(); }
+    }
     labels.update();
 
     // Autofocus on whatever is under the cursor, else on the centre of the field.
@@ -81,16 +129,26 @@ function boot() {
       $('ro-focus').textContent = fx.bokeh.uniforms.focus.value.toFixed(1);
       $('ro-wd').textContent = controls.cur.distance.toFixed(0);
       $('ro-mag').textContent = (MICROSCOPE.distance * 6 / controls.cur.distance).toFixed(1);
+      $('ro-pool').textContent = bleeding.volume.toFixed(1);
+      $('ro-ebl').textContent = bleeding.totalLoss.toFixed(0);
+      $('ro-neck').textContent = Math.round(anatomy.adhesions.progress * 100);
+      const occl = (state.tempClipOn ? state.time - state.tempClipStart : 0);
+      $('ro-temp').textContent = state.tempClipOn ? `${String(Math.floor(occl / 60)).padStart(2, '0')}:${String(Math.floor(occl % 60)).padStart(2, '0')}` : '—';
+      $('ro-temp').classList.toggle('alert', occl > 300);
+      const cp = state.clipPose;
+      $('ro-clip-row').classList.toggle('hidden', tools.active?.id !== 'clip');
+      if (cp) $('ro-clip').textContent = `${cp.roll.toFixed(0)}° · ${cp.depth >= 0 ? '+' : ''}${cp.depth.toFixed(1)} mm${cp.locked ? ' · LOCK' : ''}`;
     }
 
     fx.render(state.time);
+    tools.byId.endoscope.renderPiP(renderer, scene);
     requestAnimationFrame(tick);
   }
   tick();
   $('boot').classList.add('done');
 
   // A debugging handle for the console and automated checks.
-  window.__clipsim = { THREE, renderer, scene, camera, anatomy, controls, heart, fx, state, labels, inspector };
+  window.__clipsim = { ...ctx, tools };
 }
 
 try {

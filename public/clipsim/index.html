@@ -25,6 +25,10 @@
 
   <div id="labels"></div>
   <div id="inspector"><div class="name"></div><div class="note"></div></div>
+  <div id="reticle">
+    <svg viewBox="0 0 40 40"><circle class="ring" cx="20" cy="20" r="11"/><circle class="prog" cx="20" cy="20" r="18"/><path class="cross" d="M20 4v7M20 29v7M4 20h7M29 20h7"/></svg>
+    <div class="act"></div>
+  </div>
 
   <div id="hud" class="hidden">
     <header class="topbar">
@@ -34,6 +38,7 @@
         <span class="brand-by" data-i18n="app.by"></span>
       </div>
       <div class="chip panel mono" data-i18n="hud.milestone"></div>
+      <button class="btn panel" id="btn-tool-none"><span data-i18n="hud.hand"></span> <kbd>Esc</kbd></button>
       <div class="actions">
         <button class="btn panel" id="btn-labels"><span data-i18n="hud.labels"></span> <kbd>L</kbd></button>
         <button class="btn panel" id="btn-reset"><span data-i18n="hud.reset"></span> <kbd>R</kbd></button>
@@ -41,11 +46,36 @@
       </div>
     </header>
 
+    <div id="feed"></div>
+
     <div class="readout panel mono">
       <div><span data-i18n="hud.focus"></span> <b id="ro-focus">—</b> mm</div>
       <div><span data-i18n="hud.zoom"></span> <b id="ro-wd">—</b> mm</div>
       <div>× <b id="ro-mag">—</b></div>
+      <hr />
+      <div><span data-i18n="hud.pool"></span> <b id="ro-pool">0.0</b> ml</div>
+      <div><span data-i18n="hud.ebl"></span> <b id="ro-ebl">0</b> ml</div>
+      <div><span data-i18n="hud.neck"></span> <b id="ro-neck">0</b> %</div>
+      <div><span data-i18n="hud.temp"></span> <b id="ro-temp">—</b></div>
+      <div id="ro-clip-row" class="hidden"><span data-i18n="hud.clip"></span> <b id="ro-clip">—</b></div>
     </div>
+
+    <div id="pip" class="hidden">
+      <div class="pip-head panel mono"><span data-i18n="pip.title"></span><span class="rec">● LIVE</span></div>
+      <div class="pip-view"></div>
+    </div>
+
+    <div id="toolcard" class="panel hidden">
+      <div class="tc-name"></div>
+      <div class="tc-rule"></div>
+      <div class="tc-ctrl mono"></div>
+      <div class="tc-clip hidden">
+        <button class="btn seg" data-cliptype="straight" data-i18n="clip.straight"></button>
+        <button class="btn seg" data-cliptype="curved" data-i18n="clip.curved"></button>
+        <kbd>C</kbd>
+      </div>
+    </div>
+    <nav id="toolbar" class="panel"></nav>
 
     <footer class="hint mono" data-i18n="hud.hint"></footer>
   </div>
