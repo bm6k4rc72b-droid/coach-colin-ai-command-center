@@ -27,8 +27,8 @@ That file documents the coordinate frame.
 | `physics/` | heart clock, bleeding and blood pool, rupture risk, vessel flow |
 | `tools/` | tool manager plus one file per instrument (keys 1–0), instrument and clip models |
 | `audio/` | synthesised suction, bipolar, Doppler and UI sounds |
-| `procedure/` | event bus (stages arrive in M3) |
-| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed |
+| `procedure/` | event bus, the six stage definitions (`stages.js`) and the stage engine |
+| `ui/` | i18n (EN/日本語), inspector, labels, toolbar, feed, checklist, mentor |
 
 Add `?fx=low` to the URL to turn off depth of field and bloom on slower GPUs.
 

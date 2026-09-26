@@ -19,6 +19,9 @@ import { RuptureRisk } from './physics/risk.js';
 import { Flow } from './physics/flow.js';
 import { bus } from './procedure/bus.js';
 import { initAudio } from './audio/engine.js';
+import { StageSystem } from './procedure/stageSystem.js';
+import { Checklist } from './ui/checklist.js';
+import { Mentor } from './ui/mentor.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -61,6 +64,21 @@ function boot() {
   const ctx = { THREE, scene, camera, canvas, renderer, anatomy, controls, lights, fx, heart, inspector, labels, bleeding, risk, flow, feed, geo, animate, stats, state, i18n, bus };
   const tools = new ToolManager(ctx);
   new Toolbar($('toolbar'), $('toolcard'), tools);
+  const stages = new StageSystem(ctx);
+  const checklist = new Checklist($('checklist'), stages, state);
+  const mentor = new Mentor($('mentor'), stages);
+
+  // Cinematic stage-complete banner.
+  const banner = (kicker, title) => {
+    const b = $('banner');
+    b.querySelector('.b-kicker').textContent = kicker;
+    b.querySelector('.b-title').textContent = title;
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  };
+  bus.on('stage:complete', ({ index, id }) => {
+    const last = index === stages.stages.length - 1;
+    banner(i18n.t(last ? 'banner.all' : 'banner.stage').replace('{n}', index + 1), i18n.t('stage.' + id));
+  });
   bus.on('risk:warn', ({ reason }) => feed.push('risk.' + reason, reason.includes('Bleb') || reason.includes('bleb') || reason === 'scissorsDome' ? 'bad' : 'warn'));
 
   // ── UI wiring ────────────────────────────────────
@@ -70,6 +88,7 @@ function boot() {
   $('btn-start').onclick = () => {
     initAudio();
     state.started = true;
+    stages.start();
     $('start').classList.add('hidden');
     $('hud').classList.remove('hidden');
     controls.reset();
@@ -105,6 +124,7 @@ function boot() {
     if (state.started) {
       inspector.update();
       tools.update(dt, state.time);
+      stages.update(dt);
     }
     bleeding.update(dt, state.time, heart.pressure);
     risk.update(dt);
@@ -126,6 +146,8 @@ function boot() {
     fx.setFocus(state.focusGoal ?? controls.cur.distance, dt);
 
     if (state.started && frame % 6 === 0) {
+      checklist.update();
+      mentor.update();
       $('ro-focus').textContent = fx.bokeh.uniforms.focus.value.toFixed(1);
       $('ro-wd').textContent = controls.cur.distance.toFixed(0);
       $('ro-mag').textContent = (MICROSCOPE.distance * 6 / controls.cur.distance).toFixed(1);
@@ -148,7 +170,7 @@ function boot() {
   $('boot').classList.add('done');
 
   // A debugging handle for the console and automated checks.
-  window.__clipsim = { ...ctx, tools };
+  window.__clipsim = { ...ctx, tools, stages };
 }
 
 try {
