@@ -73,6 +73,44 @@ medical advice. No build step; it is fully separate from CLIPSIM.
 
 ---
 
+## Also in here: RAPTOR LAB · full-flow rocket engine test stand
+
+A cinematic simulator of a GENERIC full-flow staged-combustion methane/oxygen
+engine at [`public/raptorlab/`](public/raptorlab): chill-down, purge, spin-start,
+fuel-lead ignition, closed-loop mainstage, gimbal test and a fuel-rich shutdown.
+Real 1-D nozzle theory (c*, Newton area-Mach, thrust coefficient with Summerfield
+separation, Prandtl-Pack Mach-diamond spacing) and an RK4 turbopump/hydraulic
+model drive the plume, telemetry, live equations and the debrief. Education only;
+not affiliated with any manufacturer.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/raptorlab/>**
+
+---
+
+## Also in here: JET ATELIER · private-jet configurator
+
+A cinematic configurator at [`public/jet/`](public/jet): airframe class, livery,
+cabin zones, leather/veneer/metal, colour temperature, then a mission on a
+holographic globe (haversine great circles, ISA cabin altitude, Breguet range
+with reserves). Studio, cabin, walk-through, golden-hour flight and globe views,
+a build sheet and a cinematic tour. Figures are illustrative.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/jet/>**
+
+---
+
+## Also in here: GUARDIAN · safety at home for older adults
+
+At [`public/guardian/`](public/guardian): a 3D home walk-through where you find and
+fix fall hazards (and watch the night route to the bathroom turn from red to
+green), a balance check built on the CDC STEADI tools, a scam-spotting trainer,
+a caregiver dashboard and a printable family report. Education only, not medical
+advice.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/guardian/>**
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at
