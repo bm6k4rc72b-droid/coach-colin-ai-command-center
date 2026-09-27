@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JET ATELIER · by Coach Colin</title>
+  <meta name="description" content="JET ATELIER by Coach Colin: a cinematic private-jet configurator with livery, cabin layout, materials, lighting and a great-circle mission planner. Illustrative figures." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 17l26-6-9 5 4 9-4 1-5-7-8 2 1 4-3 1z' fill='none' stroke='%233ff3ff' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body class="letterbox">
+  <canvas id="scene"></canvas>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel"><span class="logo">✈</span><span class="brand-name">JET ATELIER</span><span class="brand-by" data-i18n="app.by"></span></div>
+      <div class="views panel">
+        <button data-view="studio" data-i18n="ja.view.studio"></button>
+        <button data-view="cabin" data-i18n="ja.view.cabin"></button>
+        <button data-view="walk" data-i18n="ja.view.walk"></button>
+        <button data-view="flight" data-i18n="ja.view.flight"></button>
+        <button data-view="globe" data-i18n="ja.view.globe"></button>
+      </div>
+      <div class="actions">
+        <button class="btn panel demo" id="btn-tour"><span data-i18n="app.tour"></span></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+
+    <nav id="nav" class="panel">
+      <button data-sec="airframe"><kbd>1</kbd><span data-i18n="ja.sec.airframe"></span></button>
+      <button data-sec="exterior"><kbd>2</kbd><span data-i18n="ja.sec.exterior"></span></button>
+      <button data-sec="cabin"><kbd>3</kbd><span data-i18n="ja.sec.cabin"></span></button>
+      <button data-sec="materials"><kbd>4</kbd><span data-i18n="ja.sec.materials"></span></button>
+      <button data-sec="lighting"><kbd>5</kbd><span data-i18n="ja.sec.lighting"></span></button>
+      <button data-sec="mission"><kbd>6</kbd><span data-i18n="ja.sec.mission"></span></button>
+      <button data-sec="summary"><kbd>7</kbd><span data-i18n="ja.sec.summary"></span></button>
+    </nav>
+
+    <aside id="sheet" class="panel">
+      <header class="lv-head mono" data-i18n="ja.bs.title"></header>
+      <div class="bs-price"><label data-i18n="ja.bs.price"></label><b id="bs-price" class="mono">—</b></div>
+      <dl class="bs mono">
+        <dt data-i18n="ja.bs.frame"></dt><dd id="bs-frame"></dd>
+        <dt data-i18n="ja.bs.seats"></dt><dd id="bs-seats"></dd>
+        <dt data-i18n="ja.bs.range"></dt><dd id="bs-range"></dd>
+        <dt data-i18n="ja.bs.speed"></dt><dd id="bs-speed"></dd>
+        <dt data-i18n="ja.bs.cabin"></dt><dd id="bs-cabin"></dd>
+        <dt data-i18n="ja.bs.weights"></dt><dd id="bs-weights"></dd>
+      </dl>
+      <div class="lv-sub mono" data-i18n="ja.bs.mission"></div>
+      <dl class="bs mono">
+        <dt data-i18n="ja.bs.route"></dt><dd id="bs-route"></dd>
+        <dt data-i18n="ja.bs.pax"></dt><dd id="bs-pax"></dd>
+        <dt data-i18n="ja.bs.time"></dt><dd id="bs-time"></dd>
+        <dt data-i18n="ja.bs.fuel"></dt><dd id="bs-fuel"></dd>
+        <dt data-i18n="ja.bs.co2"></dt><dd id="bs-co2"></dd>
+      </dl>
+      <div class="lv-bar fuel"><i id="bs-fuelbar"></i></div>
+      <div id="bs-verdict" class="verdict"></div>
+      <details class="bs-math-wrap"><summary class="lv-sub mono" data-i18n="ja.bs.math"></summary><div id="bs-math" class="rl-math"></div></details>
+    </aside>
+
+    <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="app.tourOn"></span></div>
+    <section id="tray" class="panel"></section>
+    <footer class="hint mono" data-i18n="app.hint"></footer>
+  </div>
+
+  <div class="keyart" id="keyart"></div>
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">AVIATION · DESIGN · CONFIGURATOR</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+      <div class="disclaimer">
+        <h2>ⓘ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+      <div class="start-actions">
+        <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel demo" id="btn-start-tour" disabled data-i18n="app.tour"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="summary" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div><div class="start-kicker mono">JET ATELIER · BUILD SHEET</div><h2 data-i18n="ja.sheet.title"></h2><p class="db-sub" id="sum-sub"></p></div>
+        <div class="sum-price"><small data-i18n="ja.bs.price"></small><b id="sum-price" class="mono"></b></div>
+      </div>
+      <div class="db-cols">
+        <div><h3 data-i18n="ja.sheet.spec"></h3><ul class="db-checks" id="sum-spec"></ul></div>
+        <div><h3 data-i18n="ja.sheet.missionH"></h3><ul class="db-checks" id="sum-mission"></ul></div>
+      </div>
+      <p class="db-disclaimer" data-i18n="ja.sheet.note"></p>
+      <div class="start-actions">
+        <button class="btn primary" id="sum-again" data-i18n="ja.sheet.again"></button>
+        <button class="btn panel" id="sum-close" data-i18n="ja.sheet.close"></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">LOADING…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
