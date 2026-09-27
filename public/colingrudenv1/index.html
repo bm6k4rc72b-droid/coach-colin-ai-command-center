@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#05070d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GrudenV1" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <title>ColinGrudenV1</title>
+  <style>
+    :root { --bg:#05070d; --panel:#0a1220; --line:rgba(62,224,232,.28); --gold:#c9a227; --cyan:#3ee0e8; --orange:#ff6a1a; --text:#d7e8ef; --dim:#7f93a3; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html,body { height:100%; background:var(--bg); color:var(--text); font-family:Inter,Segoe UI,system-ui,sans-serif; }
+    body { display:flex; flex-direction:column; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; border-bottom:1px solid var(--line); }
+    .logo { font-weight:800; } .logo span { color:var(--cyan); }
+    .sub { font-size:10px; color:var(--dim); letter-spacing:.14em; text-transform:uppercase; }
+    .live { color:#ff4d4d; font-size:11px; font-weight:700; }
+    .live i { display:inline-block; width:7px; height:7px; background:#ff4d4d; border-radius:50%; margin-right:6px; animation:p 1s infinite; }
+    @keyframes p { 50%{opacity:.3} }
+    main { flex:1; display:grid; grid-template-columns:1.3fr .9fr; min-height:0; }
+    @media (max-width:900px){ main { grid-template-columns:1fr; grid-template-rows:52vh 1fr; } }
+    .stage { position:relative; background:#000; overflow:hidden; }
+    video,#hud { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000; }
+    video { opacity:0; }
+    .ticker,.foot { position:absolute; left:0; right:0; z-index:3; font-size:11px; }
+    .ticker { top:0; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; padding:8px; background:linear-gradient(#000a,transparent); }
+    .badge { background:#0b1524cc; border:1px solid var(--line); padding:4px 8px; border-radius:4px; }
+    .foot { bottom:0; padding:8px; color:var(--cyan); background:linear-gradient(transparent,#000c); }
+    .side { background:var(--panel); border-left:1px solid var(--line); padding:12px; overflow:auto; display:flex; flex-direction:column; gap:10px; }
+    h2 { font-size:11px; letter-spacing:.16em; color:var(--cyan); }
+    canvas#chart { width:100%; height:100px; background:#071018; border:1px solid var(--line); border-radius:8px; }
+    .metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .m { background:#071018; border:1px solid var(--line); border-radius:8px; padding:8px; }
+    .m em { display:block; font-style:normal; font-size:9px; color:var(--dim); letter-spacing:.08em; }
+    .m b { font-size:16px; color:var(--cyan); }
+    .m.warm b { color:var(--orange); }
+    .bar { height:8px; background:#12202c; border-radius:99px; overflow:hidden; margin-top:6px; }
+    .bar i { display:block; height:100%; width:20%; background:linear-gradient(90deg,#3ee0e8,#c9a227,#ff6a1a); }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; padding:8px 12px; border-top:1px solid var(--line); }
+    button, label.btn {
+      flex:1; min-width:30%; border:1px solid var(--cyan); background:#0c1828; color:var(--text);
+      padding:11px 8px; border-radius:8px; font-weight:700; font-size:11px; letter-spacing:.06em; text-align:center; cursor:pointer;
+    }
+    button.primary, label.primary { background:var(--cyan); color:#041018; }
+    #file { display:none; }
+    #status { font-size:11px; color:var(--dim); padding:0 12px 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="logo">Colin<span>Gruden</span>V1</div>
+      <div class="sub">Live camera · video upload · PWA</div>
+    </div>
+    <div class="live"><i></i><span id="modechip">READY</span></div>
+  </header>
+  <main>
+    <section class="stage">
+      <div class="ticker">
+        <div class="badge" id="srcbadge">NO INPUT</div>
+        <div class="badge" id="trackchip">POSE STANDBY</div>
+      </div>
+      <video id="media" playsinline muted></video>
+      <canvas id="hud"></canvas>
+      <div class="foot" id="footer">Start live or upload a play clip. Muscle load is estimated from joints, not EMG.</div>
+    </section>
+    <aside class="side">
+      <h2>BIOMECHANICS</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong>LOCKED ATHLETE</strong>
+          <div id="vitals" style="font-size:11px;color:var(--dim)">Waiting for pose</div>
+        </div>
+        <div id="fps">—</div>
+      </div>
+      <canvas id="chart"></canvas>
+      <div class="metrics">
+        <div class="m"><em>SPEED PROXY</em><b id="spd">—</b></div>
+        <div class="m"><em>POWER EST</em><b id="pwr">—</b></div>
+        <div class="m"><em>LEVERAGE</em><b id="lev">—</b></div>
+        <div class="m warm"><em>FATIGUE IDX</em><b id="fat">—</b></div>
+        <div class="m"><em>CAL / MIN EST</em><b id="cal">—</b></div>
+        <div class="m"><em>KNEES</em><b id="knee">—</b></div>
+      </div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px"><span>QUADS EST</span><span id="qtxt">—</span></div><div class="bar"><i id="qbar"></i></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:11px"><span>POSTERIOR CHAIN EST</span><span id="htxt">—</span></div><div class="bar"><i id="hbar"></i></div></div>
+      <div class="m"><em>PLAY GRAPH</em><div id="rels" style="margin-top:6px;color:var(--cyan)">No lock yet</div></div>
+    </aside>
+  </main>
+  <div id="status">First launch needs internet to load MediaPipe. After that the PWA can open offline except the model CDN cache.</div>
+  <div class="controls">
+    <button class="primary" id="start">LIVE CAMERA</button>
+    <label class="btn primary" for="file">UPLOAD PLAY</label>
+    <input id="file" type="file" accept="video/*" />
+    <button id="flip">FLIP CAM</button>
+    <button id="install">INSTALL APP</button>
+  </div>
+
+  <script type="module">
+    import { PoseLandmarker, FilesetResolver, DrawingUtils } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+    const video = document.getElementById("media");
+    const canvas = document.getElementById("hud");
+    const ctx = canvas.getContext("2d");
+    const chart = document.getElementById("chart");
+    const cctx = chart.getContext("2d");
+    let landmarker, facing = "environment", running = false, source = "none";
+    let lastHip = null, lastT = 0, t0 = performance.now();
+    let seriesQ = [], seriesH = [], seriesG = [];
+    let deferredPrompt = null;
+
+    const ang = (a,b,c) => {
+      const ab = {x:a.x-b.x,y:a.y-b.y}, cb = {x:c.x-b.x,y:c.y-b.y};
+      const d = ab.x*cb.x + ab.y*cb.y;
+      const m = Math.hypot(ab.x,ab.y)*Math.hypot(cb.x,cb.y);
+      return m ? (Math.acos(Math.min(1,Math.max(-1,d/m)))*180)/Math.PI : 0;
+    };
+    const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+
+    function drawChart() {
+      const w = chart.width = Math.max(120, chart.clientWidth * devicePixelRatio);
+      const h = chart.height = Math.max(80, chart.clientHeight * devicePixelRatio);
+      cctx.fillStyle = "#071018"; cctx.fillRect(0,0,w,h);
+      [[seriesQ,"#3ee0e8"],[seriesG,"#b56bff"],[seriesH,"#ff9a3c"]].forEach(([s,col]) => {
+        if (s.length < 2) return;
+        cctx.beginPath(); cctx.strokeStyle = col; cctx.lineWidth = 2;
+        s.forEach((v,i) => {
+          const x = (i/(s.length-1))*w, y = h - (v/100)*h;
+          i ? cctx.lineTo(x,y) : cctx.moveTo(x,y);
+        });
+        cctx.stroke();
+      });
+    }
+
+    async function initModel() {
+      if (landmarker) return;
+      document.getElementById("status").textContent = "Loading on-device pose model…";
+      const files = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      landmarker = await PoseLandmarker.createFromOptions(files, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numPoses: 1
+      });
+      document.getElementById("status").textContent = "Model ready.";
+    }
+
+    function stopStream() {
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+        video.srcObject = null;
+      }
+      if (video.src && video.src.startsWith("blob:")) URL.revokeObjectURL(video.src);
+    }
+
+    async function startCam() {
+      await initModel();
+      stopStream();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      video.loop = false;
+      await video.play();
+      source = "live";
+      running = true;
+      document.getElementById("srcbadge").textContent = "LIVE CAMERA";
+      document.getElementById("modechip").textContent = "LIVE";
+      document.getElementById("trackchip").textContent = "AI TRACKING ACTIVE";
+      loop();
+    }
+
+    async function startFile(file) {
+      await initModel();
+      stopStream();
+      const url = URL.createObjectURL(file);
+      video.srcObject = null;
+      video.src = url;
+      video.loop = true;
+      video.muted = true;
+      await video.play();
+      source = "file";
+      running = true;
+      seriesQ = []; seriesH = []; seriesG = [];
+      document.getElementById("srcbadge").textContent = "UPLOADED PLAY";
+      document.getElementById("modechip").textContent = "FILE";
+      document.getElementById("trackchip").textContent = "ANALYZING CLIP";
+      document.getElementById("status").textContent = "Playing " + file.name + " locally. Nothing uploaded.";
+      loop();
+    }
+
+    function heatStroke(a,b,intensity) {
+      ctx.strokeStyle = `rgba(255,${Math.round(80+intensity*80)},20,${0.35+intensity*0.5})`;
+      ctx.lineWidth = 6 + intensity * 8;
+      ctx.beginPath();
+      ctx.moveTo(a.x*canvas.width, a.y*canvas.height);
+      ctx.lineTo(b.x*canvas.width, b.y*canvas.height);
+      ctx.stroke();
+    }
+
+    function loop() {
+      if (!running) return;
+      const w = canvas.width = video.videoWidth || 960;
+      const h = canvas.height = video.videoHeight || 540;
+      ctx.drawImage(video, 0, 0, w, h);
+      const now = performance.now();
+      if (landmarker && video.readyState >= 2 && !video.paused) {
+        const res = landmarker.detectForVideo(video, now);
+        if (res.landmarks?.[0]) {
+          const lm = res.landmarks[0];
+          const rk = ang(lm[24], lm[26], lm[28]);
+          const lk = ang(lm[23], lm[25], lm[27]);
+          const re = ang(lm[12], lm[14], lm[16]);
+          const hip = ang(lm[12], lm[24], lm[26]);
+          const q = clamp(Math.abs(180-rk)*0.85 + Math.abs(180-lk)*0.35, 8, 96);
+          const ham = clamp((rk < 150 ? (150-rk) : 8) + 20, 10, 90);
+          const glu = clamp(Math.abs(hip-90)*0.5 + 30, 10, 90);
+          seriesQ.push(q); seriesH.push(ham); seriesG.push(glu);
+          if (seriesQ.length > 90) { seriesQ.shift(); seriesH.shift(); seriesG.shift(); }
+          heatStroke(lm[24], lm[26], q/100);
+          heatStroke(lm[26], lm[28], ham/100);
+          heatStroke(lm[23], lm[25], q/90);
+          heatStroke(lm[12], lm[14], clamp(Math.abs(180-re)/80, .2, 1));
+          const draw = new DrawingUtils(ctx);
+          draw.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, { color:"#3EE0E8", lineWidth:2 });
+          draw.drawLandmarks(lm, { color:"#C9A227", radius:2.4 });
+          const hipP = lm[24];
+          let spd = 0;
+          if (lastHip && lastT) {
+            const dt = Math.max(0.016, (now-lastT)/1000);
+            spd = Math.hypot(hipP.x-lastHip.x, hipP.y-lastHip.y)/dt;
+          }
+          lastHip = hipP; lastT = now;
+          const unit = spd * 3.1;
+          const pwr = Math.round(400 + q*6 + unit*18);
+          const lev = clamp((re/180)*0.55 + (rk/180)*0.5, 0.2, 1.15);
+          const fat = clamp(28 + (now-t0)/15000 + (q-40)*0.12, 10, 88);
+          document.getElementById("spd").textContent = unit.toFixed(1) + " u/s";
+          document.getElementById("pwr").textContent = pwr + " W";
+          document.getElementById("lev").textContent = lev.toFixed(2);
+          document.getElementById("fat").textContent = Math.round(fat) + "%";
+          document.getElementById("cal").textContent = (4.2 + unit*0.22 + q*0.01).toFixed(1);
+          document.getElementById("knee").textContent = Math.round(rk) + "° / " + Math.round(lk) + "°";
+          document.getElementById("qbar").style.width = q + "%";
+          document.getElementById("hbar").style.width = ham + "%";
+          document.getElementById("qtxt").textContent = Math.round(q) + "% est";
+          document.getElementById("htxt").textContent = Math.round(ham) + "% est";
+          document.getElementById("vitals").textContent = `ELBOW ${Math.round(re)}° · HIP ${Math.round(hip)}° · LOAD ${Math.round(q)}%`;
+          document.getElementById("rels").innerHTML = `REACH / THROW ARM ${Math.round(re)}°<br>PLANT / DRIVE knee flex ${Math.round(180-rk)}°`;
+          document.getElementById("footer").textContent = `${source.toUpperCase()} · KNEE ${Math.round(rk)}° · QUAD EST ${Math.round(q)}%`;
+          const fps = 1000 / Math.max(1, now - (loop._t || now));
+          loop._t = now;
+          document.getElementById("fps").textContent = Math.round(fps) + " FPS";
+          drawChart();
+        }
+      }
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById("start").onclick = () => startCam().catch(e => {
+      document.getElementById("status").textContent = "Camera blocked. Serve this folder over https or localhost, then allow camera. " + e.message;
+    });
+    document.getElementById("flip").onclick = async () => {
+      facing = facing === "environment" ? "user" : "environment";
+      if (source === "live") await startCam();
+    };
+    document.getElementById("file").onchange = (e) => {
+      const f = e.target.files?.[0];
+      if (f) startFile(f).catch(err => {
+        document.getElementById("status").textContent = "Could not play that file. Try mp4/mov. " + err.message;
+      });
+    };
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById("status").textContent = "Install available. Tap INSTALL APP.";
+    });
+    document.getElementById("install").onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        return;
+      }
+      document.getElementById("status").textContent =
+        "iPhone: Safari → Share → Add to Home Screen. Android: Chrome menu → Install app. Must be opened from https or localhost, not a raw file.";
+    };
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+    initModel().catch(e => {
+      document.getElementById("status").textContent = "Need internet once to download the pose model. " + e.message;
+    });
+  </script>
+</body>
+</html>
