@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: ColinGrudenV1 · Football Pose & Play Analysis
+
+An installable PWA at [`public/colingrudenv1/`](public/colingrudenv1) that runs
+MediaPipe pose tracking on-device, from the live camera or an uploaded play
+clip, and shows joint angles and estimated muscle load, power, leverage and
+fatigue. Estimates come from joint positions, not EMG. Video never leaves the
+device. First launch needs internet to fetch the pose model. No build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/colingrudenv1/>**
+— open it on a phone and add it to the home screen. Locally it is
+`/colingrudenv1/` (`http://localhost:4173/colingrudenv1/` under `./start.sh`).
+
+---
+
 ## Also in here: FOXHOUND Virtual Armory
 
 A single-page armory showcase at [`public/armory/`](public/armory) — armory,
