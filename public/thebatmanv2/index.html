@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TheBatmanV2 — See Without Seeing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="scanlines"></div>
+  <div class="progress" id="progress"></div>
+
+  <nav>
+    <div class="brand">
+      <div class="brand-mark">V2</div>
+      TheBatmanV2
+    </div>
+    <div class="nav-links">
+      <a href="#capabilities">Capabilities</a>
+      <a href="#devices">Devices</a>
+      <a href="#stack">Stack</a>
+      <a href="#ops">Operations</a>
+      <a href="#privacy">Privacy</a>
+    </div>
+    <div class="nav-status"><span class="pulse"></span> LINK ACTIVE · AES-256</div>
+  </nav>
+
+  <main>
+    <section class="hero" id="top" data-zone="PERIMETER">
+      <div>
+        <div class="kicker">One chip. Every device. Zero lens.</div>
+        <h1>See Without<br /><span>Seeing.</span></h1>
+        <p class="lede">
+          Single-channel UWB radar that reads heartbeat through wood and brick,
+          flags arrhythmia, watches machines before they fail, and keeps a
+          factory floor safe — without a camera ever turning on.
+        </p>
+        <div class="meta-row">
+          <div class="chip">95%+ ECG through wall</div>
+          <div class="chip">&lt;120ms multi-device sync</div>
+          <div class="chip">GDPR / HIPAA mode</div>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#capabilities">Enter the cave</a>
+          <a class="btn btn-ghost" href="#devices">Cross-platform sync</a>
+        </div>
+      </div>
+      <aside class="hero-panel">
+        <div class="panel-title">Live radar waveform <span id="clock">00:00:00</span></div>
+        <canvas id="radar" width="640" height="260"></canvas>
+        <div class="vitals">
+          <div class="vital"><b id="bpm">78</b><span>Heartbeat</span></div>
+          <div class="vital"><b id="range">2.4m</b><span>Motion lock</span></div>
+          <div class="vital"><b>3/3</b><span>Workers safe</span></div>
+          <div class="vital"><b>Zone B</b><span>Loading dock</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="capabilities" data-zone="CAPABILITIES">
+      <div class="section-head">
+        <div class="kicker">Mission set</div>
+        <h2>Seven ways the chip watches the dark.</h2>
+        <p>Based on a single-channel UWB radar SoC. Presence, vitals, vibration, and zone awareness — no photos, no video, no line of sight required.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="card"><div class="idx">01</div><h3>Through-Wall Heartbeat</h3><p>95%+ ECG-class accuracy through wood and brick. Radar-to-ECG translation runs on-device.</p></article>
+        <article class="card"><div class="idx">02</div><h3>Arrhythmia Flagging</h3><p>Chip-level abnormal rhythm detection. LSTM autoencoder flags irregular beats instantly.</p></article>
+        <article class="card"><div class="idx">03</div><h3>Camera-Less Sensing</h3><p>Presence + vitals with zero lens. Privacy stays intact because visual data never exists.</p></article>
+        <article class="card"><div class="idx">04</div><h3>Predictive Maintenance</h3><p>Micro-vibration shift detection before a motor fails. Health % and remaining-life estimates.</p></article>
+        <article class="card"><div class="idx">05</div><h3>Fall Detection</h3><p>Instant motion flag + haptic / push alert. Watch, phone, and glasses fire together.</p></article>
+        <article class="card"><div class="idx">06</div><h3>Restricted Zones</h3><p>Knows who is inside a high-risk area without ID badges. Virtual boundaries, live presence.</p></article>
+        <article class="card"><div class="idx">07</div><h3>Quality Control</h3><p>Catches abnormal vibration defects before shipping. Factory dashboard on Mac / Windows.</p></article>
+        <article class="card"><div class="idx">BONUS</div><h3>Presence → Person → Emotion → Map</h3><p>Micro-Doppler signatures identify presence, then identity class, affect, and zone.</p></article>
+        <article class="card"><div class="idx">EDGE</div><h3>Offline-capable</h3><p>On-device inference for vitals. Cloud is for dashboards — not for your ECG.</p></article>
+      </div>
+    </section>
+
+    <section id="devices" data-zone="FLEET">
+      <div class="section-head">
+        <div class="kicker">Unified sync</div>
+        <h2>The same signal on every surface.</h2>
+        <p>MQTT + WebSockets keep iPhone, Android, laptop, watch, glasses, and the edge unit under 120ms.</p>
+      </div>
+      <div class="devices">
+        <div class="device-list">
+          <div class="device"><strong>iPhone · iOS 17+</strong><div><strong>Command deck</strong><span>Live radar waveform, zone map, APNs fall alerts, HealthKit.</span></div></div>
+          <div class="device"><strong>Android · 14+</strong><div><strong>Field unit</strong><span>FCM alerts, Material You UI, background radar service.</span></div></div>
+          <div class="device"><strong>Laptop · Mac / Windows</strong><div><strong>Factory ops</strong><span>Electron dashboard, vibration analytics, health % graphs.</span></div></div>
+          <div class="device"><strong>Edge camera unit</strong><div><strong>No lens</strong><span>ESP32-S3 + UWB module. RTSP disabled. BLE 5.3 / UWB stream only.</span></div></div>
+          <div class="device"><strong>Watch · watchOS / WearOS</strong><div><strong>On the wrist</strong><span>Haptic fall alert, tap for emergency, live BPM, zone label.</span></div></div>
+          <div class="device"><strong>Smart glasses</strong><div><strong>AR HUD</strong><span>“3/3 Workers Safe” · “RADAR: 2.4m MOTION LOCKED” · “HEARTBEAT: 78 BPM”.</span></div></div>
+        </div>
+        <img class="shot" src="assets/ecosystem.jpg" alt="TheBatmanV2 device ecosystem" />
+      </div>
+    </section>
+
+    <section id="ops" data-zone="OPERATIONS">
+      <div class="section-head">
+        <div class="kicker">Industry 4.0</div>
+        <h2>Protect the team. Keep the line running.</h2>
+      </div>
+      <div class="split" style="margin-bottom:28px">
+        <img src="assets/safety.jpg" alt="Worker safety HUD" />
+        <div>
+          <h2>Real-time worker safety</h2>
+          <p style="color:var(--muted);margin:12px 0 18px;font-size:18px">Presence list, radar waveform, heartbeat, and a live zone map. Falls push to watch and phone in the same beat. Glasses overlay keeps the floor lead heads-up.</p>
+          <div class="chip">Protect your team · 24/7 · Radar + heartbeat + location</div>
+        </div>
+      </div>
+      <div class="split">
+        <div>
+          <h2>Predictive maintenance &amp; QC</h2>
+          <p style="color:var(--muted);margin:12px 0 18px;font-size:18px">Motor scan, remaining life, and vibration spikes at 2.4 kHz before a bearing takes the line down. Quality-control pass rate sits next to the waveform.</p>
+          <div class="chip">Health 92% · 1,240 hrs remaining</div>
+        </div>
+        <img src="assets/maintenance.jpg" alt="Predictive maintenance dashboard" />
+      </div>
+    </section>
+
+    <section id="stack" data-zone="CORE">
+      <div class="section-head">
+        <div class="kicker">Software + silicon</div>
+        <h2>The stack behind the cowl.</h2>
+      </div>
+      <div class="stack-grid">
+        <div class="stack-item"><small>Sensing</small><h3>UWB radar SoC</h3><p>Novelda X4M300 / Infineon BGT60TR13C single-channel radar.</p></div>
+        <div class="stack-item"><small>Firmware</small><h3>ESP32-S3</h3><p>C++ / TinyML on FreeRTOS. Edge impulse models for presence and fall.</p></div>
+        <div class="stack-item"><small>Signal</small><h3>SciPy + bandpass</h3><p>Heartbeat extraction from micro-Doppler before the vitals model.</p></div>
+        <div class="stack-item"><small>Vitals AI</small><h3>TF Lite + PyTorch</h3><p>Radar-to-ECG translation at 95% accuracy, on-device only.</p></div>
+        <div class="stack-item"><small>Anomaly</small><h3>LSTM autoencoder</h3><p>Arrhythmia and vibration defect detection on the same core.</p></div>
+        <div class="stack-item"><small>Realtime</small><h3>AWS IoT + MQTT</h3><p>WebSockets fan-out. TimescaleDB, Postgres, Redis for presence.</p></div>
+        <div class="stack-item"><small>Apps</small><h3>Swift / Kotlin / Electron</h3><p>SwiftUI, Jetpack Compose, React + Recharts, Spark AR + Unity.</p></div>
+        <div class="stack-item"><small>Cloud</small><h3>Lambda · S3 · Grafana</h3><p>Predictive-maintenance dashboards. No cloud ECG store.</p></div>
+      </div>
+      <img class="shot" src="assets/stack.jpg" alt="Tech stack diagram" style="margin-top:28px" />
+    </section>
+
+    <section id="privacy" data-zone="CIPHER">
+      <div class="section-head">
+        <div class="kicker">Security</div>
+        <h2>Zero camera footage by design.</h2>
+        <p>On-device inference only for vitals. AES-256 end-to-end. GDPR / HIPAA compliant mode.</p>
+      </div>
+      <div class="privacy">
+        <div><strong>No lens</strong><p style="color:var(--muted);margin-top:8px">The “camera” unit stores no video. RTSP is disabled.</p></div>
+        <div><strong>On-device ECG</strong><p style="color:var(--muted);margin-top:8px">Heartbeat never leaves the chip as a waveform dump.</p></div>
+        <div><strong>AES-256</strong><p style="color:var(--muted);margin-top:8px">Encrypted device mesh. Secure link stays active in the HUD.</p></div>
+        <div><strong>Compliance</strong><p style="color:var(--muted);margin-top:8px">GDPR / HIPAA mode for hospitals, plants, and night shifts.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>TheBatmanV2 · Industry 4.0 ready · Edge AI · Privacy-first</div>
+    <div>ENCRYPTION · AES-256 END-TO-END · REAL-TIME · PRIVATE</div>
+  </footer>
+
+  <div id="walker">
+    <img id="frame-stand" src="assets/batman-stand.png" alt="" />
+    <img id="frame-a" class="on" src="assets/batman-walk-a.png" alt="Batman walking through the interface" />
+    <img id="frame-b" src="assets/batman-walk-b.png" alt="" />
+  </div>
+  <div class="ground-glow" id="glow"></div>
+  <div class="hud-toast" id="toast">
+    <b>ZONE · PERIMETER</b>
+    <span>Scroll to walk the Dark Knight through the system.</span>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
