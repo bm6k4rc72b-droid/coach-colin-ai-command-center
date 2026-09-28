@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#05070a" />
+  <meta name="description" content="TheBatmanV2 — UWB radar safety mesh for iPhone 13+, Android, laptop, watch, and smart glasses." />
+  <link rel="manifest" href="manifest.json" />
   <title>TheBatmanV2 — See Without Seeing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,8 +31,16 @@
       <a href="#ops">Operations</a>
       <a href="#privacy">Privacy</a>
     </div>
-    <div class="nav-status"><span class="pulse"></span> LINK ACTIVE · AES-256</div>
+    <div class="nav-status"><span class="pulse"></span> <span id="link-label">LINK ACTIVE · AES-256</span></div>
   </nav>
+
+  <div class="device-bar" id="device-bar">
+    <button data-mode="auto" class="on">Auto</button>
+    <button data-mode="phone">iPhone 13+ / Android</button>
+    <button data-mode="laptop">Laptop</button>
+    <button data-mode="watch">Watch</button>
+    <button data-mode="glasses">Glasses</button>
+  </div>
 
   <main>
     <section class="hero" id="top" data-zone="PERIMETER">
@@ -88,8 +101,8 @@
       </div>
       <div class="devices">
         <div class="device-list">
-          <div class="device"><strong>iPhone · iOS 17+</strong><div><strong>Command deck</strong><span>Live radar waveform, zone map, APNs fall alerts, HealthKit.</span></div></div>
-          <div class="device"><strong>Android · 14+</strong><div><strong>Field unit</strong><span>FCM alerts, Material You UI, background radar service.</span></div></div>
+          <div class="device"><strong>iPhone 13 and newer</strong><div><strong>Command deck · iOS 16+</strong><span>SwiftUI dashboard, Live Radar, Zone Map, APNs fall alerts, HealthKit, CoreBluetooth to the UWB puck.</span></div></div>
+          <div class="device"><strong>Android phones</strong><div><strong>Field unit · Android 12+</strong><span>Kotlin / Jetpack Compose, FCM alerts, Material You, background radar foreground service, Bluetooth LE.</span></div></div>
           <div class="device"><strong>Laptop · Mac / Windows</strong><div><strong>Factory ops</strong><span>Electron dashboard, vibration analytics, health % graphs.</span></div></div>
           <div class="device"><strong>Edge camera unit</strong><div><strong>No lens</strong><span>ESP32-S3 + UWB module. RTSP disabled. BLE 5.3 / UWB stream only.</span></div></div>
           <div class="device"><strong>Watch · watchOS / WearOS</strong><div><strong>On the wrist</strong><span>Haptic fall alert, tap for emergency, live BPM, zone label.</span></div></div>
@@ -138,6 +151,44 @@
         <div class="stack-item"><small>Cloud</small><h3>Lambda · S3 · Grafana</h3><p>Predictive-maintenance dashboards. No cloud ECG store.</p></div>
       </div>
       <img class="shot" src="assets/stack.jpg" alt="Tech stack diagram" style="margin-top:28px" />
+
+      <div class="section-head" style="margin-top:48px">
+        <div class="kicker">Ships on</div>
+        <h2>One runtime. Five surfaces.</h2>
+        <p>The same MQTT topic tree and on-device vitals model, compiled per platform so iPhone 13, Android, laptop, watch, and glasses stay in lockstep.</p>
+      </div>
+      <div class="platform-stack" id="platforms">
+        <article>
+          <small>iPhone 13 / 14 / 15 / 16</small>
+          <h3>Swift · SwiftUI · HealthKit</h3>
+          <p>Minimum: iPhone 13, iOS 16. CoreBluetooth 5.x to the radar puck. APNs for fall. WidgetKit lock-screen BPM. Live Activities during an incident.</p>
+        </article>
+        <article>
+          <small>Android phones</small>
+          <h3>Kotlin · Compose · FCM</h3>
+          <p>Minimum: Android 12. Foreground radar service, WorkManager sync, Bluetooth LE, Material You. Adaptive layout for compact and foldables.</p>
+        </article>
+        <article>
+          <small>Laptop · macOS / Windows</small>
+          <h3>Electron · React · Recharts</h3>
+          <p>Factory ops console. Vibration FFT, health %, Grafana embed, multi-zone map. Keyboard shortcuts for Mr. Wayne.</p>
+        </article>
+        <article>
+          <small>Apple Watch / Wear OS</small>
+          <h3>SwiftUI Watch · Wear complication</h3>
+          <p>Haptic fall, tap-for-emergency, 78 BPM live, Zone B chip. Works as a satellite of the phone mesh, not a standalone radar.</p>
+        </article>
+        <article>
+          <small>Ray-Ban Meta · Vision Pro · Vuzix</small>
+          <h3>Spark AR · Unity · ARKit</h3>
+          <p>HUD only: worker count, motion lock range, heartbeat. No camera capture from our side. Glasses consume the mesh, they do not film it.</p>
+        </article>
+        <article>
+          <small>Edge unit</small>
+          <h3>ESP32-S3 · FreeRTOS · TinyML</h3>
+          <p>Novelda X4M300 / Infineon BGT60TR13C. BLE 5.3 + UWB out. RTSP off. This is the only radio that “sees.”</p>
+        </article>
+      </div>
     </section>
 
     <section id="privacy" data-zone="CIPHER">
@@ -157,8 +208,26 @@
 
   <footer>
     <div>TheBatmanV2 · Industry 4.0 ready · Edge AI · Privacy-first</div>
-    <div>ENCRYPTION · AES-256 END-TO-END · REAL-TIME · PRIVATE</div>
+    <div>Score: “Signal to Noise” by Scott Buckley · CC BY 4.0 · Receptionist: Mr. Wayne</div>
   </footer>
+
+  <div class="watch-face" id="watch-face" hidden>
+    <div class="watch-ring">
+      <div class="watch-inner">
+        <div class="kicker">TheBatmanV2</div>
+        <div class="watch-bpm" id="watch-bpm">78</div>
+        <div>BPM · STABLE</div>
+        <div class="watch-zone">ZONE B · DOCK</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glasses-hud" id="glasses-hud" hidden>
+    <div>PRESENCE MONITORING — 3/3 WORKERS SAFE</div>
+    <div>RADAR: <span id="g-range">2.4m</span> · MOTION LOCKED</div>
+    <div>HEARTBEAT: <span id="g-bpm">78</span> BPM</div>
+    <div>ZONE B — LOADING DOCK · ALL SYSTEMS NORMAL</div>
+  </div>
 
   <div id="walker">
     <img id="frame-stand" src="assets/batman-stand.png" alt="" />
@@ -169,6 +238,39 @@
   <div class="hud-toast" id="toast">
     <b>ZONE · PERIMETER</b>
     <span>Scroll to walk the Dark Knight through the system.</span>
+  </div>
+
+  <aside class="wayne-dock" id="wayne-dock">
+    <div class="wayne-head">
+      <strong>Mr. Wayne</strong>
+      <span id="wayne-state">Reception</span>
+    </div>
+    <p id="wayne-caption">“The cave is online. Say a command.”</p>
+    <div class="wayne-actions">
+      <button type="button" id="btn-listen">Speak</button>
+      <button type="button" id="btn-music">Music</button>
+      <input type="range" id="vol" min="0" max="100" value="28" aria-label="Music volume" />
+    </div>
+    <div class="wayne-chips">
+      <button data-cmd="help">Help</button>
+      <button data-cmd="status">Status</button>
+      <button data-cmd="devices">Devices</button>
+      <button data-cmd="stack">Stack</button>
+      <button data-cmd="fall">Fall drill</button>
+    </div>
+  </aside>
+
+  <audio id="theme" src="assets/audio/cave-theme.mp3" loop preload="auto"></audio>
+  <audio id="wayne" preload="auto"></audio>
+
+  <div class="gate" id="gate">
+    <div class="gate-card">
+      <div class="kicker">Alfred protocol · Mr. Wayne on duty</div>
+      <h2>Enter the cave.</h2>
+      <p>Background score and a deep-voiced receptionist start on your say-so. Works as a web app on iPhone 13+, Android, laptop, watch browser, and glasses HUD.</p>
+      <button type="button" class="btn btn-primary" id="enter">Enter with Mr. Wayne</button>
+      <button type="button" class="btn btn-ghost" id="enter-quiet">Enter silent</button>
+    </div>
   </div>
 
   <script src="js/app.js"></script>

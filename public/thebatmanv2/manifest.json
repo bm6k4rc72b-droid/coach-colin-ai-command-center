@@ -1,0 +1,10 @@
+{
+  "name": "TheBatmanV2",
+  "short_name": "BatmanV2",
+  "description": "UWB radar safety mesh for iPhone 13+, Android, laptop, watch, and glasses.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#05070a",
+  "theme_color": "#05070a",
+  "orientation": "any"
+}
