@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#05070d" />
+  <title>TheJudgeV1 — Real-Time Fight Scoring</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="circuit"></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="logo"><span class="gavel">⚖</span> TheJudgeV1</div>
+      <div class="live-pill"><span class="dot"></span> LIVE FIGHT DATA SYNCED</div>
+      <span class="live-pill" id="device-chip">LAPTOP</span>
+      <div class="top-actions">
+        <button class="btn" id="btn-music" onclick="toggleMusic()">MUSIC</button>
+        <button class="btn" onclick="setChrome('watch')">WATCH</button>
+        <button class="btn" onclick="setChrome('glasses')">GLASSES</button>
+        <button class="btn" onclick="document.body.className=''; showView('home')">DESKTOP</button>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <button class="active" data-view="home" onclick="showView('home')">HOME</button>
+      <button data-view="live" onclick="showView('live')">LIVE FIGHT + CAMERA</button>
+      <button data-view="score" onclick="showView('score')">SCORECARD + IQ</button>
+      <button data-view="pipeline" onclick="showView('pipeline')">AI PIPELINE</button>
+      <button data-view="devices" onclick="showView('devices')">MULTI-DEVICE</button>
+      <button data-view="stack" onclick="showView('stack')">TECH STACK</button>
+    </nav>
+
+    <!-- HOME -->
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <div>
+          <div class="kicker">REALTIME · UNBIASED · VERIFIABLE</div>
+          <h1>You Think The Judges Got It Wrong?<br/>Prove It.</h1>
+          <p class="sub">TheJudgeV1 is a real-time fight scoring system. iPhone camera, Android camera, smartwatch biometrics, smart-glasses POV, laptop analytics hub — one official 10-point-must card.</p>
+          <div class="cta-row">
+            <button class="btn primary" onclick="showView('live'); startFight()">START LIVE FIGHT</button>
+            <button class="btn" onclick="showView('live'); toggleCamera()">OPEN CAMERA</button>
+            <button class="btn" onclick="speakKey('welcome')">TALK TO DANA</button>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card"><b>10-PT</b><span>UNIFIED MUST SYSTEM</span></div>
+            <div class="stat-card"><b>6</b><span>SYNCED SURFACES</span></div>
+            <div class="stat-card"><b>96%</b><span>VERDICT CONFIDENCE</span></div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="glass-mock"><div class="mock-screen">POV HUD · STRIKE LOCK · A 47% B 53%</div></div>
+          <div class="phone-mock">
+            <div class="mock-screen">
+              <div style="color:var(--cyan);font-weight:800">TheJudgeV1</div>
+              FIGHTER A LIVE<br/>SCORE 47%<br/>
+              <div class="mock-bar"></div>
+              PUNCHES 142 · DEFENSE 72%<br/><br/>
+              SYNCED · REALTIME · SECURE
+            </div>
+          </div>
+          <div class="watch-mock"><div class="mock-screen">HR 122<br/>ADV +2<br/>SPO2 98%</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>SCROLL TO ADVANCE THE COMBINATION</h3>
+        <p class="sub">Mike Tyson walks in and throws: stance → jab → cross → hook → uppercut → overhand. Keep scrolling the page.</p>
+      </div>
+      <div class="scroll-runway"></div>
+    </section>
+
+    <!-- LIVE -->
+    <section class="view" id="view-live">
+      <div class="watch-face" id="watch-face" style="display:none">
+        <div class="kicker">WATCH OS / WEAR OS</div>
+        <div class="score-big" id="watch-score">47 / 53</div>
+        <div id="watch-hr">122 BPM</div>
+        <div class="sub">ADVANTAGE +2</div>
+      </div>
+      <div class="fighters">
+        <div class="fA">
+          <div>FIGHTER A · CYAN</div>
+          <div class="score-big" id="pct-a">47%</div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="fB">
+          <div>FIGHTER B · RED</div>
+          <div class="score-big" id="pct-b">53%</div>
+        </div>
+      </div>
+      <div class="meter"><div class="a" id="meter-a" style="width:47%"></div><div class="b" id="meter-b" style="width:53%"></div></div>
+      <div class="round-btns">
+        <span class="live-pill" id="round-clock">R1  3:00</span>
+        <button class="btn primary" id="btn-start" onclick="startFight()">START ROUND</button>
+        <button class="btn" onclick="stopFight()">PAUSE</button>
+        <button class="btn" onclick="nextRound()">NEXT ROUND</button>
+        <button class="btn" id="btn-cam" onclick="toggleCamera()">OPEN CAMERA</button>
+        <span class="live-pill">CONFIDENCE <span id="conf">92%</span></span>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="ring">
+          <video id="cam" playsinline muted autoplay></video>
+          <canvas id="overlay"></canvas>
+          <div id="strike-toast" style="position:absolute;left:12px;top:12px;font-family:Orbitron;z-index:3"></div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>LIVE TOTALS</h3>
+            <div class="kpi"><span>Strikes A / B</span><b><span id="a-strikes">0</span> / <span id="b-strikes">0</span></b></div>
+            <div class="kpi"><span>Jabs A / B</span><b><span id="a-jabs">0</span> / <span id="b-jabs">0</span></b></div>
+            <div class="kpi"><span>Aggression</span><b><span id="a-agg">58%</span> / <span id="b-agg">62%</span></b></div>
+            <div class="kpi"><span>Heart rate</span><b><span id="a-hr">118</span> / <span id="b-hr">124</span></b></div>
+            <p class="sub" style="margin-top:10px">Open camera on iPhone Safari or Android Chrome. Motion in frame is classified as a strike for Fighter A. Simulated opponent keeps working Fighter B.</p>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <h3>MANUAL STRIKE PAD</h3>
+            <div class="round-btns">
+              <button class="btn" onclick="registerStrike('A','jab')">A JAB</button>
+              <button class="btn" onclick="registerStrike('A','cross')">A CROSS</button>
+              <button class="btn" onclick="registerStrike('A','hook')">A HOOK</button>
+              <button class="btn danger" onclick="registerStrike('B','jab')">B JAB</button>
+              <button class="btn danger" onclick="registerStrike('B','hook')">B HOOK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCORE -->
+    <section class="view" id="view-score">
+      <div class="kicker">ROUND 3 OF 3 · CONFIRMED JUDGE SCORE · OFFICIAL</div>
+      <h2 style="margin:8px 0 16px">FIGHT SCORECARD</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>ROUND</th><th>FIGHTER A</th><th>FIGHTER B</th><th>NOTES</th></tr></thead>
+          <tbody id="card-body"></tbody>
+          <tfoot>
+            <tr><th>TOTAL</th><th id="tot-a">29</th><th id="tot-b">28</th><th></th></tr>
+          </tfoot>
+        </table>
+        <div class="cta-row">
+          <div class="live-pill" id="verdict">FIGHTER A WINS — 29-28</div>
+          <button class="btn primary" onclick="exportCard()">EXPORT JSON</button>
+        </div>
+      </div>
+      <h3 style="margin:22px 0 10px;color:var(--cyan)">FIGHTER IQ LENS</h3>
+      <div class="iq">
+        <div class="card"><div class="n" id="iq-acc">73</div>ACCURACY<div class="bar"><i style="width:73%"></i></div></div>
+        <div class="card"><div class="n" id="iq-off">74</div>OFFENSE<div class="bar"><i style="width:74%"></i></div></div>
+        <div class="card"><div class="n" id="iq-gen">72</div>RING GENERALSHIP<div class="bar"><i style="width:72%"></i></div></div>
+        <div class="card"><div class="n" id="iq-ctl">70</div>CONTROL<div class="bar"><i style="width:70%"></i></div></div>
+      </div>
+    </section>
+
+    <!-- PIPELINE -->
+    <section class="view" id="view-pipeline">
+      <div class="kicker">AI FIGHT ANALYSIS · ROUND-BY-ROUND SCORING PIPELINE</div>
+      <h2 style="margin:8px 0 16px">Objective · Consistent · Transparent</h2>
+      <div class="pipe" id="pipe">
+        <div class="step"><div class="num">01</div><h3>PREPARING VIDEO</h3><p class="sub">FFmpeg ingest · 1080p · on-device or Lambda GPU</p></div>
+        <div class="step"><div class="num">02</div><h3>TRACKING A &amp; B</h3><p class="sub">YOLOv8 + ByteTrack ID lock · MediaPipe 33-pt skeleton</p></div>
+        <div class="step"><div class="num">03</div><h3>DETECTING STRIKES</h3><p class="sub">Custom TF/PyTorch classifier · Jab Hook Cross Body</p></div>
+        <div class="step"><div class="num">04</div><h3>CONTROL &amp; AGGRESSION</h3><p class="sub">OpenCV optical flow · ring pressure maps</p></div>
+        <div class="step"><div class="num">05</div><h3>SCORING 10-POINT MUST</h3><p class="sub">Rules engine + XGBoost confidence</p></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <img src="assets/ad-pipeline.jpg" alt="pipeline" style="width:100%;border-radius:12px" />
+      </div>
+    </section>
+
+    <!-- DEVICES -->
+    <section class="view" id="view-devices">
+      <div class="kicker">MULTI-DEVICE SYNC · DECENTRALIZED · CROSS-PLATFORM</div>
+      <h2 style="margin:8px 0 8px">Same card. Every surface.</h2>
+      <p class="sub" id="sync-count">4 / 6 LIVE</p>
+      <div class="device-grid" style="margin-top:16px">
+        <div class="device on" data-dev="iphone" onclick="toggleDevice('iphone')"><h3>iPHONE</h3><p class="sub">Safari camera · Judge app · SwiftUI</p></div>
+        <div class="device on" data-dev="android" onclick="toggleDevice('android')"><h3>ANDROID</h3><p class="sub">Chrome camera · Kotlin Compose</p></div>
+        <div class="device" data-dev="watch" onclick="toggleDevice('watch'); setChrome('watch')"><h3>SMARTWATCH</h3><p class="sub">watchOS / Wear OS · HR · advantage</p></div>
+        <div class="device" data-dev="glasses" onclick="toggleDevice('glasses'); setChrome('glasses')"><h3>SMART GLASSES</h3><p class="sub">ARKit / Vision Pro POV tracking</p></div>
+        <div class="device on" data-dev="laptop" onclick="toggleDevice('laptop')"><h3>LAPTOP</h3><p class="sub">Analytics hub · combined dashboard</p></div>
+        <div class="device" data-dev="actioncam" onclick="toggleDevice('actioncam')"><h3>ACTION CAM</h3><p class="sub">Live feed sync · WebRTC</p></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <img src="assets/ad-ecosystem.jpg" alt="ecosystem" style="width:100%;border-radius:12px" />
+      </div>
+    </section>
+
+    <!-- STACK -->
+    <section class="view" id="view-stack">
+      <div class="kicker">BUILDING THE FUTURE OF SPORTS ANALYTICS</div>
+      <h2 style="margin:8px 0 16px">Tech stack</h2>
+      <div class="grid-3">
+        <div class="card"><h3>FRONTEND</h3><p>SwiftUI · Kotlin Compose · this PWA</p></div>
+        <div class="card"><h3>BACKEND</h3><p>Node.js · Python FastAPI</p></div>
+        <div class="card"><h3>VISION</h3><p>YOLOv8 · OpenCV · TensorFlow · PyTorch · MediaPipe</p></div>
+        <div class="card"><h3>DATABASE</h3><p>Firebase · Supabase · PostgreSQL · S3 video</p></div>
+        <div class="card"><h3>WEARABLES</h3><p>watchOS · WearOS · HealthKit · Google Fit</p></div>
+        <div class="card"><h3>REALTIME</h3><p>WebRTC + Socket.IO</p></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <img src="assets/ad-stack.jpg" alt="stack" style="width:100%;border-radius:12px" />
+      </div>
+    </section>
+  </div>
+
+  <!-- Tyson walk-in -->
+  <div class="tyson-stage" id="tyson-stage">
+    <img src="assets/tyson1.jpg" class="on" alt="stance" />
+    <img src="assets/tyson2.jpg" alt="jab" />
+    <img src="assets/tyson3.jpg" alt="cross" />
+    <img src="assets/tyson4.jpg" alt="hook" />
+    <img src="assets/tyson5.jpg" alt="uppercut" />
+    <img src="assets/tyson6.jpg" alt="overhand" />
+  </div>
+  <div class="tyson-label" id="tyson-label">IRON MIKE · STANCE</div>
+
+  <!-- Glasses HUD -->
+  <div class="glasses-hud">
+    <div class="chip" style="left:16px;top:16px" id="glass-a">A 0 STR</div>
+    <div class="chip" style="right:16px;top:16px" id="glass-b">B 0 STR</div>
+    <div class="chip" style="left:50%;bottom:16px;transform:translateX(-50%)">TheJudgeV1 POV · ARKIT</div>
+  </div>
+
+  <!-- Dana receptionist -->
+  <aside class="dana">
+    <header>
+      <div class="avatar">DW</div>
+      <div>
+        <strong>DANA WHITE</strong>
+        <div class="sub" style="margin:0">AI receptionist · male voice</div>
+      </div>
+    </header>
+    <div class="say" id="dana-text">Tap anywhere to wake Dana. Ask for camera, live fight, scorecard, or devices.</div>
+    <div class="row">
+      <input id="dana-q" placeholder="Talk to Dana…" onkeydown="if(event.key==='Enter')handleDana(this.value)" />
+      <button class="btn primary" onclick="listenDana()">MIC</button>
+      <button class="btn" onclick="handleDana(document.getElementById('dana-q').value)">SEND</button>
+    </div>
+  </aside>
+
+  <audio id="bgm" src="assets/boxing_loop.mp3" loop></audio>
+  <script>
+    // watch face visibility when in watch chrome
+    const obs = new MutationObserver(() => {
+      const on = document.body.classList.contains("mode-watch");
+      const wf = document.getElementById("watch-face");
+      if (wf) wf.style.display = on ? "block" : "none";
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

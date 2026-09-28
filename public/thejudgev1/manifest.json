@@ -1,0 +1,10 @@
+{
+  "name": "TheJudgeV1 — Real-Time Fight Scoring",
+  "short_name": "TheJudgeV1",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#05070d",
+  "theme_color": "#00e5ff",
+  "description": "Real-time, unbiased, verifiable fight scoring across phone, watch, glasses, and desktop.",
+  "icons": []
+}
