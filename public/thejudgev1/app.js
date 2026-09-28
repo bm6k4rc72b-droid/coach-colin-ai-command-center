@@ -41,6 +41,10 @@ function showView(id) {
   if (id === "pipeline") speakKey("pipeline");
   if (id === "score") speakKey("score");
   if (id === "devices") speakKey("sync");
+  if (id === "train") {
+    if (typeof trainInit === "function") trainInit();
+    speakKey("camera");
+  }
 }
 
 /* ---------- CLOCK / LIVE SIM ---------- */
@@ -397,6 +401,7 @@ function handleDana(q) {
   if (/sync|watch|glass|iphone|android|laptop|device/.test(s)) { showView("devices"); speakKey("sync"); return; }
   if (/pipeline|how|yolo|ai|vision/.test(s)) { showView("pipeline"); speakKey("pipeline"); return; }
   if (/music/.test(s)) { toggleMusic(); speakKey("help"); return; }
+  if (/train|uppercut|jab|hook|brawl|pad|film/.test(s)) { showView("train"); if (typeof trainStart === "function") trainStart(); return; }
   speakKey("welcome");
 }
 function listenDana() {
