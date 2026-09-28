@@ -30,6 +30,7 @@
     status: { src: "assets/audio/wayne-status.mp3", text: "Link active. Heartbeat stable. Zone B, loading dock." },
     fall: { src: "assets/audio/wayne-fall.mp3", text: "Alert. Fall detected. Worker twelve. Help is pushed." },
     stealth: { src: "assets/audio/wayne-unknown.mp3", text: "Stealth stack is live. MediaPipe pinch-to-vanish, thermal plus RGB, WiFi CSI. It only masks feeds you own." },
+    lab: { src: "assets/audio/wayne-unknown.mp3", text: "The try lab is armed. Capture an empty room, then vanish. Thermal and fall drill are on the same glass." },
     unknown: { src: "assets/audio/wayne-unknown.mp3", text: "I did not catch that. Try devices, stack, privacy, or help." },
     listen: { src: "assets/audio/wayne-listen.mp3", text: "I am listening, sir." },
   };
@@ -271,8 +272,8 @@
   document.querySelectorAll("[data-cmd]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const cmd = btn.dataset.cmd;
-      if (cmd === "devices" || cmd === "stack" || cmd === "privacy" || cmd === "stealth" || cmd === "console") {
-        const el = document.getElementById(cmd === "console" ? "console" : cmd);
+      if (["devices", "stack", "privacy", "stealth", "console", "lab"].includes(cmd)) {
+        const el = document.getElementById(cmd);
         if (el) el.scrollIntoView({ behavior: "smooth" });
       }
       speak(cmd);
@@ -335,4 +336,114 @@
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
+
+  const labVideo = document.getElementById("lab-video");
+  const labCanvas = document.getElementById("lab-canvas");
+  const labCtx = labCanvas.getContext("2d", { willReadFrequently: true });
+  const labMode = document.getElementById("lab-mode");
+  const labRange = document.getElementById("lab-range");
+  const labMotion = document.getElementById("lab-motion");
+  let labStream = null;
+  let bgData = null;
+  let vanishOn = false;
+  let thermalOn = false;
+  let labLoop = 0;
+
+  function heat(r, g, b) {
+    const t = (r * 0.3 + g * 0.5 + b * 0.2) / 255;
+    if (t < 0.33) return [0, Math.floor(t * 3 * 80), Math.floor(40 + t * 80)];
+    if (t < 0.66) return [Math.floor((t - 0.33) * 3 * 220), 40, 0];
+    return [255, Math.floor((t - 0.66) * 3 * 180), 0];
+  }
+
+  function labTick() {
+    if (!labStream) return;
+    const w = labCanvas.width, h = labCanvas.height;
+    labCtx.drawImage(labVideo, 0, 0, w, h);
+    const frame = labCtx.getImageData(0, 0, w, h);
+    const d = frame.data;
+    let changed = 0;
+    if (bgData) {
+      const b = bgData.data;
+      for (let i = 0; i < d.length; i += 16) {
+        const diff = Math.abs(d[i] - b[i]) + Math.abs(d[i + 1] - b[i + 1]) + Math.abs(d[i + 2] - b[i + 2]);
+        if (diff > 70) changed++;
+      }
+    }
+    const motion = Math.min(100, Math.round((changed / (d.length / 16)) * 400));
+    labMotion.textContent = motion + "%";
+    labRange.textContent = motion > 8 ? (1.2 + (100 - motion) / 80).toFixed(1) + "m" : "clear";
+
+    if ((vanishOn && bgData) || thermalOn) {
+      const b = bgData ? bgData.data : null;
+      for (let i = 0; i < d.length; i += 4) {
+        let useBg = false;
+        if (vanishOn && b) {
+          const diff = Math.abs(d[i] - b[i]) + Math.abs(d[i + 1] - b[i + 1]) + Math.abs(d[i + 2] - b[i + 2]);
+          useBg = diff > 55;
+        }
+        if (useBg) {
+          d[i] = b[i]; d[i + 1] = b[i + 1]; d[i + 2] = b[i + 2];
+        } else if (thermalOn) {
+          const c = heat(d[i], d[i + 1], d[i + 2]);
+          d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2];
+        }
+      }
+      labCtx.putImageData(frame, 0, 0);
+    }
+    labLoop = requestAnimationFrame(labTick);
+  }
+
+  document.getElementById("lab-arm").addEventListener("click", async () => {
+    try {
+      labStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: 960, height: 540 }, audio: false });
+      labVideo.srcObject = labStream;
+      await labVideo.play();
+      labMode.textContent = "RGB LIVE";
+      cancelAnimationFrame(labLoop);
+      labTick();
+    } catch (e) {
+      labMode.textContent = "CAMERA BLOCKED";
+      document.getElementById("lab-help").textContent = "Allow the camera in the browser prompt. iPhone: Safari settings → Camera.";
+    }
+  });
+  document.getElementById("lab-bg").addEventListener("click", () => {
+    if (!labStream) return;
+    bgData = labCtx.getImageData(0, 0, labCanvas.width, labCanvas.height);
+    labMode.textContent = "ROOM LOCKED";
+  });
+  document.getElementById("lab-vanish").addEventListener("click", () => {
+    if (!bgData) {
+      labMode.textContent = "CAPTURE ROOM FIRST";
+      return;
+    }
+    vanishOn = !vanishOn;
+    labMode.textContent = vanishOn ? (thermalOn ? "VANISH + THERMAL" : "VANISH") : (thermalOn ? "THERMAL" : "RGB LIVE");
+  });
+  document.getElementById("lab-thermal").addEventListener("click", () => {
+    thermalOn = true;
+    labMode.textContent = vanishOn ? "VANISH + THERMAL" : "THERMAL";
+  });
+  document.getElementById("lab-rgb").addEventListener("click", () => {
+    thermalOn = false;
+    labMode.textContent = vanishOn ? "VANISH" : "RGB LIVE";
+  });
+  document.getElementById("lab-fall").addEventListener("click", () => {
+    applyMode("watch");
+    speak("fall");
+    document.getElementById("watch-face").hidden = false;
+    setTimeout(() => {
+      if (!document.body.classList.contains("mode-watch")) document.getElementById("watch-face").hidden = true;
+    }, 5000);
+  });
+  document.getElementById("lab-stop").addEventListener("click", () => {
+    cancelAnimationFrame(labLoop);
+    vanishOn = false;
+    thermalOn = false;
+    bgData = null;
+    if (labStream) labStream.getTracks().forEach((t) => t.stop());
+    labStream = null;
+    labMode.textContent = "STANDBY";
+    labCtx.clearRect(0, 0, labCanvas.width, labCanvas.height);
+  });
 })();
