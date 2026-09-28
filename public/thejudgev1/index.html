@@ -8,10 +8,12 @@
   <title>TheJudgeV1 — Real-Time Fight Scoring</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600&family=Orbitron:wght@600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="letterbox top"></div>
+  <div class="letterbox bot"></div>
   <div class="circuit"></div>
   <div class="app">
     <header class="topbar">
@@ -31,6 +33,7 @@
       <button data-view="live" onclick="showView('live')">LIVE FIGHT + CAMERA</button>
       <button data-view="train" onclick="showView('train')">TRAIN · UPPERCUT · AR</button>
       <button data-view="score" onclick="showView('score')">SCORECARD + IQ</button>
+      <button data-view="film" onclick="showView('film'); startFilmStudy()">FILM STUDY</button>
       <button data-view="pipeline" onclick="showView('pipeline')">AI PIPELINE</button>
       <button data-view="devices" onclick="showView('devices')">MULTI-DEVICE</button>
       <button data-view="stack" onclick="showView('stack')">TECH STACK</button>
@@ -47,6 +50,7 @@
             <button class="btn primary" onclick="showView('live'); startFight()">START LIVE FIGHT</button>
             <button class="btn" onclick="showView('live'); toggleCamera()">OPEN CAMERA</button>
             <button class="btn" onclick="showView('train'); trainStart()">ARM THEN FILM</button>
+            <button class="btn" onclick="showView('film'); startFilmStudy()">FILM STUDY</button>
             <button class="btn" onclick="speakKey('welcome')">TALK TO DANA</button>
           </div>
           <div class="stats-row">
@@ -260,6 +264,102 @@
         <div class="card"><div class="n" id="iq-gen">72</div>RING GENERALSHIP<div class="bar"><i style="width:72%"></i></div></div>
         <div class="card"><div class="n" id="iq-ctl">70</div>CONTROL<div class="bar"><i style="width:70%"></i></div></div>
       </div>
+      <p class="sub">Open <b>FILM STUDY</b> for the full post-fight breakdown — critiques, corner notes, broadcast desk, round cards.</p>
+    </section>
+
+    <!-- FILM STUDY -->
+    <section class="view" id="view-film">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div>
+          <div class="kicker">STRYKER-CLASS FILM STUDY · TheJudgeV1</div>
+          <h2>Fight Scorecard</h2>
+        </div>
+        <div class="round-btns">
+          <span class="badge">Boxing</span>
+          <span class="badge">High confidence</span>
+          <span class="badge" id="film-conf">85%</span>
+          <button class="btn primary" onclick="startFilmStudy()">RUN ANALYSIS</button>
+          <label class="btn">UPLOAD CLIP<input type="file" accept="video/*" hidden onchange="loadFightClip(this)"></label>
+        </div>
+      </div>
+
+      <div class="film-frame" id="film-frame">
+        <img id="film-still" src="assets/film-still.jpg" alt="Tony vs Jose" />
+        <video id="film-vid" playsinline muted loop style="display:none"></video>
+        <div class="flare"></div>
+        <div class="tag a">A<small id="name-a">TONY</small></div>
+        <div class="tag b">B<small id="name-b">JOSE</small></div>
+      </div>
+
+      <div class="card" id="pipe-card">
+        <h3 id="pipe-head">Preparing video…</h3>
+        <ul class="pipe-list" id="film-pipe"></ul>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>VISIBLE FIGHT TOTALS</h3>
+        <table class="totals">
+          <thead><tr><th class="col-a" id="th-a">TONY</th><th class="stat">STAT</th><th class="col-b" id="th-b">JOSE</th></tr></thead>
+          <tbody id="totals-body"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>INDIVIDUAL FIGHTER CRITIQUES</h3>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div class="tag a" style="position:static;width:28px;height:28px;font-size:12px">T</div>
+          <div><b id="crit-name">Tony</b><div class="sub" style="margin:0">SEPARATE FIGHTER CRITIQUE</div></div>
+        </div>
+        <p class="critique" id="crit-a">Tony showed excellent speed but lacked defensive closing on the exits. Needs to keep the chin tucked.</p>
+        <div class="worked">WHAT WORKED</div>
+        <ul class="sub" id="worked-a"><li>Fast hands</li><li>Good footwork</li><li>Aggressive pressure</li></ul>
+        <div class="worked" style="color:#e07a6a">CORRECTIONS</div>
+        <ul class="sub" id="corr-a"><li>Keep the chin tucked</li><li>Return the guard quickly</li><li>Angle out after combinations</li></ul>
+        <hr style="border:0;border-top:1px solid var(--line);margin:16px 0" />
+        <p class="critique" id="crit-b">Jose stayed composed and stole late seconds with cleaner exits. Cut the ring off more aggressively; don't chase — corner him.</p>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>ROUND-BY-ROUND CARD</h3>
+        <div id="rbr"></div>
+      </div>
+
+      <h3 style="margin:20px 0 10px">FIGHT-IQ LENS</h3>
+      <div class="iq-lux">
+        <div class="card"><div class="n">73</div>ACCURACY<div class="bar"><i style="width:73%"></i></div></div>
+        <div class="card"><div class="n">74</div>OFFENSE<div class="bar"><i style="width:74%"></i></div></div>
+        <div class="card"><div class="n">72</div>RING GENERALSHIP<div class="bar"><i style="width:72%"></i></div></div>
+        <div class="card"><div class="n">70</div>CONTROL<div class="bar"><i style="width:70%"></i></div></div>
+        <div class="card"><div class="n">71</div>FIGHT IQ<div class="bar"><i style="width:71%"></i></div></div>
+        <div class="card"><div class="n">72</div>COMPOSURE<div class="bar"><i style="width:72%"></i></div></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>⚖ JUDGE'S CARD</h3>
+        <p class="critique">The exchange is judged under standard 10-point must boxing criteria, focusing on clean punching, effective aggression, and ring control.</p>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>((•)) BROADCAST DESK</h3>
+        <p class="critique" id="broadcast">Tony and Jose are trading leather here in the center of the ring! Both men showing high activity levels, but they need to watch those defensive exits to avoid the counter.</p>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>ELITE CORNER NOTES</h3>
+        <p class="sub">Coach's-corner feedback — separate from the official score.</p>
+        <div class="corner"><div class="who">CHAMPIONSHIP COACH</div><p class="critique">Stop dropping the lead hand when you pull out of the pocket; you are inviting a counter cross.</p></div>
+        <div class="corner"><div class="who">VETERAN TRAINER</div><p class="critique">Your heavy breathing suggests you're over-extending. Shorten the combinations and reset behind the jab.</p></div>
+        <div class="corner"><div class="who">HALL OF FAMER</div><p class="critique">Poise wins rounds. Don't fight for the crowd's cheer; fight for the opening.</p></div>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3 style="color:var(--lime)">WEAPONS</h3>
+          <ul class="sub"><li>Hand speed</li><li>Combination output</li><li>Active pressure</li></ul>
+        </div>
+        <div class="card">
+          <h3 style="color:#e07a6a">CORRECTIONS</h3>
+          <ul class="sub"><li>Chin on exits</li><li>Don't chase — cut the ring</li><li>Guard after the last shot</li></ul>
+        </div>
+      </div>
+      <p class="kicker" style="margin-top:18px" id="film-done">ANALYSIS READY</p>
     </section>
 
     <!-- PIPELINE -->
@@ -377,5 +477,6 @@
   </script>
   <script src="app.js"></script>
   <script src="train.js"></script>
+  <script src="film.js"></script>
 </body>
 </html>

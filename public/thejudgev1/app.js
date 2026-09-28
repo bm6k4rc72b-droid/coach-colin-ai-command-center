@@ -45,6 +45,7 @@ function showView(id) {
     if (typeof trainInit === "function") trainInit();
     speakKey("camera");
   }
+  if (id === "film") speakKey("pipeline");
 }
 
 /* ---------- CLOCK / LIVE SIM ---------- */
@@ -401,7 +402,8 @@ function handleDana(q) {
   if (/sync|watch|glass|iphone|android|laptop|device/.test(s)) { showView("devices"); speakKey("sync"); return; }
   if (/pipeline|how|yolo|ai|vision/.test(s)) { showView("pipeline"); speakKey("pipeline"); return; }
   if (/music/.test(s)) { toggleMusic(); speakKey("help"); return; }
-  if (/train|uppercut|jab|hook|brawl|pad|film/.test(s)) { showView("train"); if (typeof trainStart === "function") trainStart(); return; }
+  if (/film|study|critique|tony|jose|scorecard|judge/.test(s)) { showView("film"); if (typeof startFilmStudy === "function") startFilmStudy(); return; }
+  if (/train|uppercut|jab|hook|brawl|pad/.test(s)) { showView("train"); if (typeof trainStart === "function") trainStart(); return; }
   speakKey("welcome");
 }
 function listenDana() {
