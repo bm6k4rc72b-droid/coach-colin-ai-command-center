@@ -29,6 +29,7 @@
       <a href="#capabilities">Capabilities</a>
       <a href="#console">Radar / BPM</a>
       <a href="#stealth">Stealth</a>
+      <a href="#lab">Try it</a>
       <a href="#devices">Devices</a>
       <a href="#stack">Stack</a>
       <a href="#privacy">Privacy</a>
@@ -146,12 +147,42 @@
         <article class="card"><div class="idx">06</div><h3>Multi-device stealth HUD</h3><p>iPhone · Android · Laptop · Smart glasses AR HUD · Drone aerial thermal · IoT camera feed. Thermal gain, motion radar, and WiFi waves live in one console.</p></article>
       </div>
       <div class="split" style="margin-top:28px">
-        <img class="shot" src="assets/stealth-dual.jpg" alt="Thermal vs normal dual view" />
-        <img class="shot" src="assets/stealth-ui.jpg" alt="UcantSeeMeX multi-device app UI" />
+        <img class="shot" src="assets/cave-thermal.jpg" alt="Thermal versus cave RGB dual view" />
+        <img class="shot" src="assets/cave-console.jpg" alt="Cave multi-device radar console" />
       </div>
       <div class="hero-panel" style="margin-top:22px">
         <div class="panel-title">App Store ethics</div>
-        <p style="color:#c7d7cc;line-height:1.45">UcantSeeMeX creates the invisibility effect on <strong>your own camera feeds that you control</strong> — privacy, content, AR storytelling. It does not make you physically invisible to third-party cameras you do not own.</p>
+        <p style="color:#c7d7cc;line-height:1.45">The invisibility effect runs on <strong>your own camera feeds that you control</strong> — privacy, content, AR. It does not make you physically invisible to cameras you do not own.</p>
+      </div>
+    </section>
+
+    <section id="lab" data-zone="TRY LAB">
+      <div class="section-head">
+        <div class="kicker">Live trial</div>
+        <h2>Step into the feed. Try the cave.</h2>
+        <p>Uses your device camera only in this browser. Capture an empty frame, then vanish. Thermal remaps the same feed. Motion and range react to movement. Nothing is uploaded.</p>
+      </div>
+      <div class="lab-wrap">
+        <div class="lab-stage">
+          <video id="lab-video" playsinline autoplay muted></video>
+          <canvas id="lab-canvas" width="960" height="540"></canvas>
+          <div class="lab-hud">
+            <span id="lab-mode">STANDBY</span>
+            <span>BPM <b class="bpm-sync">78</b></span>
+            <span>RANGE <b id="lab-range">—</b></span>
+            <span>MOTION <b id="lab-motion">0%</b></span>
+          </div>
+        </div>
+        <div class="lab-controls">
+          <button type="button" class="btn btn-primary" id="lab-arm">Arm camera</button>
+          <button type="button" class="btn btn-ghost" id="lab-bg">1. Capture empty room</button>
+          <button type="button" class="btn btn-ghost" id="lab-vanish">2. Vanish</button>
+          <button type="button" class="btn btn-ghost" id="lab-thermal">Thermal</button>
+          <button type="button" class="btn btn-ghost" id="lab-rgb">RGB</button>
+          <button type="button" class="btn btn-ghost" id="lab-fall">Fall drill</button>
+          <button type="button" class="btn btn-ghost" id="lab-stop">Stop</button>
+          <p id="lab-help">Arm the camera. Step out of frame and capture the empty room. Step back in and hit Vanish — your body is replaced with that still. Thermal paints heat on the same pixels. Fall drill fires Mr. Wayne and the watch alert.</p>
+        </div>
       </div>
     </section>
 
@@ -319,6 +350,7 @@
       <button data-cmd="devices">Devices</button>
       <button data-cmd="stack">Stack</button>
       <button data-cmd="stealth">Stealth</button>
+      <button data-cmd="lab">Try lab</button>
       <button data-cmd="fall">Fall drill</button>
     </div>
   </aside>
