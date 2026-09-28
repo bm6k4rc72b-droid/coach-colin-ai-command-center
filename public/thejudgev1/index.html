@@ -29,6 +29,7 @@
     <nav class="nav">
       <button class="active" data-view="home" onclick="showView('home')">HOME</button>
       <button data-view="live" onclick="showView('live')">LIVE FIGHT + CAMERA</button>
+      <button data-view="train" onclick="showView('train')">TRAIN · UPPERCUT · AR</button>
       <button data-view="score" onclick="showView('score')">SCORECARD + IQ</button>
       <button data-view="pipeline" onclick="showView('pipeline')">AI PIPELINE</button>
       <button data-view="devices" onclick="showView('devices')">MULTI-DEVICE</button>
@@ -45,6 +46,7 @@
           <div class="cta-row">
             <button class="btn primary" onclick="showView('live'); startFight()">START LIVE FIGHT</button>
             <button class="btn" onclick="showView('live'); toggleCamera()">OPEN CAMERA</button>
+            <button class="btn" onclick="showView('train'); trainStart()">ARM THEN FILM</button>
             <button class="btn" onclick="speakKey('welcome')">TALK TO DANA</button>
           </div>
           <div class="stats-row">
@@ -127,6 +129,109 @@
               <button class="btn danger" onclick="registerStrike('B','hook')">B HOOK</button>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRAIN / UPPERCUT / BRAWLER -->
+    <section class="view" id="view-train">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div>
+          <div class="kicker" id="drill-cue">DIP THEN DRIVE. SHORT ARC.</div>
+          <h2 id="drill-name">UPPERCUT</h2>
+        </div>
+        <div class="round-btns">
+          <button class="btn primary" id="btn-film" onclick="trainToggle()">ARM · FILM SET</button>
+          <button class="btn" onclick="cycleFacing()">CAM: <span id="facing-lbl">FRONT</span></button>
+          <button class="btn" onclick="document.body.classList.toggle('theme-gym')">GYM THEME</button>
+        </div>
+      </div>
+
+      <div class="chips" id="mode-chips">
+        <button class="chip-btn on" data-mode="clean">clean</button>
+        <button class="chip-btn" data-mode="night">night</button>
+        <button class="chip-btn" data-mode="thermal">thermal</button>
+        <button class="chip-btn" data-mode="heat">heat</button>
+        <button class="chip-btn" data-mode="exo">exo</button>
+        <button class="chip-btn" data-mode="ego">ego</button>
+        <button class="chip-btn" data-mode="twocam">2-cam</button>
+        <button class="chip-btn on" data-mode="ar">AR</button>
+        <button class="chip-btn" data-mode="qr">QR</button>
+      </div>
+      <div class="chips" id="drill-chips">
+        <button class="chip-btn" data-drill="JAB">jab</button>
+        <button class="chip-btn" data-drill="CROSS">cross</button>
+        <button class="chip-btn" data-drill="HOOK">hook</button>
+        <button class="chip-btn on" data-drill="UPPERCUT">uppercut</button>
+        <button class="chip-btn" data-drill="OVERHAND">overhand</button>
+      </div>
+
+      <div class="htkg" style="display:flex;gap:10px;align-items:center;margin:8px 0 12px;flex-wrap:wrap">
+        <label>Ht <input id="ht" type="number" value="188" /></label>
+        <label>Kg <input id="kg" type="number" value="79" /></label>
+        <span class="live-pill">HRV · FACE IN FRAME FOR PULSE</span>
+        <span class="live-pill" id="rep-count">REPS 0</span>
+        <span class="live-pill" id="combo-count">COMBO 0</span>
+      </div>
+
+      <div class="stage" id="train-stage">
+        <video id="train-cam" playsinline muted autoplay></video>
+        <video id="train-cam-b" class="pip" playsinline muted autoplay style="display:none;position:absolute"></video>
+        <canvas id="train-fx"></canvas>
+        <canvas id="train-hud"></canvas>
+        <div class="status-tag" id="train-status">READY</div>
+        <div class="pip" id="pip-box"><video id="pip-cam" playsinline muted autoplay></video></div>
+      </div>
+      <div style="margin:10px 0 16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;letter-spacing:.1em;color:var(--muted)">
+          <span>HEALTH</span><span id="health-lbl">100%</span>
+        </div>
+        <div class="health-bar"><i id="health-fill" style="width:100%"></i></div>
+      </div>
+
+      <div class="metric-grid">
+        <div class="metric"><span>PEAK SPEED</span><b id="m-speed">0.00 m/s</b></div>
+        <div class="metric"><span>PEAK POWER</span><b id="m-power">0 W</b></div>
+        <div class="metric"><span>BEST REP</span><b id="m-best">#0</b></div>
+        <div class="metric"><span>SWAY</span><b id="m-sway">0.0 cm</b></div>
+        <div class="metric"><span>HAND SPEED</span><b id="m-hand">0.0 m/s</b></div>
+        <div class="metric"><span>GUARD</span><b id="m-guard">High</b></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3>MUSCLE LOAD (LIVE)</h3>
+          <p class="sub">Bars jump as you move. Full body in frame.</p>
+          <div class="muscle" id="muscles"></div>
+        </div>
+        <div class="card">
+          <h3>BIOMECH (LIVE)</h3>
+          <p class="sub">Sagittal estimate from the camera + your kg. Side view is best. Not force plates. Not glasses mocap.</p>
+          <div class="bio-line" id="bio-torso">Torso lean 0.0°</div>
+          <div class="bio-line" id="bio-knee">Knee flex (F) 0.0° (R) 0.0°</div>
+          <div class="bio-line" id="bio-load">Load F 50% R 50%</div>
+          <div class="bio-line" id="bio-mom">Knee moment 0 N·m</div>
+          <canvas id="stick" width="640" height="160" style="width:100%;margin-top:8px;background:#07140f;border-radius:8px"></canvas>
+          <p class="sub" style="margin-top:8px">FORCE PLATE (KINEMATIC) · GRF from COM accel + kg. Not a Hawkin / VALD plate.</p>
+          <canvas id="grf" width="640" height="90" style="width:100%;background:#07140f;border-radius:8px"></canvas>
+          <div class="bio-line" id="grf-lbl">GRF 0 N · peak 0 N · RFD 0 N/s</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3>EMG (KINEMATIC)</h3>
+          <p class="sub">Activation envelopes from pose load. Not Delsys electrodes.</p>
+          <canvas id="emg" width="640" height="110" style="width:100%;background:#07140f;border-radius:8px"></canvas>
+        </div>
+        <div class="card">
+          <h3>OPENSIM-LITE</h3>
+          <p class="sub">Inverse dynamics + muscle force share. Educational model, not OpenSim.</p>
+          <div id="osim"></div>
+          <h3 style="margin-top:12px">ROM HEAT</h3>
+          <canvas id="rom" width="640" height="36" style="width:100%;border-radius:6px"></canvas>
+          <h3 style="margin-top:12px">TRACE</h3>
+          <canvas id="trace" width="640" height="70" style="width:100%;background:#07140f;border-radius:8px"></canvas>
         </div>
       </div>
     </section>
@@ -244,6 +349,22 @@
     </div>
   </aside>
 
+  <div class="tko" id="tko">
+    <div class="tko-card">
+      <div class="kicker">NEW RECORD</div>
+      <h1>TKO</h1>
+      <p class="sub">FINAL SCORE</p>
+      <div class="score-big" id="tko-score">0</div>
+      <div class="metric-grid" style="margin:16px 0;text-align:left">
+        <div class="metric"><span>PADS HIT</span><b id="tko-hit">0</b></div>
+        <div class="metric"><span>ACCURACY</span><b id="tko-acc">0%</b></div>
+        <div class="metric"><span>BEST COMBO</span><b id="tko-combo">0</b></div>
+        <div class="metric"><span>PERFECT</span><b id="tko-perf">0</b></div>
+      </div>
+      <button class="btn primary" onclick="trainAgain()">TRAIN AGAIN</button>
+    </div>
+  </div>
+
   <audio id="bgm" src="assets/boxing_loop.mp3" loop></audio>
   <script>
     // watch face visibility when in watch chrome
@@ -255,5 +376,6 @@
     obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   </script>
   <script src="app.js"></script>
+  <script src="train.js"></script>
 </body>
 </html>
