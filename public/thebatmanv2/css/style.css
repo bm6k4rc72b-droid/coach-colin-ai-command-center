@@ -1,7 +1,7 @@
 :root {
   --bg: #05070a;
   --bg-2: #0b1118;
-  --panel: rgba(8, 14, 20, 0.72);
+  --panel: rgba(8, 14, 20, 0.82);
   --line: rgba(90, 255, 140, 0.22);
   --green: #6dff7a;
   --green-2: #b7ff7a;
@@ -15,7 +15,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-html, body { background: var(--bg); color: var(--text); }
+html, body { background: #000; color: var(--text); }
 body {
   font-family: "Rajdhani", "Segoe UI", sans-serif;
   overflow-x: hidden;
@@ -37,16 +37,29 @@ body {
   opacity: 0.35;
 }
 
-.grid-bg {
+.cave-bg {
   pointer-events: none;
   position: fixed;
   inset: 0;
   z-index: 0;
+  background: url("../assets/throne.jpg") center 18% / cover no-repeat;
+}
+.cave-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.62) 50%, rgba(0,0,0,0.86) 100%);
+}
+.grid-bg {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
   background-image:
-    linear-gradient(rgba(80, 255, 140, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(80, 255, 140, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(80, 255, 140, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 255, 140, 0.05) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 78%);
+  opacity: 0.28;
 }
 
 nav {
