@@ -118,7 +118,15 @@
       ticking = true;
     }
   }, { passive: true });
-  window.addEventListener("resize", updateWalker);
+  // On narrow screens the Mr. Wayne dock spans the bottom edge; lift Batman above it.
+  const dock = document.getElementById("wayne-dock");
+  function liftWalker() {
+    const lift = window.innerWidth <= 980 && dock ? dock.offsetHeight + 18 : 0;
+    walker.style.bottom = lift ? lift + "px" : "";
+    glow.style.bottom = lift ? lift + "px" : "";
+  }
+  window.addEventListener("resize", () => { liftWalker(); updateWalker(); });
+  liftWalker();
   updateWalker();
 
   function pad(n) { return String(n).padStart(2, "0"); }

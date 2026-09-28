@@ -1,4 +1,4 @@
-const CACHE = "batmanv2-v3";
+const CACHE = "batmanv2-v4";
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll([
