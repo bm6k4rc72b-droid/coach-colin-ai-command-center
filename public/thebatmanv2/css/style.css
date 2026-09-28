@@ -340,10 +340,149 @@ footer {
 }
 
 @media (max-width: 980px) {
-  .hero, .devices, .split, .feature-grid, .stack-grid, .privacy {
+  .hero, .devices, .split, .feature-grid, .stack-grid, .privacy, .platform-stack {
     grid-template-columns: 1fr;
   }
   .nav-links { display: none; }
-  section { padding: 100px 6vw 160px; }
+  section { padding: 120px 6vw 180px; }
   #walker { width: min(280px, 70vw); }
+  .wayne-dock { left: 12px; right: 12px; min-width: 0; }
+  .hud-toast { display: none; }
 }
+
+.device-bar {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 61;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  background: rgba(5,7,10,0.82);
+  backdrop-filter: blur(8px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.device-bar button {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 6px 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-family: inherit;
+}
+.device-bar button.on { color: #041208; background: var(--green); }
+
+.platform-stack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.platform-stack article {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 16px;
+}
+.platform-stack small {
+  color: var(--green);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.platform-stack h3 { margin: 8px 0; font-size: 18px; }
+.platform-stack p { color: var(--muted); font-size: 15px; }
+
+.wayne-dock {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 56;
+  width: min(340px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  background: rgba(6,10,12,0.92);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+.wayne-head { display: flex; justify-content: space-between; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+.wayne-head span { color: var(--green); }
+.wayne-dock p { color: #c7d7cc; margin: 8px 0 12px; font-size: 15px; line-height: 1.35; }
+.wayne-actions { display: flex; align-items: center; gap: 8px; }
+.wayne-actions button, .wayne-chips button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  font-family: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.wayne-actions button.live { border-color: var(--red); color: var(--red); }
+#vol { flex: 1; accent-color: var(--green); }
+.wayne-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(2,4,6,0.86);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.gate-card {
+  max-width: 520px;
+  border: 1px solid var(--line);
+  background: #0a1014;
+  padding: 28px;
+}
+.gate-card p { color: var(--muted); margin: 12px 0 22px; }
+.gate-card .btn { margin-right: 8px; margin-top: 8px; }
+
+.watch-face {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.watch-ring {
+  width: min(320px, 78vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 10px solid #1a1f22;
+  box-shadow: 0 0 0 4px #6dff7a33, 0 30px 60px #000;
+  background: #05070a;
+  display: grid;
+  place-items: center;
+}
+.watch-inner { text-align: center; }
+.watch-bpm { font-family: "Orbitron", sans-serif; font-size: 64px; color: var(--green); }
+.watch-zone { margin-top: 10px; color: var(--muted); letter-spacing: 0.14em; }
+
+.glasses-hud {
+  position: fixed;
+  top: 110px;
+  right: 24px;
+  z-index: 45;
+  pointer-events: none;
+  font-family: "Orbitron", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--green);
+  text-shadow: 0 0 12px #6dff7a;
+  line-height: 1.8;
+}
+
+body.mode-watch main, body.mode-watch footer, body.mode-watch .hud-toast { filter: blur(6px) brightness(0.45); }
+body.mode-watch #walker { opacity: 0.15; }
+body.mode-glasses .glasses-hud { display: block; }
+body.mode-watch .watch-face { display: grid; }
+body.mode-laptop .hero { grid-template-columns: 1fr 1fr; }
+
+[hidden] { display: none !important; }

@@ -1,26 +1,28 @@
-# TheBatmanV2 — See Without Seeing
+# TheBatmanV2
 
-Interactive product site for the UWB radar campaign.
+Cross-platform cave console: iPhone 13+, Android, laptop, smart watch, smart glasses.
 
-## Open it
+## Open
 
-Open `index.html` in a browser, or from this folder:
-
-```bash
 python3 -m http.server 8080
-```
 
-Then visit `http://localhost:8080`.
+Visit http://localhost:8080
+iPhone: Safari → Share → Add to Home Screen
+Android: Chrome → Install app
 
-## Scroll walk
+## Audio
 
-The armored Batman figure is pinned to the viewport. As you scroll he patrols left → right through each section, swaps walk frames, bobs with each step, flips when you scroll back, and the HUD toast updates to the zone he is walking through.
+Background score: "Signal to Noise" by Scott Buckley, CC BY 4.0 (www.scottbuckley.com.au).
+Dark cinematic original — not the copyrighted Batman film theme.
 
-## What’s in the site
+Receptionist: Mr. Wayne (deep male voice).
+Enter with Mr. Wayne, then Speak / chips, or say: help, status, devices, stack, privacy, capabilities, fall, mute.
 
-- Live radar waveform + vitals mock
-- Seven capabilities + bonus from the campaign brief
-- Device fleet (iPhone, Android, laptop, edge unit, watch, glasses)
-- Worker safety and predictive-maintenance galleries
-- Silicon / AI / cloud stack
-- Privacy panel (no lens, on-device ECG, AES-256)
+## Surfaces
+
+- iPhone 13 / 14 / 15 / 16 — iOS 16 — Swift, SwiftUI, HealthKit, CoreBluetooth, APNs
+- Android phones — Android 12 — Kotlin, Jetpack Compose, FCM, BLE
+- Laptop — macOS / Windows — Electron, React, Recharts
+- Apple Watch / Wear OS — haptic fall, BPM, zone chip
+- Ray-Ban Meta / Vision Pro / Vuzix — Spark AR, Unity, ARKit HUD
+- Edge unit — ESP32-S3 — Novelda X4M300 / Infineon BGT60TR13C, TinyML
