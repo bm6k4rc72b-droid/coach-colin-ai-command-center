@@ -191,7 +191,7 @@ button, .btn {
   font-size: 12px; letter-spacing: 0.16em; color: var(--green);
   margin-bottom: 14px; text-transform: uppercase;
 }
-canvas#radar {
+canvas#radar, canvas#radar2 {
   width: 100%; height: 260px; display: block;
   background: radial-gradient(circle at center, rgba(109,255,122,0.08), transparent 62%);
 }
@@ -352,8 +352,39 @@ footer {
   box-shadow: 0 0 10px var(--green);
 }
 
+.console-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.console-tabs button {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  font-family: inherit;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.console-tabs button.on { background: var(--green); color: #041208; border-color: var(--green); }
+.console-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 22px;
+  align-items: stretch;
+}
+.deck-copy {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 22px;
+}
+.deck-copy p { color: var(--muted); margin: 10px 0 16px; font-size: 17px; line-height: 1.4; }
+.deck-list { color: #c7d7cc; padding-left: 18px; line-height: 1.7; }
+
 @media (max-width: 980px) {
-  .hero, .devices, .split, .feature-grid, .stack-grid, .privacy, .platform-stack {
+  .hero, .devices, .split, .feature-grid, .stack-grid, .privacy, .platform-stack, .console-grid {
     grid-template-columns: 1fr;
   }
   .nav-links { display: none; }

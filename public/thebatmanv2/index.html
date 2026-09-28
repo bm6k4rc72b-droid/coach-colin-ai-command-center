@@ -27,9 +27,10 @@
     </div>
     <div class="nav-links">
       <a href="#capabilities">Capabilities</a>
+      <a href="#console">Radar / BPM</a>
+      <a href="#stealth">Stealth</a>
       <a href="#devices">Devices</a>
       <a href="#stack">Stack</a>
-      <a href="#ops">Operations</a>
       <a href="#privacy">Privacy</a>
     </div>
     <div class="nav-status"><span class="pulse"></span> <span id="link-label">LINK ACTIVE · AES-256</span></div>
@@ -91,6 +92,66 @@
         <article class="card"><div class="idx">07</div><h3>Quality Control</h3><p>Catches abnormal vibration defects before shipping. Factory dashboard on Mac / Windows.</p></article>
         <article class="card"><div class="idx">BONUS</div><h3>Presence → Person → Emotion → Map</h3><p>Micro-Doppler signatures identify presence, then identity class, affect, and zone.</p></article>
         <article class="card"><div class="idx">EDGE</div><h3>Offline-capable</h3><p>On-device inference for vitals. Cloud is for dashboards — not for your ECG.</p></article>
+      </div>
+    </section>
+
+    <section id="console" data-zone="RADAR DECK">
+      <div class="section-head">
+        <div class="kicker">Live mesh</div>
+        <h2>Radar, heartbeat, and range — on every surface.</h2>
+        <p>The same three numbers sync to iPhone 13+, Android, laptop, and watch. Pick a deck. The waveform, BPM, and lock-range stay live.</p>
+      </div>
+      <div class="console-tabs" id="console-tabs">
+        <button class="on" data-deck="iphone">iPhone 13+</button>
+        <button data-deck="android">Android</button>
+        <button data-deck="laptop">Laptop</button>
+        <button data-deck="watch">Watch</button>
+      </div>
+      <div class="console-grid">
+        <aside class="hero-panel">
+          <div class="panel-title"><span id="deck-title">iPhone 13+ · HealthKit deck</span> <span id="clock2">LIVE</span></div>
+          <canvas id="radar2" width="640" height="220"></canvas>
+          <div class="vitals">
+            <div class="vital"><b class="bpm-sync">78</b><span>Heartbeat</span></div>
+            <div class="vital"><b class="range-sync">2.4m</b><span>Motion lock</span></div>
+            <div class="vital"><b id="deck-fps">30 FPS</b><span>Feed</span></div>
+            <div class="vital"><b id="deck-push">APNs</b><span>Alert path</span></div>
+          </div>
+        </aside>
+        <div class="deck-copy" id="deck-copy">
+          <h3>iPhone 13 / 14 / 15 / 16</h3>
+          <p>SwiftUI command deck. Live radar waveform, HealthKit BPM write, CoreBluetooth to the UWB puck, APNs fall banner, WidgetKit lock-screen pulse, Live Activities while an incident is open.</p>
+          <ul class="deck-list">
+            <li>Minimum: iPhone 13 · iOS 16</li>
+            <li>Radar waveform + zone map</li>
+            <li>BPM mirrored into HealthKit</li>
+            <li>Range lock shown on Dynamic Island / Live Activity</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="stealth" data-zone="STEALTH">
+      <div class="section-head">
+        <div class="kicker">UcantSeeMeX · cited stack</div>
+        <h2>Invisibility mode is real computer vision — on feeds you own.</h2>
+        <p>MediaPipe segmentation, thermal + RGB fusion, and WiFi CSI sit next to the radar mesh. Pinch to vanish on your camera. Not a cloak for someone else’s security cam.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="card"><div class="idx">01</div><h3>Human Segmentation + Gesture</h3><p>MediaPipe Selfie Segmentation cuts the person and alpha-blends a captured background. MediaPipe Hands reads a pinch (or open palm) to toggle ghost mode in ~0.2s.</p></article>
+        <article class="card"><div class="idx">02</div><h3>Thermal + Night Vision</h3><p>LWIR/MWIR background model minus live frame finds human shapes when cloth matches the wall. Thermal + RGB is the single-person segmenter. Dual view: thermal stealth index vs RGB visibility.</p></article>
+        <article class="card"><div class="idx">03</div><h3>WiFi Waves + Motion</h3><p>Channel State Information on 2.4 / 5 GHz reads presence and gesture without a lens. Non-contact WiFi presence methods reach up to 99%. Motion shows as RSSI spikes.</p></article>
+        <article class="card"><div class="idx">04</div><h3>Motion Sensor Waves</h3><p>Radar-style distance + direction tracking, same lock used for BPM range on phone and watch.</p></article>
+        <article class="card"><div class="idx">05</div><h3>Pinch-to-Vanish</h3><p>Coach Colin signature: pinch, hand skeleton glows, body drops out of your own 30 FPS 1080p anamorphic 2.4:1 feed.</p></article>
+        <article class="card"><div class="idx">06</div><h3>Multi-device stealth HUD</h3><p>iPhone · Android · Laptop · Smart glasses AR HUD · Drone aerial thermal · IoT camera feed. Thermal gain, motion radar, and WiFi waves live in one console.</p></article>
+      </div>
+      <div class="split" style="margin-top:28px">
+        <img class="shot" src="assets/stealth-dual.jpg" alt="Thermal vs normal dual view" />
+        <img class="shot" src="assets/stealth-ui.jpg" alt="UcantSeeMeX multi-device app UI" />
+      </div>
+      <div class="hero-panel" style="margin-top:22px">
+        <div class="panel-title">App Store ethics</div>
+        <p style="color:#c7d7cc;line-height:1.45">UcantSeeMeX creates the invisibility effect on <strong>your own camera feeds that you control</strong> — privacy, content, AR storytelling. It does not make you physically invisible to third-party cameras you do not own.</p>
       </div>
     </section>
 
@@ -257,6 +318,7 @@
       <button data-cmd="status">Status</button>
       <button data-cmd="devices">Devices</button>
       <button data-cmd="stack">Stack</button>
+      <button data-cmd="stealth">Stealth</button>
       <button data-cmd="fall">Fall drill</button>
     </div>
   </aside>
