@@ -29,6 +29,7 @@
     help: { src: "assets/audio/wayne-help.mp3", text: "Say capabilities, devices, stack, operations, privacy, or status." },
     status: { src: "assets/audio/wayne-status.mp3", text: "Link active. Heartbeat stable. Zone B, loading dock." },
     fall: { src: "assets/audio/wayne-fall.mp3", text: "Alert. Fall detected. Worker twelve. Help is pushed." },
+    stealth: { src: "assets/audio/wayne-unknown.mp3", text: "Stealth stack is live. MediaPipe pinch-to-vanish, thermal plus RGB, WiFi CSI. It only masks feeds you own." },
     unknown: { src: "assets/audio/wayne-unknown.mp3", text: "I did not catch that. Try devices, stack, privacy, or help." },
     listen: { src: "assets/audio/wayne-listen.mp3", text: "I am listening, sir." },
   };
@@ -137,6 +138,8 @@
     const range = (2.2 + Math.sin(Date.now() / 1400) * 0.3).toFixed(1) + "m";
     bpmEl.textContent = String(bpm);
     rangeEl.textContent = range;
+    document.querySelectorAll(".bpm-sync").forEach((el) => { el.textContent = String(bpm); });
+    document.querySelectorAll(".range-sync").forEach((el) => { el.textContent = range; });
     const wb = document.getElementById("watch-bpm");
     const gb = document.getElementById("g-bpm");
     const gr = document.getElementById("g-range");
@@ -175,6 +178,72 @@
   }
   drawRadar();
 
+  const canvas2 = document.getElementById("radar2");
+  if (canvas2) {
+    const ctx2 = canvas2.getContext("2d");
+    const hist2 = new Array(140).fill(0);
+    (function drawRadar2() {
+      const w = canvas2.width, h = canvas2.height;
+      ctx2.clearRect(0, 0, w, h);
+      ctx2.strokeStyle = "rgba(109,255,122,0.15)";
+      for (let y = 16; y < h; y += 28) {
+        ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(w, y); ctx2.stroke();
+      }
+      const t = Date.now() / 1000;
+      const beat = Math.sin(t * Math.PI * 2.4);
+      const sample = beat > 0.72 ? 1 : beat > 0.62 ? -0.35 : Math.sin(t * 9) * 0.08;
+      hist2.push(sample); hist2.shift();
+      ctx2.beginPath();
+      hist2.forEach((v, i) => {
+        const x = (i / (hist2.length - 1)) * w;
+        const y = h * 0.55 - v * h * 0.38;
+        if (i === 0) ctx2.moveTo(x, y); else ctx2.lineTo(x, y);
+      });
+      ctx2.strokeStyle = "#6dff7a";
+      ctx2.lineWidth = 2;
+      ctx2.stroke();
+      requestAnimationFrame(drawRadar2);
+    })();
+  }
+
+  const decks = {
+    iphone: {
+      title: "iPhone 13+ · HealthKit deck",
+      push: "APNs",
+      fps: "30 FPS",
+      html: "<h3>iPhone 13 / 14 / 15 / 16</h3><p>SwiftUI command deck. Live radar waveform, HealthKit BPM write, CoreBluetooth to the UWB puck, APNs fall banner, WidgetKit lock-screen pulse, Live Activities while an incident is open.</p><ul class=\"deck-list\"><li>Minimum: iPhone 13 · iOS 16</li><li>Radar waveform + zone map</li><li>BPM mirrored into HealthKit</li><li>Range lock on Live Activity</li></ul>"
+    },
+    android: {
+      title: "Android · Compose field unit",
+      push: "FCM",
+      fps: "30 FPS",
+      html: "<h3>Android 12+</h3><p>Kotlin / Jetpack Compose field unit. Foreground radar service keeps BPM and range alive with the screen off. FCM pushes falls. Material You adaptive layout for compact and foldables.</p><ul class=\"deck-list\"><li>Minimum: Android 12</li><li>BLE to the radar puck</li><li>BPM + range in a persistent notification</li><li>WorkManager mesh sync</li></ul>"
+    },
+    laptop: {
+      title: "Laptop · Electron ops",
+      push: "WebSocket",
+      fps: "60 Hz UI",
+      html: "<h3>macOS / Windows laptop</h3><p>Electron + React + Recharts factory console. Full radar FFT, multi-zone map, health %, keyboard shortcuts for Mr. Wayne. Same BPM and lock-range as the phones, just a wider glass.</p><ul class=\"deck-list\"><li>Vibration + heartbeat side by side</li><li>Range lock across every zone</li><li>Grafana embed for history</li></ul>"
+    },
+    watch: {
+      title: "Watch · haptic satellite",
+      push: "Haptic",
+      fps: "complication",
+      html: "<h3>Apple Watch / Wear OS</h3><p>Satellite of the phone mesh — not a standalone radar. Live BPM, Zone chip, range in meters, tap-for-emergency, haptic fall. The same three numbers as the iPhone deck, on the wrist.</p><ul class=\"deck-list\"><li>78 BPM live complication</li><li>Range + zone on the watch face</li><li>Haptic when motion lock breaks into a fall</li></ul>"
+    }
+  };
+  document.querySelectorAll("#console-tabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#console-tabs button").forEach((b) => b.classList.remove("on"));
+      btn.classList.add("on");
+      const d = decks[btn.dataset.deck];
+      document.getElementById("deck-title").textContent = d.title;
+      document.getElementById("deck-push").textContent = d.push;
+      document.getElementById("deck-fps").textContent = d.fps;
+      document.getElementById("deck-copy").innerHTML = d.html;
+    });
+  });
+
   function startMusic() {
     theme.volume = Number(document.getElementById("vol").value) / 100;
     theme.play().then(() => {
@@ -202,8 +271,9 @@
   document.querySelectorAll("[data-cmd]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const cmd = btn.dataset.cmd;
-      if (cmd === "devices" || cmd === "stack" || cmd === "privacy") {
-        document.getElementById(cmd).scrollIntoView({ behavior: "smooth" });
+      if (cmd === "devices" || cmd === "stack" || cmd === "privacy" || cmd === "stealth" || cmd === "console") {
+        const el = document.getElementById(cmd === "console" ? "console" : cmd);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
       }
       speak(cmd);
     });
