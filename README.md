@@ -129,6 +129,21 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: ORBIT · cockpit, spaceplane, orbit, range & cyber
+
+At [`public/orbit/`](public/orbit): four connected simulators, each running live math.
+- **Cockpit.** Fly an F-16-class fighter from the cockpit, with a conformal HUD and two MFDs. The flight model is point-mass lift, drag and thrust with a fly-by-wire g command. A fuel-economy panel plots specific range against speed and shows the Breguet range.
+- **Spaceplane.** Launch VOLTA, a concept spaceplane, from a runway to orbit. It climbs a 50 kPa corridor on combined-cycle engines to Mach 5, then switches to an electric-pump-fed methalox rocket. Live panels show the Δv budget with gravity, drag and steering losses, the mass breakdown, the rocket equation, and pump power and battery sizing. Deploy the payload once in orbit.
+- **Orbit.** 3D two-body motion plus J2, with vis-viva, Hohmann transfers, plane changes, launch azimuth, sun-synchronous inclination and propellant cost for every burn.
+- **Range.** A tactical radar display of ADS-B, AIS and primary radar tracks, launch and aircraft hazard areas, and public-risk Ec against the 1×10⁻⁴ limit. It also has a telemetry link budget with a jamming case, a GO/NO-GO poll, and a live instantaneous-impact-point track with destruct lines.
+- **Cyber range.** A defensive security-operations drill with alerts for GNSS spoofing, command replay, brute-force logins, jamming, unsigned firmware, phishing, false positives and network segmentation.
+
+EN/JA, guided tour, debrief. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/orbit/>**
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at
