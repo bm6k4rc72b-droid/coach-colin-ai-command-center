@@ -111,6 +111,24 @@ advice.
 
 ---
 
+## Also in here: HEARTBEAT · heart, stroke, mitochondria and recovery
+
+At [`public/heartbeat/`](public/heartbeat): a holographic heart driven by a live
+left-heart model (time-varying elastance + Windkessel, with ECG, pressure traces,
+PV loop and atrial fibrillation with CHA₂DS₂-VASc). Watch a clot embolise to the
+brain, then run a real-time stroke case: BE-FAST, CT, CTA/perfusion, thrombolysis
+and thrombectomy, with core and penumbra growing on the brain and a neuron-loss
+counter. Also a haemorrhage case with ABC/2 and the ICH score. Inside a neuron, a
+mitochondria model plays out the ischaemic cascade: ATP synthase reversal, anoxic
+depolarisation, calcium overload, the succinate-driven ROS burst on reperfusion,
+mPTP opening and apoptosis, plus the treatments that can rescue the cell. Recovery
+covers PREP2, proportional recovery, neuroplasticity and mitochondria's role in
+rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/heartbeat/>**
+
+---
+
 ## Also in here: CinematicX · Revan-Class Energy Sword
 
 A motion-tracked, sound-reactive 3D lightsaber hilt at
