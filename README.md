@@ -129,6 +129,20 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: RANCH OPS · flock management & drone surveillance
+
+At [`public/ranch/`](public/ranch): run a sheep ranch from the air.
+- **Flock.** 120 ewes follow Reynolds boids rules: separation, alignment, cohesion and a flight zone. Under threat, cohesion rises (the selfish herd). Live panels show RMS spread, polarisation, dry-matter intake (2.7 % of body weight), water needs and stocking rate. You can send the dog through, or have it drive the flock gate to gate.
+- **Pasture.** Six paddocks regrow on a logistic curve, dB/dt = rB(1 − B/K) − NI/A. The tab shows grazing days, regrowth time, AUM carrying capacity and an NDVI view, and simulates a 60-day rotation plan.
+- **Drone.** Rotor power comes from momentum theory with Glauert induced velocity, profile and parasite power. That gives endurance, best-endurance and best-range speeds, and cruise tilt. Mission planning covers GSD = s·h/(f·N), the camera footprint, lawn-mower lanes, battery reserve and Koopman POD. Johnson criteria set the chance to detect, recognise or identify each sheep. Thermal surveys count the flock, flag fevers and find the missing ewe, all checked against FAA Part 107 basics.
+- **Night watch.** A thermal patrol orbits the flock with a slewing gimbal and detects coyotes by slant-range GSD. The response is non-lethal: a spotlight and siren, the guardian dog, or moving the flock to the night pen.
+
+EN/JA, guided tour, ranch report. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/ranch/>**
+
+---
+
 ## Also in here: DIRECTOR'S CHAIR · blocking, lenses, light & the cut
 
 At [`public/director/`](public/director): direct a 30-second scene, *The Last Deal*, set on a rain-soaked neon rooftop.
