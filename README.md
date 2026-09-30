@@ -129,6 +129,20 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: DIRECTOR'S CHAIR · blocking, lenses, light & the cut
+
+At [`public/director/`](public/director): direct a 30-second scene, *The Last Deal*, set on a rain-soaked neon rooftop.
+- **Set.** Two actors with blocking and a six-line script. Place three cameras, and the line of action and each camera's frustum are drawn live on the set.
+- **Camera.** Choose a lens (14–135 mm, or any focal length up to 200 mm), a T-stop, focus and the sensor (Super 35, full frame, large format, IMAX), with an optional 2× anamorphic. Framing buttons compute the focal length from f = Sₕ·d/h. The live optics show field of view, circle of confusion (c = d/1500), hyperfocal distance, near and far focus, and a blur-circle chart. The viewfinder uses a physical depth-of-field shader built on b = (f²/N)·|d − s| / (d·(s − f)), with oval bokeh on anamorphic. It also has a dolly zoom (f₂ = f₁·d₂/d₁) and recorded takes.
+- **Light.** Key, fill and back fixtures placed by illuminance, with intensity = E·d² and a Kelvin colour. An incident meter computes N = √(E·t·ISO/C), and the lighting ratio is shown in stops. You also get shutter angle, ISO, ND, white balance and a false-colour exposure view. The image is exposed with the same equation, so a correctly metered face lands at mid grey.
+- **Cut.** Switch cameras live with keys 1–3, or load the editor's cut. Every cut is checked against the 180° rule, the 30° rule and jump cuts, and each line is checked for dialogue coverage.
+
+EN/JA, guided tour, wrap report. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/director/>**
+
+---
+
 ## Also in here: ORBIT · cockpit, spaceplane, orbit, range & cyber
 
 At [`public/orbit/`](public/orbit): four connected simulators, each running live math.
