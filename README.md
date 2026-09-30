@@ -129,6 +129,20 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: ACCOUNTABILITY · client check-in questionnaire
+
+At [`public/accountability/`](public/accountability): Coach Colin's accountability
+questionnaire for personal training clients. It asks whether they're following the
+nutrition protocol and for proof of logs, then shows an action accountability plan
+(1B) if they aren't. It also covers meal prep days and whether they want meal prep
+service contacts, plus detailed goals. Clients send their answers by email to
+coachcolinc@icloud.com, copy them into a text, or print them. Answers autosave on
+the client's device.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/accountability/>**
+
+---
+
 ## Also in here: ORBIT · cockpit, spaceplane, orbit, range & cyber
 
 At [`public/orbit/`](public/orbit): four connected simulators, each running live math.

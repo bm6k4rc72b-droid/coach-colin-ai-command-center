@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Client Accountability Check-In</title>
+    <meta
+      name="description"
+      content="Coach Colin's accountability questionnaire for personal training clients: nutrition protocol follow-through, meal prep plan and detailed goals."
+    />
+    <style>
+      :root {
+        --bg: #f6f5f1;
+        --card: #ffffff;
+        --ink: #1b1d1f;
+        --muted: #5c6166;
+        --line: #dedbd3;
+        --accent: #c2410c;
+        --accent-soft: #fdebe1;
+        --ok: #166534;
+        --focus: #2563eb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #111315;
+          --card: #1a1d20;
+          --ink: #eceae4;
+          --muted: #a2a6aa;
+          --line: #2e3236;
+          --accent: #fb923c;
+          --accent-soft: #2c1d13;
+          --ok: #4ade80;
+          --focus: #60a5fa;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #111315;
+        --card: #1a1d20;
+        --ink: #eceae4;
+        --muted: #a2a6aa;
+        --line: #2e3236;
+        --accent: #fb923c;
+        --accent-soft: #2c1d13;
+        --ok: #4ade80;
+        --focus: #60a5fa;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+      header h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+      header p { margin: 0; color: var(--muted); }
+      .eyebrow { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 22px 20px;
+        margin-top: 18px;
+      }
+      h2 { font-size: 1.15rem; margin: 0 0 8px; display: flex; gap: 10px; align-items: baseline; }
+      h2 .num {
+        flex: none; display: inline-grid; place-items: center;
+        min-width: 2rem; height: 2rem; padding: 0 6px; border-radius: 999px;
+        background: var(--accent-soft); color: var(--accent); font-size: 0.9rem;
+      }
+      .lead { margin: 0 0 14px; color: var(--muted); }
+      label.field { display: block; font-weight: 600; margin: 16px 0 6px; }
+      .hint { font-weight: 400; color: var(--muted); font-size: 0.9rem; }
+      input[type="text"], input[type="date"], input[type="email"], textarea {
+        width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+        border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+      }
+      textarea { min-height: 110px; resize: vertical; }
+      input:focus-visible, textarea:focus-visible, button:focus-visible, .choice input:focus-visible + span {
+        outline: 2px solid var(--focus); outline-offset: 2px;
+      }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+      .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+      .choice { position: relative; }
+      .choice input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+      .choice span {
+        display: inline-block; padding: 8px 14px; border: 1px solid var(--line);
+        border-radius: 999px; background: var(--bg); cursor: pointer; user-select: none;
+      }
+      .choice input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .callout {
+        border-left: 3px solid var(--accent); background: var(--accent-soft);
+        padding: 12px 14px; border-radius: 0 10px 10px 0; margin: 14px 0 0;
+      }
+      .callout p { margin: 0; }
+      .callout p + p { margin-top: 8px; }
+      .sub { margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--line); }
+      .sub[hidden] { display: none; }
+      ul.notes { margin: 0; padding-left: 20px; }
+      ul.notes li + li { margin-top: 10px; }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+      button {
+        font: inherit; font-weight: 600; border-radius: 10px; padding: 11px 18px; cursor: pointer;
+        border: 1px solid var(--line); background: var(--card); color: var(--ink);
+      }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .status { min-height: 1.4em; margin-top: 10px; color: var(--ok); font-weight: 600; }
+      footer { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 28px; }
+      a { color: var(--accent); }
+      @media print {
+        body { background: #fff; color: #000; }
+        section { border-color: #bbb; break-inside: avoid; }
+        .actions, .status { display: none; }
+        .sub[hidden] { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Coach Colin · Personal Training</div>
+        <h1>Accountability Check-In</h1>
+        <p>Answer every question as honestly and in as much detail as you can. When you're done, send it straight to me with the button at the bottom.</p>
+      </header>
+
+      <form id="form" autocomplete="on">
+        <section aria-labelledby="s0">
+          <h2 id="s0">Your details</h2>
+          <div class="row">
+            <div>
+              <label class="field" for="name">Full name</label>
+              <input type="text" id="name" name="name" autocomplete="name" />
+            </div>
+            <div>
+              <label class="field" for="date">Date</label>
+              <input type="date" id="date" name="date" />
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="s1">
+          <h2 id="s1"><span class="num">1</span>Nutrition protocol follow-through</h2>
+          <p class="lead">Have you been following the original nutrition protocol designed for you?</p>
+          <div class="choices" role="radiogroup" aria-labelledby="s1">
+            <label class="choice"><input type="radio" name="following" value="Yes, fully" /><span>Yes, fully</span></label>
+            <label class="choice"><input type="radio" name="following" value="Partly" /><span>Partly</span></label>
+            <label class="choice"><input type="radio" name="following" value="No" /><span>No</span></label>
+          </div>
+
+          <label class="field" for="proof">
+            Proof of completion
+            <span class="hint">— list the written or online logs you have (paper log, app, spreadsheet, photos). Please send all of them to me by text or email at <a href="mailto:coachcolinc@icloud.com">coachcolinc@icloud.com</a>.</span>
+          </label>
+          <textarea id="proof" name="proof" placeholder="e.g. MyFitnessPal diary for the last 14 days, meal photos in my camera roll, paper log for weekdays"></textarea>
+
+          <div class="choices" style="margin-top:10px">
+            <label class="choice"><input type="checkbox" name="proofSent" value="Logs sent by text" /><span>I've sent my logs by text</span></label>
+            <label class="choice"><input type="checkbox" name="proofSent" value="Logs sent by email" /><span>I've sent my logs by email</span></label>
+          </div>
+
+          <div class="sub" id="plan1b" hidden>
+            <h2><span class="num">1B</span>Your action accountability plan</h2>
+            <p class="lead">If not, no worries. Lay out the plan you'll use to hit every meal to the T, every day, without a miss.</p>
+
+            <label class="field">Which system will you try first? <span class="hint">(pick any)</span></label>
+            <div class="choices">
+              <label class="choice"><input type="checkbox" name="system" value="Daily written checklist on paper" /><span>Daily paper checklist</span></label>
+              <label class="choice"><input type="checkbox" name="system" value="Online / app checklist" /><span>Online / app checklist</span></label>
+              <label class="choice"><input type="checkbox" name="system" value="Hour-by-hour mini goals" /><span>Hour-by-hour mini goals</span></label>
+              <label class="choice"><input type="checkbox" name="system" value="Phone alarms / reminders at meal times" /><span>Meal-time alarms</span></label>
+            </div>
+
+            <label class="field" for="plan">
+              Write out your plan
+              <span class="hint">— experiment to see what works for you based on your work schedule, lifestyle and how you personally manage stress.</span>
+            </label>
+            <textarea id="plan" name="plan" placeholder="e.g. 6:30am check off breakfast on the fridge checklist · 12pm phone alarm for meal 2 (prepped container) · 3pm snack in work bag · 7pm dinner, log it before I sit down"></textarea>
+
+            <label class="field" for="obstacles">What got in the way before? <span class="hint">(time, energy, cravings, social events, travel…)</span></label>
+            <textarea id="obstacles" name="obstacles"></textarea>
+          </div>
+        </section>
+
+        <section aria-labelledby="s2">
+          <h2 id="s2"><span class="num">2</span>Meal prep</h2>
+          <div class="callout">
+            <p>Physical changes in the body come from the stimulus (in the gym), then the fuel and resources: the exact, specific nutrition designed for your goals. That means calorie intake for the specific time, and protein, carb and fat sources in specific amounts.</p>
+            <p><strong>Random tracking or no tracking = random results.</strong></p>
+          </div>
+
+          <label class="field">Which days can you dedicate to meal prepping?</label>
+          <div class="choices" id="days">
+            <label class="choice"><input type="checkbox" name="prepDays" value="Mon" /><span>Mon</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Tue" /><span>Tue</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Wed" /><span>Wed</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Thu" /><span>Thu</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Fri" /><span>Fri</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Sat" /><span>Sat</span></label>
+            <label class="choice"><input type="checkbox" name="prepDays" value="Sun" /><span>Sun</span></label>
+          </div>
+
+          <label class="field" for="prepDetails">Prep details <span class="hint">— time of day, how many days of meals per session, anything that makes it hard</span></label>
+          <textarea id="prepDetails" name="prepDetails" placeholder="e.g. Sunday 2–4pm for Mon–Wed, Wednesday evening for Thu–Sat"></textarea>
+
+          <label class="field">Would you like my contacts for meal prep cooking / services?</label>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="prepHelp" value="Yes, send me your sources" /><span>Yes, send me your sources</span></label>
+            <label class="choice"><input type="radio" name="prepHelp" value="No, I'll prep myself" /><span>No, I'll prep myself</span></label>
+          </div>
+          <p class="hint" style="margin-top:8px">If yes, I'll send you my sources as soon as possible.</p>
+        </section>
+
+        <section aria-labelledby="s3">
+          <h2 id="s3"><span class="num">3</span>Your specific goals</h2>
+          <p class="lead">List all of your specific goals below. Be as detailed as possible: numbers, dates and the reason each one matters to you.</p>
+
+          <label class="field" for="goalPrimary">Main goal <span class="hint">(e.g. drop 12 lb of fat by March 1 while keeping strength)</span></label>
+          <textarea id="goalPrimary" name="goalPrimary"></textarea>
+
+          <label class="field" for="goalBody">Body composition &amp; measurements <span class="hint">(weight, body fat %, waist, specific areas)</span></label>
+          <textarea id="goalBody" name="goalBody"></textarea>
+
+          <label class="field" for="goalPerformance">Strength / performance <span class="hint">(lifts, reps, conditioning, sport)</span></label>
+          <textarea id="goalPerformance" name="goalPerformance"></textarea>
+
+          <label class="field" for="goalLifestyle">Health &amp; lifestyle <span class="hint">(energy, sleep, stress, bloodwork, confidence)</span></label>
+          <textarea id="goalLifestyle" name="goalLifestyle"></textarea>
+
+          <label class="field" for="goalWhy">Why now? Deadlines or events? <span class="hint">(wedding, photoshoot, season, doctor's advice)</span></label>
+          <textarea id="goalWhy" name="goalWhy"></textarea>
+        </section>
+
+        <section aria-labelledby="s4">
+          <h2 id="s4">Extra notes from Coach Colin</h2>
+          <ul class="notes">
+            <li><strong>Clear intention is key</strong> with your nutrition completion and logging. If you're struggling to find time to cook, or you're low on physical energy, please don't stay quiet. Message me immediately.</li>
+            <li><strong>Always message or email first</strong> so we can log everything. Fitness is a cellular biology and physiology game. If you want to see the research behind any training or nutrition I have you doing, message me and I'll be happy to send you the cited study.</li>
+            <li>I'm 100% against random workouts and random structure. That's why anyone who has worked with me will tell you I over-deliver and I'm incredibly detailed.</li>
+          </ul>
+
+          <label class="field" for="questions">Anything you want to tell me or ask me? <span class="hint">(energy, schedule, a study you'd like to see…)</span></label>
+          <textarea id="questions" name="questions"></textarea>
+
+          <div class="actions">
+            <button type="button" class="primary" id="send">Email to Coach Colin</button>
+            <button type="button" id="copy">Copy answers (to text me)</button>
+            <button type="button" id="print">Print / save PDF</button>
+            <button type="button" id="clear">Clear form</button>
+          </div>
+          <div class="status" id="status" role="status" aria-live="polite"></div>
+        </section>
+      </form>
+
+      <footer>Questions? <a href="mailto:coachcolinc@icloud.com">coachcolinc@icloud.com</a> · Your answers autosave on this device until you send them.</footer>
+    </main>
+
+    <script>
+      (function () {
+        var COACH = "coachcolinc@icloud.com";
+        var KEY = "coach-colin-accountability-v1";
+        var form = document.getElementById("form");
+        var status = document.getElementById("status");
+        var plan1b = document.getElementById("plan1b");
+
+        function values(name) {
+          return Array.prototype.filter
+            .call(form.querySelectorAll('[name="' + name + '"]'), function (el) { return el.checked; })
+            .map(function (el) { return el.value; });
+        }
+        function val(id) { return (document.getElementById(id).value || "").trim(); }
+
+        function syncPlan() {
+          var f = values("following")[0];
+          plan1b.hidden = !(f === "Partly" || f === "No");
+        }
+
+        function snapshot() {
+          var data = {};
+          Array.prototype.forEach.call(form.elements, function (el) {
+            if (!el.name) return;
+            if (el.type === "checkbox" || el.type === "radio") {
+              data[el.name] = data[el.name] || [];
+              if (el.checked) data[el.name].push(el.value);
+            } else {
+              data[el.name] = el.value;
+            }
+          });
+          return data;
+        }
+        function restore(data) {
+          Array.prototype.forEach.call(form.elements, function (el) {
+            if (!el.name || !(el.name in data)) return;
+            if (el.type === "checkbox" || el.type === "radio") el.checked = data[el.name].indexOf(el.value) !== -1;
+            else el.value = data[el.name];
+          });
+        }
+        function save() {
+          try { localStorage.setItem(KEY, JSON.stringify(snapshot())); } catch (e) {}
+        }
+        try {
+          var saved = localStorage.getItem(KEY);
+          if (saved) restore(JSON.parse(saved));
+        } catch (e) {}
+        if (!val("date")) document.getElementById("date").value = new Date().toISOString().slice(0, 10);
+        syncPlan();
+
+        form.addEventListener("input", function () { syncPlan(); save(); });
+        form.addEventListener("change", function () { syncPlan(); save(); });
+
+        function or(s) { return s || "—"; }
+        function list(a) { return a.length ? a.join(", ") : "—"; }
+
+        function compose() {
+          var following = values("following")[0];
+          var lines = [
+            "ACCOUNTABILITY CHECK-IN",
+            "Name: " + or(val("name")),
+            "Date: " + or(val("date")),
+            "",
+            "1) Following the original nutrition protocol? " + or(following),
+            "Proof of completion / logs: " + or(val("proof")),
+            "Logs sent: " + list(values("proofSent")),
+          ];
+          if (following === "Partly" || following === "No") {
+            lines.push(
+              "",
+              "1B) Action accountability plan",
+              "System(s): " + list(values("system")),
+              "Plan: " + or(val("plan")),
+              "What got in the way: " + or(val("obstacles"))
+            );
+          }
+          lines.push(
+            "",
+            "2) Meal prep",
+            "Prep days: " + list(values("prepDays")),
+            "Prep details: " + or(val("prepDetails")),
+            "Meal prep help: " + or(values("prepHelp")[0]),
+            "",
+            "3) Specific goals",
+            "Main goal: " + or(val("goalPrimary")),
+            "Body composition: " + or(val("goalBody")),
+            "Strength / performance: " + or(val("goalPerformance")),
+            "Health & lifestyle: " + or(val("goalLifestyle")),
+            "Why now / deadlines: " + or(val("goalWhy")),
+            "",
+            "Notes / questions for Coach Colin: " + or(val("questions"))
+          );
+          return lines.join("\n");
+        }
+
+        function flash(msg) {
+          status.textContent = msg;
+          clearTimeout(flash.t);
+          flash.t = setTimeout(function () { status.textContent = ""; }, 4000);
+        }
+
+        document.getElementById("send").addEventListener("click", function () {
+          var subject = "Accountability Check-In" + (val("name") ? " — " + val("name") : "");
+          window.location.href =
+            "mailto:" + COACH + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(compose());
+          flash("Opening your email app… attach your logs before you hit send.");
+        });
+
+        document.getElementById("copy").addEventListener("click", function () {
+          var text = compose();
+          function fallback() {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); flash("Copied. Paste it into a text to Coach Colin."); }
+            catch (e) { flash("Couldn't copy automatically. Select and copy manually."); }
+            document.body.removeChild(ta);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () { flash("Copied. Paste it into a text to Coach Colin."); },
+              fallback
+            );
+          } else fallback();
+        });
+
+        document.getElementById("print").addEventListener("click", function () { window.print(); });
+
+        document.getElementById("clear").addEventListener("click", function () {
+          if (!confirm("Clear all your answers?")) return;
+          form.reset();
+          document.getElementById("date").value = new Date().toISOString().slice(0, 10);
+          try { localStorage.removeItem(KEY); } catch (e) {}
+          syncPlan();
+          flash("Form cleared.");
+        });
+      })();
+    </script>
+  </body>
+</html>
