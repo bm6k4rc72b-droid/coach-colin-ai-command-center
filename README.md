@@ -129,6 +129,28 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: GENOME ATHLETE · sports genetics with exact maths
+
+At [`public/genome/`](public/genome): 14 real sports-genetics variants on a B-DNA helix, including ACTN3 R577X, ACE I/D, PPARGC1A, PPARA, AMPD1, VEGFA, MCT1, HFE, AGT, HIF1A, IL6, COL5A1, COL1A1 and GDF5.
+- **Genome.**
+  - Pick genotypes or load sprinter/marathoner profiles.
+  - Hardy–Weinberg frequencies (p², 2pq, q²), plus total genotype scores (Williams & Folland) for endurance, power and tendon resilience.
+  - Exact population distributions by convolution, your percentile, and how rare an "optimal" profile is (Π f²).
+- **Inheritance.**
+  - A Punnett square for any gene, plus the exact distribution of a child's whole-panel score.
+  - The breeder's equation for VO₂max: E = μ + h²(m − μ), SD = σ√(1 − h⁴/2), and regression to the mean.
+- **Trainability.**
+  - The HERITAGE Family Study: +384 ± 202 mL/min, h² ≈ 0.47.
+  - A 21-SNP model calibrated so carriers of ≤9 and ≥19 favourable alleles reproduce the published +221 and +604 mL/min.
+  - A 3D cohort cloud, plus the probabilities of being a low or high responder.
+- **Plan.** A training emphasis drawn from your profile, what genes cannot tell you, and the 2015 consensus against using genetic tests for talent ID.
+
+EN/JA, guided tour, debrief. Not a genetic test. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/genome/>**
+
+---
+
 ## Also in here: APEX · race-car engineering
 
 At [`public/apex/`](public/apex): engineer a 798 kg, 735 kW single-seater for the Neon Bay night street circuit (4.54 km, built from exact straights and constant-radius arcs that close to the millimetre).
