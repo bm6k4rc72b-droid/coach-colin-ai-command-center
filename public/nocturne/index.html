@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NOCTURNE · by Coach Colin</title>
+  <meta name="description" content="NOCTURNE by Coach Colin: an original tactical suit in a cave lair — cloth-simulated cape, night-vision and thermal optics, cape-glide aerodynamics, armour ballistics, grapnel line loads and sonar mapping. Education only." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23070a10' stroke='%233d8cff' stroke-width='2'/%3E%3Cpath d='M5 16 L12 13 L16 18 L20 13 L27 16 L21 17 L16 23 L11 17 Z' fill='%23cfd8e6'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body class="letterbox" data-tab="suit">
+  <canvas id="scene"></canvas>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel"><span class="logo">◆</span><span class="brand-name">NOCTURNE</span><span class="brand-by" data-i18n="app.by"></span></div>
+      <nav id="tabs" class="views panel">
+        <button data-tab="suit"><kbd>1</kbd> <span data-i18n="tab.suit"></span></button>
+        <button data-tab="glide"><kbd>2</kbd> <span data-i18n="tab.glide"></span></button>
+        <button data-tab="armour"><kbd>3</kbd> <span data-i18n="tab.armour"></span></button>
+        <button data-tab="grapnel"><kbd>4</kbd> <span data-i18n="tab.grapnel"></span></button>
+        <button data-tab="sonar"><kbd>5</kbd> <span data-i18n="tab.sonar"></span></button>
+      </nav>
+      <div class="actions">
+        <button class="btn panel" id="btn-report"><span data-i18n="app.report"></span></button>
+        <button class="btn panel demo" id="btn-tour"><span data-i18n="app.tour"></span></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+    <section id="panel" class="panel"></section>
+    <section id="side" class="panel"></section>
+    <div id="clear" class="mono"></div>
+    <div id="caption"></div>
+    <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="app.tourOn"></span></div>
+    <footer class="hint mono" data-i18n="app.hint"></footer>
+  </div>
+
+  <div class="keyart" id="keyart"></div>
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">SUIT · GLIDE · ARMOUR · GRAPNEL · SONAR</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+      <div class="disclaimer">
+        <h2>⚠ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+      <div class="start-actions">
+        <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel demo" id="btn-start-tour" disabled data-i18n="app.tour"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="report" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div><div class="start-kicker mono">NOCTURNE · FIELD READINESS</div><h2 id="rep-title"></h2><p class="db-sub" id="rep-sub"></p></div>
+        <div class="db-ring" id="rep-ring"><b class="mono">0</b><small>%</small></div>
+      </div>
+      <ul class="db-checks" id="rep-list"></ul>
+      <h3 data-i18n="rep.next"></h3>
+      <ol class="db-tips" id="rep-next"></ol>
+      <p class="db-disclaimer" data-i18n="rep.note"></p>
+      <div class="start-actions">
+        <button class="btn primary" id="rep-print" data-i18n="rep.print"></button>
+        <button class="btn panel" id="rep-close" data-i18n="rep.close"></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">LOADING…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
