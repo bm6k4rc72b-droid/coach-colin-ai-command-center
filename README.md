@@ -16,6 +16,14 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: BROKER RANCH · liquid command site
+
+At [`public/broker-ranch/`](public/broker-ranch): a single-page site for Broker Ranch with a WebGL liquid-glass background that warps with scroll speed, a drag-to-patrol section wheel, six hover-to-x-ray "files", and Reginald, a front-desk concierge with scripted lines, agent handoffs, a gate protocol, a clearance slip and optional browser speech. Static HTML and images only; no backend.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/broker-ranch/>**
+
+---
+
 ## Also in here: ColinGrudenV1 · Football Pose & Play Analysis
 
 An installable PWA at [`public/colingrudenv1/`](public/colingrudenv1) that runs
