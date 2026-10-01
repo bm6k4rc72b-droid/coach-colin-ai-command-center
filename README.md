@@ -129,6 +129,31 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: CHRONOS · the physics of time machines
+
+At [`public/chronos/`](public/chronos): every time machine that real physics allows, with exact formulas.
+- **Twin paradox.** A relativistic rocket at constant proper acceleration:
+  - β = tanh(aτ), γ = cosh(aτ), t = sinh(aτ)/a, x = (cosh aτ − 1)/a.
+  - Accelerate, flip and decelerate to Proxima, Sirius, Vega, the Pleiades, the galactic centre or Andromeda, and back.
+  - The panel shows Earth versus ship ages, the fuel mass ratio from the relativistic rocket equation, and kinetic energy.
+  - A spacetime diagram marks proper-time ticks and the ship's line of simultaneity.
+  - The starfield applies relativistic aberration and Doppler colour and brightness in a shader.
+- **Gravity.**
+  - Satellite clocks at any altitude: +45.7 µs/day from gravity and −7.2 µs/day from speed, for +38.6 µs/day at GPS. That is an 11.6 km/day error if uncorrected, and speed and gravity cancel at 3,186 km.
+  - A ray-traced Schwarzschild black hole with null geodesics integrated per pixel and a Doppler-beamed accretion disk.
+  - Hover time dilation √(1 − r_s/r), thrust, tidal stretch, and Miller's planet.
+- **Wormhole.**
+  - Morris–Thorne throat and its embedding diagram, with the exotic mass |m| ≈ c²b/G (~0.7 Jupiter masses per metre).
+  - The Thorne time machine: Δ = T(1 − 1/γ), and a closed timelike curve once Δ > D/c.
+  - Notes on the Tipler cylinder, the Gödel universe, the Alcubierre drive and chronology protection.
+- **Paradox.** The billiard-ball paradox, solved for self-consistent histories (Novikov) as fixed points H = R(H). It shows the naive inconsistent history, a glancing-blow resolution, and cases with more than one consistent past.
+
+EN/JA, guided tour, logbook. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/chronos/>**
+
+---
+
 ## Also in here: NEUROLENS · neural photography & videography
 
 At [`public/neurolens/`](public/neurolens): a white holographic, anamorphic lab for how a brain decides what is attractive and when attention is lost.
