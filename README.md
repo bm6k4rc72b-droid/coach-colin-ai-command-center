@@ -129,6 +129,28 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: APEX · race-car engineering
+
+At [`public/apex/`](public/apex): engineer a 798 kg, 735 kW single-seater for the Neon Bay night street circuit (4.54 km, built from exact straights and constant-radius arcs that close to the millimetre).
+- **Garage.**
+  - Front and rear wing, ride height, final drive, brake bias, fuel and tyre compound.
+  - Aero map: C_LA, C_DA, balance and a Gaussian ground-effect peak that stalls and porpoises below 24 mm.
+  - Every change re-solves the whole lap in ~12 ms, with a delta to your baseline, top speed from ηP = ½ρC_DAv³ + C_rr·mgv, and per-corner speed changes.
+  - Exploded view of the car.
+- **Lap.**
+  - A quasi-steady-state lap solver: corner limit v² = μmg / (m|κ| − μ·½ρC_LA), then forward (power and traction ellipse) and backward (braking) passes.
+  - About 1:15, 325 km/h, 4 g lateral and 5.6 g braking.
+  - Replayed on the racing line with chase, onboard, TV and heli cameras.
+  - Telemetry HUD: speed, gear, RPM, pedals, live g-g point, track map and delta. Also wheel loads with aero and weight transfer.
+- **Tyres.** Pacejka magic-formula force curves, load sensitivity, temperature windows per compound, and degradation with a cliff.
+- **Strategy.** A 58-lap race model (wear, fuel weight, a 21.4 s pit loss) that searches every 1- and 2-stop plan and split, with lap-time and gap charts.
+
+EN/JA, guided tour, debrief. Fictional car and circuit. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/apex/>**
+
+---
+
 ## Also in here: CHRONOS · the physics of time machines
 
 At [`public/chronos/`](public/chronos): every time machine that real physics allows, with exact formulas.
