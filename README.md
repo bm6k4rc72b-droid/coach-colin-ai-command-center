@@ -129,6 +129,32 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: VANGUARD · powered-armour suit & pilot clearance
+
+At [`public/vanguard/`](public/vanguard): an original articulated armour suit (82 pieces on a jointed rig) that welds itself around the pilot plate by plate, then hovers on four repulsors. To fly it, the pilot must pass a five-part clearance protocol.
+- **Suit.**
+  - Assembly animation with sparks, plus a hover pose with lit repulsors.
+  - Momentum-theory flight physics: T = mg, P = T^(3/2)/√(2ρA)/FM, jet speed 2w, hover endurance, and turn load factor n = √(1 + (v²/rg)²).
+- **Wellness: skin scan.**
+  - A real camera rPPG pipeline (CHROM method: skin-colour signal → band-pass → FFT heart rate → beat-to-beat RMSSD) estimates heart rate and HRV, giving a nervous-system index.
+  - PHQ-2 and GAD-2 screeners (with support resources), plus sleep and physical readiness. Video never leaves the browser; a demo scan is built in.
+- **Labs.** 22 markers with clearance and optimal bands, all of which must be in range:
+  - Heart: LDL, ApoB, HDL, TG, Lp(a), BP, resting HR.
+  - Inflammation: hs-CRP, IL-6, homocysteine, fibrinogen, WBC, ferritin.
+  - Metabolic: glucose, HbA1c, insulin, vitamin D.
+  - Mitochondria: lactate, lactate/pyruvate, CoQ10, CK, VO₂max.
+  - Also shows HOMA-IR and TG/HDL.
+- **Fitness.**
+  - Dead-stop bench 400 lb off pins, paused RDL 500 × 5, one-arm DB press 100 lb × 5 (paused, 3 s eccentric), and +100 lb wide-grip pull-ups × 5 with a 2 s top pause, each with form checks.
+  - Bike: 10 × 10 s max sprints (HRmax = 208 − 0.7·age, fatigue index, W/kg).
+- **Neuro.** A reaction battery: simple RT (< 250 ms), choice RT (< 400 ms, ≥ 90 %) and go/no-go (≤ 1 false press).
+
+EN/JA, guided tour, clearance certificate. Fictional suit. Not medical advice.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vanguard/>**
+
+---
+
 ## Also in here: GENOME ATHLETE · sports genetics with exact maths
 
 At [`public/genome/`](public/genome): 14 real sports-genetics variants on a B-DNA helix, including ACTN3 R577X, ACE I/D, PPARGC1A, PPARA, AMPD1, VEGFA, MCT1, HFE, AGT, HIF1A, IL6, COL5A1, COL1A1 and GDF5.
