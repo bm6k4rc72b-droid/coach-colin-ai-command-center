@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Broker Ranch — Liquid Command</title>
+<meta name="description" content="Broker Ranch. Private land intelligence. 12,400 acres. Operated by Coach Colin. Liquid command surface with Reginald, the ranch receptionist." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07080b;
+    --ink: #f3ecdf;
+    --muted: #a39886;
+    --gold: #d7b15c;
+    --gold-2: #f0d48a;
+    --line: rgba(215, 177, 92, 0.28);
+    --glass: rgba(10, 11, 14, 0.62);
+    --cyan: #8ee7ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: Outfit, system-ui, sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    overflow-x: hidden;
+  }
+  img { max-width: 100%; display: block; }
+  button, input, select, textarea { font-family: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  #liquid {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .veil {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 500px at 70% 20%, rgba(215,177,92,0.08), transparent 60%),
+      linear-gradient(180deg, rgba(7,8,11,0.15), rgba(7,8,11,0.72) 70%, #07080b);
+  }
+  .page { position: relative; z-index: 2; }
+
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    mix-blend-mode: normal;
+  }
+  .brand {
+    display: flex; gap: 10px; align-items: center;
+    letter-spacing: 0.28em;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .mark {
+    width: 28px; height: 28px; border: 1px solid var(--gold);
+    display: grid; place-items: center;
+    font-family: "Cormorant Garamond", serif;
+    color: var(--gold);
+    letter-spacing: 0;
+  }
+  .nav-links { display: flex; gap: 18px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .nav-links a:hover { color: var(--gold-2); }
+  .nav-cta {
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,0.35);
+    color: var(--gold-2);
+    padding: 8px 12px;
+    letter-spacing: 0.16em;
+    font-size: 11px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .hero {
+    min-height: 100svh;
+    display: grid;
+    align-content: end;
+    padding: 22vh 7vw 12vh;
+  }
+  .kicker {
+    color: var(--gold);
+    letter-spacing: 0.42em;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 500;
+    font-size: clamp(64px, 12vw, 148px);
+    line-height: 0.82;
+    margin: 14px 0 18px;
+    letter-spacing: -0.03em;
+  }
+  h1 em { font-style: italic; color: var(--gold-2); }
+  .lede { max-width: 560px; color: #ddd4c4; font-size: 16px; line-height: 1.55; }
+  .hero-meta {
+    margin-top: 28px;
+    display: flex; flex-wrap: wrap; gap: 18px 28px;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  }
+  .hero-meta b { color: var(--ink); font-weight: 500; display: block; letter-spacing: 0.08em; margin-top: 4px; }
+  .unseal {
+    margin-top: 28px;
+    background: var(--gold);
+    color: #1a1408;
+    border: 0;
+    padding: 14px 18px;
+    letter-spacing: 0.2em;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  section { padding: 12vh 7vw; position: relative; }
+  .chap {
+    font-size: 11px;
+    letter-spacing: 0.34em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 500;
+    font-size: clamp(40px, 6vw, 84px);
+    line-height: 0.9;
+    margin: 10px 0 16px;
+  }
+  .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; }
+  .plate {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    min-height: 320px;
+    background: #000;
+  }
+  .plate img { width: 100%; height: 100%; object-fit: cover; min-height: 360px; filter: saturate(0.9) contrast(1.05); }
+  .plate.liquid-on img { animation: ripple 7s ease-in-out infinite; }
+  @keyframes ripple {
+    0%,100% { transform: scale(1.04) translate3d(0,0,0); }
+    50% { transform: scale(1.08) translate3d(-1.2%, 0.6%, 0); }
+  }
+  .plate figcaption {
+    position: absolute; left: 14px; bottom: 12px;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #efe7d6;
+    text-shadow: 0 2px 12px #000;
+  }
+  p { color: #d9d0c2; line-height: 1.65; font-size: 16px; }
+  .stats { display: flex; gap: 22px; margin-top: 18px; flex-wrap: wrap; }
+  .stats div { min-width: 110px; }
+  .stats b { display: block; font-family: "Cormorant Garamond", serif; font-size: 32px; font-weight: 500; color: var(--gold-2); }
+  .stats span { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+  .arsenal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+  .file {
+    position: relative;
+    border: 1px solid rgba(215,177,92,0.22);
+    background: linear-gradient(180deg, rgba(20,18,14,0.8), rgba(8,8,10,0.9));
+    min-height: 280px;
+    padding: 18px;
+    overflow: hidden;
+    cursor: crosshair;
+    transition: border-color 0.3s, transform 0.35s;
+  }
+  .file:hover { border-color: var(--gold); transform: translateY(-4px); }
+  .file .idx { font-size: 11px; letter-spacing: 0.22em; color: var(--gold); }
+  .file h3 { font-family: "Cormorant Garamond", serif; font-size: 32px; margin: 8px 0; font-weight: 500; }
+  .file p { font-size: 14px; color: var(--muted); }
+  .xray {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at var(--mx,50%) var(--my,40%), rgba(142,231,255,0.16), transparent 28%),
+      repeating-linear-gradient(0deg, transparent, transparent 11px, rgba(142,231,255,0.05) 12px),
+      linear-gradient(180deg, rgba(4,10,16,0.2), rgba(4,10,16,0.82));
+    opacity: 0;
+    transition: opacity 0.35s;
+    pointer-events: none;
+  }
+  .file:hover .xray { opacity: 1; }
+  .scan {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: 0 0 18px var(--cyan);
+    top: 0;
+    opacity: 0;
+  }
+  .file:hover .scan { opacity: 1; animation: scan 1.6s linear infinite; }
+  @keyframes scan { from { top: 0; } to { top: 100%; } }
+  .bones {
+    position: absolute; inset: 18px;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  .file:hover .bones { opacity: 0.9; }
+  .bones svg { width: 100%; height: 100%; }
+  .xmeta {
+    position: absolute; right: 14px; bottom: 14px;
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--cyan); opacity: 0;
+  }
+  .file:hover .xmeta { opacity: 1; }
+
+  .wheel-wrap {
+    position: fixed;
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 150px;
+    height: 420px;
+    z-index: 30;
+    perspective: 900px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+  .wheel-wrap:active { cursor: grabbing; }
+  .rotor {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.08s linear;
+  }
+  .spoke {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 36px;
+    margin-top: -18px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(243,236,223,0.45);
+    transform-style: preserve-3d;
+  }
+  .spoke i {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1px solid var(--gold);
+    display: block;
+  }
+  .spoke.on { color: var(--gold-2); }
+  .spoke.on i { background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+  .hub {
+    position: absolute; left: 18px; top: 50%; width: 74px; height: 74px;
+    margin-top: -37px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    display: grid; place-items: center;
+    background: rgba(7,8,11,0.55);
+    backdrop-filter: blur(6px);
+    font-size: 10px; letter-spacing: 0.14em; text-align: center; color: var(--gold);
+  }
+
+  .desk {
+    display: grid;
+    grid-template-columns: 0.82fr 1.18fr;
+    gap: 28px;
+    border: 1px solid var(--line);
+    background: rgba(8,9,12,0.72);
+    backdrop-filter: blur(10px);
+    padding: 18px;
+  }
+  .portrait { position: relative; overflow: hidden; min-height: 460px; background: #000; }
+  .portrait img { width: 100%; height: 100%; object-fit: cover; min-height: 460px; }
+  .portrait .live {
+    position: absolute; left: 12px; top: 12px;
+    font-size: 10px; letter-spacing: 0.2em;
+    color: #b7ffcf;
+    border: 1px solid rgba(183,255,207,0.4);
+    padding: 4px 8px;
+    background: rgba(0,0,0,0.4);
+  }
+  .log {
+    height: 180px;
+    overflow: auto;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 12px;
+    background: rgba(0,0,0,0.35);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .log .who { color: var(--gold); letter-spacing: 0.12em; font-size: 10px; text-transform: uppercase; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .chip, .ghost {
+    border: 1px solid var(--line);
+    background: transparent;
+    padding: 8px 10px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .chip { background: rgba(215,177,92,0.12); color: var(--gold-2); }
+  .ghost:hover, .chip:hover { border-color: var(--gold); }
+  .intent {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    min-height: 18px;
+  }
+  .slip {
+    margin-top: 12px;
+    border: 1px dashed var(--gold);
+    padding: 12px;
+    display: none;
+  }
+  .slip.show { display: block; }
+  .slip b { font-family: "Cormorant Garamond", serif; font-size: 28px; color: var(--gold-2); }
+
+  form { display: grid; gap: 10px; margin-top: 12px; }
+  input, select, textarea {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  footer {
+    padding: 40px 7vw 80px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .loader {
+    position: fixed; inset: 0; z-index: 80;
+    background: #05060a;
+    display: grid; place-items: center;
+    transition: opacity 0.6s;
+  }
+  .loader.hide { opacity: 0; pointer-events: none; }
+  .loader span { letter-spacing: 0.4em; font-size: 12px; color: var(--gold); }
+
+  @media (max-width: 900px) {
+    .split, .desk, .arsenal { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .wheel-wrap {
+      right: 8px; width: 92px; height: 280px; opacity: 0.92;
+    }
+    .spoke { font-size: 8px; }
+    .hub { display: none; }
+    section { padding: 10vh 20px; }
+    .hero { padding: 22vh 20px 10vh; }
+  }
+</style>
+</head>
+<body>
+<div class="loader" id="loader"><span>UNSEALING THE FILE</span></div>
+<canvas id="liquid"></canvas>
+<div class="veil"></div>
+
+<nav>
+  <div class="brand"><div class="mark">BR</div> BROKER RANCH</div>
+  <div class="nav-links">
+    <a href="#perimeter">Perimeter</a>
+    <a href="#flock">Flock</a>
+    <a href="#mesh">Mesh</a>
+    <a href="#sky">Sky</a>
+    <a href="#arsenal">Arsenal</a>
+    <a href="#cave">Cave</a>
+    <a href="#desk">Reginald</a>
+  </div>
+  <button class="nav-cta" onclick="document.getElementById('desk').scrollIntoView({behavior:'smooth'})">Call the desk</button>
+</nav>
+
+<div class="wheel-wrap" id="wheel" title="Drag the wheel to patrol">
+  <div class="rotor" id="rotor"></div>
+  <div class="hub">DRAG<br>TO PATROL</div>
+</div>
+
+<main class="page">
+  <header class="hero" id="gate">
+    <div class="kicker">Restricted · Level V · Lompoc corridor</div>
+    <h1>Broker<br><em>Ranch</em></h1>
+    <p class="lede">Private land intelligence. Twelve thousand four hundred acres, one authorised road, and a mesh that already knows you are scrolling. Operated by Coach Colin. The liquid on this glass is the patrol.</p>
+    <div class="hero-meta">
+      <div>Latitude<b>34.2534 N</b></div>
+      <div>Longitude<b>119.8092 W</b></div>
+      <div>Mesh<b>Secure</b></div>
+      <div>Flock<b>32 / 32</b></div>
+      <div>Thermal<b>Nominal</b></div>
+    </div>
+    <button class="unseal" onclick="document.getElementById('perimeter').scrollIntoView({behavior:'smooth'})">Authorize entry</button>
+  </header>
+
+  <section id="perimeter">
+    <div class="split">
+      <div>
+        <div class="chap">Chapter 01 · The road in</div>
+        <h2>The road is the first sensor.</h2>
+        <p>One road. Every mass that crosses it is logged before the dust settles. Scroll and the glass liquifies with your speed — fast visitors warp the pasture, slow ones get a cleaner read. Reginald is already timing you.</p>
+        <div class="stats">
+          <div><b>12,400</b><span>Acres under watch</span></div>
+          <div><b>1</b><span>Authorised road</span></div>
+          <div><b>24/7</b><span>Immutable log</span></div>
+        </div>
+      </div>
+      <figure class="plate liquid-on">
+        <img src="img/hero.jpg" alt="Night aerial of Broker Ranch with drones over the coastal fog" />
+        <figcaption>North approach · drones holding the fog line</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="flock">
+    <div class="split">
+      <figure class="plate liquid-on">
+        <img src="img/flock.jpg" alt="X-ray wireframe flock of roosters in the barn" />
+        <figcaption>Flock Secure Pro · 32 named birds</figcaption>
+      </figure>
+      <div>
+        <div class="chap">Chapter 02 · The flock</div>
+        <h2>Every bird is an asset on the books.</h2>
+        <p>Thirty-two roosters, each a tracked object with a name, a temperature and a history. Hover any file below and the surface peels to x-ray: skeleton, sensor, confidence. Thermal flags a sick bird before a person would.</p>
+        <div class="stats">
+          <div><b>32/32</b><span>Birds held</span></div>
+          <div><b>38.2C</b><span>Mean thermal</span></div>
+          <div><b>0</b><span>Predators inside</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="mesh">
+    <div class="split">
+      <div>
+        <div class="chap">Chapter 03 · The signal</div>
+        <h2>We see through the walls.</h2>
+        <p>The wifi mesh is not coverage. The same radio that carries the ranch reads a fourteen-point body moving through it, with no camera anywhere. It is the trick an outsider would use on you, which is why the ranch runs it first.</p>
+        <div class="stats">
+          <div><b>5</b><span>Mesh nodes</span></div>
+          <div><b>CSI</b><span>Through-wall</span></div>
+          <div><b>0</b><span>Cameras required</span></div>
+        </div>
+      </div>
+      <figure class="plate liquid-on">
+        <img src="img/lidar.jpg" alt="Gold lidar point cloud of ranch barns and tank" />
+        <figcaption>Lidar · 2cm · structure truth</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="sky">
+    <div class="split">
+      <figure class="plate liquid-on">
+        <img src="img/scope.jpg" alt="Thermal scope view of a coyote on the fence line" />
+        <figcaption>Coach’s Sniper Room · coyote 0.94</figcaption>
+      </figure>
+      <div>
+        <div class="chap">Chapter 04 · Overwatch</div>
+        <h2>The sky belongs to the ranch.</h2>
+        <p>Three heavy airframes and a twelve-bird CSI swarm. LIDAR by day, thermal by night. Six palettes, three reticles, one to twenty power, SATCOM when the local line dies. Lompoc sits under the polar corridor — the sniper room watches launches and the fence in the same glass.</p>
+        <div class="stats">
+          <div><b>20x</b><span>Optics on hand</span></div>
+          <div><b>1,200m</b><span>Laser range</span></div>
+          <div><b>SATCOM</b><span>Fallback link</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="arsenal">
+    <div class="chap">The arsenal</div>
+    <h2>Six files. Hover to x-ray.</h2>
+    <p>Each file is sealed until the pointer crosses it. The scan peels the cover and shows the system underneath — not a tooltip, an x-ray.</p>
+    <div class="arsenal" id="files"></div>
+  </section>
+
+  <section id="cave">
+    <div class="split">
+      <div>
+        <div class="chap">Below the ranch</div>
+        <h2>Colin’s secret cave.</h2>
+        <p>A natural cavern under the property, cut into a redundant command complex. Gantry, watch floor, build bench, vehicle lift, and cold water through the back. If the surface goes dark, the property does not notice.</p>
+        <div class="stats">
+          <div><b>64m</b><span>Depth</span></div>
+          <div><b>41h</b><span>Stored power</span></div>
+          <div><b>2</b><span>Surface links</span></div>
+        </div>
+      </div>
+      <figure class="plate liquid-on">
+        <img src="img/cave.jpg" alt="Underground command cave with gantry and holographic wall" />
+        <figcaption>The gantry · continuity of operations</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="desk">
+    <div class="chap">Front of house</div>
+    <h2>Meet Reginald. He does not put you on hold.</h2>
+    <div class="desk">
+      <div class="portrait">
+        <img src="img/reginald.jpg" alt="Reginald, holographic ranch concierge" />
+        <div class="live" id="liveTag">STANDING BY · VOICE OFF</div>
+      </div>
+      <div>
+        <p id="intent" class="intent">Intent x-ray · waiting for a gesture</p>
+        <div class="log" id="log"></div>
+        <div class="row">
+          <button class="chip" data-line="greet">Greeting</button>
+          <button class="chip" data-line="overwatch">Overwatch</button>
+          <button class="chip" data-line="sense">Through walls</button>
+          <button class="chip" data-line="harvest">Harvest</button>
+          <button class="chip" data-line="scan">X-ray me</button>
+          <button class="chip" data-line="voice">Voice on</button>
+        </div>
+        <div class="row" id="agents">
+          <button class="ghost" data-agent="Scout">Summon Scout</button>
+          <button class="ghost" data-agent="Herald">Herald</button>
+          <button class="ghost" data-agent="Tally">Tally</button>
+          <button class="ghost" data-agent="Nudge">Nudge</button>
+          <button class="ghost" data-agent="Ledger">Ledger</button>
+        </div>
+        <div class="row">
+          <button class="chip" id="gateBtn">Run gate protocol</button>
+          <button class="ghost" id="bookBtn">Book a night walkthrough</button>
+        </div>
+        <div class="slip" id="slip">
+          <div class="chap">Clearance slip</div>
+          <b id="code">BR-0000</b>
+          <p id="slipNote">Held for Coach Colin. After dark. Thermal on.</p>
+        </div>
+        <form id="clearance" action="#desk">
+          <input name="name" placeholder="Name" required />
+          <input name="email" type="email" placeholder="Email" required />
+          <select name="file">
+            <option>Flock Secure Pro</option>
+            <option>Perimeter and cyber</option>
+            <option>Coach’s Sniper Room</option>
+            <option>Drone survey and 3D measurement</option>
+            <option>HarvestEye and the agent desk</option>
+            <option>The whole platform</option>
+          </select>
+          <textarea name="note" rows="3" placeholder="Anything the operator should know"></textarea>
+          <button class="unseal" type="submit">Request clearance</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Broker Ranch · Enterprise ranch intelligence · Scan. Secure. Optimize.<br><br>
+    Operated by Coach Colin · coachcolinc@icloud.com · @coachcolinc<br>
+    Liquid command rebuild · not the live Higgsfield deploy
+  </footer>
+</main>
+
+<svg width="0" height="0" style="position:absolute">
+  <filter id="liq">
+    <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.008 0.02" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="12"/>
+  </filter>
+</svg>
+
+<script>
+const sections = [
+  ["gate","Gate"],["perimeter","Perimeter"],["flock","Flock"],["mesh","Mesh"],
+  ["sky","Sky"],["arsenal","Arsenal"],["cave","Cave"],["desk","Reginald"]
+];
+const files = [
+  ["01 · Livestock","Flock Secure Pro","Named birds, thermal health, predator geo-fence. No signal required.","32 joints · temp drift 0.2C"],
+  ["02 · Property","Broker Ranch","Zones, lidar truth, satellite over drone, mesh as a sensing grid.","2cm cloud · 5 nodes"],
+  ["03 · Harvest","HarvestEye","On-device ripeness. The row tells you when, and who is already waiting.","94% · block A"],
+  ["04 · Overwatch","Sniper Room","Six palettes, three reticles, SATCOM. Heat, range, intent.","LWIR 640 · 60hz"],
+  ["05 · Global","God’s Eye","OSIRIS, grid, fire, quake, traffic. A globe you can talk to.","next pass 14m"],
+  ["06 · Cyber","The Vault","Ghost protocol, plate-reader defeat, a log nobody rewrites.","6 lenses · idle"]
+];
+
+const lines = {
+  greet: "Good evening. Broker Ranch. Twelve thousand four hundred acres, thirty-two roosters, and — presently — one visitor who has not yet been a nuisance. I am Reginald. I do not do hold music.",
+  overwatch: "You have found Coach’s Sniper Room. Thermal optics, predator tracking, and a coyote who will regret the fence line. Shall I paint him, or would you prefer the launch corridor?",
+  sense: "We see through walls with the wifi you are already standing in. Unsettling? Enormously. Effective? Devastatingly. Zero cameras. Fourteen joints. Do try to stand still.",
+  harvest: "The harvest wing. Tomatoes at ninety-four percent, eggs collected, dairy at three-point-two. I have already bothered the buyers. They prefer me to a human pitch, which is either a compliment or an indictment.",
+  scan: "Very well. X-raying the visitor. Dwell time logged. Scroll velocity suggests curiosity, not a raid. Intent: unclassified, leaning toward a night walkthrough. You may put your shoulders down.",
+  voice: "Voice is live. I shall speak when spoken to, and occasionally when you linger like a man who has lost the road."
+};
+const agents = {
+  Scout: "Scout is on the desk. He finds restaurants, grocers and private buyers inside the delivery radius, and he is already cross-checking them against what the blocks will do this week.",
+  Herald: "Herald opens the conversation the day HarvestEye says a block is turning. Real quantities. Real dates. No ‘just circling back’, unless I tell him to be cruel.",
+  Tally: "Tally prices the load against the ledger and holds the margin Coach Colin set. He does not get sentimental about a buyer who wants it cheaper.",
+  Nudge: "Nudge runs three touches, then a clean exit. He has a spine, which is more than most follow-up sequences can claim.",
+  Ledger: "Ledger books the delivery, logs the payment, and puts the week on one page. I rather like him. He does not talk."
+};
+
+const rotor = document.getElementById("rotor");
+sections.forEach((s, i) => {
+  const el = document.createElement("button");
+  el.className = "spoke";
+  el.style.transform = `rotateX(${i * 36}deg) translateZ(150px)`;
+  el.innerHTML = `<span>${s[1]}</span><i></i>`;
+  el.onclick = (e) => { e.stopPropagation(); document.getElementById(s[0]).scrollIntoView({behavior:"smooth"}); };
+  rotor.appendChild(el);
+});
+
+const fileRoot = document.getElementById("files");
+files.forEach(f => {
+  const card = document.createElement("article");
+  card.className = "file";
+  card.innerHTML = `
+    <div class="idx">${f[0]}</div>
+    <h3>${f[1]}</h3>
+    <p>${f[2]}</p>
+    <div class="xray"></div>
+    <div class="scan"></div>
+    <div class="bones">${xraySvg()}</div>
+    <div class="xmeta">${f[3]}</div>`;
+  card.addEventListener("pointermove", (e) => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100) + "%");
+    card.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100) + "%");
+    setIntent("X-ray · " + f[1] + " · internal layer live");
+  });
+  fileRoot.appendChild(card);
+});
+function xraySvg() {
+  return `<svg viewBox="0 0 200 140" fill="none" stroke="#8ee7ff" stroke-width="1">
+    <ellipse cx="100" cy="78" rx="46" ry="28" opacity="0.7"/>
+    <circle cx="100" cy="40" r="14"/>
+    <path d="M100 54 V100 M70 70 H130 M78 108 L100 90 L122 108" />
+    <path d="M40 78 H70 M130 78 H164" stroke-dasharray="3 3"/>
+    <circle cx="54" cy="36" r="3"/><circle cx="150" cy="52" r="3"/><circle cx="120" cy="108" r="3"/>
+  </svg>`;
+}
+
+const logEl = document.getElementById("log");
+const memory = { files: new Set(), dwell: 0, velocity: 0, gate: 0 };
+function say(text, who="Reginald") {
+  const row = document.createElement("div");
+  row.innerHTML = `<div class="who">${who}</div><div>${text}</div>`;
+  logEl.appendChild(row);
+  logEl.scrollTop = logEl.scrollHeight;
+  if (voiceOn) speak(text);
+}
+function setIntent(t) { document.getElementById("intent").textContent = t; }
+let voiceOn = false;
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const brit = voices.find(v => /en-GB|UK|Daniel|Arthur|Google UK/i.test(v.name + v.lang));
+  if (brit) u.voice = brit;
+  u.rate = 0.96;
+  u.pitch = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+say(lines.greet);
+
+document.querySelectorAll("[data-line]").forEach(b => b.onclick = () => {
+  const key = b.dataset.line;
+  if (key === "voice") {
+    voiceOn = !voiceOn;
+    document.getElementById("liveTag").textContent = voiceOn ? "LIVE · VOICE ON" : "STANDING BY · VOICE OFF";
+    say(voiceOn ? lines.voice : "Voice stowed. I shall remain devastatingly quiet.");
+    return;
+  }
+  if (key === "scan") {
+    memory.files.add("visitor-xray");
+    say(`${lines.scan} You have opened ${memory.files.size} sealed surfaces and spent ${memory.dwell} seconds on the property.`);
+    return;
+  }
+  say(lines[key]);
+});
+document.querySelectorAll("[data-agent]").forEach(b => b.onclick = () => {
+  const name = b.dataset.agent;
+  memory.files.add(name);
+  say(agents[name], name);
+  setIntent("Handoff · " + name + " · desk still held by Reginald");
+});
+
+const gateBtn = document.getElementById("gateBtn");
+const gateScript = [
+  "Gate protocol. Three questions, then a code. First: are you here for the land, the flock, or the optics?",
+  "Noted. Second: will anyone else be on the road in with you?",
+  "Last one. After dark, thermal on. Coach Colin walks it himself. Shall I hold a seat?"
+];
+gateBtn.onclick = () => {
+  memory.gate = Math.min(memory.gate + 1, 3);
+  if (memory.gate < 3) say(gateScript[memory.gate - 1]);
+  else {
+    const code = "BR-" + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById("code").textContent = code;
+    document.getElementById("slip").classList.add("show");
+    say("Protocol complete. Your clearance is " + code.split("").join(" ") + ". I have written it on the slip. Do not lose it in the fog.");
+  }
+};
+document.getElementById("bookBtn").onclick = () => {
+  document.getElementById("slip").classList.add("show");
+  document.getElementById("code").textContent = "BR-" + Math.floor(1000 + Math.random() * 9000);
+  document.getElementById("slipNote").textContent = "Night walkthrough requested. Reginald will pester Coach Colin. He does this relentlessly.";
+  say("Booked in spirit. Leave your name on the desk and I shall make it official. Black coat, gold pin, invisible until needed.");
+  document.getElementById("clearance").scrollIntoView({behavior:"smooth", block:"center"});
+};
+document.getElementById("clearance").onsubmit = (e) => {
+  e.preventDefault();
+  const data = new FormData(e.target);
+  const code = "BR-" + Math.floor(1000 + Math.random() * 9000);
+  document.getElementById("code").textContent = code;
+  document.getElementById("slip").classList.add("show");
+  document.getElementById("slipNote").textContent = `${data.get("name")} · ${data.get("file")} · held for Coach Colin.`;
+  say(`Mr ${data.get("name") || "visitor"}, received. ${data.get("file")} is the file you want unsealed. Clearance ${code}. I shall not put this on hold.`);
+};
+
+let lastY = 0, vel = 0, announced = new Set();
+function onScroll() {
+  const y = window.scrollY;
+  vel = Math.min(1, Math.abs(y - lastY) / 40);
+  lastY = y;
+  const max = document.body.scrollHeight - innerHeight;
+  const p = max > 0 ? y / max : 0;
+  rotor.style.transform = `rotateX(${ -p * 252 }deg)`;
+  const spokes = [...rotor.children];
+  let active = 0;
+  sections.forEach((s, i) => {
+    const el = document.getElementById(s[0]);
+    if (el && el.getBoundingClientRect().top < innerHeight * 0.45) active = i;
+  });
+  spokes.forEach((sp, i) => sp.classList.toggle("on", i === active));
+  const id = sections[active][0];
+  if (!announced.has(id) && id !== "gate") {
+    announced.add(id);
+    const comments = {
+      perimeter: "The road in. I have logged your mass. Do keep to the gold lights.",
+      flock: "Thirty-two birds. All accounted for. One of them is judging you.",
+      mesh: "You are inside the sensing grid. No camera. I can still tell you paused.",
+      sky: "Overwatch. If you see a coyote, it has already been ranged.",
+      arsenal: "The files. Hover them. The x-ray is not decorative.",
+      cave: "Below the ranch. If you are not supposed to be here, you are already too late.",
+      desk: "Ah. You found the desk. I was beginning to think you would only lurk."
+    };
+    if (comments[id]) say(comments[id]);
+  }
+  liquid.vel = vel;
+  liquid.scroll = p;
+}
+addEventListener("scroll", onScroll, {passive:true});
+setInterval(() => { memory.dwell++; }, 1000);
+
+const wheel = document.getElementById("wheel");
+let dragging = false, dragY = 0;
+wheel.addEventListener("pointerdown", (e) => { dragging = true; dragY = e.clientY; wheel.setPointerCapture(e.pointerId); });
+wheel.addEventListener("pointermove", (e) => {
+  if (!dragging) return;
+  const dy = e.clientY - dragY;
+  dragY = e.clientY;
+  window.scrollBy(0, dy * 2.4);
+});
+wheel.addEventListener("pointerup", () => dragging = false);
+
+const liquid = { vel: 0, scroll: 0, mouse: [0.68, 0.42], tex: null, gl: null };
+function bootGL() {
+  const canvas = document.getElementById("liquid");
+  const gl = canvas.getContext("webgl", { alpha: false, antialias: false });
+  if (!gl) return;
+  liquid.gl = gl;
+  const vs = `attribute vec2 p; varying vec2 v; void main(){ v=p*0.5+0.5; gl_Position=vec4(p,0.0,1.0); }`;
+  const fs = `precision mediump float; varying vec2 v; uniform sampler2D tex; uniform float t; uniform vec2 m; uniform float vel; uniform float sc;
+    void main(){
+      vec2 uv = v;
+      float wave = sin(uv.y*10.0 + t*1.3 + sc*8.0)*0.012*(0.35+vel*2.2);
+      float wave2 = sin(uv.x*7.0 - t*0.8 + m.x*4.0)*0.01;
+      vec2 to = uv - m;
+      float d = dot(to,to);
+      float bulge = exp(-d*14.0) * (0.035 + vel*0.05);
+      uv += vec2(wave, wave2) + normalize(to+0.0001)*bulge;
+      vec4 c = texture2D(tex, uv);
+      c.r = texture2D(tex, uv+vec2(0.004*vel,0.0)).r;
+      c.b = texture2D(tex, uv-vec2(0.003*vel,0.001)).b;
+      float vign = smoothstep(1.1, 0.25, length(v-0.5));
+      c.rgb *= 0.55 + 0.45*vign;
+      c.rgb = mix(c.rgb, c.rgb*vec3(1.05,0.95,0.8), 0.25);
+      gl_FragColor = c;
+    }`;
+  function sh(type, src){ const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const u = {
+    t: gl.getUniformLocation(prog,"t"),
+    m: gl.getUniformLocation(prog,"m"),
+    vel: gl.getUniformLocation(prog,"vel"),
+    sc: gl.getUniformLocation(prog,"sc")
+  };
+  const img = new Image();
+  img.onload = () => {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    liquid.tex = tex;
+  };
+  img.src = "img/hero.jpg";
+  function resize(){
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
+  resize();
+  addEventListener("resize", resize);
+  addEventListener("pointermove", (e) => {
+    liquid.mouse = [e.clientX / innerWidth, 1 - e.clientY / innerHeight];
+  });
+  const t0 = performance.now();
+  function frame(now){
+    liquid.vel += (vel - liquid.vel) * 0.08;
+    gl.uniform1f(u.t, (now - t0) / 1000);
+    gl.uniform2f(u.m, liquid.mouse[0], liquid.mouse[1]);
+    gl.uniform1f(u.vel, liquid.vel);
+    gl.uniform1f(u.sc, liquid.scroll);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+bootGL();
+setTimeout(() => document.getElementById("loader").classList.add("hide"), 700);
+onScroll();
+</script>
+</body>
+</html>
