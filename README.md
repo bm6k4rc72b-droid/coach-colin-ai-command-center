@@ -137,6 +137,32 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: NOCTURNE · cave-lair suit tech
+
+At [`public/nocturne/`](public/nocturne): an original matte tactical suit in a limestone cave lair, with a waterfall, a bat swarm and a wall of live screens. It has five field-readiness goals.
+- **Suit.**
+  - A layered armour rig with a finned cowl and a real cloth-simulated cape (Verlet particles, distance constraints, body collisions).
+  - Cowl optics: night vision (image intensifier) and thermal (ironbow palette; the wearer's body heat glows).
+  - Assembly and a perch pose.
+- **Glide.**
+  - The cape locks to wrists and ankles as a low-aspect wing. Drag polar C_D = C_D0 + kC_L², (L/D)max = 1/(2√(C_D0·k)), V = √(2mg cos γ/(ρSC_L)).
+  - A full 2-D lift/drag flight from the rooftop (with the phugoid). Landing equals a 60 m fall unless a canopy is deployed (v = √(2mg/(ρC_DA))).
+- **Armour.**
+  - NIJ 0101.06 test threats, from 9 mm up to .30-06 AP: E = ½mv², p = mv, and why bullets don't knock people over.
+  - Aramid, UHMWPE or ceramic at a chosen areal density, fired on a test rig.
+- **Grapnel.**
+  - Gas launch v = √(2PAL/m), a Dyneema line's breaking strength, and the shock load F = mg + √((mg)² + 2mg·k·h) with an optional absorber.
+  - The pendulum swing is simulated with live tension T = m(g cos θ + Lθ′²).
+- **Sonar.**
+  - c = 331.3√(1 + T/273.15), λ = c/f, and range from 40 log r + 2αr loss.
+  - Pings ray-march the cave into a point cloud, and five hidden caches must be found.
+
+EN/JA, guided tour, readiness report. Original fictional suit. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/nocturne/>**
+
+---
+
 ## Also in here: VANGUARD · powered-armour suit & pilot clearance
 
 At [`public/vanguard/`](public/vanguard): an original articulated armour suit (82 pieces on a jointed rig) that welds itself around the pilot plate by plate, then hovers on four repulsors. To fly it, the pilot must pass a five-part clearance protocol.
