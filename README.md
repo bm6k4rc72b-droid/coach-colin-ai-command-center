@@ -129,6 +129,33 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: NEUROLENS · neural photography & videography
+
+At [`public/neurolens/`](public/neurolens): a white holographic, anamorphic lab for how a brain decides what is attractive and when attention is lost.
+- **Brain.** A pearl-glass 3D brain with 16 regions, each with a description, its chemistry and a tip for creators:
+  - Reward: VTA, nucleus accumbens, vmPFC, OFC.
+  - Salience and arousal: amygdala, insula, ACC, locus coeruleus.
+  - Attention: dlPFC, superior colliculus.
+  - Novelty and memory: hippocampus.
+  - Vision: V1, V4, MT, FFA.
+  - Mind-wandering: the default mode network.
+
+  Animated dopamine, noradrenaline and visual pathways connect them. Schultz's experiment runs as TD learning, δ = r + γV′ − V. The burst moves from the reward to the cue, and an omitted reward gives a dip.
+- **Viewer.** Seven traits: novelty seeking, reward sensitivity, face bias, colour, motion, arousal and executive control. Five presets. The panel shows the derived habituation time, novelty bonus, dopamine gain, Yerkes–Dodson efficiency and the attention span on an unedited shot. Notes explain DRD4/D2, COMT, ADHD, age, sleep and caffeine.
+- **Screen.** A procedural film analysed at 10 Hz on real pixels:
+  - Itti–Koch saliency (intensity, colour opponency, orientation and motion, with centre–surround and normalisation) and a heat map.
+  - Predicted gaze, plus colourfulness (Hasler–Süsstrunk), contrast, edge density and focus.
+  - Simulated viewer: reward prediction error, adaptive-gain noradrenaline, attention with a default-mode takeover, and a retention curve.
+  - Editor's notes say why attention was lost and how to fix it.
+  - Shots can be edited, a tuned cut compared, and your own video uploaded.
+- **Photo.** A saliency heat map and a 7-fixation scanpath (winner-take-all with inhibition of return), with thirds, centring and symmetry checks. Attraction is scored for each viewer type, with suggestions. You can upload your own photo.
+
+EN/JA, guided tour, report. Education only; it does not read anyone's brain.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/neurolens/>**
+
+---
+
 ## Also in here: RANCH OPS · flock management & drone surveillance
 
 At [`public/ranch/`](public/ranch): run a sheep ranch from the air.
