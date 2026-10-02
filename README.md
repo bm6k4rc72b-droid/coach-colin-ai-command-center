@@ -24,7 +24,11 @@ catheter up the arm, left-main engagement under a virtual C-arm with pulsed fluo
 contrast cines, wire steering, pre-dilation, DES deployment and final angiography. A patient
 monitor shows ST changes, a mentor guides each step, a scripted demo runs the whole case, and the
 case ends in a scored debrief. It is a standalone Vite + TypeScript + Three.js project with its own
-`package.json`. Run `cd pci-sim && npm install && npm run dev`. It is for education and
+`package.json`. Run `cd pci-sim && npm install && npm run dev`.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/pci-sim/>**
+
+It is for education and
 demonstration only, not clinical training or medical advice.
 
 ---

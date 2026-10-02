@@ -43,6 +43,15 @@ jobs:
       - name: Build static site
         run: ./scripts/build-static.sh "${GITHUB_REPOSITORY#*/}"
 
+      # The PCI simulator is its own Vite project; publish it under /pci-sim/.
+      - name: Build PCI simulator
+        run: |
+          cd pci-sim
+          npm ci
+          npm run build
+          rm -rf ../dist/pci-sim
+          cp -r dist ../dist/pci-sim
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
