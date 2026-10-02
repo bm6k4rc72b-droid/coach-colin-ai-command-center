@@ -25,7 +25,15 @@ with suspension landing loads, a barrier crash and range. Only about 6% of build
 requirements; a guided tour shows the trade-offs. It is a standalone Vite + TypeScript +
 Three.js project.
 
-**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/batmobile-builder/>** (after merge)
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/batmobile-builder/>**
+
+---
+
+## Also in here: WAYNE VEIL · optical cloak
+
+At [`public/wayne-veil/`](public/wayne-veil): a single-page live invisibility cloak. MediaPipe person segmentation hides you from the camera and fills the hole with a locked clean plate, a learned background or a camo pattern. Hand gestures drive it: two fingers swept back and forth toggle the cloak; open palm then fist fires a simulated EMP blackout. Sensor views include thermal (white-hot, iron, arctic), night vision, a depth proxy, frame-diff "radar" motion and a red-team detector score. Device HUDs for phone, laptop, DJI, smart glasses and watch, plus voiced "Bruce Wayne" lines and a synth soundtrack. Static HTML and MP3s; needs camera permission and network for the MediaPipe models.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/wayne-veil/>**
 
 ---
 
