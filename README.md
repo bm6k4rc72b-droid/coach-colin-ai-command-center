@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Night Interceptor · Batmobile-style vehicle builder
+
+At [`batmobile-builder/`](batmobile-builder): design an armoured night-pursuit car (chassis,
+powertrain, armour, tyres, drive, suspension, wing) and test it on a night-city proving ground:
+0–100 and quarter mile, top speed, braking, a hairpin with rollover physics, a 20 m canal jump
+with suspension landing loads, a barrier crash and range. Only about 6% of builds pass all eight
+requirements; a guided tour shows the trade-offs. It is a standalone Vite + TypeScript +
+Three.js project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/batmobile-builder/>** (after merge)
+
+---
+
 ## Also in here: Cloak Lab · invisibility, sensors & EMP hardening
 
 At [`cloak-lab/`](cloak-lab): an educational lab on how close today's tech gets to an invisibility
