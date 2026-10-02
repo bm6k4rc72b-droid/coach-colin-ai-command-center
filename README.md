@@ -16,6 +16,22 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Cloak Lab · invisibility, sensors & EMP hardening
+
+At [`cloak-lab/`](cloak-lab): an educational lab on how close today's tech gets to an invisibility
+cloak. The **AI Stack** tab sorts real tools (MediaPipe, COCO-SSD/YOLO, SAM 2, generative
+inpainting, Depth Anything, Gaussian splats, AI coding assistants) into shipping, prototype,
+research and fiction, and has a 30 fps latency-budget calculator. **Live Cloak** runs real
+in-browser person segmentation and clean-plate compositing on your webcam or a synthetic actor,
+with a COCO-SSD "red team" detector. **Spectrum Lab** pits your loadout against visible, thermal,
+radar, acoustic and Wi-Fi sensors. **EMP Lab** is defensive hardening of the cloak's electronics.
+There is also a guided tour and a quiz. It is a standalone Vite + TypeScript project: run
+`cd cloak-lab && npm install && npm run dev`.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/cloak-lab/>** (after merge)
+
+---
+
 ## Also in here: PCI Sim · educational mid-LAD stenting
 
 At [`pci-sim/`](pci-sim): a browser-based **educational** simulator of percutaneous coronary

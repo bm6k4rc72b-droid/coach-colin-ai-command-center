@@ -52,6 +52,15 @@ jobs:
           rm -rf ../dist/pci-sim
           cp -r dist ../dist/pci-sim
 
+      # Cloak Lab: its build step self-hosts the MediaPipe WASM and COCO-SSD weights.
+      - name: Build Cloak Lab
+        run: |
+          cd cloak-lab
+          npm ci
+          npm run build
+          rm -rf ../dist/cloak-lab
+          cp -r dist ../dist/cloak-lab
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
