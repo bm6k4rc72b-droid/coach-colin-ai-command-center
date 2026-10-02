@@ -27,7 +27,7 @@ traps. You can watch each technique succeed or get fooled. A tech panel covers w
 add: Whisper, CLIP, YAMNet, pose estimation, LLMs and ffmpeg.wasm. It is a standalone Vite +
 TypeScript project.
 
-**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/highlight-cutter/>** (after merge)
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/highlight-cutter/>**
 
 ---
 
@@ -40,7 +40,7 @@ rooftop landing). A PID tuning lab plots the altitude step response, and the end
 kerosene turbines, batteries and the fictional "arc reactor" are real calculations. A guided tour
 walks through the control-software stack. It is a standalone Vite + TypeScript + Three.js project.
 
-**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/flight-club/>** (after merge)
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/flight-club/>**
 
 ---
 
@@ -77,7 +77,7 @@ radar, acoustic and Wi-Fi sensors. **EMP Lab** is defensive hardening of the clo
 There is also a guided tour and a quiz. It is a standalone Vite + TypeScript project: run
 `cd cloak-lab && npm install && npm run dev`.
 
-**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/cloak-lab/>** (after merge)
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/cloak-lab/>**
 
 ---
 
