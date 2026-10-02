@@ -77,6 +77,14 @@ jobs:
           rm -rf ../dist/flight-club
           cp -r dist ../dist/flight-club
 
+      - name: Build Highlight Cutter
+        run: |
+          cd highlight-cutter
+          npm ci
+          npm run build
+          rm -rf ../dist/highlight-cutter
+          cp -r dist ../dist/highlight-cutter
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
