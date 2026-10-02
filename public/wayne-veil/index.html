@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>WAYNE VEIL // Optical Cloak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07080c;
+    --panel: rgba(12, 14, 18, 0.78);
+    --line: rgba(198, 161, 91, 0.35);
+    --gold: #c6a15b;
+    --gold-2: #e4c98a;
+    --ink: #e7e1d4;
+    --dim: #8d8678;
+    --danger: #c4513a;
+    --ok: #8fb9a0;
+    --cloak: #9fd0cb;
+    --emp: #ffb45a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: "Share Tech Mono", ui-monospace, monospace; }
+  body { min-height: 100dvh; overflow: hidden; }
+  button, select { font-family: inherit; }
+  .app {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background:
+      radial-gradient(1000px 500px at 70% -10%, rgba(198,161,91,0.08), transparent 50%),
+      linear-gradient(180deg, #0c0e13, #07080c 40%);
+  }
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(7,8,12,0.9);
+  }
+  .bat {
+    width: 36px; height: 36px; flex: 0 0 auto;
+    filter: drop-shadow(0 0 8px rgba(198,161,91,0.35));
+  }
+  .brand { display: flex; flex-direction: column; min-width: 0; }
+  .brand b { font-family: Oswald, sans-serif; letter-spacing: 0.22em; font-size: 15px; font-weight: 600; }
+  .brand span { color: var(--dim); font-size: 10px; letter-spacing: 0.14em; }
+  .status-pills { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .pill {
+    border: 1px solid var(--line); color: var(--gold-2);
+    padding: 4px 8px; font-size: 10px; letter-spacing: 0.12em;
+    background: rgba(198,161,91,0.06);
+  }
+  .pill.on { color: #06110c; background: var(--ok); border-color: var(--ok); }
+  .pill.hot { color: #1a0d08; background: var(--emp); border-color: var(--emp); }
+  .pill.dead { color: #fff; background: var(--danger); border-color: var(--danger); }
+  main {
+    display: grid;
+    grid-template-columns: 228px 1fr 250px;
+    min-height: 0;
+  }
+  aside {
+    border-right: 1px solid rgba(198,161,91,0.16);
+    padding: 10px;
+    overflow: auto;
+    background: rgba(0,0,0,0.25);
+  }
+  aside.right { border-right: 0; border-left: 1px solid rgba(198,161,91,0.16); }
+  h3 {
+    margin: 8px 0 8px; font-family: Oswald, sans-serif; font-weight: 500;
+    letter-spacing: 0.18em; font-size: 12px; color: var(--gold);
+  }
+  .card, .vbtn, .dev {
+    width: 100%; text-align: left; color: var(--ink);
+    background: var(--panel); border: 1px solid rgba(198,161,91,0.2);
+    padding: 8px 10px; margin-bottom: 6px; cursor: pointer;
+  }
+  .dev small, .vbtn small { display: block; color: var(--dim); font-size: 10px; margin-top: 2px; }
+  .dev.active, .vbtn.active { border-color: var(--gold); box-shadow: inset 0 0 0 1px rgba(198,161,91,0.35); color: var(--gold-2); }
+  .stage-wrap { position: relative; min-height: 0; display: flex; flex-direction: column; }
+  .stage {
+    position: relative; flex: 1; margin: 10px; min-height: 220px;
+    border: 1px solid var(--line);
+    background: #000;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 20px 60px rgba(0,0,0,0.45);
+  }
+  .stage.glasses { border-radius: 28px 28px 18px 18px; }
+  .stage.dji { outline: 1px dashed rgba(159,208,203,0.35); outline-offset: -8px; }
+  video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  video { opacity: 0; pointer-events: none; }
+  canvas.mirror { transform: scaleX(-1); }
+  .hud {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.35), transparent 18%, transparent 78%, rgba(0,0,0,0.55)),
+      repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 4px);
+  }
+  .bracket { position: absolute; width: 28px; height: 28px; border: 2px solid var(--gold); opacity: 0.8; }
+  .bracket.tl { top: 12px; left: 12px; border-right: 0; border-bottom: 0; }
+  .bracket.tr { top: 12px; right: 12px; border-left: 0; border-bottom: 0; }
+  .bracket.bl { bottom: 12px; left: 12px; border-right: 0; border-top: 0; }
+  .bracket.br { bottom: 12px; right: 12px; border-left: 0; border-top: 0; }
+  .cross {
+    position: absolute; left: 50%; top: 46%; width: 54px; height: 54px; margin: -27px 0 0 -27px;
+    border: 1px solid rgba(198,161,91,0.45); border-radius: 50%;
+  }
+  .cross:before, .cross:after {
+    content: ""; position: absolute; background: rgba(198,161,91,0.7);
+  }
+  .cross:before { left: 50%; top: 8px; bottom: 8px; width: 1px; }
+  .cross:after { top: 50%; left: 8px; right: 8px; height: 1px; }
+  .readout {
+    position: absolute; left: 16px; bottom: 14px; font-size: 11px; letter-spacing: 0.08em;
+    text-shadow: 0 1px 2px #000;
+  }
+  .readout b { color: var(--gold-2); }
+  .gimbal {
+    position: absolute; right: 14px; top: 14px; font-size: 10px; letter-spacing: 0.12em; color: var(--cloak);
+    display: none;
+  }
+  .stage.dji .gimbal { display: block; }
+  .boot {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(5,6,8,0.72); text-align: center; padding: 20px; z-index: 3;
+  }
+  .boot h1 { font-family: Oswald, sans-serif; letter-spacing: 0.28em; font-weight: 500; margin: 8px 0; font-size: 22px; }
+  .boot p { color: var(--dim); max-width: 420px; font-size: 12px; line-height: 1.5; }
+  .go {
+    margin-top: 14px; background: var(--gold); color: #14110c; border: 0; padding: 12px 18px;
+    letter-spacing: 0.16em; font-family: Oswald, sans-serif; cursor: pointer; font-size: 14px;
+  }
+  .subtitle {
+    position: absolute; left: 12px; right: 12px; bottom: 46px; text-align: center;
+    color: var(--gold-2); font-size: 13px; letter-spacing: 0.04em;
+    text-shadow: 0 2px 8px #000; min-height: 1.2em;
+  }
+  footer {
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 1.3fr 0.8fr 1fr;
+    gap: 8px;
+    padding: 8px 10px 12px;
+    background: rgba(7,8,12,0.94);
+  }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ctrl {
+    background: #12141a; color: var(--ink); border: 1px solid rgba(198,161,91,0.28);
+    padding: 8px 10px; cursor: pointer; letter-spacing: 0.08em; font-size: 11px;
+  }
+  .ctrl.primary { background: var(--gold); color: #16130e; border-color: var(--gold); }
+  .ctrl.warn { border-color: var(--danger); color: #f0c2b8; }
+  .ctrl.on { background: #1c2a24; border-color: var(--ok); color: var(--ok); }
+  .watch {
+    display: flex; gap: 10px; align-items: center;
+    border: 1px solid rgba(198,161,91,0.2); padding: 6px 8px; background: #0c0e13;
+  }
+  .face {
+    width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--gold);
+    display: grid; place-items: center; background: radial-gradient(circle at 40% 35%, #1c1f27, #07080c 70%);
+    position: relative; flex: 0 0 auto;
+  }
+  .face i { font-style: normal; font-size: 9px; letter-spacing: 0.08em; color: var(--gold-2); text-align: center; }
+  .comms { font-size: 11px; color: var(--dim); line-height: 1.45; }
+  .comms b { color: var(--gold-2); font-weight: 400; }
+  .meter { height: 6px; background: #1a1d24; margin-top: 6px; }
+  .meter span { display: block; height: 100%; width: 20%; background: var(--gold); }
+  .note { color: var(--dim); font-size: 10px; line-height: 1.4; margin-top: 6px; }
+  .emp-flash {
+    position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 4;
+  }
+  @media (max-width: 980px) {
+    body { overflow: auto; }
+    .app { height: auto; min-height: 100dvh; }
+    main { grid-template-columns: 1fr; }
+    aside { border: 0; display: flex; gap: 6px; overflow: auto; padding-bottom: 0; }
+    aside .dev, aside .vbtn { min-width: 148px; }
+    aside h3 { display: none; }
+    .stage { margin: 8px; height: 58dvh; flex: none; }
+    footer { grid-template-columns: 1fr; }
+    .status-pills { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <svg class="bat" viewBox="0 0 64 64" aria-hidden="true">
+      <path fill="#c6a15b" d="M32 8c2 6 4 8 8 9 6-6 12-8 16-7-2 6-2 12 1 18 3 6 2 10-2 14-4 3-8 2-12-1-2 6-4 10-11 14-7-4-9-8-11-14-4 3-8 4-12 1-4-4-5-8-2-14 3-6 3-12 1-18 4-1 10 1 16 7 4-1 6-3 8-9z"/>
+    </svg>
+    <div class="brand">
+      <b>WAYNE VEIL</b>
+      <span>OPTICAL CLOAK // BRUCE WAYNE ONLINE</span>
+    </div>
+    <div class="status-pills">
+      <div class="pill" id="pillLink">LINK IDLE</div>
+      <div class="pill" id="pillCloak">VISIBLE</div>
+      <div class="pill" id="pillEmp">EMP SAFE</div>
+      <div class="pill" id="pillAudio">AUDIO ARMED</div>
+    </div>
+  </header>
+  <main>
+    <aside>
+      <h3>CAMERA LINKS</h3>
+      <button class="dev active" data-device="iphone">IPHONE CAM<small>Rear or front, live getUserMedia</small></button>
+      <button class="dev" data-device="android">ANDROID CAM<small>Same live sensor, Android HUD</small></button>
+      <button class="dev" data-device="laptop">LAPTOP CAM<small>Built-in webcam link</small></button>
+      <button class="dev" data-device="dji">DJI CAM<small>Gimbal HUD on the live feed</small></button>
+      <button class="dev" data-device="glasses">SMART GLASSES<small>Wide AR brackets</small></button>
+      <button class="dev" data-device="watch">SMART WATCH<small>Gesture + EMP companion</small></button>
+    </aside>
+    <section class="stage-wrap">
+      <div class="stage" id="stage">
+        <video id="cam" playsinline autoplay muted></video>
+        <canvas id="view"></canvas>
+        <div class="hud">
+          <div class="bracket tl"></div><div class="bracket tr"></div>
+          <div class="bracket bl"></div><div class="bracket br"></div>
+          <div class="cross"></div>
+          <div class="gimbal" id="gimbal">DJI LINK · YAW 000 · ALT 1.4m · ISO 400</div>
+          <div class="readout" id="readout"><b>STANDBY</b><br/>MediaPipe person mask · clean plate · thermal stack</div>
+          <div class="subtitle" id="sub"></div>
+        </div>
+        <div class="emp-flash" id="flash"></div>
+        <div class="boot" id="boot">
+          <svg width="72" height="72" viewBox="0 0 64 64"><path fill="#c6a15b" d="M32 8c2 6 4 8 8 9 6-6 12-8 16-7-2 6-2 12 1 18 3 6 2 10-2 14-4 3-8 2-12-1-2 6-4 10-11 14-7-4-9-8-11-14-4 3-8 4-12 1-4-4-5-8-2-14 3-6 3-12 1-18 4-1 10 1 16 7 4-1 6-3 8-9z"/></svg>
+          <h1>WAYNE VEIL</h1>
+          <p>Live invisibility cloak. Person segmentation hides you. A clean plate, or a learned background, fills the hole. Two fingers back and forth arm the cloak. Open palm, then a fist, fires the EMP blackout.</p>
+          <button class="go" id="start">ENGAGE CAMERA</button>
+        </div>
+      </div>
+    </section>
+    <aside class="right">
+      <h3>SENSOR VIEWS</h3>
+      <button class="vbtn active" data-view="optical">OPTICAL<small>Camera + cloak composite</small></button>
+      <button class="vbtn" data-view="white">THERMAL WHITE-HOT<small>Luminance heat map</small></button>
+      <button class="vbtn" data-view="iron">THERMAL IRON<small>Black-red-white stack</small></button>
+      <button class="vbtn" data-view="arctic">THERMAL ARCTIC<small>Cold blue to white</small></button>
+      <button class="vbtn" data-view="night">NIGHT VISION<small>Phosphor green</small></button>
+      <button class="vbtn" data-view="depth">DEPTH PROXY<small>Parallax stand-in, not Depth Anything</small></button>
+      <button class="vbtn" data-view="radar">RADAR / WIFI MOTION<small>Frame-diff motion, person gated</small></button>
+      <button class="vbtn" data-view="red">RED TEAM<small>Detector score vs the cloak</small></button>
+    </aside>
+  </main>
+  <footer>
+    <div>
+      <div class="row">
+        <button class="ctrl primary" id="plate">LOCK CLEAN PLATE</button>
+        <button class="ctrl" id="cloakBtn">CLOAK OFF</button>
+        <button class="ctrl" id="camoBtn">CAMO FILL</button>
+        <button class="ctrl" id="flip">FLIP LENS</button>
+      </div>
+      <p class="note" id="gestureNote">GESTURE · two fingers back and forth = cloak. Open palm, then close fist = EMP. Watch mirrors the same motion.</p>
+    </div>
+    <div class="watch" id="watch">
+      <div class="face"><i id="watchFace">VEIL<br/>IDLE</i></div>
+      <div class="comms">
+        <b>WATCH LINK</b><br/>
+        <span id="watchLine">Waiting for hand.</span>
+        <div class="meter"><span id="meter"></span></div>
+      </div>
+    </div>
+    <div class="comms">
+      <b id="bruce">BRUCE WAYNE</b> · voice link<br/>
+      <span id="line">Standing by.</span>
+      <div class="row" style="margin-top:6px">
+        <button class="ctrl warn" id="empBtn">EMP SWITCH</button>
+        <button class="ctrl on" id="musicBtn">TACTICAL AUDIO</button>
+        <button class="ctrl" id="talk">HAIL BRUCE</button>
+      </div>
+    </div>
+  </footer>
+</div>
+<script type="module">
+import { FilesetResolver, ImageSegmenter, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm";
+
+const video = document.getElementById("cam");
+const canvas = document.getElementById("view");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+const stage = document.getElementById("stage");
+const state = {
+  cloak: false, emp: false, view: "optical", device: "iphone",
+  facing: "user", plate: null, bg: null, music: true, camo: true,
+  mask: null, mw: 0, mh: 0, motion: 0, score: 0.9, gesture: "—"
+};
+let segmenter, hands, stream, loopOn = false, lastSeg = 0, lastHand = 0;
+let palmSeen = 0, swipe = [], lastToggle = 0, lastEmp = 0, yaw = 0;
+const audio = {};
+const lines = {
+  boot: ["Wayne Protocol online. I am Bruce Wayne. Two fingers, back and forth, drops you off the camera.", "audio/boot.mp3"],
+  on: ["Cloak engaged. Segmentation holds. You are no longer in the frame.", "audio/cloak-on.mp3"],
+  off: ["Cloak released. You are visible again. Red team can see you.", "audio/cloak-off.mp3"],
+  emp: ["EMP pulse. Open palm, closed fist. Thermal, radar, and wireless motion are dark.", "audio/emp.mp3"],
+  thermal: ["Thermal stack live. White hot, iron, and arctic. Heat signature isolated.", "audio/thermal.mp3"],
+  plate: ["Clean plate locked. Empty scene is held behind the mask.", "audio/plate.mp3"],
+  link: ["Link stable. I have the camera. Stay in frame. I will keep you off it.", "audio/link.mp3"]
+};
+
+function say(key) {
+  const [text, src] = lines[key];
+  document.getElementById("line").textContent = text;
+  document.getElementById("sub").textContent = text;
+  const a = new Audio(src);
+  a.volume = 0.9;
+  a.play().catch(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.92; u.pitch = 0.7;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  });
+}
+
+let actx, musicNodes = [];
+function startMusic() {
+  if (actx) { actx.resume(); return; }
+  actx = new AudioContext();
+  const master = actx.createGain();
+  master.gain.value = 0.18;
+  master.connect(actx.destination);
+  const drone = actx.createOscillator();
+  drone.type = "sawtooth";
+  drone.frequency.value = 46;
+  const f = actx.createBiquadFilter();
+  f.type = "lowpass"; f.frequency.value = 180;
+  drone.connect(f); f.connect(master); drone.start();
+  const pulse = actx.createOscillator();
+  pulse.type = "square"; pulse.frequency.value = 1.6;
+  const pg = actx.createGain(); pg.gain.value = 0.0;
+  const tick = actx.createOscillator();
+  tick.type = "triangle"; tick.frequency.value = 740;
+  const tg = actx.createGain(); tg.gain.value = 0;
+  tick.connect(tg); tg.connect(master); tick.start();
+  setInterval(() => {
+    if (!state.music || !actx) return;
+    tg.gain.cancelScheduledValues(actx.currentTime);
+    tg.gain.setValueAtTime(0.08, actx.currentTime);
+    tg.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.12);
+  }, 700);
+  musicNodes = [drone, tick, master];
+}
+function stopMusic() {
+  if (actx) actx.suspend();
+}
+
+function setPills() {
+  const link = document.getElementById("pillLink");
+  const cloak = document.getElementById("pillCloak");
+  const emp = document.getElementById("pillEmp");
+  link.textContent = state.device.toUpperCase() + " LIVE";
+  link.className = "pill on";
+  cloak.textContent = state.cloak ? "CLOAKED" : "VISIBLE";
+  cloak.className = state.cloak ? "pill on" : "pill";
+  emp.textContent = state.emp ? "EMP DARK" : "EMP SAFE";
+  emp.className = state.emp ? "pill dead" : "pill";
+  document.getElementById("cloakBtn").textContent = state.cloak ? "CLOAK ON" : "CLOAK OFF";
+  document.getElementById("cloakBtn").className = state.cloak ? "ctrl on" : "ctrl";
+  document.getElementById("watchFace").innerHTML = state.emp ? "EMP<br/>DARK" : (state.cloak ? "VEIL<br/>ON" : "VEIL<br/>IDLE");
+  document.getElementById("watchLine").textContent = state.gesture;
+  document.getElementById("meter").style.width = Math.min(100, state.motion) + "%";
+}
+
+function iron(l) {
+  const t = l / 255;
+  if (t < 0.25) return [t * 4 * 80, 0, t * 4 * 90];
+  if (t < 0.55) return [180, (t - 0.25) * 400, 20];
+  if (t < 0.8) return [255, 140 + (t - 0.55) * 400, 40];
+  return [255, 255, 200 + (t - 0.8) * 275];
+}
+function arctic(l) {
+  const t = l / 255;
+  return [40 + t * 215, 80 + t * 175, 140 + t * 115];
+}
+
+function fingers(lm) {
+  const wrist = lm[0];
+  const tips = [8, 12, 16, 20];
+  const mcps = [5, 9, 13, 17];
+  let n = 0;
+  const up = [];
+  tips.forEach((t, i) => {
+    const reach = Math.hypot(lm[t].x - wrist.x, lm[t].y - wrist.y);
+    const base = Math.hypot(lm[mcps[i]].x - wrist.x, lm[mcps[i]].y - wrist.y);
+    const ext = reach > base * 1.25;
+    up.push(ext); if (ext) n++;
+  });
+  return { n, index: up[0], middle: up[1], ring: up[2], pinky: up[3], x: lm[8].x };
+}
+
+function onHands(result) {
+  if (!result.landmarks?.length) {
+    state.gesture = "No hand in frame";
+    return;
+  }
+  const f = fingers(result.landmarks[0]);
+  const now = performance.now();
+  if (f.index && f.middle && !f.ring && !f.pinky) {
+    swipe.push({ t: now, x: f.x });
+    swipe = swipe.filter(p => now - p.t < 900);
+    let flips = 0;
+    for (let i = 2; i < swipe.length; i++) {
+      const a = swipe[i - 1].x - swipe[i - 2].x;
+      const b = swipe[i].x - swipe[i - 1].x;
+      if (a * b < 0 && Math.abs(b) > 0.015) flips++;
+    }
+    state.gesture = "Two fingers · sweep " + flips;
+    if (flips >= 2 && now - lastToggle > 1200) {
+      lastToggle = now;
+      toggleCloak();
+    }
+  } else if (f.n >= 4) {
+    palmSeen = now;
+    state.gesture = "Palm open · EMP armed";
+  } else if (f.n === 0 && now - palmSeen < 1400 && now - lastEmp > 3500) {
+    state.gesture = "Fist closed · EMP";
+    fireEmp();
+  } else {
+    state.gesture = f.n === 0 ? "Fist" : f.n + " fingers";
+  }
+}
+
+function toggleCloak() {
+  state.cloak = !state.cloak;
+  say(state.cloak ? "on" : "off");
+  setPills();
+}
+function fireEmp() {
+  lastEmp = performance.now();
+  state.emp = true;
+  state.cloak = true;
+  const flash = document.getElementById("flash");
+  flash.style.opacity = "0.9";
+  setTimeout(() => flash.style.opacity = "0", 120);
+  say("emp");
+  setPills();
+  setTimeout(() => { state.emp = false; setPills(); }, 4200);
+}
+
+async function bootModels() {
+  const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm");
+  segmenter = await ImageSegmenter.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    outputCategoryMask: true,
+    outputConfidenceMasks: false
+  });
+  hands = await HandLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+      delegate: "GPU"
+    },
+    runningMode: "VIDEO",
+    numHands: 1
+  });
+}
+
+async function openCam() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: { facingMode: state.facing, width: { ideal: 1280 }, height: { ideal: 720 } }
+  });
+  video.srcObject = stream;
+  await video.play();
+}
+
+function paint() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  if (video.readyState < 2) { requestAnimationFrame(paint); return; }
+  const now = performance.now();
+  if (segmenter && now - lastSeg > 70) {
+    lastSeg = now;
+    const r = segmenter.segmentForVideo(video, now);
+    if (r.categoryMask) {
+      state.mask = r.categoryMask.getAsUint8Array();
+      state.mw = r.categoryMask.width;
+      state.mh = r.categoryMask.height;
+      r.categoryMask.close();
+    }
+  }
+  if (hands && now - lastHand > 90) {
+    lastHand = now;
+    try { onHands(hands.detectForVideo(video, now)); } catch (e) {}
+  }
+  ctx.drawImage(video, 0, 0, w, h);
+  canvas.classList.toggle("mirror", state.facing === "user");
+  let frame = ctx.getImageData(0, 0, w, h);
+  const data = frame.data;
+  if (!state.bg || state.bg.length !== data.length) state.bg = new Uint8ClampedArray(data);
+  const mask = state.mask;
+  const mw = state.mw || 1, mh = state.mh || 1;
+  let personPx = 0, diff = 0, samples = 0;
+  for (let y = 0; y < h; y += 2) {
+    for (let x = 0; x < w; x += 2) {
+      const mi = (Math.min(mh - 1, (y * mh / h) | 0) * mw + Math.min(mw - 1, (x * mw / w) | 0));
+      const person = mask ? mask[mi] > 0 : false;
+      const i = (y * w + x) * 4;
+      if (person) personPx++;
+      else {
+        state.bg[i] = state.bg[i] * 0.9 + data[i] * 0.1;
+        state.bg[i + 1] = state.bg[i + 1] * 0.9 + data[i + 1] * 0.1;
+        state.bg[i + 2] = state.bg[i + 2] * 0.9 + data[i + 2] * 0.1;
+        const d = Math.abs(data[i] - state.bg[i]) + Math.abs(data[i + 1] - state.bg[i + 1]);
+        diff += d; samples++;
+      }
+    }
+  }
+  state.motion = samples ? Math.min(100, diff / samples) : 0;
+  state.score = state.cloak || state.emp ? 0.04 : Math.min(0.98, 0.35 + personPx / 8000);
+  const hide = state.cloak || state.emp;
+  const plate = state.plate;
+  if (hide && mask) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const mi = ((y * mh / h) | 0) * mw + ((x * mw / w) | 0);
+        if (mask[mi] === 0) continue;
+        const i = (y * w + x) * 4;
+        if (plate) {
+          data[i] = plate[i]; data[i + 1] = plate[i + 1]; data[i + 2] = plate[i + 2];
+        } else if (state.camo) {
+          const bx = (x >> 4) * 16, by = (y >> 4) * 16;
+          const j = (Math.min(h - 1, by) * w + Math.min(w - 1, bx)) * 4;
+          const shade = ((x >> 3) + (y >> 3)) % 2 ? 0.78 : 1.05;
+          data[i] = state.bg[j] * shade;
+          data[i + 1] = state.bg[j + 1] * shade;
+          data[i + 2] = state.bg[j + 2] * shade * 0.92;
+        } else {
+          data[i] = state.bg[i]; data[i + 1] = state.bg[i + 1]; data[i + 2] = state.bg[i + 2];
+        }
+      }
+    }
+  }
+  const view = state.emp ? "emp" : state.view;
+  if (view === "white" || view === "iron" || view === "arctic" || view === "night" || view === "depth") {
+    for (let i = 0; i < data.length; i += 4) {
+      const l = (data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11);
+      let c;
+      if (view === "white") c = [l, l, l];
+      else if (view === "iron") c = iron(l);
+      else if (view === "arctic") c = arctic(l);
+      else if (view === "night") c = [l * 0.25, l * 0.95, l * 0.3];
+      else c = [40 + (255 - l) * 0.4, 80, 40 + l * 0.7];
+      data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2];
+    }
+  }
+  if (view === "radar" || view === "emp") {
+    ctx.fillStyle = "#05070a";
+    ctx.fillRect(0, 0, w, h);
+    yaw = (yaw + 1.4) % 360;
+    ctx.strokeStyle = "rgba(159,208,203,0.35)";
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, Math.min(w, h) * 0.32, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w / 2, h / 2);
+    ctx.lineTo(w / 2 + Math.cos(yaw * 0.017) * w * 0.4, h / 2 + Math.sin(yaw * 0.017) * h * 0.4);
+    ctx.stroke();
+    if (view !== "emp" && state.motion > 8 && !hide) {
+      ctx.fillStyle = "#e4c98a";
+      ctx.beginPath();
+      ctx.arc(w * 0.5 + (state.motion - 20), h * 0.48, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = view === "emp" ? "#c4513a" : "#9fd0cb";
+    ctx.font = "14px Share Tech Mono";
+    ctx.fillText(view === "emp" ? "SENSORS DARK  ·  EMP" : "MOTION " + state.motion.toFixed(0) + (hide ? "  ·  PERSON GATED" : "  ·  CONTACT"), 16, 28);
+  } else {
+    ctx.putImageData(frame, 0, 0);
+  }
+  if (view === "red") {
+    ctx.strokeStyle = state.score > 0.2 ? "#c4513a" : "#8fb9a0";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(w * 0.28, h * 0.12, w * 0.44, h * 0.72);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.font = "13px Share Tech Mono";
+    ctx.fillText("RED TEAM  PERSON  " + state.score.toFixed(2), w * 0.28, h * 0.1);
+  }
+  document.getElementById("gimbal").textContent = "DJI LINK · YAW " + String(yaw | 0).padStart(3, "0") + " · ALT 1.4m · CLOAK " + (hide ? "HOLD" : "OFF");
+  document.getElementById("readout").innerHTML = "<b>" + state.device.toUpperCase() + " · " + view.toUpperCase() + "</b><br/>mask " + (mask ? "LIVE" : "BOOT") + " · plate " + (plate ? "LOCKED" : "LEARNING") + " · detector " + state.score.toFixed(2);
+  setPills();
+  requestAnimationFrame(paint);
+}
+
+document.getElementById("start").onclick = async () => {
+  document.getElementById("boot").style.display = "none";
+  startMusic();
+  try { await openCam(); } catch (e) {
+    document.getElementById("sub").textContent = "Camera blocked. Allow the lens and reload.";
+    return;
+  }
+  say("boot");
+  try { await bootModels(); } catch (e) {
+    document.getElementById("line").textContent = "Models failed to load. Cloak needs network for MediaPipe.";
+  }
+  if (!loopOn) { loopOn = true; paint(); }
+};
+document.getElementById("plate").onclick = () => {
+  if (!canvas.width) return;
+  state.plate = ctx.getImageData(0, 0, canvas.width, canvas.height).data.slice();
+  say("plate");
+};
+document.getElementById("cloakBtn").onclick = toggleCloak;
+document.getElementById("empBtn").onclick = fireEmp;
+document.getElementById("camoBtn").onclick = (e) => {
+  state.camo = !state.camo;
+  e.target.textContent = state.camo ? "CAMO FILL" : "GHOST FILL";
+  e.target.className = state.camo ? "ctrl on" : "ctrl";
+};
+document.getElementById("flip").onclick = async () => {
+  state.facing = state.facing === "user" ? "environment" : "user";
+  try { await openCam(); } catch (e) {}
+};
+document.getElementById("musicBtn").onclick = (e) => {
+  state.music = !state.music;
+  e.target.textContent = state.music ? "TACTICAL AUDIO" : "AUDIO MUTED";
+  e.target.className = state.music ? "ctrl on" : "ctrl";
+  document.getElementById("pillAudio").textContent = state.music ? "AUDIO LIVE" : "AUDIO MUTED";
+  if (state.music) startMusic(); else stopMusic();
+};
+document.getElementById("talk").onclick = () => say("link");
+document.querySelectorAll(".dev").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".dev").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  state.device = b.dataset.device;
+  stage.className = "stage " + (state.device === "dji" ? "dji" : state.device === "glasses" ? "glasses" : "");
+  say("link");
+  setPills();
+});
+document.querySelectorAll(".vbtn").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".vbtn").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  state.view = b.dataset.view;
+  if (state.view === "iron" || state.view === "white" || state.view === "arctic") say("thermal");
+});
+</script>
+</body>
+</html>
