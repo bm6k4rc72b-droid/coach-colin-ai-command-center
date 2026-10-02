@@ -16,6 +16,21 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Highlight Cutter · AI video highlights
+
+At [`highlight-cutter/`](highlight-cutter): find the best moments of a video and export them as a
+reel, all inside the browser. It scores every half-second using Web Audio loudness, frame
+differencing, luma-histogram scene-cut detection and an optional TensorFlow.js COCO-SSD object
+detector. A picker then chooses the top peaks, adds padding and merges them, and MediaRecorder
+exports the reel. A synthetic demo match comes with an answer key: five real highlights and two
+traps. You can watch each technique succeed or get fooled. A tech panel covers what pro tools
+add: Whisper, CLIP, YAMNet, pose estimation, LLMs and ffmpeg.wasm. It is a standalone Vite +
+TypeScript project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/highlight-cutter/>** (after merge)
+
+---
+
 ## Also in here: Flight Club · jet suit simulator
 
 At [`flight-club/`](flight-club): fly an Iron Man-style suit with two boot jets and two palm jets.

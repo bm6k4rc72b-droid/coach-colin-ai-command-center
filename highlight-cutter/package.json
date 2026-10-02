@@ -1,0 +1,24 @@
+{
+  "name": "highlight-cutter",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Educational video highlight cutter: audio loudness, motion, scene cuts and optional object detection score every second, then a picker cuts and exports the best moments — all in the browser.",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/fetch-models.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/fetch-models.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}

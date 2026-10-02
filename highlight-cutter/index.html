@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Highlight Cutter: find and export the best moments of a video with in-browser audio, vision and AI analysis — and learn how it works." />
+    <title>Highlight Cutter — AI video highlights (educational)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='7' width='28' height='18' rx='3' fill='%23fb923c'/%3E%3Cpath d='M13 11 L21 16 L13 21 Z' fill='%23111'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">HIGHLIGHT CUTTER <small>AI video editing · educational</small></div>
+      <div class="spacer"></div>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+    <main id="layout">
+      <aside id="left" class="panel" aria-label="Source and settings"></aside>
+      <section id="stage">
+        <div class="viewport">
+          <canvas id="view" width="960" height="540" aria-label="Video preview"></canvas>
+          <div id="busy" class="busy hidden"><div><strong id="busy-label">Analysing…</strong><div class="pbar"><i id="busy-bar"></i></div></div></div>
+        </div>
+        <div class="transport">
+          <button id="play-btn" aria-label="Play">▶</button>
+          <span id="clock" class="mono">0:00 / 0:00</span>
+          <div class="spacer"></div>
+          <button id="reel-btn" class="primary">▶ Play highlights</button>
+          <button id="export-btn">⬇ Export reel</button>
+        </div>
+        <div class="panel" id="timeline-wrap">
+          <h3>Timeline · <span class="hint" style="text-transform:none;letter-spacing:0">click to seek</span></h3>
+          <canvas id="timeline" width="1200" height="270"></canvas>
+          <div class="legend"><span style="--c:#60a5fa">Loudness</span><span style="--c:#fb923c">Motion</span><span style="--c:#e5e7eb">Scene cuts</span><span style="--c:#c084fc">Objects</span><span style="--c:#4ade80">Excitement score</span><span style="--c:rgba(251,146,60,.35)">Picked clips</span></div>
+        </div>
+      </section>
+      <aside id="right" class="panel" aria-label="Results"></aside>
+    </main>
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="start" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
