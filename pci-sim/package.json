@@ -1,0 +1,23 @@
+{
+  "name": "pci-sim",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Educational browser simulator of PCI: stenting a 90% mid-LAD stenosis via right radial access. Education and demonstration only.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}

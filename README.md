@@ -16,6 +16,23 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: PCI Sim · educational mid-LAD stenting
+
+At [`pci-sim/`](pci-sim): a browser-based **educational** simulator of percutaneous coronary
+intervention for medical students. You stent a 90% mid-LAD stenosis via right radial access: guide
+catheter up the arm, left-main engagement under a virtual C-arm with pulsed fluoroscopy and
+contrast cines, wire steering, pre-dilation, DES deployment and final angiography. A patient
+monitor shows ST changes, a mentor guides each step, a scripted demo runs the whole case, and the
+case ends in a scored debrief. It is a standalone Vite + TypeScript + Three.js project with its own
+`package.json`. Run `cd pci-sim && npm install && npm run dev`.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/pci-sim/>**
+
+It is for education and
+demonstration only, not clinical training or medical advice.
+
+---
+
 ## Also in here: BROKER RANCH · liquid command site
 
 At [`public/broker-ranch/`](public/broker-ranch): a single-page site for Broker Ranch with a WebGL liquid-glass background that warps with scroll speed, a drag-to-patrol section wheel, six hover-to-x-ray "files", and Reginald, a front-desk concierge with scripted lines, agent handoffs, a gate protocol, a clearance slip and optional browser speech. Static HTML and images only; no backend.
