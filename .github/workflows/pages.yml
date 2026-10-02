@@ -61,6 +61,14 @@ jobs:
           rm -rf ../dist/cloak-lab
           cp -r dist ../dist/cloak-lab
 
+      - name: Build Batmobile builder
+        run: |
+          cd batmobile-builder
+          npm ci
+          npm run build
+          rm -rf ../dist/batmobile-builder
+          cp -r dist ../dist/batmobile-builder
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

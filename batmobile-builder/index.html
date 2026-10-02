@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Night Interceptor: a Batmobile-style vehicle builder that teaches real vehicle dynamics." />
+    <title>Night Interceptor — vehicle builder (educational)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M2 20 L8 12 L24 12 L30 20 Z' fill='%23facc15'/%3E%3Ccircle cx='9' cy='21' r='3' fill='%23111'/%3E%3Ccircle cx='23' cy='21' r='3' fill='%23111'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">NIGHT INTERCEPTOR <small>Batmobile-style builder · educational</small></div>
+      <div class="spacer"></div>
+      <button id="reset-btn">Reset</button>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+    <main id="layout">
+      <aside id="config" class="panel" aria-label="Build"></aside>
+      <section id="stage">
+        <div class="viewport">
+          <canvas id="view" aria-label="3D test ground"></canvas>
+          <div id="status" class="status"></div>
+          <div id="tests" class="tests"></div>
+        </div>
+        <div class="panel" id="telemetry-panel">
+          <h3>Telemetry · <span id="tel-title">speed vs time</span></h3>
+          <canvas id="telemetry" width="900" height="160"></canvas>
+          <p id="lesson" class="lesson"></p>
+        </div>
+      </section>
+      <aside id="results" class="panel" aria-label="Results"></aside>
+    </main>
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="start" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
