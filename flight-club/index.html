@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Flight Club: fly an Iron Man-style jet suit and learn the real physics and control software behind it." />
+    <title>Flight Club — jet suit simulator (educational)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='11' y='4' width='10' height='14' rx='3' fill='%23b91c1c'/%3E%3Cpath d='M12 20 L16 31 L20 20 Z' fill='%2393c5fd'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">FLIGHT CLUB <small>jet suit simulator · educational</small></div>
+      <div class="spacer"></div>
+      <button id="reset-btn">Restart</button>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+    <main id="layout">
+      <aside id="left" class="panel" aria-label="Setup"></aside>
+      <section id="stage">
+        <div class="viewport">
+          <canvas id="view" aria-label="3D flight view"></canvas>
+          <div id="hud" class="hud"></div>
+          <canvas id="horizon" width="120" height="120" aria-hidden="true"></canvas>
+          <div id="thrust" class="thrust"></div>
+          <div id="msg" class="msg"></div>
+          <div id="gloc" class="gloc hidden">G-LOC — pilot blacked out</div>
+          <div class="sticks" id="sticks">
+            <div class="stick" data-stick="left"><i></i><span>climb · yaw</span></div>
+            <div class="stick" data-stick="right"><i></i><span>pitch · roll</span></div>
+          </div>
+        </div>
+        <div class="panel" id="lab"></div>
+      </section>
+      <aside id="right" class="panel" aria-label="Debrief"></aside>
+    </main>
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="start" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -69,6 +69,14 @@ jobs:
           rm -rf ../dist/batmobile-builder
           cp -r dist ../dist/batmobile-builder
 
+      - name: Build Flight Club
+        run: |
+          cd flight-club
+          npm ci
+          npm run build
+          rm -rf ../dist/flight-club
+          cp -r dist ../dist/flight-club
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
