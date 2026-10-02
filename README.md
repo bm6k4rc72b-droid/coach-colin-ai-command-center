@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Flight Club · jet suit simulator
+
+At [`flight-club/`](flight-club): fly an Iron Man-style suit with two boot jets and two palm jets.
+It uses rigid-body physics, quaternion attitude and a four-thruster mixer. There are three assist
+levels (manual, stability and flight computer) and three courses (hover test, ring run and a gusty
+rooftop landing). A PID tuning lab plots the altitude step response, and the endurance figures for
+kerosene turbines, batteries and the fictional "arc reactor" are real calculations. A guided tour
+walks through the control-software stack. It is a standalone Vite + TypeScript + Three.js project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/flight-club/>** (after merge)
+
+---
+
 ## Also in here: Night Interceptor · Batmobile-style vehicle builder
 
 At [`batmobile-builder/`](batmobile-builder): design an armoured night-pursuit car (chassis,

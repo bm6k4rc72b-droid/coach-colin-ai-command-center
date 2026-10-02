@@ -1,0 +1,22 @@
+{
+  "name": "flight-club",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Educational flight-physics lab: fly an Iron Man-style thruster suit with real rigid-body dynamics, PID control and energy budgets.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}
