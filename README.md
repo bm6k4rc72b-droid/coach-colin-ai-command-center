@@ -219,6 +219,49 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: STRIDE · running performance & footwear science
+
+At [`public/stride/`](public/stride): a procedurally built racing shoe (lofted midsole with live stack, drop and rocker; a carbon plate; outsole pads; knit upper and laces) in a studio, with explode and x-ray views, plus a 400 m stadium for ghost races.
+- **Shoe lab.**
+  - Foam (EVA 66 %, TPU 76 %, PEBA 87 % energy return), stack, drop, plate and mass feed a transparent model calibrated to published averages:
+    - PEBA vs EVA −1.8 % (Rodrigo-Carranza 2024)
+    - plate effect small (Healey & Hoogkamer 2022)
+    - +1.11 % per 100 g (Hoogkamer 2016)
+    - Vaporfly-like ≈ −3 to −4 % (Hoogkamer 2018: −4.16 %)
+  - World Athletics legality (road ≤ 40 mm, track ≤ 20 mm).
+  - A hysteresis loop whose returned/stored ratio equals the foam's energy return exactly.
+- **Race.**
+  - Economy → time using the Kipp, Kram & Hoogkamer (2019) method: a linear VO₂–speed relation with an intercept plus air resistance.
+  - Slower runners gain a larger percentage.
+  - Elite context from Bermon 2021.
+  - Ghost runners race on a shader-drawn track.
+- **Wear & body.**
+  - Foam wear (PEBA +2.28 % after 450 km vs EVA ≈ unchanged), with a crossover near 430 km.
+  - The super-placebo trial (Hébert-Losier 2025).
+  - Navicular bone stress injuries in plated shoes (Tenforde 2023).
+- **Evidence.**
+  - 13 cited studies and rules (2016–2026), including the 2026 meta-analysis (−2.9 %), super spikes (~2 %) and data-driven design (−3.6 % vs current super shoes).
+  - A forest plot that marks your shoe's prediction.
+
+EN/JA, guided tour, report. Education only.
+
+## Also in here: DROPZONE: LOMPOC · battle royale physics
+
+At [`public/lompoc/`](public/lompoc): an original battle royale (not affiliated with any game franchise) over a stylised Lompoc Valley and Vandenberg Space Force Base. Public geography only, with distances between landmarks compressed 4 : 1. Landmarks:
+- Old Town's street grid, the striped flower-seed fields with eucalyptus windrows, and the Santa Ynez River
+- Lompoc Airport, La Purísima Mission and Vandenberg Village on Burton Mesa
+- the base and airfield, two coastal launch complexes with a rocket on the pad, Surf Beach and the coast railway
+- the Pacific at golden hour
+- **Drop.** Freefall integrated with drag and lift: v_t = √(2mg/ρC_DA), with belly, track and head-down body positions. A ram-air canopy (glide 2.2) S-turns onto the target. Reach rings and speed/height charts.
+- **Circle.** The next circle is uniform within R − r. P(inside next) = lens area / π(R − r)², shown as a heat map. Edge speed, plus a 2,000-match Monte Carlo of final circles.
+- **Range.** Point-mass external ballistics with Mach-dependent drag in Lompoc's onshore crosswind. Mil holds, a scope view and a hold chart. Fictional game rifle.
+- **Match.** 24 operators, a cargo plane, looting, phased gas damage, and TTK and hit-probability models.
+  - Fixed 50 ms steps make each seed deterministic.
+  - Phases are timed to be runnable on foot.
+  - Autopilot or manual play.
+
+EN/JA, guided tour, debrief. Fictional game, real physics.
+
 ## Also in here: CHROMA FORCE · five-colour hero team physics
 
 At [`public/chroma/`](public/chroma): an original five-colour hero team (red, blue, gold, green, pink) on a canyon plateau at sunset, five machines that combine into a 43 m mech, and a monster that grows ×22.
