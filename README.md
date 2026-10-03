@@ -219,6 +219,25 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: SILENT VECTOR · stealth infiltration science
+
+At [`public/vector/`](public/vector): an original stealth operative (sneaking suit, vest, headband with animated tails, flip-down night-vision goggles) in a rain-soaked night compound with sodium lamps, a sweeping searchlight and four patrolling guards.
+- **Suit.**
+  - Adaptive camouflage: the suit's procedural camo shifts toward the chosen terrain, and the match is scored with CIE L*a*b* ΔE*ab.
+  - Thermal signature: q = ΔT/(R_suit + R_surf), apparent temperature (εT_s⁴ + (1−ε)T_env⁴)^¼, and the heat stored in the body (minutes to +1 °C core).
+  - Night-vision and thermal goggle views.
+- **Infiltrate.**
+  - A playable mission (WASD, run, crouch, crawl) to reach the terminal, download for 4 s and return to extraction.
+  - Guards have view cones with line of sight; detection builds as v = light·(1−0.85·camo)·stance·motion. They also investigate footsteps they hear. A live tactical map is included.
+- **Acoustics.** Footsteps by gait and surface: L(r) = L₁ − 20 log₁₀ r, with the audible radius set against background noise (rain masks you).
+- **Comms.** A radio link budget (FSPL, sensitivity −174 + 10 log B + NF + SNR). An eavesdropper is defeated with a directional antenna, spread-spectrum processing gain and short bursts (P = 1 − e^(−τ/T)).
+
+EN/JA, guided tour, debrief. Original fictional scenario. Education only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vector/>**
+
+---
+
 ## Also in here: NOCTURNE · cave-lair suit tech
 
 At [`public/nocturne/`](public/nocturne): an original matte tactical suit in a limestone cave lair, with a waterfall, a bat swarm and a wall of live screens. It has five field-readiness goals.
