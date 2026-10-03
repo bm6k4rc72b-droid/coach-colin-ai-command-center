@@ -219,6 +219,29 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: CRYSTAL RIFT · a multiverse RPG
+
+At [`public/crystalrift/`](public/crystalrift): an original fantasy RPG inspired by classic Japanese role-playing games (not affiliated with any franchise). A rift links four worlds, each with its own hero and its own real science, and then the Rift itself.
+- **Ferrum** (a night reactor city; hero Vey).
+  - Carnot efficiency η = f·(1 − T_c/T_h) sets the heat drawn from the planet's Aether.
+  - The pool regrows logistically: dA/dt = rA(1 − A/K) − h, with maximum sustainable yield rK/4.
+  - Over-harvest and it collapses within 80 years. Hotter wells, better turbines and city savings each help.
+- **Academy** (a seaside academy; hero Lio).
+  - Rift Cards: a 3×3 duel where higher touching ranks flip neighbours.
+  - The AI searches the game tree (≈ 5 × 10⁹ move sequences) with minimax and alpha–beta, and the hint shows the perfect-play outcome.
+- **Mistreach** (golden peaks above a sea of mist; hero Pip).
+  - Airship lift ρ_air(h)(1 − M_gas/M_air)V for hydrogen, helium, hot air or Mist.
+  - The ceiling comes from exponential air density, and cruise speed from ½ρC_D·V^(2/3)·v³ = ηP. The goal is to carry 20 t over a 1,500 m ridge.
+- **Isles** (a tropical stadium with a floating 24 m water sphere; hero Mara).
+  - Sphere-ball: a neutrally buoyant ball with added mass ½ρV, giving v(x) = v₀e^(−kx).
+  - Water kills a pass in about 7 m. Also shows pressure with depth.
+- **The Rift** (all four heroes vs the Rift Wyrm).
+  - Active Time Battle: gauges fill ∝ SPD, and damage = 5·ATK²/(ATK + DEF) × power × element × variance × critical.
+  - The Wyrm is weak to ice and absorbs fire. Limits, Cure and Defend.
+  - Autopilot, or a manual wait mode.
+
+EN/JA, guided tour, chronicle. Fictional game, real science.
+
 ## Also in here: KEYLIGHT · the maths behind the magic
 
 At [`public/keylight/`](public/keylight): an original fantasy action-RPG (not affiliated with any game franchise). A hero with a scarf and the Lumen Key wakes on a glowing stained-glass platform floating in a starry void. The enemies are Hollows: smoky creatures with a single teal eye.
