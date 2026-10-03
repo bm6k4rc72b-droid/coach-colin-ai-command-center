@@ -219,6 +219,28 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: CHROMA FORCE · five-colour hero team physics
+
+At [`public/chroma/`](public/chroma): an original five-colour hero team (red, blue, gold, green, pink) on a canyon plateau at sunset, five machines that combine into a 43 m mech, and a monster that grows ×22.
+- **Morph.**
+  - Each hero morphs from street clothes into a glossy suit with a helmet and a visor shape of their own, with converging light particles.
+  - Each colour maps to a wavelength, with photon energy E = hc/λ. Pink has no single wavelength: the eye mixes red and violet.
+  - E = mc² for an 11 kg suit made from energy (≈ 236 Mt TNT), compared with ½mv² to deploy a stored suit.
+- **Strike lab.**
+  - Impulse–momentum: F̄ = m_eff·v/Δt against break thresholds for a pine board, a concrete paver and a brick. A board snaps in half when the force is enough.
+  - The goal is to break concrete by shortening the contact time instead of adding a power boost.
+  - Jumps and flips: h = v²/2g, t = 2v/g, ω = 2πn/t.
+- **Mech.**
+  - Five machines fly in and combine.
+  - Square–cube law: m ∝ ρs³ while leg stress σ = σ₀ρs. This gives a safety factor and H_max for aluminium, steel, titanium and nanotube.
+  - Walking speed from Froude 0.25, step time π√(L/g), ground pressure and fall time.
+- **Battle.**
+  - A five-lane rhythm game (A S D F G).
+  - Team strikes add as Gaussian impulses: peak = max Σ F·e^(−(t−tᵢ)²/2w²). Perfect sync gives 20 kN, while sloppy timing gives far less.
+  - The grown monster's bone safety factor (≈ 1.3) shows why real giants can't exist.
+
+EN/JA, guided tour, debrief. An original team inspired by the classic five-colour hero genre, not affiliated with any series. Education only.
+
 ## Also in here: SILENT VECTOR · stealth infiltration science
 
 At [`public/vector/`](public/vector): an original stealth operative (sneaking suit, vest, headband with animated tails, flip-down night-vision goggles) in a rain-soaked night compound with sodium lamps, a sweeping searchlight and four patrolling guards.
