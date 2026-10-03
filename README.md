@@ -219,6 +219,51 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: KEYLIGHT · the maths behind the magic
+
+At [`public/keylight/`](public/keylight): an original fantasy action-RPG (not affiliated with any game franchise). A hero with a scarf and the Lumen Key wakes on a glowing stained-glass platform floating in a starry void. The enemies are Hollows: smoky creatures with a single teal eye.
+- **Dive.**
+  - The window has n wedges in k colours with Cₙ or Dₙ symmetry.
+  - Counted exactly with Burnside's lemma (BigInt): necklaces N = (1/n)Σφ(d)k^(n/d), plus bracelets with flips.
+  - Shows orbit × stabiliser for a random colouring.
+  - Goal: the smallest 3-colour window with more than 10,000 designs (n = 12).
+- **Magic.** A 100 MP budget (1 MP = 10 kJ) with real energy bills:
+  - Fire: m·c·ΔT to ignition.
+  - Ice: cooling, plus 334 kJ/kg of latent heat, plus cooling the ice.
+  - Thunder: a 12 MV breakdown of a 4 m gap, energy ½CV².
+- **Routes.** The Prism ship flies Hohmann transfers between five worlds.
+  - Shows Δv₁, Δv₂, transfer time and lead angle.
+  - Fuel follows the rocket equation. Zig-zag routes run dry, while visiting worlds in order of distance makes it.
+- **Battle.**
+  - Three waves of Hollows with timed combo chains (three swings and a spinning finisher), dodge-rolls and fire.
+  - Knockback comes from impulse (J = m·v_tip, Δv = J/m) with floor friction, and pushing a Hollow off the edge is a ring-out.
+  - Autopilot or manual play.
+
+EN/JA, guided tour, journal. Fictional game, real maths.
+
+## Also in here: RINGFALL · physics of a ring world
+
+At [`public/ringfall/`](public/ringfall): an original sci-fi ring world (not affiliated with any game franchise). You stand on the inside of a 10,000 km ring:
+- the floor curves up into an arch across the sky
+- retaining walls line the rims, with a gas giant beyond
+- "Builder" monoliths stand around the arena
+- an original power-armour Ranger fights hostile Warden drones
+- **Ring.**
+  - Spin gravity ω = √(g/R), with a 7 km/s rim and a 75-minute turn.
+  - Hoop stress σ/ρ = gR(1 + λ) does not depend on thickness: only nanotubes come close (R_max ≈ 2,200 km at a safety factor of 1.5).
+  - Wall height from the atmospheric scale height, and the arch elevation s/2R.
+- **Coriolis.** An exact rotating-frame throw on a 200 m spin station.
+  - The path is a straight line in the inertial frame, t* = 2R·u_y/|u|², rotated back into the station's frame.
+  - A co-rotating camera shows the curved floor.
+  - Apparent weight changes when running spinward vs antispinward.
+- **Shields.** Design capacity, recharge delay and recharge rate against a 30 s ambush. Each choice adds mass, and the goal is to survive at 200 kg or less.
+- **Firefight.**
+  - Three waves of shielded drones that lead their shots.
+  - Plasma strips shields and the rifle breaks hulls, with heat management and dodging slow bolts.
+  - Autopilot or manual play.
+
+EN/JA, guided tour, debrief. Fictional game, real physics.
+
 ## Also in here: STRIDE · running performance & footwear science
 
 At [`public/stride/`](public/stride): a procedurally built racing shoe (lofted midsole with live stack, drop and rocker; a carbon plate; outsole pads; knit upper and laces) in a studio, with explode and x-ray views, plus a 400 m stadium for ghost races.
