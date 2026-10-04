@@ -1,0 +1,9 @@
+{
+  "name": "GhostFinder V1",
+  "short_name": "GhostFinder",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#030806",
+  "theme_color": "#030806",
+  "icons": []
+}

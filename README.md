@@ -1370,6 +1370,25 @@ demo runs without a camera, and the honest rows survived onto the rendered page.
 
 ---
 
+## Also in here: GhostFinder V1 · a ghost-hunting HUD
+
+At [`public/ghostfinder/`](public/ghostfinder): a single-page, phone-first ghost-hunting toy with
+a green night-vision HUD. It runs on iPhone, Android and laptop browsers.
+- **Modes.** SLS 3D (a skeleton overlay locks onto frame-difference motion), Matrix LiDAR (a
+  painted depth mesh), Spirit Box (random EVP phrases), Sensors, and a wide Glasses HUD.
+  Night vision and the camera can be toggled.
+- **Readouts.** The audio spectrum is real, from the mic through Web Audio. The EMF, temperature
+  and "humanoid" class are theatrical, driven by the motion score.
+- **Colin The Batman on comms.** Voice commands via the Web Speech API, with pre-recorded voice
+  clips in `audio/` and a speech-synthesis fallback.
+
+It needs camera and microphone permission and falls back to a simulation mode without them. It
+is entertainment only: it does not detect anything paranormal.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/ghostfinder/>**
+
+---
+
 ## What the skin changes
 
 Four files. No upstream rule was deleted, so pulling new commits from upstream
