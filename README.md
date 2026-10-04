@@ -219,6 +219,16 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: HYPERSCALE · an AI data center
+
+At [`public/hyperscale/`](public/hyperscale): commission an AI campus at five stations around one 3D site (data hall, network fabric, cooling yard, substation, solar field). Hardware classes and site numbers are representative values, not any real company or product.
+- **Train**: compute C ≈ 6·N·D, time = C/(n·peak·MFU), and the Chinchilla loss fit L = E + A/N^α + B/D^β with its compute-optimal split (iso-FLOP chart). Goal: loss 1.85 in 30 days on 8,192 accelerators.
+- **Power**: IT load (1.4·TDP + 300 W per accelerator) × PUE, annual energy, cost, homes-equivalent, and lifecycle CO₂e (IPCC AR5 medians, EIA grid average). Goal: 65,536 accelerators, ≤ 150 MW, ≤ 100 kt/yr.
+- **Cool**: Q = ṁ·c_p·ΔT for air and water, fan/pump power V̇·Δp/η, Carnot-fraction chillers, free cooling against dry-bulb or wet-bulb, tower water use (WUE), and chip temperature. Goal: 100 kW racks on a 35 °C day, PUE ≤ 1.15, no water.
+- **Fabric**: ring all-reduce 2(d−1)/d·S/BW + 2(d−1)·α, overlap with the backward pass, and fat-tree tiers 2·(k/2)^t with (2t−1)·n/k switches. Goal: 90 % efficiency at 65,536 accelerators in three tiers.
+- **Operate**: a live 24-hour day with DVFS power (∝ s³), a water loop warming by C·dT/dt, a heat wave, a 45 MW demand-response hour and a 40 MWh battery. Play it by hand or with the autopilot.
+- EN/日本語, guided tour, commissioning report, Higgsfield key art.
+
 ## Also in here: CRYSTAL RIFT · a multiverse RPG
 
 At [`public/crystalrift/`](public/crystalrift): an original fantasy RPG inspired by classic Japanese role-playing games (not affiliated with any franchise). A rift links four worlds, each with its own hero and its own real science, and then the Rift itself.
