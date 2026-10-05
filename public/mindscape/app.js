@@ -48,7 +48,7 @@ export class Mind {
     this.tt = { sys: 'attraction', n: 16, seed: 0, res: null, runs: [] };
     this.sg = { load: 0, fatigue: 0, depth: 0, h: 'high', reps: 1, trust: false, prompt: false, sawWorst: false };
     this.goal = { atlas: false, dopamine: false, motivation: false, arousal: false, attraction: false, suggestion: false };
-    this.view = { yaw: 0.9, pitch: 0.12, r: 1, drag: null, last: 0, moved: 0 };
+    this.view = { yaw: 1.2, pitch: 0.12, r: 1, drag: null, last: 0, moved: 0 };
     this.keys = new Set(); this.tab = 'atlas'; this.entered = false; this.uiT = 0; this.time = 0;
     app.stage.use(scene, this.cam); this.paint();
   }
@@ -64,7 +64,7 @@ export class Mind {
   toggle(id, on, label) { return `<button class="btn seg ${on ? 'active' : ''}" id="${id}">${label}: ${on ? t('on') : t('off')}</button>`; }
   setTab(tab) {
     this.tab = tab; sfx.select(); document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab)); document.body.dataset.tab = tab;
-    this.view.yaw = { atlas: 0.9, dopamine: 0.35, motivation: 0.6, arousal: -0.6, attraction: 0.25, suggestion: 0.75 }[tab]; this.view.pitch = 0.12; this.view.r = 1; this.snap = true;
+    this.view.yaw = { atlas: 1.2, dopamine: 1.0, motivation: 0.8, arousal: -1.0, attraction: 1.3, suggestion: 0.9 }[tab]; this.view.pitch = 0.12; this.view.r = 1; this.snap = true;
     if (tab !== 'atlas' && this.at.quiz) this.at.quiz = null;
     this.paint(); this.render(); this.caption('cap.' + tab);
   }
@@ -81,7 +81,7 @@ export class Mind {
     const h = this.highlights(), glass = this.glassy(), focus = Object.keys(h).length > 0;
     paintCortex(this.B, h, focus);
     for (const m of this.B.cortex) { m.material.opacity = glass ? 0.16 : 1; m.material.depthWrite = !glass; m.material.needsUpdate = true; }
-    for (const [id, list] of Object.entries(this.B.parts)) for (const m of list) { const k = h[id] || 0; m.material.emissiveIntensity = focus ? 0.08 + 1.4 * k : 0.3; m.material.opacity = focus && !k && id !== 'cerebellum' && id !== 'pons' && id !== 'medulla' && id !== 'midbrain' ? 0.35 : 1; m.material.color.set(COLORS[id]).multiplyScalar(focus && !k ? 0.35 : 1); }
+    for (const [id, list] of Object.entries(this.B.parts)) for (const m of list) { const k = h[id] || 0; m.material.emissiveIntensity = focus ? 0.06 + 0.55 * k : 0.22; m.material.opacity = focus && !k && id !== 'cerebellum' && id !== 'pons' && id !== 'medulla' && id !== 'midbrain' ? 0.35 : 1; m.material.color.set(COLORS[id]).multiplyScalar(focus && !k ? 0.35 : 1); }
     for (const [id, s] of Object.entries(this.B.markers)) s.userData.k = h[id] || (this.tab === 'atlas' && this.at.quiz ? 0.25 : 0);
   }
 
@@ -150,8 +150,8 @@ export class Mind {
     if (!full) return;
     const D = this.da, L = D.L, last = L.last, asym = tdAsym(D);
     const b = $('#da-big'); if (b) b.innerHTML = `<div><b class="mono c-amber">${last ? f2(last.d[TD.tc - 1]) : '—'}</b><small>${t('da.atCue')}</small></div><div><b class="mono ${last && last.d[TD.tr - 1] < -0.05 ? 'c-red' : 'c-green'}">${last ? f2(last.d[TD.tr - 1]) : '—'}</b><small>${t('da.atRew')}</small></div><div><b class="mono">${L.n}</b><small>${t('da.trials')}</small></div>`;
-    const bars = last ? [...last.d].map((v, i) => ({ x: i, y: v, color: v >= 0 ? '#ffd23a' : '#ff5a6a', glow: Math.abs(v) > 0.2 })) : [];
-    barChart($('#cv-trial'), { bars: bars.map((q) => ({ ...q, y: q.y + 1.1 })), x0: -0.5, x1: TD.T - 0.5, y0: 0, y1: 2.3, w: 0.8, xTicks: [TD.tc - 1, TD.tr - 1], xFmt: (i) => (i === TD.tc - 1 ? t('da.cue') : t('da.reward')), yFmt: (y) => f1(y - 1.1), title: t('da.chart1'), marks: [] });
+    const tr = []; if (last) last.d.forEach((v, i) => { tr.push([i - 0.5, v], [i + 0.5, v]); });
+    lineChart($('#cv-trial'), { x0: -0.5, x1: TD.T - 0.5, y0: -1.1, y1: 1.2, xTicks: [TD.tc - 1, TD.tr - 1], xFmt: (i) => (i === TD.tc - 1 ? t('da.cue') : t('da.reward')), yFmt: f1, title: t('da.chart1'), series: [{ pts: tr, color: '#ffd23a', fill: 'rgba(255,210,58,.18)' }], marks: [{ y: 0, color: 'rgba(255,255,255,.35)' }, { x: TD.tc - 1, color: 'rgba(143,227,255,.4)' }, { x: TD.tr - 1, color: 'rgba(124,255,158,.4)' }] });
     const H = L.hist;
     lineChart($('#cv-learn'), { x0: Math.max(0, L.n - 150), x1: Math.max(20, L.n), y0: -1.1, y1: 1.2, xFmt: (x) => f0(x), yFmt: f1, title: t('da.chart2'), series: [{ pts: H.map((q) => [q[0], q[1]]), color: '#ffd23a', label: t('da.cue') }, { pts: H.map((q) => [q[0], q[2]]), color: '#7cff9e', label: t('da.reward') }], marks: [{ y: asym.cue, color: 'rgba(255,210,58,.45)' }, { y: 0, color: 'rgba(255,255,255,.2)' }] });
     const m = $('#da-math');
@@ -313,8 +313,8 @@ export class Mind {
       const target = lv[k] || 0; F.level += (target - F.level) * Math.min(1, dt * 4);
       const P = F.pts.geometry.attributes.position, sp = 0.4 + F.level * 0.8, tmp = V(0, 0, 0);
       F.seeds.forEach((s, i) => { s.t = (s.t + dt * s.v * sp * 0.6) % 1; F.curves[s.c].getPointAt(s.t, tmp); P.setXYZ(i, tmp.x, tmp.y, tmp.z); });
-      P.needsUpdate = true; F.pts.material.opacity = Math.min(1, F.level); F.pts.material.size = 0.05 + 0.05 * Math.min(1.5, F.level); F.line.material.opacity = Math.min(0.5, F.level * 0.3);
-      if (k === 'noradrenergic' && lv.phasic !== undefined) F.pts.material.opacity = Math.min(1, F.level * (0.6 + 0.8 * lv.phasic * (0.5 + 0.5 * Math.sin(time * 6))));
+      P.needsUpdate = true; F.pts.material.opacity = Math.min(0.85, F.level * 0.75); F.pts.material.size = 0.09 + 0.06 * Math.min(1.5, F.level); F.line.material.opacity = Math.min(0.5, F.level * 0.3);
+      if (k === 'noradrenergic' && lv.phasic !== undefined) F.pts.material.opacity = Math.min(0.85, F.level * 0.6 * (0.6 + 0.8 * lv.phasic * (0.5 + 0.5 * Math.sin(time * 6))));
     }
     for (const s of Object.values(B.markers)) s.material.opacity = Math.min(1, (s.userData.k || 0) * (0.7 + 0.3 * Math.sin(time * 3)));
     // Hypnosis network links.
@@ -326,12 +326,12 @@ export class Mind {
       if (!sgOn) { k.s.material.opacity = 0; continue; }
       k.t += dt * 0.35;
       if (k.t > 1) { k.t = 0; k.dir.set(Math.random() - 0.5, (Math.random() - 0.5) * 0.6, Math.random() - 0.5).normalize(); k.acc = Math.random() < P; }
-      const r = k.t < 0.6 ? 6 - (k.t / 0.6) * (k.acc ? 5.2 : 3.6) : k.acc ? 0.8 * (1 - (k.t - 0.6) / 0.4) : 2.4 + ((k.t - 0.6) / 0.4) * 4;
-      k.s.position.copy(k.dir).multiplyScalar(r); k.s.material.color.set(k.t > 0.55 ? (k.acc ? '#ff5aa8' : '#9fe8ff') : '#ffffff'); k.s.material.opacity = Math.sin(Math.PI * k.t) * 0.9; k.s.scale.setScalar(k.t > 0.55 && !k.acc ? 0.45 : 0.32);
+      const r = k.t < 0.6 ? 4.6 - (k.t / 0.6) * (k.acc ? 3.9 : 2.4) : k.acc ? 0.7 * (1 - (k.t - 0.6) / 0.4) : 2.2 + ((k.t - 0.6) / 0.4) * 2.6;
+      k.s.position.copy(k.dir).multiplyScalar(r); k.s.material.color.set(k.t > 0.55 ? (k.acc ? '#ff5aa8' : '#9fe8ff') : '#fff2b0'); k.s.material.opacity = Math.sin(Math.PI * k.t) * 0.95; k.s.scale.setScalar(k.t > 0.55 && !k.acc ? 0.26 : 0.18);
     }
     B.dust.rotation.y += dt * 0.01;
     // Camera orbit.
-    const look = V(0, -0.1, 0), R = 7.6 * v.r, cp = V(Math.sin(v.yaw) * Math.cos(v.pitch) * R, Math.sin(v.pitch) * R + 0.3, Math.cos(v.yaw) * Math.cos(v.pitch) * R);
+    const look = V(0, -0.15, 0), R = 9.6 * v.r, cp = V(Math.sin(v.yaw) * Math.cos(v.pitch) * R, Math.sin(v.pitch) * R + 0.3, Math.cos(v.yaw) * Math.cos(v.pitch) * R);
     this.cam.position.lerp(cp, this.snap ? 1 : Math.min(1, dt * 5)); this.snap = false; this.cam.lookAt(look);
     this.cam.aspect = innerWidth / innerHeight; this.cam.updateProjectionMatrix();
     this.uiT += dt; if (this.uiT > 0.12) { this.uiT = 0; this.uiN = (this.uiN || 0) + 1; this.refresh(this.uiN % 3 === 0); }

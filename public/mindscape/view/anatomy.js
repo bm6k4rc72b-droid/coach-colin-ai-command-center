@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { fbm, weld, glowSprite } from './holo.js';
+import { fbm, weld, glowSprite, glowTexture } from './holo.js';
 
 // MINDSCAPE · a glass brain you can take apart. Cortex vertices carry a region id (lobes and named areas);
 // deep structures are separate meshes; neuromodulator pathways carry travelling light.
@@ -40,7 +40,7 @@ function classify(q, lat, side) {
 
 function hemisphere(side) {
   const geo = weld(new THREE.IcosahedronGeometry(1, 40)), pos = geo.attributes.position, n = pos.count, d = V(0, 0, 0);
-  const region = new Uint8Array(n), C = V(side * 0.32, 0.04, 0);
+  const region = new Uint8Array(n), C = V(side * 0.15, 0.04, 0);
   for (let i = 0; i < n; i++) {
     d.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
     let x = d.x * 0.6, y = d.y * 0.66, z = d.z * 0.95;
@@ -53,7 +53,7 @@ function hemisphere(side) {
     region[i] = CORTEX.indexOf(id);
     // Gyri: ridged noise, plus the lateral (Sylvian) fissure and the central sulcus.
     const f = fbm(d.x * 2.3 + (side > 0 ? 0 : 13), d.y * 2.3, d.z * 2.3, 4);
-    let depth = 0.045 * (1 - Math.abs(Math.sin(f * 24))) ** 3;
+    let depth = 0.075 * (1 - Math.abs(Math.sin(f * 30))) ** 2.2;
     if (lat > 0.2) depth += 0.07 * Math.exp(-(((y - (-0.09 - 0.22 * z)) / 0.025) ** 2)) * smooth(-0.66, -0.3, z) * smooth(0.5, 0.3, z);
     if (y > -0.05 && lat > -0.2) depth += 0.04 * Math.exp(-(((z - (-0.05 - 0.2 * y)) / 0.02) ** 2));
     q.multiplyScalar(1 - depth);
@@ -61,7 +61,7 @@ function hemisphere(side) {
   }
   geo.computeVertexNormals();
   geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.05, transparent: true, opacity: 1, emissive: '#ffffff', emissiveIntensity: 0.0 });
+  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.0, transparent: true, opacity: 1, emissive: '#ffffff', emissiveIntensity: 0.0 });
   const mesh = new THREE.Mesh(geo, mat); mesh.userData = { region, side, cortex: true }; return mesh;
 }
 
@@ -97,8 +97,8 @@ export function buildBrain(scene) {
   add('lc', ellipsoid([0.014, 0.022, 0.014]), [0.03, -0.3, -0.19], both);
   { const g = new THREE.CylinderGeometry(0.075 * S, 0.055 * S, 0.24 * S, 24); add('medulla', g, [0, -0.55, -0.15]); }
   { const g = new THREE.SphereGeometry(1, 64, 48), p = g.attributes.position, d = V(0, 0, 0);
-    for (let i = 0; i < p.count; i++) { d.set(p.getX(i), p.getY(i), p.getZ(i)); const fol = 1 - 0.035 * Math.abs(Math.sin(d.y * 26 + d.z * 6)), mid = 1 - 0.18 * Math.exp(-((d.x / 0.12) ** 2)) * (d.z < 0 ? 1 : 0.4); p.setXYZ(i, d.x * 0.4 * S * fol * mid, d.y * 0.17 * S * fol, d.z * 0.24 * S * fol); }
-    g.computeVertexNormals(); add('cerebellum', g, [0, -0.36, -0.5]); }
+    for (let i = 0; i < p.count; i++) { d.set(p.getX(i), p.getY(i), p.getZ(i)); const fol = 1 - 0.035 * Math.abs(Math.sin(d.y * 26 + d.z * 6)), mid = 1 - 0.18 * Math.exp(-((d.x / 0.12) ** 2)) * (d.z < 0 ? 1 : 0.4); p.setXYZ(i, d.x * 0.34 * S * fol * mid, d.y * 0.15 * S * fol, d.z * 0.21 * S * fol); }
+    g.computeVertexNormals(); add('cerebellum', g, [0, -0.36, -0.56]); }
   // Neuromodulator pathways (travelling light). Each is a set of curves; particles ride them.
   const P = (pts) => new THREE.CatmullRomCurve3(pts.map(at));
   B.paths.mesolimbic = [1, -1].map((s) => P([V(0, -0.22, -0.04), V(0.04 * s, -0.17, 0.08), V(0.085 * s, -0.1, 0.24)]));
@@ -109,7 +109,7 @@ export function buildBrain(scene) {
   for (const [k, curves] of Object.entries(B.paths)) {
     const n = curves.length * 70, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
     const col = { mesolimbic: '#ffd23a', mesocortical: '#ffb020', nigrostriatal: '#ff8a3a', noradrenergic: '#5ab4ff' }[k];
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 0.07, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: 0.07, map: glowTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
     pts.renderOrder = 5; B.group.add(pts); B.flow[k] = { pts, curves, seeds: [...Array(n)].map((_, i) => ({ c: i % curves.length, t: Math.random(), v: 0.25 + Math.random() * 0.3 })), level: 0 };
     const lineG = new THREE.BufferGeometry().setFromPoints(curves.flatMap((c) => { const a = c.getPoints(30); const out = []; for (let i = 0; i < a.length - 1; i++) out.push(a[i], a[i + 1]); return out; }));
     const line = new THREE.LineSegments(lineG, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })); line.renderOrder = 4; B.group.add(line); B.flow[k].line = line;
@@ -130,7 +130,7 @@ export function paintCortex(B, h = {}, focus = false) {
   const col = new THREE.Color(), base = CORTEX.map((id) => new THREE.Color(COLORS[id]));
   for (const m of B.cortex) {
     const c = m.geometry.attributes.color, reg = m.userData.region;
-    for (let i = 0; i < reg.length; i++) { const id = CORTEX[reg[i]], k = h[id] || 0; col.copy(base[reg[i]]).multiplyScalar(focus ? 0.18 + 1.6 * k : 0.55 + 0.9 * k); c.setXYZ(i, col.r, col.g, col.b); }
+    for (let i = 0; i < reg.length; i++) { const id = CORTEX[reg[i]], k = h[id] || 0; col.copy(base[reg[i]]).multiplyScalar(focus ? 0.28 + 0.72 * k : 0.5 + 0.5 * k); c.setXYZ(i, col.r, col.g, col.b); }
     c.needsUpdate = true;
   }
 }
