@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RUSTWING · by Coach Colin</title>
+  <meta name="description" content="RUSTWING by Coach Colin: an original tramp freighter and the real physics of star travel — the relativistic rocket, faster-than-light warp-bubble energy, a ray-traced black hole with its accretion disk, colliding black holes and gravitational waves, and a smuggler's run through a black-hole cluster in under 12 parsecs." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305060c'/%3E%3Cellipse cx='16' cy='17' rx='12' ry='5' fill='%23a0a4ac'/%3E%3Ccircle cx='16' cy='12' r='3' fill='%237fb8ff'/%3E%3Ccircle cx='9' cy='20' r='1.6' fill='%235ab4ff'/%3E%3Ccircle cx='23' cy='20' r='1.6' fill='%235ab4ff'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body class="letterbox" data-tab="hangar">
+  <canvas id="scene"></canvas>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel"><span class="logo">◉</span><span class="brand-name">RUSTWING</span><span class="brand-by" data-i18n="app.by"></span></div>
+      <nav id="tabs" class="views panel">
+        <button data-tab="hangar"><kbd>1</kbd> <span data-i18n="tab.hangar"></span></button>
+        <button data-tab="hyper"><kbd>2</kbd> <span data-i18n="tab.hyper"></span></button>
+        <button data-tab="hole"><kbd>3</kbd> <span data-i18n="tab.hole"></span></button>
+        <button data-tab="merger"><kbd>4</kbd> <span data-i18n="tab.merger"></span></button>
+        <button data-tab="run"><kbd>5</kbd> <span data-i18n="tab.run"></span></button>
+      </nav>
+      <div class="actions">
+        <button class="btn panel" id="btn-report"><span data-i18n="app.report"></span></button>
+        <button class="btn panel demo" id="btn-tour"><span data-i18n="app.tour"></span></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+    <section id="panel" class="panel"></section>
+    <section id="side" class="panel"></section>
+    <div id="runmap"><canvas></canvas></div>
+    <div id="clear" class="mono"></div>
+    <div id="caption"></div>
+    <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="app.tourOn"></span></div>
+    <footer class="hint mono" data-i18n="app.hint"></footer>
+  </div>
+
+  <div class="keyart" id="keyart"></div>
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">HANGAR · HYPERSPACE · BLACK HOLE · MERGER · THE RUN</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+      <div class="disclaimer">
+        <h2>⚠ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+      <div class="start-actions">
+        <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel demo" id="btn-start-tour" disabled data-i18n="app.tour"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="report" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div><div class="start-kicker mono">RUSTWING · FLIGHT LOG</div><h2 id="rep-title"></h2><p class="db-sub" id="rep-sub"></p></div>
+        <div class="db-ring" id="rep-ring"><b class="mono">0</b><small>%</small></div>
+      </div>
+      <ul class="db-checks" id="rep-list"></ul>
+      <h3 data-i18n="rep.next"></h3>
+      <ol class="db-tips" id="rep-next"></ol>
+      <p class="db-disclaimer" data-i18n="rep.note"></p>
+      <div class="start-actions">
+        <button class="btn primary" id="rep-print" data-i18n="rep.print"></button>
+        <button class="btn panel" id="rep-close" data-i18n="rep.close"></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">LOADING…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
