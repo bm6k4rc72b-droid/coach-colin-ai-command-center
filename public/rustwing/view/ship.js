@@ -50,7 +50,7 @@ export function buildShip() {
     const core = new THREE.Mesh(new THREE.CircleGeometry(0.85, 28), new THREE.MeshBasicMaterial({ color: '#7fd0ff' })); core.position.z = 2.3; pod.add(core);
     const g1 = glowSprite('#5ab4ff', 5, 0.8); g1.position.z = 2.6; pod.add(g1);
     const plume = new THREE.Mesh(new THREE.ConeGeometry(0.8, 6, 24, 1, true), new THREE.MeshBasicMaterial({ color: '#4aa8ff', transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-    plume.rotation.x = -Math.PI / 2; plume.position.z = 5.3; pod.add(plume);
+    plume.rotation.x = -Math.PI / 2; plume.position.z = 5.3; plume.visible = false; pod.add(plume);
     glows.push({ core, g1, plume });
   }
   // Rear engine strip across the stern.
@@ -61,7 +61,7 @@ export function buildShip() {
   return ship;
 }
 export function setThrust(ship, k, t) {
-  const U = ship.userData; for (const g of U.glows) { g.g1.material.opacity = 0.25 + 0.75 * k; g.g1.scale.setScalar(3 + 5 * k + Math.sin(t * 40) * 0.2 * k); g.plume.material.opacity = 0.05 + 0.35 * k; g.plume.scale.set(1, 0.4 + 1.4 * k, 1); g.core.material.color.setRGB(0.4 + 0.6 * k, 0.75 + 0.25 * k, 1); }
+  const U = ship.userData; for (const g of U.glows) { g.g1.material.opacity = 0.2 + 0.5 * k; g.g1.scale.setScalar(2 + 2.6 * k + Math.sin(t * 40) * 0.15 * k); g.plume.material.opacity = 0.04 + 0.16 * k; g.plume.scale.set(0.7, 0.3 + 0.6 * k, 0.7); g.plume.position.z = 2.3 + 3 * (0.3 + 0.6 * k); g.core.material.color.setRGB(0.4 + 0.6 * k, 0.75 + 0.25 * k, 1); }
   U.strip.material.color.setRGB(0.35 + 0.6 * k, 0.7 + 0.3 * k, 1); U.dish.rotation.y = t * 0.8; U.nav.forEach((n, i) => (n.material.opacity = Math.sin(t * 3 + i * Math.PI) > 0.6 ? 1 : 0.15));
 }
 

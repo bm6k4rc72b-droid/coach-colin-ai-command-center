@@ -17,7 +17,7 @@ try {
   i18n.apply();
   { const img = new Image(); img.onload = () => { $('#keyart').style.backgroundImage = `url("${KEYART}")`; $('#keyart').classList.add('on'); }; img.src = KEYART; }
   const app = { stage: createStage($('#scene')), feed: new Feed($('#feed')), state: { time: 0 } };
-  app.stage.grade.uniforms.uHolo.value = 0.25; app.stage.grade.uniforms.uStreak.value = 1.0; app.stage.bloom.strength = 0.7; app.stage.bloom.threshold = 0.78; app.stage.bloom.radius = 0.55; app.stage.renderer.toneMappingExposure = 1.0;
+  app.stage.grade.uniforms.uHolo.value = 0.25; app.stage.grade.uniforms.uStreak.value = 1.0; app.stage.bloom.strength = 0.5; app.stage.bloom.threshold = 0.85; app.stage.bloom.radius = 0.55; app.stage.renderer.toneMappingExposure = 1.0;
   const A = new Rustwing(app);
   A.setTab('hangar');
 

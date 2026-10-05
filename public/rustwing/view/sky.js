@@ -27,8 +27,8 @@ vec3 sky(vec3 d){
   // Nebula and the band of the galaxy.
   float n = noise(d * 3.0) * 0.6 + noise(d * 7.0) * 0.3 + noise(d * 15.0) * 0.1;
   float band = exp(-pow(dot(d, normalize(vec3(0.2, 1.0, 0.35))) * 3.2, 2.0));
-  col += vec3(0.16, 0.08, 0.22) * pow(n, 2.2) * 1.3 + vec3(0.12, 0.13, 0.2) * band * (0.4 + n);
-  col += vec3(0.25, 0.12, 0.06) * pow(noise(d * 4.0 + 9.0), 4.0) * 1.2;
+  col += vec3(0.16, 0.08, 0.22) * pow(n, 2.2) * 0.55 + vec3(0.12, 0.13, 0.2) * band * (0.15 + 0.5 * n);
+  col += vec3(0.25, 0.12, 0.06) * pow(noise(d * 4.0 + 9.0), 4.0) * 0.5;
   return col;
 }
 vec3 diskColor(float r, vec3 p, vec3 v){
@@ -40,7 +40,7 @@ vec3 diskColor(float r, vec3 p, vec3 v){
   float cosT = dot(vel, -normalize(v)); float D = 1.0 / (g * (1.0 - beta * cosT));
   float grav = sqrt(max(0.0, 1.0 - 1.0 / r));
   float swirl = 0.6 + 0.4 * noise(vec3(r * 3.0, atan(p.z, p.x) * 4.0 + uTime * 0.6 / pow(r, 1.5) * 6.0, 0.0));
-  return hot * T * pow(D * grav, 3.0) * swirl * 2.2;
+  return hot * T * pow(D * grav, 3.0) * swirl * 1.1;
 }
 void main(){
   vec4 vp = uInvProj * vec4(vNdc, 1.0, 1.0); vec3 dir = normalize((uCamWorld * vec4(vp.xyz / vp.w, 0.0)).xyz);
@@ -80,7 +80,7 @@ void main(){
     float rad = acos(clamp(ct, -1.0, 1.0)); float z = 1.0 / max(0.02, tan(rad * 0.5));
     float s = fract(z * 0.08 * (0.6 + h) - uTime * (1.2 + h * 1.5));
     float streak = smoothstep(0.0, 0.03, s) * smoothstep(0.35 + h * 0.4, 0.0, s) * step(0.55, h) * smoothstep(0.05, 0.4, rad);
-    vec3 tun = vec3(0.55, 0.75, 1.0) * streak * 2.2 + vec3(0.08, 0.14, 0.32) * smoothstep(1.2, 0.0, rad) * 0.8 + vec3(0.9, 0.95, 1.0) * exp(-rad * rad * 60.0) * 1.5;
+    vec3 tun = vec3(0.55, 0.75, 1.0) * streak * 2.2 + vec3(0.08, 0.14, 0.32) * smoothstep(1.2, 0.0, rad) * 0.8 + vec3(0.9, 0.95, 1.0) * exp(-rad * rad * 60.0) * 0.8;
     col = mix(col, tun, clamp(uWarp, 0.0, 1.0));
   }
   gl_FragColor = vec4(col, 1.0);
