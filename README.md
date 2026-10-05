@@ -219,6 +219,16 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: RUSTWING · freighter, hyperspace & black holes
+
+At [`public/rustwing/`](public/rustwing): an original saucer tramp freighter, inspired by classic space-opera freighters but not affiliated with any franchise, flown through real physics.
+- **Hangar**: relativistic rocket. Ship time τ = (2c/a)·acosh(1 + ad/2c²), Earth time, peak γ, and the fuel mass ratio exp(2·acosh γ·c/v_e) for chemical, ion, fusion and photon drives. Goal: Proxima in < 4 ship-years.
+- **Hyperspace**: the hyperdrive is fiction, so travel time is d/(k·c). It shows the Alcubierre warp-bubble energy scaling (c⁴/G)k²R²/Δ, a "mass shadow" r_j = √(GM/g_th) that blocks jumps near stars, and the FTL-implies-time-travel caveat.
+- **Black hole**: a full-screen GPU ray tracer integrating Schwarzschild null geodesics. It draws a Doppler-beamed, redshifted accretion disk (T ∝ r^−3/4), a photon ring and a lensed star field. Orbit numbers: r_s, ISCO, √(1 − 1.5/x) time dilation, period, redshift, tidal 2GML/r³.
+- **Merger**: binary black-hole lensing over a rippling spacetime grid. Includes the chirp mass, quadrupole chirp f(τ), strain, f_ISCO, ringdown frequency and radiated energy, with an audible chirp (GW150914 preset).
+- **The Run**: drag waypoints through a supermassive black-hole cluster with mass shadows to make the run in under 12 parsecs. A parsec is a distance.
+- EN/日本語, guided tour, flight-log report, Higgsfield key art.
+
 ## Also in here: MINDSCAPE · the brain, motivation & suggestion
 
 At [`public/mindscape/`](public/mindscape): a 3D glass brain you can take apart, plus five rooms of behavioural neuroscience. It is a separate app; the other brain project is untouched. Educational only, not medical or psychological advice.
