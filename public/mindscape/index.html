@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MINDSCAPE · by Coach Colin</title>
+  <meta name="description" content="MINDSCAPE by Coach Colin: explore every part of the brain in 3D, then the neuroscience of dopamine and reward prediction, motivation and its absence, arousal and curiosity, attraction, and hypnosis and suggestibility — with the published models and the maths behind them." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2307050f'/%3E%3Cpath d='M16 7c-5 0-9 3.5-9 8.5 0 3 1.6 5.4 4 6.8V26h10v-3.7c2.4-1.4 4-3.8 4-6.8C25 10.5 21 7 16 7z' fill='none' stroke='%23ff7ad9' stroke-width='1.8'/%3E%3Cpath d='M16 8v17M11 13c2 1 3 3 5 3M21 13c-2 1-3 3-5 3' stroke='%235ab4ff' stroke-width='1.3' fill='none'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body class="letterbox" data-tab="atlas">
+  <canvas id="scene"></canvas>
+
+  <div id="hud" class="hidden">
+    <header class="topbar">
+      <div class="brand panel"><span class="logo">✺</span><span class="brand-name">MINDSCAPE</span><span class="brand-by" data-i18n="app.by"></span></div>
+      <nav id="tabs" class="views panel">
+        <button data-tab="atlas"><kbd>1</kbd> <span data-i18n="tab.atlas"></span></button>
+        <button data-tab="dopamine"><kbd>2</kbd> <span data-i18n="tab.dopamine"></span></button>
+        <button data-tab="motivation"><kbd>3</kbd> <span data-i18n="tab.motivation"></span></button>
+        <button data-tab="arousal"><kbd>4</kbd> <span data-i18n="tab.arousal"></span></button>
+        <button data-tab="attraction"><kbd>5</kbd> <span data-i18n="tab.attraction"></span></button>
+        <button data-tab="suggestion"><kbd>6</kbd> <span data-i18n="tab.suggestion"></span></button>
+      </nav>
+      <div class="actions">
+        <button class="btn panel" id="btn-report"><span data-i18n="app.report"></span></button>
+        <button class="btn panel demo" id="btn-tour"><span data-i18n="app.tour"></span></button>
+        <button class="btn panel lang" id="btn-lang" data-i18n="app.lang"></button>
+      </div>
+    </header>
+    <section id="panel" class="panel"></section>
+    <section id="side" class="panel"></section>
+    <div id="clear" class="mono"></div>
+    <div id="caption"></div>
+    <div id="feed"></div>
+    <div id="demo-bar" class="hidden mono"><span class="dot"></span><span data-i18n="app.tourOn"></span></div>
+    <footer class="hint mono" data-i18n="app.hint"></footer>
+  </div>
+
+  <div class="keyart" id="keyart"></div>
+  <section id="start">
+    <div class="start-card panel">
+      <div class="start-kicker mono">ATLAS · DOPAMINE · MOTIVATION · AROUSAL · ATTRACTION · SUGGESTION</div>
+      <h1 data-i18n="app.title"></h1>
+      <p class="sub" data-i18n="app.sub"></p>
+      <p class="byline" data-i18n="app.by"></p>
+      <div class="disclaimer">
+        <h2>⚠ <span data-i18n="app.disclaimer.h"></span></h2>
+        <p data-i18n="app.disclaimer"></p>
+        <label class="ack"><input type="checkbox" id="ack" /> <span data-i18n="app.ack"></span></label>
+      </div>
+      <div class="start-actions">
+        <button class="btn primary" id="btn-start" disabled data-i18n="app.start"></button>
+        <button class="btn panel demo" id="btn-start-tour" disabled data-i18n="app.tour"></button>
+        <button class="btn panel lang" id="btn-lang-start" data-i18n="app.lang"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="report" class="hidden">
+    <div class="db-card panel">
+      <div class="db-head">
+        <div><div class="start-kicker mono">MINDSCAPE · FIELD NOTES</div><h2 id="rep-title"></h2><p class="db-sub" id="rep-sub"></p></div>
+        <div class="db-ring" id="rep-ring"><b class="mono">0</b><small>%</small></div>
+      </div>
+      <ul class="db-checks" id="rep-list"></ul>
+      <h3 data-i18n="rep.next"></h3>
+      <ol class="db-tips" id="rep-next"></ol>
+      <p class="db-disclaimer" data-i18n="rep.note"></p>
+      <div class="start-actions">
+        <button class="btn primary" id="rep-print" data-i18n="rep.print"></button>
+        <button class="btn panel" id="rep-close" data-i18n="rep.close"></button>
+      </div>
+    </div>
+  </section>
+
+  <div id="boot" class="mono">LOADING…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
