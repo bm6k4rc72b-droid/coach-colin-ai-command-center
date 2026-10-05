@@ -219,6 +219,17 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: MINDSCAPE · the brain, motivation & suggestion
+
+At [`public/mindscape/`](public/mindscape): a 3D glass brain you can take apart, plus five rooms of behavioural neuroscience. It is a separate app; the other brain project is untouched. Educational only, not medical or psychological advice.
+- **Atlas**: 32 parts (lobes and named areas, limbic system, thalamus/hypothalamus/glands, basal ganglia and dopamine nuclei, brainstem, cerebellum). Each has its function and a fact. Glass mode shows the deep structures, and a click-the-brain quiz tests you. Uses the 86-billion-neuron census (Azevedo 2009) and the ~20 W energy budget.
+- **Dopamine**: temporal-difference learning, δ = r + γV(t+1) − V(t). The burst moves from reward to cue and dips when a reward is omitted (Schultz 1997), with the analytic asymptotes γ^k·p·R and (1 − p)R.
+- **Motivation**: hyperbolic delay and parabolic effort discounting, dopamine-weighted, against an easy alternative, with a softmax start probability and Niv's vigour τ* = √(C_v/R̄). Goal: start a task on a low-dopamine day.
+- **Arousal & interest**: Yerkes–Dodson inverted U (lower optimum for hard tasks), locus coeruleus tonic/phasic modes, and curiosity ∝ P(1 − P) (Kang 2009).
+- **Attraction**: Fisher's lust / attraction / attachment systems mapped onto the brain. A replication of the Dutton & Aron shaky-bridge study with Fisher's exact test and power analysis.
+- **Suggestion**: hypnosis networks (Jiang 2017), EEG bands, and a critical-filter model of when the mind accepts claims without checking. The model covers Gilbert's provisional-acceptance account, illusory truth from repetition, load/fatigue/absorption, and accuracy prompts that restore the check.
+- EN/日本語, guided tour, field-notes report, Higgsfield key art.
+
 ## Also in here: HYPERSCALE · an AI data center
 
 At [`public/hyperscale/`](public/hyperscale): commission an AI campus at five stations around one 3D site (data hall, network fabric, cooling yard, substation, solar field). Hardware classes and site numbers are representative values, not any real company or product.
