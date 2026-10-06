@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>VultureSystemV1 · by Coach Colin</title>
+  <meta name="description" content="VultureSystemV1 by Coach Colin: turn any camera into real-time safety intelligence. On-device computer vision for zone occupancy, people and vehicle counting, alerts and analytics, plus pose-based joint angles, reps, speed, force, fatigue, and open-data route-safety prediction." />
+  <meta name="theme-color" content="#070b14" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070b14'/%3E%3Cpath d='M16 5 L27 12 L22 13 L16 27 L10 13 L5 12 Z' fill='none' stroke='%23f5d90a' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='16' cy='13' r='2' fill='%2339e0c8'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <aside id="nav">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5 L27 12 L22 13 L16 27 L10 13 L5 12 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="13" r="2" fill="#39e0c8"/></svg>
+      <div><b>VULTURE<span>SYSTEM</span>V1</b><small>by Coach Colin</small></div>
+    </div>
+    <nav>
+      <h6>Monitor</h6>
+      <button data-view="dashboard" class="on"><i>▦</i>Live Monitor</button>
+      <button data-view="kinetics"><i>✣</i>Kinetics</button>
+      <button data-view="route"><i>⌖</i>Route Safety</button>
+      <button data-view="history"><i>◷</i>History &amp; Analytics</button>
+      <h6>Configure</h6>
+      <button data-view="cameras"><i>◉</i>Cameras &amp; Devices</button>
+      <button data-view="designer"><i>⬚</i>Space Designer</button>
+      <button data-view="alerts"><i>⚠</i>Alerts<em id="alert-badge" hidden>0</em></button>
+      <button data-view="system"><i>⚙</i>System &amp; Tech</button>
+    </nav>
+    <div class="nav-foot mono"><span class="dot live"></span><span id="clock">--:--</span><br><span id="nav-uptime" class="muted">uptime 0s</span></div>
+  </aside>
+
+  <main>
+    <header id="top">
+      <button id="nav-toggle" class="btn icon" aria-label="Menu">☰</button>
+      <div>
+        <h1 id="view-title">Live Monitor</h1>
+        <div class="sub"><span class="dot live"></span> LIVE · <span id="top-sub">on-device AI · frames never leave this browser</span></div>
+      </div>
+      <div class="spacer"></div>
+      <select id="cam-select" aria-label="Active camera"></select>
+      <button class="btn" id="quick-demo">▶ Demo feeds</button>
+    </header>
+
+    <!-- LIVE MONITOR -->
+    <section class="view on" id="view-dashboard">
+      <div class="kpis">
+        <div class="kpi"><span>Live feeds</span><b id="k-cams">0</b><small id="k-cams-sub">cameras active</small></div>
+        <div class="kpi"><span>Detections</span><b id="k-dets">0</b><small id="k-dets-sub">vehicles · people</small></div>
+        <div class="kpi"><span>Occupancy</span><b id="k-occ">--</b><small id="k-occ-sub">spaces</small></div>
+        <div class="kpi"><span>Alerts</span><b id="k-alerts">0</b><small>since start</small></div>
+        <div class="kpi"><span>Inference</span><b id="k-inf">--</b><small id="k-inf-sub">ms / frame</small></div>
+        <div class="kpi"><span>Uptime</span><b id="k-up">0s</b><small id="k-fps">0 fps</small></div>
+      </div>
+      <div class="dash-grid">
+        <div class="card stage-card">
+          <div class="stage-head">
+            <b id="stage-name">No camera</b>
+            <span class="chip mono" id="stage-kind"></span>
+            <div class="spacer"></div>
+            <label class="toggle"><input type="checkbox" id="ov-zones" checked> Zones</label>
+            <label class="toggle"><input type="checkbox" id="ov-boxes" checked> Boxes</label>
+            <label class="toggle"><input type="checkbox" id="ov-pose" checked> Pose</label>
+          </div>
+          <div class="stage" id="stage">
+            <canvas id="stage-canvas"></canvas>
+            <div class="empty" id="stage-empty">
+              <h2>Turn any camera into real-time safety intelligence</h2>
+              <p>Use this device's camera, mirror a drone/glasses app, open an IP-camera stream, or run the simulated feeds.</p>
+              <div class="row center">
+                <button class="btn primary" data-add="webcam">◉ Use this device's camera</button>
+                <button class="btn" data-add="sim-lot">▶ Simulated parking lot</button>
+                <button class="btn" data-add="sim-athlete">▶ Simulated athlete</button>
+              </div>
+            </div>
+          </div>
+          <div class="tiles" id="tiles"></div>
+        </div>
+        <div class="side">
+          <div class="card">
+            <h3>Space occupancy <small id="occ-sum" class="muted"></small></h3>
+            <div class="occ-map" id="occ-map"></div>
+            <div class="counts" id="counts"></div>
+          </div>
+          <div class="card" id="mini-kin">
+            <h3>Athlete <small class="muted">kinetics</small></h3>
+            <div class="mini-kv" id="mini-kv"><p class="muted">Pose tracking starts when a person is in view.</p></div>
+          </div>
+          <div class="card feed-card">
+            <h3>Event feed</h3>
+            <ol class="feed" id="feed"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KINETICS -->
+    <section class="view" id="view-kinetics">
+      <div class="kin-grid">
+        <div class="card stage-card">
+          <div class="stage-head">
+            <b>Live camera feed</b><span class="chip mono" id="kin-rec">REC · -- fps</span>
+            <div class="spacer"></div>
+            <label>Exercise <select id="kin-ex"></select></label>
+          </div>
+          <div class="stage" id="kin-stage"><canvas id="kin-canvas"></canvas><div class="pose-state mono" id="kin-state">Tracking: waiting for a person…</div></div>
+          <div class="kin-controls">
+            <button class="btn" id="kin-pause">❚❚ Pause</button>
+            <button class="btn primary" id="kin-cal">◎ Calibrate</button>
+            <button class="btn" id="kin-reset">↺ New set</button>
+            <button class="btn" id="kin-export">⬇ Export CSV</button>
+            <button class="btn" id="kin-imu">📱 Phone motion sensors</button>
+          </div>
+          <div class="row wrap kin-inputs">
+            <label>Mass (kg) <input type="number" id="kin-mass" min="20" max="250" step="0.5"></label>
+            <label>Height (m) <input type="number" id="kin-height" min="1" max="2.4" step="0.01"></label>
+            <label>Treadmill (km/h) <input type="number" id="kin-tread" min="0" max="30" step="0.1"></label>
+            <label>Pose model <select id="kin-model"><option value="lite">Lite (fast)</option><option value="full">Full (accurate)</option></select></label>
+          </div>
+        </div>
+        <div class="kin-side">
+          <div class="card">
+            <h3>Muscle activation <small class="muted">estimated · 0–100%</small></h3>
+            <div id="kin-muscles" class="muscles"></div>
+            <p class="hint">Kinematic demand model (joint flexion × dynamic load), not EMG. Strip = intensity through the range of motion.</p>
+          </div>
+          <div class="card">
+            <h3>Joint angles <small class="muted">live · ROM min–max</small></h3>
+            <table class="angles" id="kin-angles"></table>
+          </div>
+          <div class="card">
+            <h3>Reps &amp; form</h3>
+            <div class="reps"><b id="kin-reps">0</b><span>reps</span><div id="kin-repinfo" class="muted mono"></div></div>
+            <div id="kin-flags" class="flags"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sensors">
+        <div class="card sensor"><h4>Speed</h4><b id="s-speed">--</b><canvas id="c-speed" class="spark"></canvas><small id="s-speed-sub"></small></div>
+        <div class="card sensor"><h4>Force output</h4><b id="s-force">--</b><canvas id="c-force" class="spark"></canvas><small id="s-force-sub"></small></div>
+        <div class="card sensor"><h4>Fatigue</h4><b id="s-fat">--</b><canvas id="c-fat" class="spark"></canvas><small id="s-fat-sub"></small></div>
+        <div class="card sensor"><h4>Cadence · stride</h4><b id="s-cad">--</b><canvas id="c-cad" class="spark"></canvas><small id="s-cad-sub"></small></div>
+        <div class="card sensor"><h4>Impact</h4><b id="s-imp">--</b><canvas id="c-imp" class="spark"></canvas><small id="s-imp-sub"></small></div>
+      </div>
+    </section>
+
+    <!-- ROUTE -->
+    <section class="view" id="view-route"><div id="route-root"></div></section>
+
+    <!-- HISTORY -->
+    <section class="view" id="view-history">
+      <div class="card">
+        <div class="row wrap"><h3>Occupancy timeline</h3><div class="spacer"></div><button class="btn" id="h-csv">⬇ Export CSV</button><button class="btn" id="h-json">⬇ Export config</button></div>
+        <canvas id="h-chart" class="chart" style="height:180px"></canvas>
+        <input type="range" id="h-scrub" min="0" max="0" value="0" aria-label="Scrub history">
+        <div class="row wrap"><span class="mono" id="h-time">—</span><div class="spacer"></div><button class="btn" id="h-live">● Live</button></div>
+        <div class="occ-map" id="h-map"></div>
+      </div>
+      <div class="hist-grid">
+        <div class="card"><h3>Mean occupancy by hour</h3><canvas id="h-hour" class="chart" style="height:150px"></canvas></div>
+        <div class="card"><h3>Utilisation by space</h3><canvas id="h-util" class="chart" style="height:150px"></canvas></div>
+      </div>
+      <div class="card"><h3>Space analytics</h3><div class="table-wrap"><table class="data" id="h-table"></table></div></div>
+      <div class="card"><h3>Training session · reps</h3><div class="table-wrap"><table class="data" id="h-reps"></table></div></div>
+    </section>
+
+    <!-- CAMERAS -->
+    <section class="view" id="view-cameras">
+      <div class="cam-grid">
+        <div class="card">
+          <h3>Add a camera</h3>
+          <div class="add-grid">
+            <button class="dev" data-add="webcam"><b>📱 iPhone / Android</b><span>Phone camera in the browser (front or back)</span></button>
+            <button class="dev" data-add="webcam"><b>💻 Laptop webcam</b><span>Built-in or USB webcam</span></button>
+            <button class="dev" data-add="webcam"><b>🎥 DJI / action cam</b><span>USB webcam mode or HDMI capture card</span></button>
+            <button class="dev" data-add="screen"><b>🕶 Smart glasses</b><span>Mirror the Ray-Ban Meta / Vuzix app or livestream</span></button>
+            <button class="dev" data-add="screen"><b>🚁 Drone</b><span>Mirror DJI Fly / controller, or RTSP from the drone</span></button>
+            <button class="dev" data-add="rtsp"><b>📡 IP / RTSP camera</b><span>Any ONVIF / RTSP camera via the local relay</span></button>
+            <button class="dev" data-add="url"><b>🌐 Stream URL</b><span>HLS (.m3u8), MJPEG or MP4/WebM</span></button>
+            <button class="dev" data-add="file"><b>🎞 Video file</b><span>Analyse recorded footage</span></button>
+          </div>
+          <form id="cam-form" class="cam-form" hidden>
+            <h4 id="cf-title">New camera</h4>
+            <label>Name <input id="cf-name" required></label>
+            <label id="cf-dev-l">Device <select id="cf-dev"></select></label>
+            <label id="cf-url-l">URL <input id="cf-url" placeholder="rtsp://user:pass@192.168.1.20:554/stream1"></label>
+            <label id="cf-relay-l">Relay <input id="cf-relay" value="http://127.0.0.1:8787"></label>
+            <label id="cf-file-l">File <input id="cf-file" type="file" accept="video/*"></label>
+            <label>Analyse <select id="cf-task"><option value="both">Zones + kinetics</option><option value="zones">Zones / occupancy only</option><option value="kinetics">Kinetics only</option></select></label>
+            <div class="row"><button class="btn primary" type="submit">Connect</button><button class="btn" type="button" id="cf-cancel">Cancel</button></div>
+            <div id="cf-msg" class="msg"></div>
+          </form>
+        </div>
+        <div class="card">
+          <h3>Connected cameras</h3>
+          <ul class="cam-list" id="cam-list"></ul>
+          <details class="relay">
+            <summary>RTSP relay for IP cameras, DJI and drones (runs on your own machine)</summary>
+            <p>Browsers can't open <code>rtsp://</code> directly. The relay is a 120-line Node script that has ffmpeg transcode RTSP to MJPEG, which the browser then reads. Video stays on your network.</p>
+            <pre><code>curl -O <span id="relay-url"></span>
+node rtsp-relay.mjs          # needs Node 18+ and ffmpeg
+# → http://127.0.0.1:8787  (HOST=0.0.0.0 to reach it from a phone)</code></pre>
+            <p><a href="./relay/rtsp-relay.mjs" download>Download rtsp-relay.mjs</a> · <a href="./relay/README.md" target="_blank">Relay guide</a></p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESIGNER -->
+    <section class="view" id="view-designer">
+      <div class="des-grid">
+        <div class="card stage-card">
+          <div class="tools" id="des-tools">
+            <button data-tool="select" class="on">✥ Select / edit</button>
+            <button data-tool="space">⬚ Space</button>
+            <button data-tool="row">▤ Row of spaces</button>
+            <button data-tool="restricted">⛔ Restricted zone</button>
+            <button data-tool="line">↔ Count line</button>
+            <div class="spacer"></div>
+            <label class="toggle"><input type="checkbox" id="des-test" checked> Test (live detections)</label>
+            <button id="des-undo">↶ Undo point</button>
+            <button id="des-clear" class="danger">✕ Clear drawing</button>
+          </div>
+          <div class="stage" id="des-stage"><canvas id="des-canvas"></canvas></div>
+          <div class="hint" id="des-hint">Select a tool, then click on the image. Close a polygon by clicking its first point, double-clicking, or pressing Enter. Esc cancels.</div>
+        </div>
+        <div class="card">
+          <h3>Zones <small class="muted" id="des-count"></small></h3>
+          <ul class="zones" id="des-zones"></ul>
+          <h4>Detection tuning</h4>
+          <label>Coverage to occupy <input type="range" id="t-cover" min="0.1" max="0.9" step="0.05"><span class="mono" id="t-cover-v"></span></label>
+          <label>Occupy after (s) <input type="number" id="t-enter" min="0" max="60" step="0.5"></label>
+          <label>Vacate after (s) <input type="number" id="t-exit" min="0" max="120" step="0.5"></label>
+          <label>Min confidence <input type="range" id="t-score" min="0.1" max="0.9" step="0.05"><span class="mono" id="t-score-v"></span></label>
+          <label>Detections / s <input type="number" id="t-fps" min="1" max="30" step="1"></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="view" id="view-alerts">
+      <div class="alert-grid">
+        <div class="card"><h3>Rules</h3><div id="rules" class="rules"></div></div>
+        <div class="card">
+          <h3>Delivery</h3>
+          <label class="toggle"><input type="checkbox" id="a-sound"> Sound</label>
+          <label class="toggle"><input type="checkbox" id="a-notify"> System notifications</label>
+          <label class="toggle"><input type="checkbox" id="a-snap"> Attach frame snapshot</label>
+          <label>Webhook URL <input id="a-hook" placeholder="https://ntfy.sh/your-topic  ·  Zapier / Make / n8n"></label>
+          <label>Webhook format <select id="a-format"><option value="json">JSON</option><option value="text">Plain text (ntfy.sh)</option></select></label>
+          <div class="row"><button class="btn" id="a-test">Send test alert</button></div>
+          <p class="hint">A <code>https://ntfy.sh/&lt;topic&gt;</code> URL in plain-text mode pushes alerts to your phone through the free ntfy app.</p>
+        </div>
+      </div>
+      <div class="card"><div class="row"><h3>Alert log</h3><div class="spacer"></div><button class="btn" id="a-clear">Clear</button></div><ol class="feed big" id="alert-log"></ol></div>
+    </section>
+
+    <!-- SYSTEM -->
+    <section class="view" id="view-system">
+      <div class="sys-grid">
+        <div class="card"><h3>Diagnostics</h3><div class="kv" id="diag"></div></div>
+        <div class="card"><h3>Data &amp; privacy</h3>
+          <p>All video is processed on this device. Nothing is uploaded. The models (EfficientDet-Lite0 and BlazePose) download once from Google's model CDN. Settings, zones and up to 4 h of occupancy history are kept in this browser's local storage.</p>
+          <div class="row wrap"><button class="btn" id="sys-export">⬇ Export config</button><label class="btn">⬆ Import config<input type="file" id="sys-import" accept="application/json" hidden></label><button class="btn danger" id="sys-reset">Reset everything</button></div>
+        </div>
+      </div>
+      <div class="card tech"><h3>What's running: the real stack in this build</h3><div id="tech"></div></div>
+    </section>
+  </main>
+
+  <div id="toasts" aria-live="polite"></div>
+  <script src="./vendor/leaflet/leaflet.js"></script>
+  <script src="./vendor/hls.light.min.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -40,6 +40,7 @@
     "test": "node scripts/run-unit-tests.mjs",
     "test:track": "node scripts/track-regression.mjs",
     "test:harvest-eye": "node --test tests/harvest-eye/*.test.mjs",
+    "test:vulture": "node --test tests/vulture/*.test.mjs",
     "test:baseline": "node --test tests/baseline/*.test.mjs",
     "test:sentry": "node --test tests/sentry/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",

@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: VultureSystemV1 · camera safety intelligence
+
+At [`public/vulture/`](public/vulture), by Coach Colin: VultureSystemV1 turns any camera into real-time safety intelligence, in the browser and on-device. It takes the approach used by Lot Vulture, the open-source parking-occupancy project: run computer vision on existing camera feeds instead of installing in-ground sensors. It then adds athlete kinetics and route safety. The code is written from scratch, not copied from Lot Vulture.
+- **Cameras**: phone or laptop camera, USB/HDMI capture (DJI, action cams), a screen or app mirror (DJI Fly, Ray-Ban Meta), HLS, MJPEG, MP4/WebM, video files, and RTSP IP cameras through the bundled ffmpeg relay ([`public/vulture/relay/`](public/vulture/relay)).
+- **Zones**: MediaPipe EfficientDet-Lite0 detection (vehicles and people), a SORT-style tracker, and a space designer (polygons, 4-corner row subdivision, restricted zones, directed count lines). Occupancy is time-debounced. Analytics cover dwell, turnover, utilisation, hourly profile and a scrubbable 5 s history, with CSV export.
+- **Kinetics**: MediaPipe BlazePose (33 landmarks plus metric world landmarks). It reports One-Euro-filtered joint angles, ROM, reps, speed, F = m(g + a), velocity-loss fatigue, cadence and step length, impact G (vision or phone IMU) and form cues. Muscle activation is a labelled kinematic estimate, not EMG.
+- **Route safety**: OSRM foot/bike routing, Overpass (lamps, `lit`, surface, road class, POIs), Open-Meteo elevation and weather, and NOAA sun altitude feed a per-segment risk score (< 30 low, 30–70 moderate, > 70 high). Live GPS predicts the risk ahead.
+- **Alerts**: rules with cooldowns, frame snapshots, sound, system notifications and a webhook (JSON, or plain text for ntfy.sh).
+- Simulated parking-lot and athlete feeds let you demo it with no camera. Tests: `npm run test:vulture`.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vulture/>**
+
+---
+
 ## Also in here: Highlight Cutter · AI video highlights
 
 At [`highlight-cutter/`](highlight-cutter): find the best moments of a video and export them as a
