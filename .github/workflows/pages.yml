@@ -85,6 +85,14 @@ jobs:
           rm -rf ../dist/highlight-cutter
           cp -r dist ../dist/highlight-cutter
 
+      - name: Build thrombectomy simulator
+        run: |
+          cd thrombectomy-sim
+          npm ci
+          npm run build
+          rm -rf ../dist/thrombectomy-sim
+          cp -r dist ../dist/thrombectomy-sim
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

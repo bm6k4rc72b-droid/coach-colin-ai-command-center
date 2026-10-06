@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Stroke Code · mechanical thrombectomy simulator
+
+At [`thrombectomy-sim/`](thrombectomy-sim): an educational simulator of clot retrieval for acute
+ischaemic stroke. You run the code-stroke decisions (imaging, BP, thrombolysis, eligibility),
+then navigate the arch, carotid and siphon to an M1 or ICA-terminus clot. Each pass uses a
+stent retriever, aspiration, or both, under balloon-guide flow arrest. Every pass is graded on
+DSA with eTICI. The core grows on the clock, and the debrief compares the outcome with no
+thrombectomy. Three cases: early window, late window and large core. For education and
+demonstration only. It is a standalone Vite + TypeScript + Three.js project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/thrombectomy-sim/>**
+
+---
+
 ## Also in here: Highlight Cutter · AI video highlights
 
 At [`highlight-cutter/`](highlight-cutter): find the best moments of a video and export them as a
