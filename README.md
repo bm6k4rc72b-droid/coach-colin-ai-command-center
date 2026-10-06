@@ -273,6 +273,36 @@ rehabilitation. EN/JA, with a guided tour. Education only, not medical advice.
 
 ---
 
+## Also in here: PROMPTFLOW · what happens when you send an AI prompt
+
+At [`public/promptflow/`](public/promptflow): follow one prompt from your phone to the answer in 3D. Type your own prompt and everything updates.
+- **Send**: UTF-8 bytes, JSON, TLS and TCP/IP overheads, then light in fibre at c/1.468 through about 14 routers. Round-trip time vs data-centre distance, with packets animated along the route.
+- **Tokens**: a real byte-pair-encoding tokenizer trained live in the browser, showing token IDs, characters per token and the merges learned.
+- **Attention**: real vectors (embedding + sinusoidal positions) and real QKᵀ/√d softmax with a causal mask, in four heads. Shown as 3D arcs and a heat map.
+- **Predict**: a real trigram language model with backoff. Logits, temperature, top-p, sampling and the autoregressive loop, with a streaming reply on the phone.
+- **Compute**: weights vs GPU memory, prefill FLOPs, memory-bound decoding, batching, time to first token, tokens/s and energy per answer.
+- EN/日本語, guided tour, trace report, Higgsfield key art.
+
+## Also in here: VOIDFRAME · space, gravity & how the brain perceives physics
+
+At [`public/voidframe/`](public/voidframe):
+- **Galaxy**: 40,000 stars in differential rotation. Visible-matter vs dark-matter-halo rotation curves against observations, enclosed mass and the galactic year.
+- **Vacuum**: US Standard Atmosphere to 86 km, then thermosphere, solar wind, interstellar and intergalactic gas. Number density, pressure, mean free path, the Antoine boiling point (the Armstrong limit) and radiative-equilibrium temperature.
+- **Gravity**: why worlds are round. Central pressure vs material strength, the "potato radius", maximum mountain height and real bodies (Vesta, Ceres, Mimas, Hyperion).
+- **Body**: the otoliths as accelerometers, the somatogravic illusion θ = atan(a/g), and spaceflight effects.
+- **Perception**: the brain's 1-g internal model. Catch a falling ball on the Moon and watch it adapt. Also the light-from-above shading prior and the visual "what/where" streams.
+- EN/日本語, guided tour, field report, Higgsfield key art.
+
+## Also in here: TWO MINDS · the neuroscience of the AI divide
+
+At [`public/aidivide/`](public/aidivide): why people embrace or resist AI, fair to both sides, with a glass brain and a simulated society.
+- **The split**: Pew survey data (most people are mixed, not in camps) and a five-question self-placement.
+- **The brain**: threat/salience vs reward networks, loss aversion and intolerance of uncertainty. The same AI gets opposite verdicts from different brains.
+- **Roots**: harshness, unpredictability, a caring adult and autonomy. Covers threat reactivity, learned controllability, the inverted-U of adversity and resilience, forced vs chosen change, and brain maturation by age.
+- **Tribes**: Deffuant bounded-confidence opinion dynamics with echo chambers and zealots, showing polarisation and hysteresis.
+- **Bridges**: personas and evidence-weighted approaches (acknowledging concerns, hands-on use, choice, trusted messengers, and mockery, which backfires).
+- EN/日本語, guided tour, insight report, Higgsfield key art. Educational only; it does not diagnose or label anyone.
+
 ## Also in here: RUSTWING · freighter, hyperspace & black holes
 
 At [`public/rustwing/`](public/rustwing): an original saucer tramp freighter, inspired by classic space-opera freighters but not affiliated with any franchise, flown through real physics.
