@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Rocksalt · community sighting map
+
+At [`rocksalt/`](rocksalt): a mobile-first map for crowdsourced reports of immigration enforcement
+activity, imported from [rocksaltdev/rocksalt](https://github.com/rocksaltdev/rocksalt). Report a
+sighting (with an EXIF-stripped photo), see nearby reports on a map, confirm or dispute them, and
+find know-your-rights resources, in five languages. The Pages build has no database, so it runs in
+demo mode: reports stay in your browser and are not shared. Add `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` (see [`rocksalt/README.md`](rocksalt/README.md)) for live, shared reports.
+React + Vite + Leaflet + Supabase.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/rocksalt/>**
+
+---
+
 ## Also in here: VultureSystemV1 · lot occupancy + kinetics
 
 At [`vulture-system/`](vulture-system): a browser app for parking-lot occupancy. Connect a camera,

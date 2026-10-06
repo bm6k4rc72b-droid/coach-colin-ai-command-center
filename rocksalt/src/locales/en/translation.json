@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "map": "Map",
+    "report": "Report",
+    "resources": "Resources",
+    "alerts": "Alerts"
+  },
+  "report": {
+    "title": "Report Sighting",
+    "subtitle": "Help your community stay informed",
+    "whatDidYouSee": "What did you see?",
+    "required": "*Required",
+    "location": "Location",
+    "locationHint": "Drop pin on map or use current location",
+    "searchAddress": "Search for an address...",
+    "useMyLocation": "Use My Location",
+    "locationNotAvailable": "Your location is not available. Please enable location services.",
+    "locationOutOfBounds": "Location must be within Oklahoma state bounds",
+    "selectActivityType": "Please select an activity type",
+    "additionalDetails": "Additional Details",
+    "additionalDetailsPlaceholder": "Add any additional information...",
+    "activityType": "Activity Type",
+    "vehicleCount": "Number of Vehicles",
+    "agentCount": "Number of Agents",
+    "description": "Description (optional)",
+    "photo": "Add Photo (optional)",
+    "exifNote": "EXIF data will be removed for privacy.",
+    "submit": "Submit Report",
+    "success": "Report submitted",
+    "error": "Something went wrong",
+    "cancel": "Cancel"
+  },
+  "activity": {
+    "vehicle": "Vehicle",
+    "on_foot": "On Foot",
+    "checkpoint": "Checkpoint",
+    "raid": "Raid",
+    "unknown": "Unknown"
+  },
+  "map": {
+    "stillThere": "Still There",
+    "gone": "Gone",
+    "reported": "Reported",
+    "ago": "ago",
+    "confidence": "Confidence",
+    "filterTime": "Time Range",
+    "hours": "hours",
+    "nearbySightings": "Nearby Sightings",
+    "lastHours": "Last",
+    "noSightings": "No sightings in the last",
+    "miAway": "mi away",
+    "rateLimitExceeded": "You've already confirmed/disputed this sighting recently. Please wait a moment.",
+    "errorConfirming": "Error confirming sighting. Please try again.",
+    "errorDisputing": "Error disputing sighting. Please try again.",
+    "confirming": "Confirming...",
+    "confirmed": "Confirmed",
+    "reporting": "Reporting...",
+    "updatingConfidence": "Updating confidence score..."
+  },
+  "alerts": {
+    "subscribe": "Get Alerts",
+    "phone": "Phone Number",
+    "radius": "Alert Radius",
+    "miles": "miles",
+    "subscribed": "You'll receive alerts",
+    "unsubscribe": "Unsubscribe",
+    "recentAlerts": "Recent Alerts",
+    "subtitle": "Stay informed about activity in your area",
+    "loading": "Loading alerts...",
+    "noAlerts": "No recent alerts",
+    "expired": "Sighting expired - no longer active",
+    "confirmedByCommunity": "confirmed by community",
+    "newSightingReported": "New",
+    "sightingReported": "sighting reported"
+  },
+  "resources": {
+    "title": "Know Your Rights",
+    "legal": "Legal Help",
+    "rights1": "You have the right to remain silent.",
+    "rights2": "You do not have to open your door to immigration agents without a judicial warrant.",
+    "rights3": "You have the right to speak to a lawyer.",
+    "rights4": "Do not sign anything without understanding it."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "close": "Close"
+  }
+}
+

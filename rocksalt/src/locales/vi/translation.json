@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "map": "Bản đồ",
+    "report": "Báo cáo",
+    "resources": "Tài nguyên",
+    "alerts": "Cảnh báo"
+  },
+  "report": {
+    "title": "Báo cáo Sự kiện",
+    "subtitle": "Giúp cộng đồng của bạn luôn được thông tin",
+    "whatDidYouSee": "Bạn đã thấy gì?",
+    "required": "*Bắt buộc",
+    "location": "Vị trí",
+    "locationHint": "Đặt ghim trên bản đồ hoặc sử dụng vị trí hiện tại",
+    "searchAddress": "Tìm kiếm địa chỉ...",
+    "useMyLocation": "Sử dụng Vị trí Của Tôi",
+    "locationNotAvailable": "Vị trí của bạn không khả dụng. Vui lòng bật dịch vụ định vị.",
+    "locationOutOfBounds": "Vị trí phải nằm trong ranh giới tiểu bang Oklahoma",
+    "selectActivityType": "Vui lòng chọn loại hoạt động",
+    "additionalDetails": "Chi tiết Bổ sung",
+    "additionalDetailsPlaceholder": "Thêm bất kỳ thông tin bổ sung nào...",
+    "activityType": "Loại Hoạt động",
+    "vehicleCount": "Số lượng Xe",
+    "agentCount": "Số lượng Nhân viên",
+    "description": "Mô tả (tùy chọn)",
+    "photo": "Thêm Ảnh (tùy chọn)",
+    "exifNote": "Dữ liệu EXIF sẽ bị xóa để bảo vệ quyền riêng tư.",
+    "submit": "Gửi Báo cáo",
+    "success": "Báo cáo đã được gửi",
+    "error": "Đã xảy ra lỗi",
+    "cancel": "Hủy"
+  },
+  "activity": {
+    "vehicle": "Xe",
+    "on_foot": "Đi bộ",
+    "checkpoint": "Trạm kiểm soát",
+    "raid": "Đột kích",
+    "unknown": "Không xác định"
+  },
+  "map": {
+    "stillThere": "Vẫn còn đó",
+    "gone": "Đã rời đi",
+    "reported": "Đã báo cáo",
+    "ago": "trước",
+    "confidence": "Độ tin cậy",
+    "filterTime": "Khoảng thời gian",
+    "hours": "giờ",
+    "nearbySightings": "Sự kiện Gần đây",
+    "lastHours": "Cuối cùng",
+    "noSightings": "Không có sự kiện nào trong",
+    "miAway": "dặm cách",
+    "rateLimitExceeded": "Bạn đã xác nhận/phản đối sự kiện này gần đây. Vui lòng đợi một chút.",
+    "errorConfirming": "Lỗi khi xác nhận sự kiện. Vui lòng thử lại.",
+    "errorDisputing": "Lỗi khi phản đối sự kiện. Vui lòng thử lại.",
+    "confirming": "Đang xác nhận...",
+    "confirmed": "Đã xác nhận",
+    "reporting": "Đang báo cáo...",
+    "updatingConfidence": "Đang cập nhật điểm tin cậy..."
+  },
+  "alerts": {
+    "subscribe": "Nhận Cảnh báo",
+    "phone": "Số điện thoại",
+    "radius": "Bán kính Cảnh báo",
+    "miles": "dặm",
+    "subscribed": "Bạn sẽ nhận được cảnh báo",
+    "unsubscribe": "Hủy đăng ký",
+    "recentAlerts": "Cảnh báo Gần đây",
+    "subtitle": "Luôn được thông tin về hoạt động trong khu vực của bạn",
+    "loading": "Đang tải cảnh báo...",
+    "noAlerts": "Không có cảnh báo gần đây",
+    "expired": "Sự kiện đã hết hạn - không còn hoạt động",
+    "confirmedByCommunity": "đã được cộng đồng xác nhận",
+    "newSightingReported": "Mới",
+    "sightingReported": "sự kiện đã được báo cáo"
+  },
+  "resources": {
+    "title": "Biết Quyền của Bạn",
+    "legal": "Trợ giúp Pháp lý",
+    "rights1": "Bạn có quyền giữ im lặng.",
+    "rights2": "Bạn không phải mở cửa cho nhân viên nhập cư mà không có lệnh của tòa án.",
+    "rights3": "Bạn có quyền nói chuyện với luật sư.",
+    "rights4": "Đừng ký bất cứ thứ gì mà không hiểu rõ."
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "retry": "Thử lại",
+    "close": "Đóng"
+  }
+}
