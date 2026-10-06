@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Stroke Code: an educational mechanical thrombectomy simulator — triage decisions, catheter navigation, stent retriever and aspiration passes, DSA and eTICI grading." />
+    <title>Stroke Code — mechanical thrombectomy simulator (educational)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='14' r='11' fill='%23f1a7b0'/%3E%3Cpath d='M16 30 V18 L22 12' stroke='%23b91c1c' stroke-width='3' fill='none'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">STROKE CODE <small>mechanical thrombectomy · educational</small></div>
+      <div class="spacer"></div>
+      <select id="case-select" aria-label="Case"></select>
+      <button id="restart-btn">Restart</button>
+      <button id="demo-btn" class="primary">▶ Watch demo</button>
+    </header>
+    <main id="layout">
+      <aside id="left" class="panel" aria-label="Patient"></aside>
+      <section id="stage">
+        <div class="views">
+          <div class="viewport">
+            <canvas id="view3d" aria-label="3D anatomy and devices"></canvas>
+            <div id="hud" class="hud"></div>
+            <div class="view-btns"><button data-cam="follow">Follow tip</button><button data-cam="overview">Overview</button><button data-cam="brain">Brain</button></div>
+          </div>
+          <div class="viewport dsa-wrap">
+            <canvas id="dsa" width="640" height="640" aria-label="Angiography"></canvas>
+            <div class="view-btns"><button data-proj="AP" class="on">AP</button><button data-proj="LAT">Lateral</button></div>
+          </div>
+        </div>
+        <div id="controls" class="panel"></div>
+      </section>
+      <aside id="right" class="panel" aria-label="Mentor and log"></aside>
+    </main>
+    <div id="demobar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="overlay" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
