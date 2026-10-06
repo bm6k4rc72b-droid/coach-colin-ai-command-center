@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VultureSystemV1 · Lot Occupancy + Kinetics</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3c2 3 3 5 3 7a3 3 0 1 1-6 0c0-2 1-4 3-7z" fill="#f5c518"/>
+            <path d="M4 14c2.2-1 4.2-1 6.2.2L12 16l1.8-1.8C16 13 18 13 20 14c-1 3-3.2 5-8 6-4.8-1-7-3-8-6z" stroke="#3ee0ff" stroke-width="1.4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Vulture<span>System</span>V1</h1>
+          <p>By Coach Colin · edge occupancy</p>
+        </div>
+      </div>
+      <div class="pills">
+        <div class="pill"><span class="dot" id="engineDot"></span> Engine <b id="engineLabel">booting</b></div>
+        <div class="pill">Inference <b id="inferLabel">CPU · on device</b></div>
+        <div class="pill">Source <b id="sourceLabel">Demo lot</b></div>
+        <div class="pill">Latency <b id="latencyLabel">—</b></div>
+      </div>
+    </header>
+    <div class="shell">
+      <aside class="sidebar">
+        <button class="nav-btn active" data-view="dashboard"><small>01</small><strong>Live Dashboard</strong></button>
+        <button class="nav-btn" data-view="designer"><small>02</small><strong>Space Designer</strong></button>
+        <button class="nav-btn" data-view="kinetics"><small>03</small><strong>Kinetics</strong></button>
+        <button class="nav-btn" data-view="safety"><small>04</small><strong>Terrain & Safety</strong></button>
+        <button class="nav-btn" data-view="cameras"><small>05</small><strong>Cameras</strong></button>
+        <button class="nav-btn" data-view="alerts"><small>06</small><strong>Alerts & Timeline</strong></button>
+        <button class="nav-btn" data-view="analytics"><small>07</small><strong>Utilization</strong></button>
+        <div class="side-foot">On-device loop: camera → polygon ROI → vehicle inference → dual-threshold hysteresis → live map. Video stays in this browser.</div>
+      </aside>
+      <main class="main">
+        <section class="kpi-row">
+          <div class="kpi"><span>Occupied</span><b id="kpiOcc">0 / 0</b></div>
+          <div class="kpi"><span>Utilization</span><b id="kpiUtil">0%</b></div>
+          <div class="kpi"><span>Detections</span><b id="kpiDet">0</b></div>
+          <div class="kpi"><span>Alerts</span><b id="kpiAlerts">0</b></div>
+        </section>
+
+        <section class="view dashboard-grid active" id="view-dashboard">
+          <div class="stage-card">
+            <div class="stage-head">
+              <h2>Live occupancy map</h2>
+              <div class="tools">
+                <button class="btn" id="btnDemo">Demo lot</button>
+                <button class="btn primary" id="btnCam">Use camera</button>
+                <button class="btn" id="btnSnap">Analyze photo</button>
+              </div>
+            </div>
+            <div class="stage-wrap" id="stageWrap">
+              <video class="feed" id="video" playsinline muted></video>
+              <canvas class="stage" id="stage"></canvas>
+              <canvas class="overlay" id="overlay"></canvas>
+            </div>
+            <div class="hint" id="stageHint">Green = vacant, red = occupied. State flips only after the hysteresis window, so shadows and passing cars do not flicker a stall.</div>
+          </div>
+          <aside class="panel">
+            <div class="panel-head"><h2>Spaces</h2><span id="clockLabel"></span></div>
+            <div class="stats">
+              <div class="stat"><span>Free</span><b id="freeCount">0</b></div>
+              <div class="stat"><span>Taken</span><b id="occCount">0</b></div>
+              <div class="stat"><span>Uptime</span><b id="uptimeLabel">0s</b></div>
+            </div>
+            <div class="space-list" id="spaceList"></div>
+          </aside>
+        </section>
+
+        <section class="view designer-grid" id="view-designer">
+          <div class="stage-card">
+            <div class="stage-head">
+              <h2>Space designer</h2>
+              <div class="tools">
+                <button class="btn primary" id="btnDraw">Draw 4-point stall</button>
+                <button class="btn" id="btnGrid">Drop 6-stall grid</button>
+                <button class="btn danger" id="btnClearSpace">Delete selected</button>
+              </div>
+            </div>
+            <div class="stage-wrap">
+              <canvas class="stage" id="designStage"></canvas>
+              <canvas class="overlay" id="designOverlay"></canvas>
+            </div>
+            <div class="hint">Click four corners of a stall, in order. Points are normalized, so they stick when the camera frame resizes. Drag a corner to refine.</div>
+          </div>
+          <aside class="panel">
+            <div class="panel-head"><h2>Stall settings</h2></div>
+            <label class="field">Name<input id="spaceName" type="text" value="Space 19" /></label>
+            <div class="form-grid">
+              <label class="field">Occupy threshold<input id="occTh" type="number" min="0.05" max="0.9" step="0.01" value="0.30" /></label>
+              <label class="field">Free threshold<input id="freeTh" type="number" min="0.01" max="0.5" step="0.01" value="0.12" /></label>
+              <label class="field">Occupy frames<input id="occFrames" type="number" min="1" max="20" value="3" /></label>
+              <label class="field">Free frames<input id="freeFrames" type="number" min="1" max="30" value="6" /></label>
+            </div>
+            <p class="hint">Dual threshold + frame hysteresis is the Lot Vulture stability trick: a stall becomes occupied only after overlap stays above the high bar, and vacant only after it stays under the low bar.</p>
+            <button class="btn" id="btnSaveThresholds">Apply thresholds</button>
+          </aside>
+        </section>
+
+        <section class="view kinetics-grid" id="view-kinetics">
+          <div class="stage-card">
+            <div class="stage-head">
+              <h2>Full kinetics · joint angles</h2>
+              <div class="tools">
+                <button class="btn primary" id="btnPose">Start pose camera</button>
+                <button class="btn" id="btnPoseStop">Stop</button>
+              </div>
+            </div>
+            <div class="stage-wrap">
+              <video class="feed" id="poseVideo" playsinline muted></video>
+              <canvas class="stage" id="poseStage"></canvas>
+            </div>
+            <div class="hint" id="poseHint">33-point pose via MediaPipe. Angles and muscle load are estimated on device from the skeleton. Force uses an 80 kg assumed mass.</div>
+          </div>
+          <aside class="panel">
+            <div class="panel-head"><h2>Muscle activation</h2></div>
+            <div class="bars" id="muscleBars"></div>
+            <div class="angles" id="angleGrid"></div>
+            <div class="stats">
+              <div class="stat"><span>Speed</span><b id="speedLabel">0 m/s</b></div>
+              <div class="stat"><span>Force</span><b id="forceLabel">0 N</b></div>
+              <div class="stat"><span>Fatigue</span><b id="fatigueLabel">0%</b></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="view" id="view-safety">
+          <div class="stage-card">
+            <div class="stage-head"><h2>Route safety prediction</h2>
+              <div class="tools"><button class="btn" id="btnGeo">Use my location</button></div>
+            </div>
+            <div class="map-wrap"><canvas id="safetyMap"></canvas></div>
+            <div class="hint" id="safetyHint">Risk score uses time of day, lighting window, slope, and surface mix. Night and isolated segments raise the score. Thresholds: <30 low, 30–70 moderate, >70 high.</div>
+          </div>
+          <aside class="panel">
+            <div class="panel-head"><h2>Terrain tracker</h2></div>
+            <div class="stats">
+              <div class="stat"><span>Risk</span><b id="riskLabel">18% LOW</b></div>
+              <div class="stat"><span>Elevation</span><b id="elevLabel">245–382 m</b></div>
+              <div class="stat"><span>Slope</span><b id="slopeLabel">12.4°</b></div>
+            </div>
+            <label class="field">Slope angle <input id="slopeInput" type="number" value="12.4" step="0.1" /></label>
+            <label class="field">Packed dirt % <input id="dirtInput" type="number" value="72" min="0" max="100" /></label>
+            <label class="field">Low-light penalty <input id="lightInput" type="number" value="10" min="0" max="40" /></label>
+            <button class="btn primary" id="btnRecalc">Recalculate risk</button>
+            <p class="hint" id="geoLabel">GPS locked when you allow location. Score still runs without it.</p>
+          </aside>
+        </section>
+
+        <section class="view" id="view-cameras">
+          <div class="panel">
+            <div class="panel-head"><h2>Camera sources</h2></div>
+            <p class="hint">Lot Vulture ingests RTSP or snapshot URLs on a local edge box. Browsers cannot open raw RTSP, so this build takes the webcam, a photo, or a video file and runs the same ROI occupancy engine. A snapshot URL works if the camera allows CORS.</p>
+            <div class="form-grid">
+              <label class="field">Snapshot URL<input id="snapUrl" type="url" placeholder="https://camera/snapshot.jpg" /></label>
+              <label class="field">Video file<input id="fileInput" type="file" accept="image/*,video/*" /></label>
+            </div>
+            <div class="tools">
+              <button class="btn primary" id="btnLoadUrl">Load snapshot</button>
+              <button class="btn" id="btnExport">Export occupancy JSON</button>
+            </div>
+            <div id="cameraList" class="space-list"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-alerts">
+          <div class="panel">
+            <div class="panel-head"><h2>Alerts & state timeline</h2>
+              <button class="btn ghost" id="btnClearLog">Clear</button>
+            </div>
+            <div class="alert-list" id="alertList"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-analytics">
+          <div class="stage-card">
+            <div class="stage-head"><h2>Utilization scrub</h2></div>
+            <div class="map-wrap"><canvas id="utilChart"></canvas></div>
+            <div class="hint">Samples every 2 seconds for this session. This is the rolling history Lot Vulture keeps in LMDB, stored locally in the browser here.</div>
+          </div>
+        </section>
+        <p class="footer-note">VultureSystemV1 · field ready · GPS · realtime · secure · v1.0.3 build 1124 · Coach Colin Systems. Occupancy pipeline follows Lot Vulture (lotvulture/lotvulture): polygon spaces, on-device detection, dual-threshold hysteresis. This browser build infers with COCO-SSD, not Lot Vulture commercial weights.</p>
+      </main>
+    </div>
+  </div>
+  <div class="toast-wrap" id="toasts"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

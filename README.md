@@ -16,6 +16,18 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: VultureSystemV1 · lot occupancy + kinetics
+
+At [`vulture-system/`](vulture-system): a browser app for parking-lot occupancy. Connect a camera,
+video, photo or snapshot URL, draw polygon stalls, and COCO-SSD runs vehicle detection on device
+with dual-threshold hysteresis feeding a live map, alerts and a utilization timeline. A demo lot
+feed works with no camera. It also has a Kinetics view (MediaPipe Pose joint angles) and a
+Terrain & Safety route-risk view. Plain static HTML/JS, no build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vulture-system/>**
+
+---
+
 ## Also in here: Stroke Code · mechanical thrombectomy simulator
 
 At [`thrombectomy-sim/`](thrombectomy-sim): an educational simulator of clot retrieval for acute
