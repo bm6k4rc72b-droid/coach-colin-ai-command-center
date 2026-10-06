@@ -93,6 +93,15 @@ jobs:
           rm -rf ../dist/thrombectomy-sim
           cp -r dist ../dist/thrombectomy-sim
 
+      # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
+      - name: Build Rocksalt
+        run: |
+          cd rocksalt
+          npm ci
+          npm run build
+          rm -rf ../dist/rocksalt
+          cp -r dist ../dist/rocksalt
+
       # VultureSystemV1 is plain static HTML/JS; copy it as is.
       - name: Copy VultureSystemV1
         run: |
