@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "map": "地图",
+    "report": "报告",
+    "resources": "资源",
+    "alerts": "警报"
+  },
+  "report": {
+    "title": "报告目击",
+    "subtitle": "帮助您的社区保持信息畅通",
+    "whatDidYouSee": "您看到了什么？",
+    "required": "*必填",
+    "location": "位置",
+    "locationHint": "在地图上放置图钉或使用当前位置",
+    "searchAddress": "搜索地址...",
+    "useMyLocation": "使用我的位置",
+    "locationNotAvailable": "您的位置不可用。请启用位置服务。",
+    "locationOutOfBounds": "位置必须在俄克拉荷马州范围内",
+    "selectActivityType": "请选择活动类型",
+    "additionalDetails": "附加详情",
+    "additionalDetailsPlaceholder": "添加任何附加信息...",
+    "activityType": "活动类型",
+    "vehicleCount": "车辆数量",
+    "agentCount": "特工数量",
+    "description": "描述（可选）",
+    "photo": "添加照片（可选）",
+    "exifNote": "EXIF数据将被删除以保护隐私。",
+    "submit": "提交报告",
+    "success": "报告已提交",
+    "error": "出了点问题",
+    "cancel": "取消"
+  },
+  "activity": {
+    "vehicle": "车辆",
+    "on_foot": "步行",
+    "checkpoint": "检查站",
+    "raid": "突袭",
+    "unknown": "未知"
+  },
+  "map": {
+    "stillThere": "仍在",
+    "gone": "已离开",
+    "reported": "已报告",
+    "ago": "前",
+    "confidence": "置信度",
+    "filterTime": "时间范围",
+    "hours": "小时",
+    "nearbySightings": "附近目击",
+    "lastHours": "最近",
+    "noSightings": "在过去没有目击",
+    "miAway": "英里外",
+    "rateLimitExceeded": "您最近已经确认/质疑过此目击。请稍候。",
+    "errorConfirming": "确认目击时出错。请重试。",
+    "errorDisputing": "质疑目击时出错。请重试。",
+    "confirming": "确认中...",
+    "confirmed": "已确认",
+    "reporting": "报告中...",
+    "updatingConfidence": "更新置信度分数..."
+  },
+  "alerts": {
+    "subscribe": "获取警报",
+    "phone": "电话号码",
+    "radius": "警报半径",
+    "miles": "英里",
+    "subscribed": "您将收到警报",
+    "unsubscribe": "取消订阅",
+    "recentAlerts": "最近警报",
+    "subtitle": "了解您所在地区的活动",
+    "loading": "加载警报...",
+    "noAlerts": "没有最近的警报",
+    "expired": "目击已过期 - 不再活跃",
+    "confirmedByCommunity": "社区已确认",
+    "newSightingReported": "新",
+    "sightingReported": "目击报告"
+  },
+  "resources": {
+    "title": "了解您的权利",
+    "legal": "法律帮助",
+    "rights1": "您有权保持沉默。",
+    "rights2": "在没有司法授权的情况下，您不必为移民特工开门。",
+    "rights3": "您有权与律师交谈。",
+    "rights4": "在不理解的情况下不要签署任何文件。"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "close": "关闭"
+  }
+}

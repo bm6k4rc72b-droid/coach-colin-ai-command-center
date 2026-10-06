@@ -1,0 +1,37 @@
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+.leaflet-popup-close-button {
+  color: hsl(var(--foreground)) !important;
+  opacity: 0.7;
+  font-size: 20px !important;
+  padding: 8px !important;
+}
+
+.leaflet-popup-close-button:hover {
+  opacity: 1;
+}
+
+.leaflet-container {
+  background: hsl(var(--background));
+}
+
+/* Ensure map container fills parent */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}

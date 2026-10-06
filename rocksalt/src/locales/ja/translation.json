@@ -1,0 +1,90 @@
+{
+  "nav": {
+    "map": "地図",
+    "report": "報告",
+    "resources": "リソース",
+    "alerts": "アラート"
+  },
+  "report": {
+    "title": "目撃情報を報告",
+    "subtitle": "コミュニティが情報を得られるように支援",
+    "whatDidYouSee": "何を見ましたか？",
+    "required": "*必須",
+    "location": "場所",
+    "locationHint": "地図にピンを置くか、現在地を使用",
+    "searchAddress": "住所を検索...",
+    "useMyLocation": "現在地を使用",
+    "locationNotAvailable": "現在地が利用できません。位置情報サービスを有効にしてください。",
+    "locationOutOfBounds": "場所はオクラホマ州の範囲内である必要があります",
+    "selectActivityType": "活動タイプを選択してください",
+    "additionalDetails": "追加の詳細",
+    "additionalDetailsPlaceholder": "追加情報を入力...",
+    "activityType": "活動タイプ",
+    "vehicleCount": "車両数",
+    "agentCount": "エージェント数",
+    "description": "説明（任意）",
+    "photo": "写真を追加（任意）",
+    "exifNote": "プライバシーのため、EXIFデータは削除されます。",
+    "submit": "報告を送信",
+    "success": "報告が送信されました",
+    "error": "エラーが発生しました",
+    "cancel": "キャンセル"
+  },
+  "activity": {
+    "vehicle": "車両",
+    "on_foot": "徒歩",
+    "checkpoint": "検問所",
+    "raid": "襲撃",
+    "unknown": "不明"
+  },
+  "map": {
+    "stillThere": "まだいる",
+    "gone": "いなくなった",
+    "reported": "報告済み",
+    "ago": "前",
+    "confidence": "信頼度",
+    "filterTime": "時間範囲",
+    "hours": "時間",
+    "nearbySightings": "近くの目撃情報",
+    "lastHours": "過去",
+    "noSightings": "過去に目撃情報はありません",
+    "miAway": "マイル離れた",
+    "rateLimitExceeded": "最近この目撃情報を確認/異議申し立てしました。しばらくお待ちください。",
+    "errorConfirming": "目撃情報の確認中にエラーが発生しました。もう一度お試しください。",
+    "errorDisputing": "目撃情報の異議申し立て中にエラーが発生しました。もう一度お試しください。",
+    "confirming": "確認中...",
+    "confirmed": "確認済み",
+    "reporting": "報告中...",
+    "updatingConfidence": "信頼度スコアを更新中..."
+  },
+  "alerts": {
+    "subscribe": "アラートを受け取る",
+    "phone": "電話番号",
+    "radius": "アラート半径",
+    "miles": "マイル",
+    "subscribed": "アラートを受け取ります",
+    "unsubscribe": "購読を解除",
+    "recentAlerts": "最近のアラート",
+    "subtitle": "お住まいの地域の活動について情報を得る",
+    "loading": "アラートを読み込み中...",
+    "noAlerts": "最近のアラートはありません",
+    "expired": "目撃情報が期限切れ - もうアクティブではありません",
+    "confirmedByCommunity": "コミュニティによって確認済み",
+    "newSightingReported": "新規",
+    "sightingReported": "目撃情報が報告されました"
+  },
+  "resources": {
+    "title": "あなたの権利を知る",
+    "legal": "法的支援",
+    "rights1": "あなたには黙秘権があります。",
+    "rights2": "司法令状なしで移民エージェントにドアを開ける必要はありません。",
+    "rights3": "あなたには弁護士と話す権利があります。",
+    "rights4": "理解せずに何も署名しないでください。"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "retry": "再試行",
+    "close": "閉じる"
+  }
+}

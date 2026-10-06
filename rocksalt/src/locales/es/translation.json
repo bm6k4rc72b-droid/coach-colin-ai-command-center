@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "map": "Mapa",
+    "report": "Reportar",
+    "resources": "Recursos",
+    "alerts": "Alertas"
+  },
+  "report": {
+    "title": "Reportar Avistamiento",
+    "subtitle": "Ayuda a tu comunidad a mantenerse informada",
+    "whatDidYouSee": "¿Qué viste?",
+    "required": "*Requerido",
+    "location": "Ubicación",
+    "locationHint": "Coloca un pin en el mapa o usa tu ubicación actual",
+    "searchAddress": "Buscar una dirección...",
+    "useMyLocation": "Usar Mi Ubicación",
+    "locationNotAvailable": "Tu ubicación no está disponible. Por favor habilita los servicios de ubicación.",
+    "locationOutOfBounds": "La ubicación debe estar dentro de los límites del estado de Oklahoma",
+    "selectActivityType": "Por favor selecciona un tipo de actividad",
+    "additionalDetails": "Detalles Adicionales",
+    "additionalDetailsPlaceholder": "Agrega cualquier información adicional...",
+    "activityType": "Tipo de Actividad",
+    "vehicleCount": "Número de Vehículos",
+    "agentCount": "Número de Agentes",
+    "description": "Descripción (opcional)",
+    "photo": "Agregar Foto (opcional)",
+    "exifNote": "Los datos EXIF se eliminarán por privacidad.",
+    "submit": "Enviar Reporte",
+    "success": "Reporte enviado",
+    "error": "Algo salió mal",
+    "cancel": "Cancelar"
+  },
+  "activity": {
+    "vehicle": "Vehículo",
+    "on_foot": "A Pie",
+    "checkpoint": "Puesto de Control",
+    "raid": "Redada",
+    "unknown": "Desconocido"
+  },
+  "map": {
+    "stillThere": "Sigue Ahí",
+    "gone": "Ya No Está",
+    "reported": "Reportado",
+    "ago": "hace",
+    "confidence": "Confianza",
+    "filterTime": "Rango de Tiempo",
+    "hours": "horas",
+    "nearbySightings": "Avistamientos Cercanos",
+    "lastHours": "Últimas",
+    "noSightings": "No hay avistamientos en las últimas",
+    "miAway": "millas de distancia",
+    "rateLimitExceeded": "Ya has confirmado/impugnado este avistamiento recientemente. Por favor espera un momento.",
+    "errorConfirming": "Error al confirmar avistamiento. Por favor intenta de nuevo.",
+    "errorDisputing": "Error al impugnar avistamiento. Por favor intenta de nuevo.",
+    "confirming": "Confirmando...",
+    "confirmed": "Confirmado",
+    "reporting": "Reportando...",
+    "updatingConfidence": "Actualizando puntuación de confianza..."
+  },
+  "alerts": {
+    "subscribe": "Recibir Alertas",
+    "phone": "Número de Teléfono",
+    "radius": "Radio de Alerta",
+    "miles": "millas",
+    "subscribed": "Recibirás alertas",
+    "unsubscribe": "Cancelar suscripción",
+    "recentAlerts": "Alertas Recientes",
+    "subtitle": "Mantente informado sobre la actividad en tu área",
+    "loading": "Cargando alertas...",
+    "noAlerts": "No hay alertas recientes",
+    "expired": "Avistamiento expirado - ya no está activo",
+    "confirmedByCommunity": "confirmado por la comunidad",
+    "newSightingReported": "Nuevo",
+    "sightingReported": "avistamiento reportado"
+  },
+  "resources": {
+    "title": "Conoce Tus Derechos",
+    "legal": "Ayuda Legal",
+    "rights1": "Tiene derecho a guardar silencio.",
+    "rights2": "No tiene que abrir la puerta a agentes de inmigración sin una orden judicial.",
+    "rights3": "Tiene derecho a hablar con un abogado.",
+    "rights4": "No firme nada sin entenderlo."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "close": "Cerrar"
+  }
+}
+

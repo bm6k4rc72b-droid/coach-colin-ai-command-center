@@ -85,6 +85,29 @@ jobs:
           rm -rf ../dist/highlight-cutter
           cp -r dist ../dist/highlight-cutter
 
+      - name: Build thrombectomy simulator
+        run: |
+          cd thrombectomy-sim
+          npm ci
+          npm run build
+          rm -rf ../dist/thrombectomy-sim
+          cp -r dist ../dist/thrombectomy-sim
+
+      # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
+      - name: Build Rocksalt
+        run: |
+          cd rocksalt
+          npm ci
+          npm run build
+          rm -rf ../dist/rocksalt
+          cp -r dist ../dist/rocksalt
+
+      # VultureSystemV1 is plain static HTML/JS; copy it as is.
+      - name: Copy VultureSystemV1
+        run: |
+          rm -rf dist/vulture-system
+          cp -r vulture-system dist/vulture-system
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

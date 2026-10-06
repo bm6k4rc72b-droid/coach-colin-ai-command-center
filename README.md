@@ -30,6 +30,46 @@ At [`public/vulture/`](public/vulture), by Coach Colin: VultureSystemV1 turns an
 
 ---
 
+## Also in here: Rocksalt · community sighting map
+
+At [`rocksalt/`](rocksalt): a mobile-first map for crowdsourced reports of immigration enforcement
+activity, imported from [rocksaltdev/rocksalt](https://github.com/rocksaltdev/rocksalt). Report a
+sighting (with an EXIF-stripped photo), see nearby reports on a map, confirm or dispute them, and
+find know-your-rights resources, in five languages. The Pages build has no database, so it runs in
+demo mode: reports stay in your browser and are not shared. Add `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` (see [`rocksalt/README.md`](rocksalt/README.md)) for live, shared reports.
+React + Vite + Leaflet + Supabase.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/rocksalt/>**
+
+---
+
+## Also in here: VultureSystemV1 · lot occupancy + kinetics
+
+At [`vulture-system/`](vulture-system): a browser app for parking-lot occupancy. Connect a camera,
+video, photo or snapshot URL, draw polygon stalls, and COCO-SSD runs vehicle detection on device
+with dual-threshold hysteresis feeding a live map, alerts and a utilization timeline. A demo lot
+feed works with no camera. It also has a Kinetics view (MediaPipe Pose joint angles) and a
+Terrain & Safety route-risk view. Plain static HTML/JS, no build step.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vulture-system/>**
+
+---
+
+## Also in here: Stroke Code · mechanical thrombectomy simulator
+
+At [`thrombectomy-sim/`](thrombectomy-sim): an educational simulator of clot retrieval for acute
+ischaemic stroke. You run the code-stroke decisions (imaging, BP, thrombolysis, eligibility),
+then navigate the arch, carotid and siphon to an M1 or ICA-terminus clot. Each pass uses a
+stent retriever, aspiration, or both, under balloon-guide flow arrest. Every pass is graded on
+DSA with eTICI. The core grows on the clock, and the debrief compares the outcome with no
+thrombectomy. Three cases: early window, late window and large core. For education and
+demonstration only. It is a standalone Vite + TypeScript + Three.js project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/thrombectomy-sim/>**
+
+---
+
 ## Also in here: Highlight Cutter · AI video highlights
 
 At [`highlight-cutter/`](highlight-cutter): find the best moments of a video and export them as a
