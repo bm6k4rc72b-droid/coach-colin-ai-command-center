@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Qubits & Clones · quantum computing + cloning lab
+
+At [`quantum-clone-lab/`](quantum-clone-lab): two educational labs in one app. The **quantum lab**
+is a correct state-vector circuit simulator — build circuits, see superposition, entanglement and
+interference, run Bell/GHZ/Grover/Deutsch–Jozsa/teleportation, inspect the Bloch sphere and
+measurement histograms, and explore decoherence on real hardware platforms. The **cloning lab**
+walks through somatic-cell nuclear transfer (the Dolly technique) with real biology, a
+yield model showing why cloning is only a few percent efficient, the historical milestones and the
+ethics. For education and demonstration only. Standalone Vite + TypeScript project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/quantum-clone-lab/>**
+
+---
+
 ## Also in here: VultureSystemV1 · camera safety intelligence
 
 At [`public/vulture/`](public/vulture), by Coach Colin: VultureSystemV1 turns any camera into real-time safety intelligence, in the browser and on-device. It takes the approach used by Lot Vulture, the open-source parking-occupancy project: run computer vision on existing camera feeds instead of installing in-ground sensors. It then adds athlete kinetics and route safety. The code is written from scratch, not copied from Lot Vulture.
