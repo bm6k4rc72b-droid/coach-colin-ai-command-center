@@ -1,0 +1,4 @@
+node_modules
+dist
+# BodyParts3D source archive (~1.3 GB). See README → "Anatomy assets".
+assets/anatomy/raw/

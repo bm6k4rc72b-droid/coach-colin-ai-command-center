@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Human Atlas · 3D anatomy explorer
+
+At [`human-atlas/`](human-atlas): a full-screen, museum-style 3D anatomy atlas of 890 real
+BodyParts3D structures across eight systems. Toggle systems, search any structure, isolate it,
+read its verified bone attachments, or explode the whole body into a catalogued specimen sheet
+(Hand, Shoulder, Thigh, Foot, Heart and Brain each have their own sheet). React + React Three
+Fiber; the asset pipeline (`npm run build:anatomy`) converts the BodyParts3D archive into
+compressed GLBs and a manifest. Anatomy data © DBCLS, CC BY-SA 2.1 JP.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/human-atlas/>**
+
+---
+
 ## Also in here: Qubits & Clones · quantum computing + cloning lab
 
 At [`quantum-clone-lab/`](quantum-clone-lab): two educational labs in one app. The **quantum lab**
