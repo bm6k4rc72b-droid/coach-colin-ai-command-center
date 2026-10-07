@@ -1,0 +1,98 @@
+region: BP24 "left costal cartilage" not under a region node; placed in Thorax by name/position
+region: BP28 "right costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA10951 "inferior vena cava" not under a region node; placed in Thorax by name/position
+region: FMA14331 "splenic vein" not under a region node; placed in Thorax by name/position
+region: FMA14332 "superior mesenteric vein" not under a region node; placed in Thorax by name/position
+region: FMA14335 "right renal vein" not under a region node; placed in Thorax by name/position
+region: FMA14336 "left renal vein" not under a region node; placed in Thorax by name/position
+region: FMA14749 "superior mesenteric artery" not under a region node; placed in Thorax by name/position
+region: FMA14750 "inferior mesenteric artery" not under a region node; placed in Abdomen by name/position
+region: FMA14752 "right renal artery" not under a region node; placed in Thorax by name/position
+region: FMA14753 "left renal artery" not under a region node; placed in Thorax by name/position
+region: FMA14765 "right common iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA14766 "left common iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA14768 "left gastric artery" not under a region node; placed in Thorax by name/position
+region: FMA14771 "common hepatic artery" not under a region node; placed in Thorax by name/position
+region: FMA14773 "splenic artery" not under a region node; placed in Thorax by name/position
+region: FMA18806 "right external iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA18807 "left external iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA18809 "right internal iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA18810 "left internal iliac artery" not under a region node; placed in Abdomen by name/position
+region: FMA18885 "right external iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA18886 "left external iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA18887 "right internal iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA18888 "left internal iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA21387 "right common iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA21388 "left common iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA23707 "interosseous membrane of right forearm" not under a region node; placed in Forearm by name/position
+region: FMA23708 "interosseous membrane of left forearm" not under a region node; placed in Forearm by name/position
+region: FMA258847 "right calcaneal tendon" not under a region node; placed in Leg by name/position
+region: FMA258850 "right intermediate tendon" not under a region node; placed in Head by name/position
+region: FMA264840 "left intermediate tendon" not under a region node; placed in Head by name/position
+region: FMA264844 "left calcaneal tendon" not under a region node; placed in Leg by name/position
+region: FMA274027 "choroid plexus of right cerebral hemisphere" not under a region node; placed in Brain by name/position
+region: FMA274029 "choroid plexus of left cerebral hemisphere" not under a region node; placed in Brain by name/position
+region: FMA35192 "interosseous membrane of right leg" not under a region node; placed in Leg by name/position
+region: FMA35193 "interosseous membrane of left leg" not under a region node; placed in Leg by name/position
+region: FMA3784 "descending aorta" not under a region node; placed in Thorax by name/position
+region: FMA42398 "set of lumbricals of right hand" not under a region node; placed in Hand by name/position
+region: FMA42399 "set of lumbricals of left hand" not under a region node; placed in Hand by name/position
+region: FMA42402 "set of palmar interossei of right hand" not under a region node; placed in Hand by name/position
+region: FMA42403 "set of palmar interossei of left hand" not under a region node; placed in Hand by name/position
+region: FMA42404 "set of dorsal interossei of right hand" not under a region node; placed in Hand by name/position
+region: FMA42405 "set of dorsal interossei of left hand" not under a region node; placed in Hand by name/position
+region: FMA44249 "right long plantar ligament" not under a region node; placed in Foot by name/position
+region: FMA44250 "left long plantar ligament" not under a region node; placed in Foot by name/position
+region: FMA4720 "superior vena cava" not under a region node; placed in Thorax by name/position
+region: FMA4751 "right brachiocephalic vein" not under a region node; placed in Neck by name/position
+region: FMA4754 "right internal jugular vein" not under a region node; placed in Neck by name/position
+region: FMA4755 "right subclavian vein" not under a region node; placed in Neck by name/position
+region: FMA4761 "left brachiocephalic vein" not under a region node; placed in Neck by name/position
+region: FMA4762 "left internal jugular vein" not under a region node; placed in Neck by name/position
+region: FMA4763 "left subclavian vein" not under a region node; placed in Neck by name/position
+region: FMA50737 "celiac artery" not under a region node; placed in Thorax by name/position
+region: FMA50875 "right optic nerve" not under a region node; placed in Brain by name/position
+region: FMA50878 "left optic nerve" not under a region node; placed in Brain by name/position
+region: FMA55099 "thyroid cartilage" not under a region node; placed in Neck by name/position
+region: FMA61822 "white matter structure of cerebral hemisphere" not under a region node; placed in Brain by name/position
+region: FMA61961 "anterior commissure" not under a region node; placed in Brain by name/position
+region: FMA61970 "commissure of fornix of forebrain" not under a region node; placed in Brain by name/position
+region: FMA61975 "lamina terminalis" not under a region node; placed in Brain by name/position
+region: FMA62045 "optic chiasm" not under a region node; placed in Brain by name/position
+region: FMA62072 "posterior commissure" not under a region node; placed in Brain by name/position
+region: FMA62382 "right optic tract" not under a region node; placed in Brain by name/position
+region: FMA66326 "pulmonary artery" not under a region node; placed in Thorax by name/position
+region: FMA66643 "pulmonary vein" not under a region node; placed in Thorax by name/position
+region: FMA67936 "left optic tract" not under a region node; placed in Brain by name/position
+region: FMA71704 "set of nasal cartilages" not under a region node; placed in Head by name/position
+region: FMA72908 "anterior limb of right internal capsule" not under a region node; placed in Brain by name/position
+region: FMA72909 "anterior limb of left internal capsule" not under a region node; placed in Brain by name/position
+region: FMA72924 "right fornix of forebrain" not under a region node; placed in Brain by name/position
+region: FMA72925 "left fornix of forebrain" not under a region node; placed in Brain by name/position
+region: FMA72939 "right stria terminalis" not under a region node; placed in Brain by name/position
+region: FMA72940 "left stria terminalis" not under a region node; placed in Brain by name/position
+region: FMA73413 "right stria medullaris of thalamus" not under a region node; placed in Brain by name/position
+region: FMA73414 "left stria medullaris of thalamus" not under a region node; placed in Brain by name/position
+region: FMA7394 "trachea" not under a region node; placed in Neck by name/position
+region: FMA7409 "bronchus" not under a region node; placed in Thorax by name/position
+region: FMA74140 "set of dorsal interossei of right foot" not under a region node; placed in Foot by name/position
+region: FMA74141 "set of dorsal interossei of left foot" not under a region node; placed in Foot by name/position
+region: FMA74877 "mammillary body" not under a region node; placed in Brain by name/position
+region: FMA75351 "interventricular foramen" not under a region node; placed in Brain by name/position
+region: FMA78497 "central canal of spinal cord" not under a region node; placed in Brain by name/position
+region: FMA7875 "right first costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA7886 "right second costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA7913 "right third costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA7976 "right fourth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8005 "left first costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8031 "left second costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8058 "left third costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8070 "right fifth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8112 "left fifth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8167 "left fourth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8194 "right sixth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8221 "left sixth costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8248 "right seventh costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA8275 "left seventh costal cartilage" not under a region node; placed in Thorax by name/position
+region: FMA83740 "interpeduncular fossa" not under a region node; placed in Brain by name/position
+region: FMA86464 "corpus callosum" not under a region node; placed in Brain by name/position

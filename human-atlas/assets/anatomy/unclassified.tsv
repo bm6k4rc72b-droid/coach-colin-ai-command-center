@@ -1,0 +1,45 @@
+id	name	system roots	reason
+FMA10419	pancreatic duct	alimentary,endocrine	outside the 8 atlas systems or ambiguous
+FMA13889	pituitary gland	endocrine	outside the 8 atlas systems or ambiguous
+FMA14542	appendix	alimentary	outside the 8 atlas systems or ambiguous
+FMA14543nsn	colon, nsn	alimentary	outside the 8 atlas systems or ambiguous
+FMA14544	rectum	alimentary	outside the 8 atlas systems or ambiguous
+FMA15571	right ureter	urinary	outside the 8 atlas systems or ambiguous
+FMA15572	left ureter	urinary	outside the 8 atlas systems or ambiguous
+FMA15629	right adrenal gland	endocrine	outside the 8 atlas systems or ambiguous
+FMA15630	left adrenal gland	endocrine	outside the 8 atlas systems or ambiguous
+FMA15900	urinary bladder	urinary	outside the 8 atlas systems or ambiguous
+FMA18247	glans penis	genital	outside the 8 atlas systems or ambiguous
+FMA18256	right epididymis	genital	outside the 8 atlas systems or ambiguous
+FMA18257	left epididymis	genital	outside the 8 atlas systems or ambiguous
+FMA19235	right deferent duct	genital	outside the 8 atlas systems or ambiguous
+FMA19236	left deferent duct	genital	outside the 8 atlas systems or ambiguous
+FMA19387	right seminal vesicle	genital	outside the 8 atlas systems or ambiguous
+FMA19388	left seminal vesicle	genital	outside the 8 atlas systems or ambiguous
+FMA19617nsn	corpus spongiosum of penis, nsn	genital	outside the 8 atlas systems or ambiguous
+FMA19618	corpus cavernosum of penis	genital	outside the 8 atlas systems or ambiguous
+FMA19667	urethra	urinary	outside the 8 atlas systems or ambiguous
+FMA59815nsn	labial part of mouth, nsn	respiratory,alimentary	outside the 8 atlas systems or ambiguous
+FMA70751	set of head hairs	integumentary	outside the 8 atlas systems or ambiguous
+FMA70754	set of pubic hairs	integumentary	outside the 8 atlas systems or ambiguous
+FMA71098	set of eyebrows	integumentary	outside the 8 atlas systems or ambiguous
+FMA71194	right lobe of thymus	lymphoid	outside the 8 atlas systems or ambiguous
+FMA71195	left lobe of thymus	lymphoid	outside the 8 atlas systems or ambiguous
+FMA7131	esophagus	alimentary	outside the 8 atlas systems or ambiguous
+FMA7148	stomach	alimentary	outside the 8 atlas systems or ambiguous
+FMA7163	skin	integumentary	outside the 8 atlas systems or ambiguous
+FMA7196	spleen	lymphoid	outside the 8 atlas systems or ambiguous
+FMA7197	liver	alimentary	outside the 8 atlas systems or ambiguous
+FMA7198nsn	pancreas, nsn	alimentary,endocrine	outside the 8 atlas systems or ambiguous
+FMA7202	gallbladder	alimentary	outside the 8 atlas systems or ambiguous
+FMA7204	right kidney	urinary	outside the 8 atlas systems or ambiguous
+FMA7205	left kidney	urinary	outside the 8 atlas systems or ambiguous
+FMA7206	duodenum	alimentary	outside the 8 atlas systems or ambiguous
+FMA7207	jejunum	alimentary	outside the 8 atlas systems or ambiguous
+FMA7208	ileum	alimentary	outside the 8 atlas systems or ambiguous
+FMA7211	right testis	genital,endocrine	outside the 8 atlas systems or ambiguous
+FMA7212	left testis	genital,endocrine	outside the 8 atlas systems or ambiguous
+FMA76891	mesocolic taenia	alimentary	outside the 8 atlas systems or ambiguous
+FMA76892	omental taenia	alimentary	outside the 8 atlas systems or ambiguous
+FMA76893	free taenia	alimentary	outside the 8 atlas systems or ambiguous
+FMA9600	prostate	genital	outside the 8 atlas systems or ambiguous
