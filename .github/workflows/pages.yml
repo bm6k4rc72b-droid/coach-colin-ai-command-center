@@ -93,6 +93,14 @@ jobs:
           rm -rf ../dist/thrombectomy-sim
           cp -r dist ../dist/thrombectomy-sim
 
+      - name: Build Qubits & Clones lab
+        run: |
+          cd quantum-clone-lab
+          npm ci
+          npm run build
+          rm -rf ../dist/quantum-clone-lab
+          cp -r dist ../dist/quantum-clone-lab
+
       # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
       - name: Build Rocksalt
         run: |

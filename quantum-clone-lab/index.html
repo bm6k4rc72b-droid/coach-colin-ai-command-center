@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Twin educational labs: a real quantum-circuit simulator (qubits, entanglement, Grover, decoherence) and a somatic-cell nuclear transfer (cloning) walkthrough with real biology, success rates, history and ethics." />
+    <title>Qubits & Clones — quantum computing and cloning lab (educational)</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%2338bdf8' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='12' ry='5' fill='none' stroke='%237c4dff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2338bdf8'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand">QUBITS &amp; CLONES <small>quantum computing + cloning · educational</small></div>
+      <div class="spacer"></div>
+      <div class="tabs">
+        <button data-tab="quantum" class="on">⚛ Quantum lab</button>
+        <button data-tab="clone">🧬 Cloning lab</button>
+      </div>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+
+    <main id="quantum" class="view">
+      <aside class="panel" id="q-left"></aside>
+      <section id="q-stage">
+        <div class="panel"><div id="q-circuit"></div></div>
+        <div class="q-grid">
+          <div class="panel"><h3>Measurement probabilities</h3><canvas id="q-probs" width="560" height="260"></canvas><div id="q-state" class="state"></div></div>
+          <div class="panel"><h3>Bloch sphere <span class="hint" id="q-bloch-q"></span></h3><canvas id="q-bloch" width="320" height="300"></canvas></div>
+        </div>
+      </section>
+      <aside class="panel" id="q-right"></aside>
+    </main>
+
+    <main id="clone" class="view hidden">
+      <aside class="panel" id="c-left"></aside>
+      <section id="c-stage">
+        <div class="panel">
+          <div class="stage-head"><h3 id="c-room"></h3><div id="c-step-nav"></div></div>
+          <canvas id="c-scene" width="640" height="340"></canvas>
+          <h4 id="c-title"></h4>
+          <p id="c-what"></p>
+          <p id="c-detail" class="detail"></p>
+        </div>
+        <div class="panel"><h3>Yield funnel · reconstructed embryos → live births</h3><canvas id="c-funnel" width="640" height="220"></canvas><div id="c-funnel-note" class="hint"></div></div>
+      </section>
+      <aside class="panel" id="c-right"></aside>
+    </main>
+
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="overlay" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

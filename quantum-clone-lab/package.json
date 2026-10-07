@@ -1,0 +1,22 @@
+{
+  "name": "quantum-clone-lab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Educational twin labs: a correct state-vector quantum-circuit simulator (qubits, gates, entanglement, Grover, Deutsch-Jozsa, decoherence) and a somatic-cell nuclear transfer (cloning) walkthrough with real biology, success rates, history and ethics.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}
