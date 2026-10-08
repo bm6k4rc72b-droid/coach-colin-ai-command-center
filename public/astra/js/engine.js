@@ -169,6 +169,7 @@ export function resolveNamed(query) {
     if (names.some((name) => text.includes(name))) return entry;
   }
   // Class words map to the class exemplar.
+  if (/\btriple[\s-]?(?:hormone|receptor)?[\s-]?agonist\b|\bglucagon agonist\b/.test(text)) return findPeptide('retatrutide');
   if (/\bglp[\s-]?1\b|\bincretin\b/.test(text)) return findPeptide('semaglutide');
   if (/\bcopper peptide\b/.test(text)) return findPeptide('ghk-cu');
   if (/\bthymosin\b/.test(text)) return findPeptide('tb-500');
@@ -376,6 +377,9 @@ function activeResearchNote(entry) {
   const humanCount = entry.studies.filter((study) => tier(study.tier).rank <= 3).length;
   if (entry.regulatory.status === 'approved') {
     return `Active clinical programme. The literature is large and growing, and the open questions are about duration, discontinuation and population rather than whether the compound does anything. Most recent milestone in this corpus: ${latest.year}, ${latest.label.toLowerCase()}.`;
+  }
+  if (entry.regulatory.status === 'investigational') {
+    return `Late-stage industry programme. Randomised Phase 3 trials are reading out and a regulatory filing is planned, so this entry will move quickly — check the newest topline claims against the peer-reviewed papers as they appear. Most recent milestone in this corpus: ${latest.year}, ${latest.label.toLowerCase()}.`;
   }
   if (!humanCount) {
     return `No registered human programme is visible in this corpus. Interest is running well ahead of the research — the most recent milestone here is cultural rather than clinical: ${latest.year}, ${latest.label.toLowerCase()}. Watch the Research Radar for anything that changes that.`;

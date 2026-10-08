@@ -543,7 +543,7 @@ export class ARScene {
         const ctx = out.getContext('2d');
         ctx.scale(scale, scale);
 
-        ctx.fillStyle = '#05030e';
+        ctx.fillStyle = '#030a1a';
         ctx.fillRect(0, 0, width, height);
 
         if (this.cameraOn && this.video.videoWidth) {

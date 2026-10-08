@@ -231,7 +231,7 @@ export class Lab {
     this.ok = false;
     this.running = false;
     this.scene = 'vault';
-    this.accent = hexToRgb('#9d7bff');
+    this.accent = hexToRgb('#6fb8ff');
     this.accentTarget = [...this.accent];
     this.pulse = 0;
     this.tilt = { x: 0, y: 0 };
@@ -725,17 +725,19 @@ export class Lab {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.disable(gl.DEPTH_TEST);
 
-    // The facility's two structural colours, matching `--holo-2` and
-    // `--holo-3` in the sheet. Per-compound accent stays on `this.accent`.
-    const iris = [0.55, 0.42, 1.0];
-    const magenta = [1.0, 0.44, 0.88];
+    // The facility's two structural colours: ice glass and gold, matching
+    // `--holo-1` and `--iris` in the sheet. Per-compound accent stays on
+    // `this.accent`. The vault is drawn faintly because the photographed
+    // environment behind the canvas now carries the room.
+    const iris = [0.42, 0.72, 1.0];
+    const magenta = [0.91, 0.77, 0.42];
 
     if (this.scene === 'graph' && this.graphGeo) {
       this.#drawLines(this.graphGeo.edges, viewProjection, { color: iris, alpha: 0.42, sweep: 0.4 });
       this.#drawNodes(viewProjection, 0.95);
     } else {
-      this.#drawLines(this.geo.vault, viewProjection, { color: iris, alpha: 0.52, sweep: 1 });
-      this.#drawPoints(this.geo.motes, viewProjection, { color: iris, alpha: 0.3, size: 46, drift: 0.4 });
+      this.#drawLines(this.geo.vault, viewProjection, { color: iris, alpha: 0.2, sweep: 1 });
+      this.#drawPoints(this.geo.motes, viewProjection, { color: magenta, alpha: 0.3, size: 46, drift: 0.4 });
 
       if (this.scene === 'molecule') {
         // The molecule floats where the helix normally stands.

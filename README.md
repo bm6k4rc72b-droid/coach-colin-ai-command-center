@@ -1266,6 +1266,16 @@ in code and assert in CI.
   and marketing compliance guardian; a content studio turning one paper into
   thirty governed assets; a private command centre with a live Europe PMC radar
   and a campaign generator behind an approval gate.
+- **A photographed glass-and-gold environment.** Seven plates sit behind the
+  WebGL lab and crossfade as you move between decks and entrance chapters:
+  glass molecules with gold bonds on deep navy, a robotic assembly bay, a helix
+  in a museum cylinder, living cells. The whole interface is retuned to match:
+  a navy ground, ice-blue glass and gold structure.
+- **Retatrutide**, the investigational GIP/GLP-1/glucagon triple agonist, is in
+  the corpus. It carries its peer-reviewed Phase 1b and Phase 2 trials (Lancet
+  2022 and 2023, NEJM 2023, Nature Medicine 2024) and the 2025–26 Phase 3
+  TRIUMPH topline readouts. Those toplines are shown in full but not weighed
+  until they are peer-reviewed.
 - **A progression loop that only rewards research literacy** — points for
   opening primary sources, decoding papers and finding contradicting evidence;
   none for time on site. Calm mode switches the streaks and reward drops off,

@@ -12,7 +12,7 @@
  * CACHED badge, which the radar handles itself with its own last-good store.
  */
 
-const CACHE = 'astra-v2';
+const CACHE = 'astra-v3';
 
 const SHELL = [
   './',
@@ -33,6 +33,7 @@ const SHELL = [
   './js/decoder.js',
   './js/dom.js',
   './js/engine.js',
+  './js/env.js',
   './js/evidence.js',
   './js/geometry.js',
   './js/graph.js',
@@ -45,6 +46,13 @@ const SHELL = [
   './js/sensors.js',
   './js/studio.js',
   './js/data/peptides.js',
+  './assets/env/emblem.jpg',
+  './assets/env/assembly.jpg',
+  './assets/env/nucleus.jpg',
+  './assets/env/helix.jpg',
+  './assets/env/cells.jpg',
+  './assets/env/bench.jpg',
+  './assets/env/orbit.jpg',
 ];
 
 self.addEventListener('install', (event) => {

@@ -163,7 +163,14 @@ async function main() {
   const before = await page.evaluate(() => ({ ...globalThis.__astra.lab.goal, target: [...globalThis.__astra.lab.goal.target] }));
   await page.evaluate(() => {
     const intro = document.getElementById('intro');
-    intro.scrollTop = intro.scrollHeight * 0.55;
+    // Scroll to the library itself rather than a fixed fraction of the page,
+    // which landed somewhere different every time the library grew.
+    // The entrance scrolls smoothly, so a programmatic jump would still be
+    // in flight when the check reads it; jump instantly instead.
+    intro.style.scrollBehavior = 'auto';
+    const card = intro.querySelector('.vial-card');
+    if (card) intro.scrollTop += card.getBoundingClientRect().top - intro.getBoundingClientRect().top - intro.clientHeight * 0.3;
+    else intro.scrollTop = intro.scrollHeight * 0.55;
     intro.dispatchEvent(new Event('scroll'));
   });
   await wait(900);
@@ -431,13 +438,23 @@ async function main() {
   check('panels behind the compound fade out', placement.hidden > 0, `${placement.hidden} hidden`);
   check('no visible panel drifts off screen', placement.offscreen === 0, `${placement.offscreen} off screen`);
 
-  // Rotating the compound must move the panels with it.
-  const beforeSpin = await page.evaluate(() => document.querySelector('.ar-panel').style.transform);
+  // Rotating the compound must move the panels with it. Every panel is
+  // compared, not just the first: a panel that happens to be behind the
+  // compound is faded out and left unpositioned, so watching one alone made
+  // the check depend on the spin angle at the moment it ran.
+  const panelTransforms = () => [...document.querySelectorAll('.ar-panel')].map((node) => node.style.transform).join('|');
+  const beforeSpin = await page.evaluate(panelTransforms);
   await page.evaluate(() => {
     globalThis.__astra.ar.yaw += 1.2;
   });
-  await wait(400);
-  const afterSpin = await page.evaluate(() => document.querySelector('.ar-panel').style.transform);
+  // Poll rather than sleep a fixed interval: under software GL a frame can
+  // take longer than the old 400 ms budget, which tested the machine, not
+  // the behaviour.
+  let afterSpin = beforeSpin;
+  for (let tries = 0; tries < 10 && afterSpin === beforeSpin; tries += 1) {
+    await wait(200);
+    afterSpin = await page.evaluate(panelTransforms);
+  }
   check('turning the compound carries its evidence round with it', beforeSpin !== afterSpin);
 
   // The camera is optional: with a fake device it starts, and the scene is
@@ -497,7 +514,8 @@ async function main() {
     .find((button) => button.textContent.includes('QR sheet')).click());
   await wait(900);
 
-  const sheet = await page.evaluate(() => {
+  const sheet = await page.evaluate(async () => {
+    const corpus = await import('./js/data/peptides.js');
     const host = document.getElementById('qr-sheet');
     const cards = [...host.querySelectorAll('.qr-card')];
     return {
@@ -506,9 +524,10 @@ async function main() {
       svgs: host.querySelectorAll('.qr-code svg').length,
       urls: cards.map((card) => card.querySelector('.qr-url').textContent),
       printable: document.body.classList.contains('sheet-open'),
+      expected: corpus.PEPTIDES.length + corpus.STACKS.length,
     };
   });
-  check('the QR sheet builds a card per compound', sheet.shown && sheet.cards === 13, `${sheet.cards} cards`);
+  check('the QR sheet builds a card per compound', sheet.shown && sheet.cards === sheet.expected, `${sheet.cards} of ${sheet.expected} cards`);
   // Colour carries meaning here — the compound's accent and its evidence band —
   // so a sheet where every card is the same colour is a broken sheet.
   const accents = await page.evaluate(() => {

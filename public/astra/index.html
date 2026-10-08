@@ -5,20 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
 <title>ASTRA — Peptide Intelligence Platform</title>
 <meta name="description" content="A research facility for peptide science. Search, compare, verify and understand: every claim carries its evidence tier, every tier opens into its sources. Educational only — no diagnosis, no dosing, no protocols. Runs in the browser, works offline.">
-<meta name="theme-color" content="#05030e">
+<meta name="theme-color" content="#030a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ASTRA">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="./icon.svg">
+<link rel="apple-touch-icon" href="./assets/env/emblem.jpg">
+<link rel="preload" as="image" href="./assets/env/helix.jpg">
 <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 
 <!-- The AR backdrop: the live camera, behind the renderer. Hidden until the
      AR bench asks for it, and never recording. -->
+<!-- The photographed environment: glass-and-gold plates the lab floats in
+     front of. Swapped per deck and per entrance chapter by js/env.js. -->
+<div id="env" aria-hidden="true"></div>
 <video id="ar-video" playsinline muted aria-hidden="true"></video>
 <canvas id="lab" aria-hidden="true"></canvas>
 <!-- Drag surface for turning the compound, and the layer its data panels

@@ -168,7 +168,7 @@ function subjectAnswer(asked, subject, goals) {
   // concierge should answer the question rather than recite the file.
   if (/\b(safe|safety|side effect|risk|harm|danger)\b/i.test(asked)) {
     return {
-      text: `On safety for ${subject.name}: the honest answer is that safety is established by large, long trials, and ${isStack ? 'this combination has none' : subject.regulatory.status === 'approved' ? 'this compound has them' : 'this compound does not have them'}.\n\n${(subject.uncertainties || []).slice(0, 3).map((item) => `• ${item}`).join('\n')}\n\n${subject.regulatory ? subject.regulatory.headline : ''} Absence of reported harm in small studies is not evidence of safety — it is absence of the study that would find harm.`,
+      text: `On safety for ${subject.name}: the honest answer is that safety is established by large, long trials, and ${isStack ? 'this combination has none' : subject.regulatory.status === 'approved' ? 'this compound has them' : subject.regulatory.status === 'investigational' ? 'this compound is still partway through them — Phase 3 data exists, but no regulator has reviewed it yet' : 'this compound does not have them'}.\n\n${(subject.uncertainties || []).slice(0, 3).map((item) => `• ${item}`).join('\n')}\n\n${subject.regulatory ? subject.regulatory.headline : ''} Absence of reported harm in small studies is not evidence of safety — it is absence of the study that would find harm.`,
       sources: sourcesFor(subject), followUps: followUps(asked, subject), subject, goals, reading,
     };
   }

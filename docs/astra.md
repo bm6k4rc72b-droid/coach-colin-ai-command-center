@@ -81,11 +81,32 @@ down; below 0.35, two tiers down. The study card in the dossier shows the
 adjustment — original tier, arrow, adjusted tier, and a sentence saying why —
 rather than burying it in the arithmetic.
 
+### Topline results and substudies
+
+Two more kinds of record are shown in full but handled carefully in the
+arithmetic:
+
+- **Unpublished topline readouts** (`preliminary: true`), meaning the sponsor's
+  announcement of a trial's headline numbers before the paper exists. They are
+  counted one tier below their design, and they carry no weight at all while
+  peer-reviewed trials of the same compound are available. A press release is
+  not yet evidence that anyone outside the sponsor has checked.
+- **Substudies of a trial already counted** (`subsetOf: '<study id>'`). These
+  add no weight when the parent trial is in the same evidence base, because
+  their participants would otherwise be counted twice.
+
+The meter's reasons say how many records were set aside and why. Retatrutide is
+why this exists. Its Phase 3 TRIUMPH programme has reported topline numbers that
+are the largest weight losses in the field, and counting them at full weight
+would push an unapproved drug above semaglutide's outcome trials, a result the
+corpus tests forbid.
+
 The effect on the library is the whole argument in one table:
 
 | Compound | Best design on paper | Reading | Why |
 | --- | --- | --- | --- |
 | Semaglutide | Human RCT | **86%** Well established | Three large outcome trials, on the endpoint claimed |
+| Retatrutide | Human RCT | **86%** Well established | Three peer-reviewed RCTs; four Phase 3 toplines shown but not weighed (below) |
 | Tesamorelin | Human RCT | **82%** Well established | Approved, pivotal trial on the claimed endpoint |
 | GHK-Cu | Human trial | **63%** Human-supported | Small cosmetic trials, topical, appearance endpoints |
 | CJC-1295 | Human RCT | **54%** Emerging | The trial measured a hormone level, not an outcome |
@@ -353,11 +374,11 @@ recommending, producing protocols, and inventing studies.
 
 ## The corpus
 
-Eleven compounds and two stacks, in
+Twelve compounds and two stacks, in
 [`js/data/peptides.js`](../public/astra/js/data/peptides.js): BPC-157, TB-500,
-KPV, GHK-Cu, semaglutide, tirzepatide, CJC-1295, ipamorelin, tesamorelin, Semax,
-Selank, plus the KLOW and CJC-1295/Ipamorelin stacks. 29 catalogued studies, 34
-graded claims, 38 mechanisms.
+KPV, GHK-Cu, semaglutide, tirzepatide, retatrutide, CJC-1295, ipamorelin,
+tesamorelin, Semax, Selank, plus the KLOW and CJC-1295/Ipamorelin stacks. 38
+catalogued studies, 40 graded claims, 38 mechanisms.
 
 Two editorial rules govern the file:
 
@@ -439,6 +460,7 @@ public/astra/
   js/
     app.js              wiring: routing, entrance, rewards, service worker
     intro.js            the scroll-linked entrance
+    env.js              the photographed environment behind the lab
     lab.js              WebGL2 renderer
     geometry.js         procedural vault, helix, molecules, vials
     mathkit.js          matrices, easing, seeded RNG

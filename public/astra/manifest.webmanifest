@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#05030e",
-  "theme_color": "#05030e",
+  "background_color": "#030a1a",
+  "theme_color": "#030a1a",
   "categories": ["education", "medical", "productivity"],
   "icons": [
     { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
