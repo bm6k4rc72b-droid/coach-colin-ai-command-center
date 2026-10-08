@@ -13,6 +13,7 @@ import { Lab } from './lab.js';
 import { Score } from './audio.js';
 import { Lens, Tilt, interpretScan, prefersReducedMotion } from './sensors.js';
 import { Intro } from './intro.js';
+import { Environment } from './env.js';
 import { Radar, Telemetry, arrivalProfile, deepLink } from './command.js';
 import { ask, composeLocalAnswer, goalsIn, readSettings, writeSettings } from './astra.js';
 import { knowledgeGraph, neighbourhood } from './graph.js';
@@ -67,6 +68,7 @@ const DECK_WAYPOINTS = {
 };
 
 const lab = new Lab($('lab'));
+const env = new Environment($('env'), { reducedMotion: prefersReducedMotion() });
 const score = new Score();
 const tilt = new Tilt();
 const lens = new Lens($('lens-video'));
@@ -320,6 +322,7 @@ function go(deck, payload = {}) {
     if (ctx.deckState.bodyfat) ctx.deckState.bodyfat.camera = false;
   }
   lab.goTo(DECK_WAYPOINTS[deck] || 'engine');
+  env.show(deck);
   // The console's panel sits on the right on a wide screen, so the subject is
   // pushed left to sit beside it rather than behind it.
   lab.setFraming(window.innerWidth > 900 ? 3.2 : 0);
@@ -477,6 +480,8 @@ function boot() {
     onOpen: (id) => { enterFacility(); go('engine', { subject: id }); },
     onEnter: enterFacility,
   });
+  $('intro').addEventListener('chapter', (event) => { if (!state.entered) env.show(event.detail.id); });
+  env.show('gate');
   intro.mount();
 
   // The first gesture anywhere starts the score, because browsers require one

@@ -63,7 +63,7 @@ export const CHAPTERS = [
     id: 'showcase',
     kicker: '03 — The library',
     title: 'The compounds, graded.',
-    body: 'Ten compounds and two stacks, each with mechanisms, claims, studies, uncertainties and regulatory status. Scroll the rail; open anything.',
+    body: 'Twelve compounds and two stacks, each with mechanisms, claims, studies, uncertainties and regulatory status. Scroll the rail; open anything.',
     waypoint: 'compound',
     mood: 'graph',
   },

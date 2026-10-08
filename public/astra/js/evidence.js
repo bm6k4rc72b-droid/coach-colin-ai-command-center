@@ -138,7 +138,10 @@ const TIER_BY_ID = new Map(TIERS.map((tier) => [tier.id, tier]));
 export function effectiveTier(study) {
   const base = tier(study.tier);
   const relevance = study.relevance === undefined ? 1 : study.relevance;
-  const demotion = relevance >= 0.6 ? 0 : relevance >= 0.35 ? 1 : 2;
+  // An unpublished topline readout — a company announcement of a trial's
+  // headline numbers — has the design of its trial but not yet the scrutiny of
+  // peer review, so it is counted one tier down until the paper appears.
+  const demotion = (relevance >= 0.6 ? 0 : relevance >= 0.35 ? 1 : 2) + (study.preliminary ? 1 : 0);
   if (!demotion) return { tier: base, demotion, relevance };
   const index = Math.min(TIERS.length - 1, base.rank - 1 + demotion);
   return { tier: TIERS[index], demotion, relevance };
@@ -153,6 +156,9 @@ export function effectiveTier(study) {
 export function relevanceNote(study) {
   const { tier: effective, demotion } = effectiveTier(study);
   if (!demotion) return null;
+  if (study.preliminary) {
+    return `Counted as ${effective.label.toLowerCase()} rather than ${tier(study.tier).label.toLowerCase()}: these are topline results announced by the sponsor and not yet peer-reviewed. They carry no weight while peer-reviewed trials of the same compound are available.`;
+  }
   return `Counted as ${effective.label.toLowerCase()} rather than ${tier(study.tier).label.toLowerCase()}: the design is sound, but what it tested is ${demotion > 1 ? 'well removed from' : 'not quite'} the claim it is used to support.`;
 }
 
@@ -205,7 +211,7 @@ export function sampleWeight(n) {
 /**
  * Score a body of evidence.
  *
- * @param {Array<{ tier: string, n?: number, direction?: 1|0|-1, independent?: boolean }>} studies The evidence base.
+ * @param {Array<{ tier: string, n?: number, direction?: 1|0|-1, independent?: boolean, preliminary?: boolean, subsetOf?: string }>} studies The evidence base.
  * @returns {{ score: number, band: object, best: object, counts: Record<string, number>,
  *   replication: number, consistency: number, reasons: string[] }} The reading.
  */
@@ -226,8 +232,18 @@ export function scoreEvidence(studies) {
     };
   }
 
+  // Two kinds of record are shown in full but add no weight of their own:
+  // unpublished topline readouts, whenever peer-reviewed work is also on the
+  // table, and substudies of a trial already counted, whose participants
+  // would otherwise be counted twice.
+  const ids = new Set(list.map((study) => study.id));
+  const published = list.filter((study) => !study.preliminary);
+  const scored = (published.length ? published : list)
+    .filter((study) => !(study.subsetOf && ids.has(study.subsetOf)));
+  const setAside = list.length - scored.length;
+
   // The band is set by the best *relevant* design, not simply the best design.
-  const effective = list.map((study) => ({ study, ...effectiveTier(study) }));
+  const effective = scored.map((study) => ({ study, ...effectiveTier(study) }));
   const best = effective.reduce((acc, item) => (item.tier.rank < acc.rank ? item.tier : acc), effective[0].tier);
 
   // Saturation: the mass of weighted evidence, flattening rather than
@@ -242,7 +258,7 @@ export function scoreEvidence(studies) {
   const replication = Math.min(1, independent / 3);
 
   // Consistency: do the results point the same way?
-  const directed = list.filter((study) => study.direction !== undefined && study.direction !== 0);
+  const directed = scored.filter((study) => study.direction !== undefined && study.direction !== 0);
   const positive = directed.filter((study) => study.direction > 0).length;
   const consistency = directed.length
     ? Math.abs(positive * 2 - directed.length) / directed.length
@@ -255,7 +271,8 @@ export function scoreEvidence(studies) {
   const score = Math.min(best.ceiling, Math.max(best.floor, Number(raw.toFixed(3))));
 
   const reasons = [];
-  reasons.push(`Best available design: ${best.label.toLowerCase()}${counts[best.id] > 1 ? ` (${counts[best.id]} studies)` : ''}, which sets a band of ${Math.round(best.floor * 100)}–${Math.round(best.ceiling * 100)}%.`);
+  const atBand = effective.filter((item) => item.tier.id === best.id).length;
+  reasons.push(`Best available design: ${best.label.toLowerCase()}${atBand > 1 ? ` (${atBand} studies)` : ''}, which sets a band of ${Math.round(best.floor * 100)}–${Math.round(best.ceiling * 100)}%.`);
   if (score >= best.ceiling - 0.001) reasons.push(`At the ceiling for ${best.label.toLowerCase()} — no stronger design exists here, so more of the same cannot raise it.`);
   if (independent >= 2) reasons.push(`Replicated by ${independent} independent reports at or near that tier.`);
   else reasons.push('Not independently replicated at the top tier.');
@@ -267,6 +284,9 @@ export function scoreEvidence(studies) {
   const demoted = effective.filter((item) => item.demotion).length;
   if (demoted) {
     reasons.push(`${demoted} ${demoted === 1 ? 'study was' : 'studies were'} counted below ${demoted === 1 ? 'its' : 'their'} design, because what ${demoted === 1 ? 'it' : 'they'} tested is not what the claim asserts.`);
+  }
+  if (setAside) {
+    reasons.push(`${setAside} ${setAside === 1 ? 'record is' : 'records are'} shown but not weighed: unpublished topline results, or a substudy of a trial already counted.`);
   }
   const humans = list.filter((study) => tier(study.tier).rank <= 3).length;
   if (!humans) reasons.push('No human data at all. Everything here is animal, cell or mechanism.');
