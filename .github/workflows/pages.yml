@@ -119,6 +119,15 @@ jobs:
           rm -rf ../dist/two-speed-brain
           cp -r dist ../dist/two-speed-brain
 
+      # Superhuman Gene Lab copies the Human Atlas body meshes into its own dist at build time.
+      - name: Build Superhuman Gene Lab
+        run: |
+          cd superhuman-lab
+          npm ci
+          npm run build
+          rm -rf ../dist/superhuman-lab
+          cp -r dist ../dist/superhuman-lab
+
       # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
       - name: Build Rocksalt
         run: |
