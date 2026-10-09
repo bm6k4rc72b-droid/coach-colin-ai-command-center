@@ -110,6 +110,15 @@ jobs:
           rm -rf ../dist/human-atlas
           cp -r dist ../dist/human-atlas
 
+      # Two-Speed Brain copies the Human Atlas brain meshes into its own dist at build time.
+      - name: Build Two-Speed Brain
+        run: |
+          cd two-speed-brain
+          npm ci
+          npm run build
+          rm -rf ../dist/two-speed-brain
+          cp -r dist ../dist/two-speed-brain
+
       # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
       - name: Build Rocksalt
         run: |
