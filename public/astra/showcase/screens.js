@@ -8,7 +8,16 @@
  * @module astra/showcase/screens
  */
 
-import { AGONISTS, CEILINGS, CODONS, READINGS, SEQUENCES, SIZE, SITES, requiredEfficiency, sppsYield } from './sections.js';
+import { AGONISTS, CEILINGS, CODONS, READINGS, SEQUENCES, SIZE, SITES, STUDIES, requiredEfficiency, sppsYield } from './sections.js';
+import { PEPTIDES, SYSTEMS } from '../js/data/peptides.js';
+import { REVIEWERS } from '../js/reviewers.js';
+import { FORMATS } from '../js/studio.js';
+import { TIERS } from '../js/evidence.js';
+
+/** The station's photograph, set by {@link draw} for the duration of one draw. */
+let plate = null;
+/** How hard to darken the plate: 0 leaves it bright, 1 nearly hides it. */
+let plateShade = 0.7;
 
 const GOLD = '#f0b75a';
 const GOLD_SOFT = 'rgba(240,183,90,0.35)';
@@ -26,6 +35,20 @@ function chrome(ctx, w, h, title, sub) {
   bg.addColorStop(1, '#020306');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
+  if (plate && plate.complete && plate.naturalWidth) {
+    // Cover-fit the photograph, then shade it so the instruments stay legible:
+    // heavier on the left, where the readouts sit.
+    const scale = Math.max(w / plate.naturalWidth, h / plate.naturalHeight);
+    const dw = plate.naturalWidth * scale;
+    const dh = plate.naturalHeight * scale;
+    ctx.drawImage(plate, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    const shade = ctx.createLinearGradient(0, 0, w, 0);
+    shade.addColorStop(0, `rgba(2,3,6,${0.55 + plateShade * 0.4})`);
+    shade.addColorStop(0.55, `rgba(2,3,6,${0.25 + plateShade * 0.45})`);
+    shade.addColorStop(1, `rgba(2,3,6,${0.1 + plateShade * 0.3})`);
+    ctx.fillStyle = shade;
+    ctx.fillRect(0, 0, w, h);
+  }
   // Fine grid.
   ctx.strokeStyle = 'rgba(111,211,255,0.05)';
   ctx.lineWidth = 1;
@@ -339,4 +362,208 @@ function genome(ctx, w, h, t, s) {
   text(ctx, 'K* = Lys26 carrying the C18 fatty diacid', w - 40, h * 0.94, { size: h * 0.026, color: DIM, align: 'right' });
 }
 
-export const DRAWERS = { chamber, analysis, receptor, agonists, synthesis, telemetry, genome };
+/** Word-wrap a paragraph; returns the y after the last line. */
+function para(ctx, value, x, y, maxWidth, lineHeight, { size = 22, color = TEXT, weight = 400, lines = 6 } = {}) {
+  ctx.font = `${weight} ${size}px ${FONT}`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'left';
+  const words = String(value || '').split(/\s+/);
+  let line = '';
+  let n = 0;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(n === lines - 1 ? `${line}…` : line, x, y + n * lineHeight);
+      n += 1;
+      line = word;
+      if (n >= lines) return y + n * lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) { ctx.fillText(line, x, y + n * lineHeight); n += 1; }
+  return y + n * lineHeight;
+}
+
+function map(ctx, w, h, t, s) {
+  chrome(ctx, w, h, 'PEPTIDE SHOWCASE MAP', 'Compounds · body systems · related links');
+  const peptide = PEPTIDES.find((p) => p.id === s.mapSelected);
+  if (!peptide) {
+    const links = PEPTIDES.reduce((n, p) => n + p.systems.length + (p.related || []).length, 0);
+    [[PEPTIDES.length, 'COMPOUNDS'], [SYSTEMS.length, 'BODY SYSTEMS'], [links, 'LINKS']].forEach(([n, l], i) => {
+      text(ctx, String(n), 50, h * (0.36 + i * 0.2), { size: h * 0.11, weight: 700, color: i === 1 ? ICE : GOLD, glow: 10 });
+      text(ctx, l, 54, h * (0.42 + i * 0.2), { size: h * 0.03, color: DIM });
+    });
+    text(ctx, 'Pick a compound to light its threads →', 50, h * 0.92, { size: h * 0.034, color: TEXT });
+    return;
+  }
+  const reading = READINGS.find((r) => r.id === peptide.id);
+  text(ctx, peptide.name, 44, h * 0.3, { size: h * 0.08, weight: 700, color: GOLD, glow: 10 });
+  text(ctx, `${peptide.klass} · ${Math.round(reading.score * 100)}% ${reading.band.label}`, 46, h * 0.37, { size: h * 0.032, color: DIM });
+  const sys = peptide.systems.map((id) => SYSTEMS.find((x) => x.id === id)?.label || id);
+  text(ctx, 'BODY SYSTEMS', 46, h * 0.47, { size: h * 0.028, color: ICE, weight: 700 });
+  sys.forEach((label, i) => text(ctx, `• ${label}`, 46, h * (0.53 + i * 0.055), { size: h * 0.034 }));
+  text(ctx, 'RELATED', w * 0.42, h * 0.47, { size: h * 0.028, color: ICE, weight: 700 });
+  (peptide.related || []).forEach((id, i) => text(ctx, `• ${PEPTIDES.find((p) => p.id === id)?.name || id}`, w * 0.42, h * (0.53 + i * 0.055), { size: h * 0.034 }));
+  para(ctx, peptide.tagline, 46, h * 0.86, w * 0.6, h * 0.045, { size: h * 0.032, color: TEXT, lines: 2 });
+}
+
+function compare(ctx, w, h, t, s) {
+  chrome(ctx, w, h, 'COMPARISON BENCH', 'Evidence quality, not effect size');
+  const result = s.compareResult;
+  if (!result) return;
+  [result.left, result.right].forEach((col, i) => {
+    const x = 44 + i * w * 0.47;
+    const r = col.reading;
+    text(ctx, col.entry.name, x, h * 0.3, { size: h * 0.064, weight: 700, color: i ? ICE : GOLD, glow: 8 });
+    gauge(ctx, x + h * 0.13, h * 0.53, h * 0.11, r.score, r.band.accent, r.band.label, h * 0.05);
+    para(ctx, `Best design: ${r.best.label}`, x + h * 0.3, h * 0.46, w * 0.22, h * 0.04, { size: h * 0.03, color: TEXT, lines: 2 });
+    para(ctx, col.entry.regulatory ? col.entry.regulatory.headline : 'Strictest component status applies', x + h * 0.3, h * 0.56, w * 0.22, h * 0.04, { size: h * 0.028, color: DIM, lines: 3 });
+  });
+  para(ctx, result.verdict.headline, 44, h * 0.84, w - 90, h * 0.05, { size: h * 0.042, weight: 700, color: GOLD, lines: 1 });
+  para(ctx, result.verdict.caution, 44, h * 0.9, w - 90, h * 0.038, { size: h * 0.028, color: DIM, lines: 2 });
+}
+
+function debate(ctx, w, h, t, s) {
+  chrome(ctx, w, h, 'DEBATE ROOM', 'Four reviewers · one evidence base');
+  const result = s.debateResult;
+  if (!result) return;
+  text(ctx, result.entry.name, 44, h * 0.29, { size: h * 0.06, weight: 700, color: GOLD, glow: 8 });
+  REVIEWERS.forEach((reviewer, i) => {
+    const on = s.debate?.speaker === i;
+    const x = 44 + i * (w - 88) / 4;
+    ctx.strokeStyle = on ? reviewer.accent : 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = on ? 3 : 1.5;
+    ctx.strokeRect(x, h * 0.34, (w - 88) / 4 - 12, h * 0.1);
+    text(ctx, reviewer.name.replace(' Reviewer', ''), x + 12, h * 0.385, { size: h * 0.028, color: on ? reviewer.accent : TEXT, weight: on ? 700 : 500 });
+    text(ctx, result.opinions[i].position, x + 12, h * 0.425, { size: h * 0.024, color: DIM });
+  });
+  const opinion = result.opinions[s.debate?.speaker ?? 0];
+  para(ctx, `“${opinion.body}”`, 44, h * 0.53, w - 90, h * 0.046, { size: h * 0.032, color: TEXT, lines: 5 });
+  para(ctx, result.consensus.verdict, 44, h * 0.9, w - 90, h * 0.04, { size: h * 0.03, color: GOLD, weight: 600, lines: 2 });
+}
+
+const LEVEL = {
+  supported: ['HOLDS UP', '#3ef0b4'],
+  mixed: ['MIXED', '#f0b75a'],
+  overstated: ['OVERSTATED', '#f0b75a'],
+  contradicted: ['SHATTERED', '#ff5a5a'],
+  unsupported: ['NO EVIDENCE', '#ff5a5a'],
+  unknown: ['UNKNOWN COMPOUND', '#6fd3ff'],
+};
+
+function myth(ctx, w, h, t, s) {
+  plateShade = 0.55;
+  chrome(ctx, w, h, 'MYTH CHECKER', 'Claim → corpus → verdict');
+  const result = s.mythResult;
+  if (!result || !result.ok) {
+    para(ctx, result?.reason || 'Type or pick a claim. The glass holds, or it shatters.', 44, h * 0.4, w * 0.6, h * 0.06, { size: h * 0.045, color: TEXT, lines: 4 });
+    return;
+  }
+  para(ctx, `“${result.text}”`, 44, h * 0.32, w * 0.62, h * 0.055, { size: h * 0.04, color: TEXT, weight: 500, lines: 3 });
+  const [word, color] = LEVEL[result.verdict.level] || ['CHECKED', ICE];
+  ctx.save();
+  ctx.translate(w * 0.36, h * 0.62);
+  ctx.rotate(-0.06);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  ctx.font = `800 ${Math.round(h * 0.1)}px ${FONT}`;
+  const width = ctx.measureText(word).width + 40;
+  ctx.strokeRect(-width / 2, -h * 0.085, width, h * 0.13);
+  text(ctx, word, 0, h * 0.02, { size: h * 0.1, weight: 800, align: 'center', color, glow: 16 });
+  ctx.restore();
+  para(ctx, result.verdict.headline, 44, h * 0.82, w - 90, h * 0.045, { size: h * 0.034, color: GOLD, weight: 600, lines: 2 });
+  text(ctx, `Best tier: ${result.tierInfo.label} · wording: ${result.compliance.severity}`, 44, h * 0.93, { size: h * 0.028, color: DIM });
+}
+
+function simulator(ctx, w, h, t, s) {
+  chrome(ctx, w, h, 'STUDY SIMULATOR', 'What would 100 positive results from this design be worth?');
+  const r = s.simResult;
+  if (!r) return;
+  const stats = [
+    [`${Math.round(r.power * 100)}%`, 'POWER', ICE],
+    [`${Math.round(r.falsePositiveRisk * 100)}%`, 'FALSE-POSITIVE RISK', r.falsePositiveRisk > 0.5 ? '#ff5a5a' : GOLD],
+    [r.detectable.toFixed(2), 'SMALLEST DETECTABLE d', TEXT],
+    [r.tier.short, 'DESIGN TIER', r.tier.accent],
+  ];
+  stats.forEach(([v, l, c], i) => {
+    const x = 44 + (i % 2) * w * 0.27;
+    const y = h * (0.38 + Math.floor(i / 2) * 0.24);
+    text(ctx, v, x, y, { size: h * 0.1, weight: 700, color: c, glow: 10 });
+    text(ctx, l, x + 2, y + h * 0.05, { size: h * 0.026, color: DIM });
+  });
+  para(ctx, r.verdict.text, 44, h * 0.86, w * 0.56, h * 0.042, { size: h * 0.03, color: TEXT, lines: 3 });
+  // The 10 × 10 grid, mirrored from the hologram.
+  const wrong = Math.round(r.falsePositiveRisk * 100);
+  const cell = h * 0.052;
+  for (let i = 0; i < 100; i += 1) {
+    ctx.fillStyle = i < wrong ? '#ff5a5a' : GOLD;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(w * 0.64 + (i % 10) * cell, h * 0.26 + Math.floor(i / 10) * cell, cell - 4, cell - 4);
+  }
+  ctx.globalAlpha = 1;
+  text(ctx, `${wrong} of 100 positives are false`, w * 0.64, h * 0.83, { size: h * 0.032, color: wrong > 50 ? '#ff5a5a' : GOLD, weight: 700 });
+}
+
+function studies(ctx, w, h, t, s) {
+  chrome(ctx, w, h, `THE ARCHIVE · ${STUDIES.length} STUDIES`, 'Every citation in the corpus, by tier');
+  const counts = TIERS.map((tier) => ({ tier, n: STUDIES.filter((st) => st.tier === tier.id).length })).filter((x) => x.n);
+  const max = Math.max(...counts.map((c) => c.n));
+  counts.forEach(({ tier, n }, i) => {
+    const y = h * 0.27 + i * h * 0.075;
+    const on = s.studyTier === tier.id;
+    text(ctx, tier.label, 44, y + h * 0.03, { size: h * 0.03, color: on ? GOLD : TEXT, weight: on ? 700 : 500 });
+    ctx.fillStyle = tier.accent;
+    ctx.globalAlpha = on || !s.studyTier ? 1 : 0.35;
+    ctx.fillRect(w * 0.24, y + h * 0.008, (w * 0.22) * (n / max), h * 0.03);
+    ctx.globalAlpha = 1;
+    text(ctx, String(n), w * 0.24 + (w * 0.22) * (n / max) + 10, y + h * 0.032, { size: h * 0.03, color: DIM });
+  });
+  const study = STUDIES.find((st) => st.id === s.studyPicked);
+  if (study) {
+    const x = w * 0.56;
+    para(ctx, study.title, x, h * 0.3, w * 0.4, h * 0.045, { size: h * 0.034, weight: 700, color: GOLD, lines: 3 });
+    text(ctx, `${study.journal.split(',')[0]} · ${study.year}${study.n ? ` · n=${study.n}` : ''}`, x, h * 0.47, { size: h * 0.026, color: DIM });
+    para(ctx, study.finding, x, h * 0.54, w * 0.4, h * 0.04, { size: h * 0.028, color: TEXT, lines: 5 });
+    para(ctx, `Catch: ${study.limitation}`, x, h * 0.78, w * 0.4, h * 0.038, { size: h * 0.026, color: DIM, lines: 4 });
+  }
+}
+
+function studio(ctx, w, h, t, s) {
+  plateShade = 0.6;
+  chrome(ctx, w, h, 'CONTENT STUDIO', 'One study in · a governed content pack out');
+  const pack = s.studio?.pack;
+  if (!pack) return;
+  text(ctx, String(pack.assets.length), 44, h * 0.4, { size: h * 0.14, weight: 700, color: GOLD, glow: 12 });
+  text(ctx, 'ASSETS', 48, h * 0.46, { size: h * 0.028, color: DIM });
+  text(ctx, String(pack.blocked), 44 + w * 0.17, h * 0.4, { size: h * 0.14, weight: 700, color: pack.blocked ? '#ff5a5a' : '#3ef0b4', glow: 10 });
+  text(ctx, 'BLOCKED', 48 + w * 0.17, h * 0.46, { size: h * 0.028, color: DIM });
+  text(ctx, String(pack.warnings), 44 + w * 0.34, h * 0.4, { size: h * 0.14, weight: 700, color: ICE, glow: 10 });
+  text(ctx, 'WARNINGS', 48 + w * 0.34, h * 0.46, { size: h * 0.028, color: DIM });
+  FORMATS.forEach((format, i) => {
+    const x = 44 + (i % 3) * w * 0.2;
+    const y = h * 0.58 + Math.floor(i / 3) * h * 0.08;
+    text(ctx, `${format.icon} ${format.label} ×${format.count}`, x, y, { size: h * 0.028, color: s.studio.asset?.format === format.id ? GOLD : TEXT });
+  });
+  text(ctx, `${s.studio.peptideName} · ${s.studio.studyTitle}`.slice(0, 80), 44, h * 0.92, { size: h * 0.028, color: DIM });
+}
+
+export const DRAWERS = { chamber, map, analysis, compare, debate, myth, simulator, studies, studio, receptor, agonists, synthesis, telemetry, genome };
+
+/**
+ * Draw one station's screen over its photograph.
+ *
+ * @param {string} id Station id.
+ * @param {CanvasRenderingContext2D} ctx Target.
+ * @param {number} w Width.
+ * @param {number} h Height.
+ * @param {number} t Clock.
+ * @param {object} s Shared state.
+ * @param {HTMLImageElement|null} image The station's plate, if it has one.
+ */
+export function draw(id, ctx, w, h, t, s, image) {
+  plate = image || null;
+  plateShade = 0.7;
+  DRAWERS[id](ctx, w, h, t, s);
+  plate = null;
+}

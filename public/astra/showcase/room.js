@@ -1,9 +1,9 @@
 /**
- * The chamber: a circular black-and-gold laboratory, seven stations round its
- * wall, each with a curved bank of screens, a pedestal and a hologram.
+ * The chamber: a circular black-and-gold laboratory, fourteen stations round
+ * its wall, each with a curved bank of screens, a pedestal and a hologram.
  *
  * Geometry is generated in code — no model files. Station i stands at angle
- * φᵢ = i·(2π/7) round the room's vertical axis; its local −z points from the
+ * φᵢ = i·(2π/N) round the room's vertical axis; its local −z points from the
  * centre towards it, so a camera at the origin with yaw φᵢ looks straight at
  * it.
  *
@@ -12,70 +12,13 @@
 
 import * as THREE from 'three';
 import { Reflector } from 'three/addons/objects/Reflector.js';
-import { SITES } from './sections.js';
+import { SITES, STATIONS } from './sections.js';
+import { DOT, GOLD, ICE, atomMaterial, atoms, glow, hot, label, mulberry32, radialTexture } from './kit.js';
+import { EXTRA_HOLOGRAMS } from './holograms.js';
 
-export const STATION_COUNT = 7;
+export const STATION_COUNT = STATIONS.length;
 export const STEP = (Math.PI * 2) / STATION_COUNT;
 
-const GOLD = new THREE.Color('#f0b75a');
-const ICE = new THREE.Color('#6fd3ff');
-
-/** Seeded PRNG so every visitor sees the same protein. */
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** A colour pushed past 1 so the bloom pass picks it up. */
-const hot = (color, gain) => color.clone().multiplyScalar(gain);
-
-/** Additive glow material. */
-const glow = (color, opacity = 1) => new THREE.MeshBasicMaterial({
-  color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false,
-});
-
-/** A soft radial sprite texture, for light pools and particles. */
-function radialTexture(inner = 'rgba(255,255,255,1)', outer = 'rgba(255,255,255,0)') {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  gradient.addColorStop(0, inner);
-  gradient.addColorStop(1, outer);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 128, 128);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
-const DOT = radialTexture();
-
-/** Text on a transparent canvas, as a sprite. */
-function label(text, { color = '#f3d08a', size = 46, width = 512 } = {}) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = 96;
-  const ctx = canvas.getContext('2d');
-  ctx.font = `600 ${size}px Inter, system-ui, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 14;
-  ctx.fillStyle = color;
-  ctx.fillText(text, width / 2, 48);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
-  sprite.scale.set(width / 96 * 0.16, 0.16, 1);
-  return sprite;
-}
 
 /* =================================================================== room */
 
@@ -90,23 +33,26 @@ function buildShell(scene, { reflectorSize }) {
   // A real mirror under a smoked-glass skin: the gold rings and the screens
   // pool on the floor the way they do on polished stone.
   if (reflectorSize) {
-    const mirror = new Reflector(new THREE.CircleGeometry(16, 64), {
+    const mirror = new Reflector(new THREE.CircleGeometry(20, 64), {
       textureWidth: reflectorSize, textureHeight: reflectorSize, color: 0x5a5a5a, clipBias: 0.003,
     });
     mirror.rotation.x = -Math.PI / 2;
     scene.add(mirror);
   }
   const smoke = new THREE.Mesh(
-    new THREE.CircleGeometry(16, 64),
+    new THREE.CircleGeometry(20, 64),
     new THREE.MeshStandardMaterial({ color: 0x050505, metalness: 0.6, roughness: 0.35, transparent: true, opacity: reflectorSize ? 0.72 : 1 }),
   );
   smoke.rotation.x = -Math.PI / 2;
   smoke.position.y = 0.004;
+  // The floor goes down before anything see-through, or its smoked glass
+  // would be blended over the holograms that stand above it.
+  smoke.renderOrder = -2;
   scene.add(smoke);
 
   // Floor inlays: gold arcs radiating from the centre, as in the reference.
   const inlay = glow(hot(GOLD, 0.9), 0.35);
-  for (const radius of [2.4, 4.4, 7.6]) {
+  for (const radius of [2.4, 5.0, 9.6]) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(radius, radius + 0.025, 128), inlay);
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.01;
@@ -122,7 +68,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // The wall: a dark brushed-metal drum.
   const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(10.6, 10.6, 9.4, 112, 1, true),
+    new THREE.CylinderGeometry(13.2, 13.2, 9.4, 160, 1, true),
     new THREE.MeshStandardMaterial({ color: 0x060608, metalness: 0.7, roughness: 0.5, side: THREE.BackSide }),
   );
   wall.position.y = 4.7;
@@ -130,7 +76,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // Light rings: the gold bands that wrap the room at three heights.
   const rings = [];
-  for (const [y, radius, gain] of [[0.55, 10.25, 1.5], [5.75, 10.3, 1.7], [6.6, 10.35, 1.2], [8.7, 10.0, 1.0]]) {
+  for (const [y, radius, gain] of [[0.55, 12.85, 1.5], [5.75, 12.9, 1.7], [6.6, 12.95, 1.2], [8.7, 12.6, 1.0]]) {
     const material = new THREE.MeshBasicMaterial({ color: hot(GOLD, gain) });
     rings.push(material);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.028, 6, 220), material);
@@ -141,7 +87,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // Ceiling: concentric rings, like the iris over the reference room.
   const ceiling = new THREE.Mesh(
-    new THREE.CircleGeometry(10.6, 64),
+    new THREE.CircleGeometry(13.2, 64),
     new THREE.MeshStandardMaterial({ color: 0x060607, metalness: 0.7, roughness: 0.5, side: THREE.DoubleSide }),
   );
   ceiling.rotation.x = Math.PI / 2;
@@ -164,7 +110,7 @@ function buildShell(scene, { reflectorSize }) {
     const edge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 8.6, 0.03), ribEdge);
     edge.position.z = 0.27;
     rib.add(edge);
-    rib.position.set(Math.sin(angle) * 10.1, 4.7, -Math.cos(angle) * 10.1);
+    rib.position.set(Math.sin(angle) * 12.7, 4.7, -Math.cos(angle) * 12.7);
     rib.rotation.y = -angle;
     scene.add(rib);
   }
@@ -201,62 +147,8 @@ function consoleTexture() {
 
 /* =========================================================== holograms */
 
-/** Glass-and-light material for instanced atoms. */
-function atomMaterial(envMap, { metal = 0.2, rough = 0.12, emissive = 0.55 } = {}) {
-  const material = new THREE.MeshStandardMaterial({
-    color: 0xffffff, metalness: metal, roughness: rough, envMap, envMapIntensity: 0.45,
-    transparent: true, opacity: 0.9, emissive: 0xffffff, emissiveIntensity: emissive * 0.6,
-  });
-  // Drive emissive from the instance colour so each atom glows its own hue.
-  material.onBeforeCompile = (shader) => {
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <emissivemap_fragment>',
-      '#include <emissivemap_fragment>\n#ifdef USE_INSTANCING_COLOR\n totalEmissiveRadiance *= vColor;\n#endif',
-    );
-  };
-  return material;
-}
 
-/** Instanced spheres at given positions, one colour each. */
-function atoms(points, radius, colors, material) {
-  const mesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 14), material, points.length);
-  const m = new THREE.Matrix4();
-  points.forEach((p, i) => {
-    const r = Array.isArray(radius) ? radius[i] : radius;
-    m.makeScale(r, r, r).setPosition(p);
-    mesh.setMatrixAt(i, m);
-    mesh.setColorAt(i, colors[i]);
-  });
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.instanceColor.needsUpdate = true;
-  return mesh;
-}
-
-/** Station 0 — a folded protein in blue-to-rose glass, as on the centre plinth. */
-function proteinHologram(envMap) {
-  const rand = mulberry32(42);
-  const points = [];
-  let p = new THREE.Vector3();
-  let dir = new THREE.Vector3(1, 0, 0);
-  for (let i = 0; i < 170; i += 1) {
-    // A persistent random walk confined to an ellipsoid: chain-like, compact.
-    dir.add(new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(1.1)).normalize();
-    const next = p.clone().addScaledVector(dir, 0.11);
-    const e = new THREE.Vector3(next.x / 0.62, next.y / 0.78, next.z / 0.5);
-    if (e.length() > 1) dir.addScaledVector(next, -2.2 / next.length()).normalize();
-    p = p.clone().addScaledVector(dir, 0.11);
-    points.push(p.clone());
-  }
-  const blue = new THREE.Color('#4f9dff');
-  const rose = new THREE.Color('#ff7a8c');
-  const colors = points.map((pt) => blue.clone().lerp(rose, THREE.MathUtils.smoothstep(-pt.y, -0.6, 0.6)));
-  const radii = points.map(() => 0.075 + rand() * 0.03);
-  const group = new THREE.Group();
-  group.add(atoms(points, radii, colors, atomMaterial(envMap)));
-  return { group, update: (t, s) => { group.rotation.y = t * 0.25 * s.speed; } };
-}
-
-/** Station 1 — a gold peptide backbone with a scan wave running along it. */
+/** Analysis — a gold peptide backbone with a scan wave running along it. */
 function chainHologram(envMap) {
   const count = 150;
   const points = [];
@@ -312,7 +204,7 @@ function helixTube(height, coil, turns, tube, material) {
 }
 
 /**
- * Station 2 — the GLP-1 receptor: seven transmembrane helices in a membrane,
+ * Receptor — the GLP-1 receptor: seven transmembrane helices in a membrane,
  * an extracellular domain, and a ligand that docks in two steps.
  */
 function receptorHologram(envMap) {
@@ -394,7 +286,7 @@ function receptorHologram(envMap) {
   };
 }
 
-/** Station 3 — three receptor rings and the agonist that reaches them. */
+/** Agonists — three receptor rings and the agonist that reaches them. */
 function agonistHologram(envMap) {
   const group = new THREE.Group();
   const ids = ['GLP-1R', 'GIPR', 'GCGR'];
@@ -443,7 +335,7 @@ function agonistHologram(envMap) {
   };
 }
 
-/** Station 4 — a chain growing residue by residue from a resin bead. */
+/** Synthesis — a chain growing residue by residue from a resin bead. */
 function synthesisHologram(envMap) {
   const group = new THREE.Group();
   const resin = new THREE.Mesh(
@@ -500,7 +392,7 @@ function synthesisHologram(envMap) {
   };
 }
 
-/** Station 5 — a holographic body with the incretin action sites lit. */
+/** Telemetry — a holographic body with the incretin action sites lit. */
 function bodyHologram() {
   const group = new THREE.Group();
   const shell = new THREE.MeshBasicMaterial({ color: hot(ICE, 0.9), wireframe: true, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -551,7 +443,7 @@ function bodyHologram() {
   };
 }
 
-/** Station 6 — gold B-DNA: 10.5 base pairs per turn, a reading frame sweeping it. */
+/** Genome — gold B-DNA: 10.5 base pairs per turn, a reading frame sweeping it. */
 function dnaHologram(envMap) {
   const group = new THREE.Group();
   const pairs = 42;
@@ -599,7 +491,6 @@ function dnaHologram(envMap) {
 }
 
 const HOLOGRAMS = {
-  chamber: proteinHologram,
   analysis: chainHologram,
   receptor: receptorHologram,
   agonists: agonistHologram,
@@ -624,7 +515,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const screenTexture = new THREE.CanvasTexture(screenCanvas);
   screenTexture.colorSpace = THREE.SRGBColorSpace;
   screenTexture.anisotropy = 4;
-  const curve = new THREE.CylinderGeometry(9.7, 9.7, 3.5, 24, 1, true, Math.PI - 0.33, 0.66);
+  const curve = new THREE.CylinderGeometry(12.3, 12.3, 3.4, 24, 1, true, Math.PI - 0.2, 0.4);
   // Viewed from inside, a cylinder's u runs right-to-left; flip it back.
   const uv = curve.attributes.uv;
   for (let i = 0; i < uv.count; i += 1) uv.setX(i, 1 - uv.getX(i));
@@ -632,19 +523,19 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   screen.position.y = 3.62;
   group.add(screen);
   // Its frame: gold edges top and bottom.
-  for (const y of [1.84, 5.4]) {
-    const edge = new THREE.Mesh(new THREE.TorusGeometry(9.66, 0.02, 6, 48, 0.68), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
+  for (const y of [1.89, 5.35]) {
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(12.26, 0.02, 6, 48, 0.42), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
     edge.rotation.x = Math.PI / 2;
-    edge.rotation.z = Math.PI / 2 - 0.34 + Math.PI;
+    edge.rotation.z = Math.PI / 2 - 0.21 + Math.PI;
     edge.position.y = y;
     group.add(edge);
   }
 
   // A row of instrument consoles beneath it.
-  for (let k = -2; k <= 2; k += 1) {
-    const a = k * 0.12;
+  for (let k = -1; k <= 1; k += 1) {
+    const a = k * 0.085;
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.36), new THREE.MeshBasicMaterial({ map: consoleTex, color: new THREE.Color(0.9, 0.9, 0.9) }));
-    panel.position.set(Math.sin(a) * 9.1, 0.95, -Math.cos(a) * 9.1);
+    panel.position.set(Math.sin(a) * 11.6, 0.95, -Math.cos(a) * 11.6);
     panel.lookAt(0, 2.3, 0);
     group.add(panel);
   }
@@ -652,13 +543,14 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   // The logo over the first station, as in the reference.
   if (logo) {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.3), new THREE.MeshBasicMaterial({ map: logo, transparent: true, depthWrite: false, color: new THREE.Color(1.15, 1.15, 1.15) }));
-    sign.position.set(0, 7.3, -9.9);
+    sign.position.set(0, 7.35, -12.5);
     group.add(sign);
   }
 
   // Pedestal: dark drum, glowing lip, light pool, rising motes.
   const pedestal = new THREE.Group();
-  pedestal.position.set(0, 0, -5.5);
+  pedestal.position.set(0, 0, -6.8);
+  pedestal.scale.setScalar(0.88);
   group.add(pedestal);
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.25, 0.6, 64), new THREE.MeshStandardMaterial({ color: 0x07070a, metalness: 0.9, roughness: 0.35, envMap, envMapIntensity: 0.18 }));
   drum.position.y = 0.3;
@@ -687,7 +579,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const rand = mulberry32(100 + index);
   const moteSeeds = Array.from({ length: moteCount }, () => [rand() * Math.PI * 2, Math.sqrt(rand()) * 0.9, rand()]);
 
-  const holo = HOLOGRAMS[id](envMap);
+  const holo = (EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
   holo.group.position.y += 1.95;
   pedestal.add(holo.group);
 

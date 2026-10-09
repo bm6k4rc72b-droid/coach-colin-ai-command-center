@@ -1277,14 +1277,28 @@ in code and assert in CI.
   TRIUMPH topline readouts. Those toplines are shown in full but not weighed
   until they are peer-reviewed.
 - **The Peptide Chamber** ([`public/astra/showcase/`](public/astra/showcase)):
-  a 3D circular lab in black and gold, styled as COLIN Biomedical
-  Technologies. Seven holographic stations sit round its wall: evidence
-  analysis, the GLP-1 receptor docking its ligand, the three incretin agonists,
-  solid-phase synthesis, a body map and gene-to-drug. Swipe, scroll or use the
-  arrow keys to travel round the room. Tilt the phone, or move a finger, to
-  look around; optional tilt steering changes station on a hard tilt. Every
-  number is read from the corpus or computed. One example is the synthesis
-  yield, Y = p^(2(L−1)).
+  a 3D circular lab in black and gold for COLIN Biomedical Technologies,
+  built from Coach Colin's own key art. **Colin**, a holographic
+  receptionist, stands on the centre pedestal. He speaks with the device's
+  British English male voice, listens through the microphone where the
+  browser allows, and answers from the graded corpus with dry British humour.
+  He gives a guided tour, takes visitors to any station ("compare BPC-157 and
+  semaglutide", "debate retatrutide", "check: …") and reads the debate room
+  aloud. He will not do doses or personal advice. Fourteen stations sit round
+  the wall, each with a photographic screen, a hologram and an interactive
+  card:
+  - **Reference stations:** map, evidence analysis, the GLP-1 receptor,
+    incretin agonists, synthesis, telemetry and gene to drug.
+  - **ASTRA's own tools, rebuilt for the room:**
+    - a comparison balance;
+    - the four-reviewer debate room;
+    - a myth checker whose glass shatters;
+    - a study simulator showing how many of 100 positive results are false;
+    - the archive of all 38 cited studies;
+    - a content studio that writes governed content packs for creators.
+
+  Swipe, scroll or use the arrow keys to move round the room. Tilt the phone
+  or move a finger to look around. Everything runs on the device.
 - **A progression loop that only rewards research literacy** — points for
   opening primary sources, decoding papers and finding contradicting evidence;
   none for time on site. Calm mode switches the streaks and reward drops off,
