@@ -16,6 +16,17 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Superhuman Gene Lab · fiction built on real science
+
+At [`superhuman-lab/`](superhuman-lab): build a being from nine real human gene variants (myostatin,
+ACTN3, LRP5, the Tibetan EPAS1, the DEC2 short-sleeper variant, CCR5-Δ32, PCSK9, SCN9A and sickle-cell
+trait) and watch a real 3D body change. Every card gives the real effect, who carries it, the cost and
+the sources. A Reality ↔ Fiction dial turns it into a superhuman alien and labels it as not real.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/superhuman-lab/>**
+
+---
+
 ## Also in here: Two-Speed Brain · why feelings arrive before reasons
 
 At [`two-speed-brain/`](two-speed-brain): an interactive 3D brain (real BodyParts3D meshes) that replays
