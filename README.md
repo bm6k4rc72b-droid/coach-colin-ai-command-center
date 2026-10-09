@@ -1276,6 +1276,15 @@ in code and assert in CI.
   2022 and 2023, NEJM 2023, Nature Medicine 2024) and the 2025–26 Phase 3
   TRIUMPH topline readouts. Those toplines are shown in full but not weighed
   until they are peer-reviewed.
+- **The Peptide Chamber** ([`public/astra/showcase/`](public/astra/showcase)):
+  a 3D circular lab in black and gold, styled as COLIN Biomedical
+  Technologies. Seven holographic stations sit round its wall: evidence
+  analysis, the GLP-1 receptor docking its ligand, the three incretin agonists,
+  solid-phase synthesis, a body map and gene-to-drug. Swipe, scroll or use the
+  arrow keys to travel round the room. Tilt the phone, or move a finger, to
+  look around; optional tilt steering changes station on a hard tilt. Every
+  number is read from the corpus or computed. One example is the synthesis
+  yield, Y = p^(2(L−1)).
 - **A progression loop that only rewards research literacy** — points for
   opening primary sources, decoding papers and finding contradicting evidence;
   none for time on site. Calm mode switches the streaks and reward drops off,
