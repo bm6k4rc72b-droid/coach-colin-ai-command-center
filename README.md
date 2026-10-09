@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Two-Speed Brain · why feelings arrive before reasons
+
+At [`two-speed-brain/`](two-speed-brain): an interactive 3D brain (real BodyParts3D meshes) that replays
+everyday moments millisecond by millisecond: being criticised, change at work, a post attacking your
+side, a near miss, learning, being shown you're wrong. The fast alarm (amygdala, insula, body) fires
+before the prefrontal "slow system" catches up. Toggle sleep loss, stress or a practised pause and
+watch the crossover move. Includes a five-step pause trainer and 15 evidence-rated myths. Every
+claim carries its source and rating.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/two-speed-brain/>**
+
+---
+
 ## Also in here: Human Atlas · 3D anatomy explorer
 
 At [`human-atlas/`](human-atlas): a full-screen, museum-style 3D anatomy atlas of 890 real
