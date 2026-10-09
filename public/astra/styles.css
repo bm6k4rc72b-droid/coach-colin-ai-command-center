@@ -2343,3 +2343,4 @@ body.ar-mode #ar-layer { display: block; }
   body::before { transform: none !important; }
   #scanlines, #grain { display: none; }
 }
+#btn-chamber { color: var(--iris); text-decoration: none; }

@@ -461,6 +461,13 @@ public/astra/
     app.js              wiring: routing, entrance, rewards, service worker
     intro.js            the scroll-linked entrance
     env.js              the photographed environment behind the lab
+
+  showcase/             the Peptide Chamber, a separate three.js page
+    main.js             scroll, wheel, keys, finger and device-tilt wiring
+    room.js             the circular room, seven stations, holograms
+    screens.js          the wall screens (canvas instruments)
+    sections.js         station copy, trial numbers, SPPS yield maths
+    vendor/             three.js r16x and the post-processing addons
     lab.js              WebGL2 renderer
     geometry.js         procedural vault, helix, molecules, vials
     mathkit.js          matrices, easing, seeded RNG
