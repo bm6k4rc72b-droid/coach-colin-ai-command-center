@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ASTRA Chamber — COLIN Biomedical Technologies</title>
-<meta name="description" content="A 3D peptide intelligence chamber: swipe sideways through seven holographic stations (evidence analysis, the GLP-1 receptor, incretin agonists, peptide synthesis, biological telemetry and gene-to-drug) and tilt your phone or move a finger to look around. Educational only.">
+<meta name="description" content="A 3D peptide intelligence chamber with a holographic voice receptionist: swipe through fourteen stations — map, evidence analysis, comparison, debate room, myth checker, study simulator, the cited-studies archive, a content studio, the GLP-1 receptor, incretin agonists, synthesis, telemetry and gene-to-drug. Educational only.">
 <meta name="theme-color" content="#020203">
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/env/emblem.jpg">
@@ -20,9 +20,9 @@
   <div class="gate-inner">
     <p class="gate-brand"><span>COLIN</span> Biomedical Technologies</p>
     <h1>The Peptide Chamber</h1>
-    <p class="gate-copy">Seven holographic stations in a circular lab. Swipe sideways to travel round the room. Tilt your phone, or move a finger, and the room moves with you.</p>
+    <p class="gate-copy">Fourteen holographic stations in a circular lab, and Colin on reception. Swipe sideways to travel round the room, tilt your phone or move a finger to look around, and talk to Colin by voice or text.</p>
     <button id="enter" class="btn-gold" type="button">Enter the chamber</button>
-    <p class="gate-fine">On a phone this asks for motion-sensor access. Nothing is recorded or sent anywhere. Educational only: no diagnosis, no dosing.</p>
+    <p class="gate-fine">Turn your sound on: Colin speaks. On a phone this also asks for motion-sensor access. Nothing is recorded or sent anywhere. Educational only: no diagnosis, no dosing.</p>
   </div>
 </div>
 
@@ -41,6 +41,44 @@
 <button id="prev" class="nav-arrow prev" type="button" aria-label="Previous station">‹</button>
 <button id="next" class="nav-arrow next" type="button" aria-label="Next station">›</button>
 <nav id="dots" class="dots" aria-label="Stations"></nav>
+
+<!-- Colin, the receptionist: the avatar opens his desk anywhere in the room. -->
+<button id="btn-colin" class="colin-btn" type="button" aria-expanded="false" aria-controls="desk" title="Ask Colin, the receptionist">
+  <span class="colin-face" aria-hidden="true"></span>
+  <span class="colin-label">Ask Colin</span>
+</button>
+<p id="caption" class="caption" aria-live="polite"></p>
+
+<aside id="desk" class="desk" aria-label="Colin, the receptionist">
+  <header class="desk-head">
+    <span class="colin-face small" aria-hidden="true"></span>
+    <div>
+      <p class="desk-name">Colin</p>
+      <p class="desk-role">Receptionist · COLIN Biomedical Technologies</p>
+    </div>
+    <button id="desk-close" class="icon" type="button" aria-label="Close">✕</button>
+  </header>
+  <div class="desk-tools">
+    <button id="desk-voice" class="chip-btn" type="button" aria-pressed="true">🔊 Voice on</button>
+    <button id="desk-narrate" class="chip-btn" type="button" aria-pressed="true" title="Colin introduces each station as you arrive">Narrate stations</button>
+    <select id="desk-voices" aria-label="Colin’s voice"></select>
+  </div>
+  <div id="desk-log" class="desk-log" aria-live="polite"></div>
+  <div class="desk-quick">
+    <button type="button" data-say="Give me the tour">Give me the tour</button>
+    <button type="button" data-say="What is retatrutide?">What is retatrutide?</button>
+    <button type="button" data-say="Compare BPC-157 and semaglutide">Compare BPC-157 and semaglutide</button>
+    <button type="button" data-say="Check: BPC-157 heals almost any injury in the body">Check a myth</button>
+    <button type="button" data-say="Take me to the debate room">Debate room</button>
+    <button type="button" data-say="Tell me a joke">Tell me a joke</button>
+  </div>
+  <form id="desk-form" class="desk-form">
+    <input id="desk-input" type="text" autocomplete="off" placeholder="Ask Colin anything about the library…" aria-label="Message Colin">
+    <button id="desk-mic" class="mic" type="button" aria-pressed="false" aria-label="Speak to Colin">🎙</button>
+    <button class="send" type="submit" aria-label="Send">➤</button>
+  </form>
+  <p class="desk-fine">Runs on your device: nothing you type or say is sent anywhere. Colin’s voice is your device’s British English voice. No doses, no personal advice.</p>
+</aside>
 
 <footer class="fine-print">Educational showcase · not medical advice · no dosing · telemetry is simulated</footer>
 

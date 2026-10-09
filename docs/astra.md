@@ -463,10 +463,14 @@ public/astra/
     env.js              the photographed environment behind the lab
 
   showcase/             the Peptide Chamber, a separate three.js page
-    main.js             scroll, wheel, keys, finger and device-tilt wiring
-    room.js             the circular room, seven stations, holograms
-    screens.js          the wall screens (canvas instruments)
-    sections.js         station copy, trial numbers, SPPS yield maths
+    main.js             scroll, wheel, keys, finger and device-tilt wiring; Colin's desk
+    colin.js            the receptionist: voice choice, speech in/out, intents, manners
+    cards.js            each station's controls, driving ASTRA's own engines
+    room.js             the circular room, fourteen stations, reference holograms
+    holograms.js        Colin, map, balance, debate table, myth glass, simulator, archive, studio
+    screens.js          the wall screens: canvas instruments over the photographs
+    sections.js         station copy, plates, trial numbers, SPPS yield maths
+    kit.js              shared colours, PRNG, glow materials, sprites, instanced atoms
     vendor/             three.js r16x and the post-processing addons
     lab.js              WebGL2 renderer
     geometry.js         procedural vault, helix, molecules, vials
