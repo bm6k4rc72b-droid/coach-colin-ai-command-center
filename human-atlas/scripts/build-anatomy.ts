@@ -56,6 +56,7 @@ export const SYSTEM_LABELS: Record<SystemId, string> = {
   veins: 'Veins',
   nervous: 'Nervous system',
   respiratory: 'Respiratory',
+  viscera: 'Organs & glands',
 };
 
 // ---------------------------------------------------------------------------

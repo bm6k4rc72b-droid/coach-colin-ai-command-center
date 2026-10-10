@@ -79,7 +79,7 @@ function SystemModel({ system, manifest }: { system: SystemId; manifest: Manifes
 }
 
 // Load order: what is visible first and cheapest first, muscles (largest) last.
-const LOAD_ORDER: SystemId[] = ['skeleton', 'heart', 'arteries', 'veins', 'nervous', 'respiratory', 'sensory', 'muscles'];
+const LOAD_ORDER: SystemId[] = ['skeleton', 'heart', 'arteries', 'veins', 'nervous', 'respiratory', 'sensory', 'viscera', 'muscles'];
 
 export function Anatomy() {
   const manifest = useAtlas((s) => s.manifest);

@@ -16,6 +16,18 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Peptide Journey · where peptides go in the body
+
+At [`peptide-journey/`](peptide-journey): follow ten real peptides through a 3D body (real BodyParts3D
+anatomy). Six are natural hormones (GLP-1, insulin, ghrelin, vasopressin, ANP, secretin) and four are
+medicines (semaglutide, tirzepatide, exenatide, teriparatide). See where each starts, how it travels,
+which organs respond and what clears it, on a timeline from one second to thirty days. Watch
+semaglutide outlast natural GLP-1 by a week. No dosing information; educational only.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/peptide-journey/>**
+
+---
+
 ## Also in here: Superhuman Gene Lab · fiction built on real science
 
 At [`superhuman-lab/`](superhuman-lab): build a being from nine real human gene variants (myostatin,
@@ -42,8 +54,8 @@ claim carries its source and rating.
 
 ## Also in here: Human Atlas · 3D anatomy explorer
 
-At [`human-atlas/`](human-atlas): a full-screen, museum-style 3D anatomy atlas of 890 real
-BodyParts3D structures across eight systems. Toggle systems, search any structure, isolate it,
+At [`human-atlas/`](human-atlas): a full-screen, museum-style 3D anatomy atlas of 917 real
+BodyParts3D structures across nine systems. Toggle systems, search any structure, isolate it,
 read its verified bone attachments, or explode the whole body into a catalogued specimen sheet
 (Hand, Shoulder, Thigh, Foot, Heart and Brain each have their own sheet). React + React Three
 Fiber; the asset pipeline (`npm run build:anatomy`) converts the BodyParts3D archive into

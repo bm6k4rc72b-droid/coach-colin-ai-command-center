@@ -1,6 +1,6 @@
 # Human Atlas
 
-A full-screen 3D human anatomy explorer: 890 real anatomical structures from
+A full-screen 3D human anatomy explorer: 917 real anatomical structures from
 [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html) in
 anatomical position, with a minimal floating interface. The anatomy itself can be
 exploded into a catalogued specimen sheet.
@@ -16,7 +16,7 @@ npm run build:anatomy  # regenerate public/anatomy from the BodyParts3D archive
 
 | | |
 |---|---|
-| **Systems** | 8 systems (skeleton, muscles, heart, sensory organs, arteries, veins, nervous, respiratory) with toggles and presets (All, Skeleton, Organs). Systems fade in and out, staggered slightly when several change at once. |
+| **Systems** | 9 systems (skeleton, muscles, heart, sensory organs, arteries, veins, nervous, respiratory, and organs & glands: digestive, urinary, endocrine, lymphoid) with toggles and presets (All, Skeleton, Organs). Systems fade in and out, staggered slightly when several change at once. |
 | **Explode** | Every piece has an `assembledPosition` and an `explodedPosition` on a specimen sheet: large structures in the top rows, small ones packed densely at the bottom. Transitions use easeInOutCubic and a slight per-row stagger, and the camera pulls back as the sheet opens. |
 | **Specimen collections** | Hand, Shoulder, Thigh, Foot, Heart and Brain, each filtered by Both, Left or Right. Choosing one frames that region and lays it out as its own sheet. |
 | **Hover / select** | BVH-accelerated raycasting, a navy tooltip (name and category), an emphasised selection with everything else dimmed, and camera focus on the selected structure. |
@@ -53,19 +53,20 @@ unchanged.
 ### Build (`scripts/build-anatomy.ts`)
 
 1. Maps every mesh ID to its English name (`parts_list_e.txt`).
-2. Classifies each piece into a system using the dataset's own part-of tree
+2. Classifies each piece into one of nine systems using the dataset's own part-of tree
    (`scripts/rules/classify.ts`). Name patterns are used only to split the
    cardiovascular system into heart, arteries and veins, and to read laterality.
    **Anything no rule covers is written to `assets/anatomy/unclassified.tsv`
-   instead of being guessed.** Currently 44 pieces are listed there: digestive,
-   urinary, genital, endocrine and lymphoid organs, and the skin.
+   instead of being guessed.** Currently 17 pieces are listed there: the genital
+   organs, the lips, skin and hair. Digestive, urinary, endocrine and lymphoid
+   organs form the ninth system, "Organs & glands".
 3. Assigns a region from the part-of tree. Pieces with no region node fall back
    to name keywords and then body height, and each fallback is logged in
    `assets/anatomy/build-report.txt`.
 4. Detects side from the name ("left ventricle" is not the left side of the
    body), then checks it against the mesh centroid.
 5. Converts millimetres (Z up) to metres (Y up, anterior +Z), welds, decimates
-   with meshoptimizer (24.1 M → 1.1 M triangles), and writes one
+   with meshoptimizer (24.6 M → 1.1 M triangles), and writes one
    meshopt-compressed GLB per system with every piece as a node named by its ID.
 6. Computes the atlas sheet layout (`src/lib/atlasLayout.ts`, shared with the
    app), the curated attachments and the proximity lists, then writes

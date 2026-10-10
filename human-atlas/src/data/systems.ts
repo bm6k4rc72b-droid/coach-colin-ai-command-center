@@ -21,12 +21,13 @@ export const SYSTEM_STYLE: Record<SystemId, SystemStyle> = {
   veins: { label: 'Veins', swatch: '#4B6A99', color: '#5D79A6', roughness: 0.4, noun: 'venous' },
   nervous: { label: 'Nervous system', swatch: '#D3B15E', color: '#E3CD93', roughness: 0.55, noun: 'neural' },
   respiratory: { label: 'Respiratory', swatch: '#C99597', color: '#DDB2B1', roughness: 0.55, noun: 'respiratory' },
+  viscera: { label: 'Organs & glands', swatch: '#A88A62', color: '#CDB28F', roughness: 0.5, noun: 'visceral' },
 };
 
 export const PRESETS: Record<'all' | 'skeleton' | 'organs', SystemId[]> = {
-  all: ['skeleton', 'muscles', 'heart', 'sensory', 'arteries', 'veins', 'nervous', 'respiratory'],
+  all: ['skeleton', 'muscles', 'heart', 'sensory', 'arteries', 'veins', 'nervous', 'respiratory', 'viscera'],
   skeleton: ['skeleton'],
-  organs: ['heart', 'sensory', 'arteries', 'veins', 'nervous', 'respiratory'],
+  organs: ['heart', 'sensory', 'arteries', 'veins', 'nervous', 'respiratory', 'viscera'],
 };
 
 export const BACKGROUND = '#F3F3F1';

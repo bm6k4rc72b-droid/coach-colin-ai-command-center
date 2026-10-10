@@ -94,9 +94,9 @@ function Credits() {
           </ul>
           <h4>Changes made</h4>
           <p>
-            Meshes were re-oriented to metres (Y up), decimated from 24.1 M to 1.1 M triangles and compressed to glTF.
+            Meshes were re-oriented to metres (Y up), decimated from 24.6 M to 1.1 M triangles and compressed to glTF.
             The derived meshes are shared under the same CC BY-SA 2.1 JP license. Names and part-of groups come from the
-            BodyParts3D tables; 44 pieces outside the eight atlas systems are not shown.
+            BodyParts3D tables; 17 pieces outside the nine atlas systems (genital organs, skin and hair) are not shown.
           </p>
           <h4>Relationships</h4>
           <p>
