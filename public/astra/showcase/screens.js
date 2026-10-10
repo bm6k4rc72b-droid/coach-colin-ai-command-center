@@ -567,3 +567,6 @@ export function draw(id, ctx, w, h, t, s, image) {
   DRAWERS[id](ctx, w, h, t, s);
   plate = null;
 }
+
+/** Drawing helpers, shared with the new wing's screens. */
+export const ink = { chrome, text, gauge, para, GOLD, ICE, TEXT, DIM, FONT };

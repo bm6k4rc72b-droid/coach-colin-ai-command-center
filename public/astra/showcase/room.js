@@ -1,5 +1,5 @@
 /**
- * The chamber: a circular black-and-gold laboratory, fourteen stations round
+ * The chamber: a circular black-and-gold laboratory, twenty stations round
  * its wall, each with a curved bank of screens, a pedestal and a hologram.
  *
  * Geometry is generated in code — no model files. Station i stands at angle
@@ -15,6 +15,7 @@ import { Reflector } from 'three/addons/objects/Reflector.js';
 import { SITES, STATIONS } from './sections.js';
 import { DOT, GOLD, ICE, atomMaterial, atoms, glow, hot, label, mulberry32, radialTexture } from './kit.js';
 import { EXTRA_HOLOGRAMS } from './holograms.js';
+import { WING_HOLOGRAMS } from './holograms2.js';
 
 export const STATION_COUNT = STATIONS.length;
 export const STEP = (Math.PI * 2) / STATION_COUNT;
@@ -33,14 +34,14 @@ function buildShell(scene, { reflectorSize }) {
   // A real mirror under a smoked-glass skin: the gold rings and the screens
   // pool on the floor the way they do on polished stone.
   if (reflectorSize) {
-    const mirror = new Reflector(new THREE.CircleGeometry(20, 64), {
+    const mirror = new Reflector(new THREE.CircleGeometry(25, 64), {
       textureWidth: reflectorSize, textureHeight: reflectorSize, color: 0x5a5a5a, clipBias: 0.003,
     });
     mirror.rotation.x = -Math.PI / 2;
     scene.add(mirror);
   }
   const smoke = new THREE.Mesh(
-    new THREE.CircleGeometry(20, 64),
+    new THREE.CircleGeometry(25, 64),
     new THREE.MeshStandardMaterial({ color: 0x050505, metalness: 0.6, roughness: 0.35, transparent: true, opacity: reflectorSize ? 0.72 : 1 }),
   );
   smoke.rotation.x = -Math.PI / 2;
@@ -52,7 +53,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // Floor inlays: gold arcs radiating from the centre, as in the reference.
   const inlay = glow(hot(GOLD, 0.9), 0.35);
-  for (const radius of [2.4, 5.0, 9.6]) {
+  for (const radius of [2.6, 6.2, 12.0]) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(radius, radius + 0.025, 128), inlay);
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.01;
@@ -68,7 +69,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // The wall: a dark brushed-metal drum.
   const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(13.2, 13.2, 9.4, 160, 1, true),
+    new THREE.CylinderGeometry(16.4, 16.4, 9.4, 200, 1, true),
     new THREE.MeshStandardMaterial({ color: 0x060608, metalness: 0.7, roughness: 0.5, side: THREE.BackSide }),
   );
   wall.position.y = 4.7;
@@ -76,7 +77,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // Light rings: the gold bands that wrap the room at three heights.
   const rings = [];
-  for (const [y, radius, gain] of [[0.55, 12.85, 1.5], [5.75, 12.9, 1.7], [6.6, 12.95, 1.2], [8.7, 12.6, 1.0]]) {
+  for (const [y, radius, gain] of [[0.55, 16.05, 1.5], [5.75, 16.1, 1.7], [7.6, 16.15, 1.2], [8.7, 15.8, 1.0]]) {
     const material = new THREE.MeshBasicMaterial({ color: hot(GOLD, gain) });
     rings.push(material);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.028, 6, 220), material);
@@ -87,7 +88,7 @@ function buildShell(scene, { reflectorSize }) {
 
   // Ceiling: concentric rings, like the iris over the reference room.
   const ceiling = new THREE.Mesh(
-    new THREE.CircleGeometry(13.2, 64),
+    new THREE.CircleGeometry(16.4, 64),
     new THREE.MeshStandardMaterial({ color: 0x060607, metalness: 0.7, roughness: 0.5, side: THREE.DoubleSide }),
   );
   ceiling.rotation.x = Math.PI / 2;
@@ -110,7 +111,7 @@ function buildShell(scene, { reflectorSize }) {
     const edge = new THREE.Mesh(new THREE.BoxGeometry(0.03, 8.6, 0.03), ribEdge);
     edge.position.z = 0.27;
     rib.add(edge);
-    rib.position.set(Math.sin(angle) * 12.7, 4.7, -Math.cos(angle) * 12.7);
+    rib.position.set(Math.sin(angle) * 15.9, 4.7, -Math.cos(angle) * 15.9);
     rib.rotation.y = -angle;
     scene.add(rib);
   }
@@ -490,7 +491,7 @@ function dnaHologram(envMap) {
   };
 }
 
-const HOLOGRAMS = {
+export const HOLOGRAMS = {
   analysis: chainHologram,
   receptor: receptorHologram,
   agonists: agonistHologram,
@@ -515,7 +516,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const screenTexture = new THREE.CanvasTexture(screenCanvas);
   screenTexture.colorSpace = THREE.SRGBColorSpace;
   screenTexture.anisotropy = 4;
-  const curve = new THREE.CylinderGeometry(12.3, 12.3, 3.4, 24, 1, true, Math.PI - 0.2, 0.4);
+  const curve = new THREE.CylinderGeometry(15.3, 15.3, 3.4, 24, 1, true, Math.PI - 0.135, 0.27);
   // Viewed from inside, a cylinder's u runs right-to-left; flip it back.
   const uv = curve.attributes.uv;
   for (let i = 0; i < uv.count; i += 1) uv.setX(i, 1 - uv.getX(i));
@@ -524,18 +525,18 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   group.add(screen);
   // Its frame: gold edges top and bottom.
   for (const y of [1.89, 5.35]) {
-    const edge = new THREE.Mesh(new THREE.TorusGeometry(12.26, 0.02, 6, 48, 0.42), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(15.26, 0.02, 6, 48, 0.29), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
     edge.rotation.x = Math.PI / 2;
-    edge.rotation.z = Math.PI / 2 - 0.21 + Math.PI;
+    edge.rotation.z = Math.PI / 2 - 0.145 + Math.PI;
     edge.position.y = y;
     group.add(edge);
   }
 
   // A row of instrument consoles beneath it.
   for (let k = -1; k <= 1; k += 1) {
-    const a = k * 0.085;
+    const a = k * 0.072;
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.36), new THREE.MeshBasicMaterial({ map: consoleTex, color: new THREE.Color(0.9, 0.9, 0.9) }));
-    panel.position.set(Math.sin(a) * 11.6, 0.95, -Math.cos(a) * 11.6);
+    panel.position.set(Math.sin(a) * 14.4, 0.95, -Math.cos(a) * 14.4);
     panel.lookAt(0, 2.3, 0);
     group.add(panel);
   }
@@ -543,13 +544,13 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   // The logo over the first station, as in the reference.
   if (logo) {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.3), new THREE.MeshBasicMaterial({ map: logo, transparent: true, depthWrite: false, color: new THREE.Color(1.15, 1.15, 1.15) }));
-    sign.position.set(0, 7.35, -12.5);
+    sign.position.set(0, 6.75, -15.6);
     group.add(sign);
   }
 
   // Pedestal: dark drum, glowing lip, light pool, rising motes.
   const pedestal = new THREE.Group();
-  pedestal.position.set(0, 0, -6.8);
+  pedestal.position.set(0, 0, -8.6);
   pedestal.scale.setScalar(0.88);
   group.add(pedestal);
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.25, 0.6, 64), new THREE.MeshStandardMaterial({ color: 0x07070a, metalness: 0.9, roughness: 0.35, envMap, envMapIntensity: 0.18 }));
@@ -579,7 +580,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const rand = mulberry32(100 + index);
   const moteSeeds = Array.from({ length: moteCount }, () => [rand() * Math.PI * 2, Math.sqrt(rand()) * 0.9, rand()]);
 
-  const holo = (EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
+  const holo = (WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
   holo.group.position.y += 1.95;
   pedestal.add(holo.group);
 
@@ -638,7 +639,7 @@ function logoTexture() {
  */
 export function buildRoom(scene, { envMap, ids, canvases, reflectorSize }) {
   scene.background = new THREE.Color(0x020203);
-  scene.fog = new THREE.Fog(0x020203, 14, 30);
+  scene.fog = new THREE.Fog(0x020203, 16, 34);
   const shell = buildShell(scene, { reflectorSize });
   const consoleTex = consoleTexture();
   const logo = logoTexture();
