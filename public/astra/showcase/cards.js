@@ -57,13 +57,13 @@ export function chipRow(items, current, onPick) {
 }
 
 /** A labelled select box. */
-function picker(label, options, value, onChange) {
+export function picker(label, options, value, onChange) {
   const select = el('select', { 'aria-label': label, onchange: () => onChange(select.value) }, options.map((o) => el('option', { value: o.id, text: o.name })));
   select.value = value;
   return { node: el('label', { class: 'field' }, [el('span', { text: label }), select]), select };
 }
 
-const fill = (node, children) => { node.replaceChildren(...[].concat(children).filter(Boolean)); };
+export const fill = (node, children) => { node.replaceChildren(...[].concat(children).filter(Boolean)); };
 
 /* ------------------------------------------------------------ the cards */
 

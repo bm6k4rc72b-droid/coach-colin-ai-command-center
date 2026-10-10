@@ -21,7 +21,12 @@ import { STEP, buildRoom } from './room.js';
 import { draw } from './screens.js';
 import { AGONISTS, PLATES, READINGS, SITES, STATIONS, sppsYield } from './sections.js';
 import { buildCards, el } from './cards.js';
-import { Ears, Voice, answer, arrivalLine, understand } from './colin.js';
+import { buildWingCards } from './cards2.js';
+import './screens2.js';
+import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, understand } from './colin.js';
+import { LANGS, T } from './i18n.js';
+import { fetchBriefing } from './briefing.js';
+import { ARLab } from './arlab.js';
 
 const $ = (id) => document.getElementById(id);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -51,6 +56,14 @@ const state = {
   studyTier: null,
   studyPeptide: null,
   studyPicked: null,
+  pk: { drug: 'semaglutide', interval: 168, miss: false },
+  scanSystem: null,
+  globeCompound: 'semaglutide',
+  globeBanned: false,
+  roast: null,
+  roastLine: -1,
+  arena: null,
+  futurePicked: null,
 };
 
 const look = { x: 0, y: 0, source: 'pointer' };
@@ -73,9 +86,9 @@ const voice = new Voice({ onLevel: (level) => { state.speak = level; } });
 const ears = new Ears();
 const desk = { open: false, narrate: true, touring: false, lastArrival: -1 };
 
-function say(text) {
+function say(text, style) {
   showCaption(text);
-  return voice.say(text);
+  return voice.say(text, style);
 }
 
 function stopTalking() {
@@ -88,14 +101,17 @@ function stopTalking() {
 let api = {};
 
 function buildStations() {
-  const built = buildCards(state, { go, say, stop: stopTalking, now: () => clock.elapsedTime, index: indexOf });
+  const hooks = { go, say, stop: stopTalking, now: () => clock.elapsedTime, index: indexOf };
+  const built = buildCards(state, hooks);
   api = built.api;
+  const wing = buildWingCards(state, { ...hooks, api });
+  Object.assign(built.cards, wing);
   const track = $('track');
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
     const card = el('article', { class: 'card', 'aria-labelledby': `t-${station.id}` }, [
       station.plate ? el('div', { class: 'card-plate', style: `background-image:url('${PLATES[station.plate]}')`, 'aria-hidden': 'true' }) : null,
-      el('p', { class: 'kicker', text: station.kicker }),
+      el('p', { class: 'kicker', text: `${String(i).padStart(2, '0')} · ${station.kicker}` }),
       el('h2', { id: `t-${station.id}`, text: station.title }),
       el('p', { text: station.body }),
       ...(built.cards[station.id] ? built.cards[station.id]() : []),
@@ -202,6 +218,18 @@ function go(index) {
   target = i;
   steering = performance.now() + 1200;
   track().scrollTo({ left: i * track().clientWidth, behavior: reduced ? 'auto' : 'smooth' });
+  // Some engines drop a smooth scroll issued while the page is still
+  // settling; if it has not arrived, jump.
+  setTimeout(() => { if (target === i && Math.abs(track().scrollLeft - i * track().clientWidth) > 4) jumpTo(i); }, 1600);
+}
+
+/** Move to a station instantly, bypassing smooth scrolling and snapping. */
+function jumpTo(i) {
+  const t = track();
+  t.style.scrollBehavior = 'auto';
+  t.scrollLeft = i * t.clientWidth;
+  t.style.scrollBehavior = '';
+  onScroll();
 }
 
 function onScroll() {
@@ -338,8 +366,8 @@ function log(who, text, extra) {
 /** A guided tour: Colin introduces each station, then walks on. */
 async function tour() {
   desk.touring = true;
-  log('colin', 'Right, follow me. Do keep up; I glide, you swipe.');
-  await say('Right, follow me. Do keep up. I glide, you swipe.');
+  log('colin', line('tourStart'));
+  await say(line('tourStart'));
   for (let i = 0; i < STATIONS.length && desk.touring; i += 1) {
     go(i);
     desk.lastArrival = i;
@@ -353,7 +381,7 @@ async function tour() {
     const spent = performance.now() - started;
     if (spent < reading * 0.5) await new Promise((r) => setTimeout(r, reading - spent));
   }
-  if (desk.touring) await say('And that’s the chamber. I’ll be at reception. Obviously. I can’t leave.');
+  if (desk.touring) await say(line('tourEnd'));
   desk.touring = false;
 }
 
@@ -366,8 +394,12 @@ async function handle(text) {
   const reply = async (line, extra) => { log('colin', line, extra); await say(line); };
   switch (intent.kind) {
     case 'tour': return tour();
-    case 'stop': stopTalking(); return log('colin', 'Of course. I’ll be quiet. Ish.');
-    case 'step': go(target + intent.by); return reply(intent.by > 0 ? 'Onward.' : 'Back we go.');
+    case 'stop': stopTalking(); return log('colin', line('quiet'));
+    case 'step': go(target + intent.by); return reply(intent.by > 0 ? line('onward') : line('back'));
+    case 'briefing': return briefing();
+    case 'ar': return openAR();
+    case 'roast': api.roast?.(intent.caption); return log('colin', line('roastIntro'));
+    case 'globe': api.globe?.(intent.subjects[0].id); return reply(arrivalLine(indexOf('globe')));
     case 'reply': return reply(intent.reply);
     case 'go': {
       const i = indexOf(intent.station);
@@ -380,14 +412,14 @@ async function handle(text) {
       const [a, b] = intent.subjects;
       api.compare?.(a.id, b.id);
       const v = state.compareResult?.verdict;
-      return reply(`To the balance. ${v ? v.headline : ''}. Mind you, that’s evidence, not effect.`);
+      return reply(line('compare', v ? v.headline : ''));
     }
-    case 'debate': api.debate?.(intent.subjects[0].id); return reply(`Convening the panel on ${intent.subjects[0].name}. Press “Colin reads the debate” and I’ll do the voices. Well, the voice.`);
-    case 'studio': api.studio?.(intent.subjects[0].id); return reply(`One content pack on ${intent.subjects[0].name}, coming up. Honest claims only, I’m afraid.`);
+    case 'debate': api.debate?.(intent.subjects[0].id); return reply(line('debate', intent.subjects[0].name));
+    case 'studio': api.studio?.(intent.subjects[0].id); return reply(line('studio', intent.subjects[0].name));
     case 'myth': {
       const result = api.myth?.(intent.claim);
-      if (!result || !result.ok) return reply('I need a proper sentence to check, I’m afraid. Three words won’t do.');
-      const lead = { contradicted: 'Shattered.', unsupported: 'No evidence for that one.', overstated: 'Overstated, I’m afraid.', mixed: 'A mixed bag.', supported: 'That one holds up, actually.' }[result.verdict.level] || 'Checked.';
+      if (!result || !result.ok) return reply(line('mythNeedMore'));
+      const lead = line('mythLead')[result.verdict.level] || '';
       return reply(`${lead} ${result.verdict.headline}`);
     }
     default: {
@@ -399,12 +431,35 @@ async function handle(text) {
   }
 }
 
+/** Colin's weekly research briefing: live radar, or the library when offline. */
+async function briefing() {
+  log('colin', line('briefingIntro'));
+  await say(line('briefingIntro'));
+  const { live, items } = await fetchBriefing({ limit: 5 });
+  if (!live) { log('colin', line('briefingOffline')); await say(line('briefingOffline')); }
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    const text = line('briefingItem', i + 1, item.title, item.year);
+    const link = item.url ? el('a', { href: item.url, target: '_blank', rel: 'noopener', text: 'Open ↗' }) : null;
+    log('colin', `${text}${item.peptide ? ` (${item.peptide})` : ''}`, link);
+    await say(text);
+  }
+  log('colin', line('briefingOutro'));
+  await say(line('briefingOutro'));
+}
+
+const arLab = new ARLab({ state, onSay: () => say(line('arIntro')) });
+function openAR() {
+  openDesk(false);
+  return arLab.open();
+}
+
 function openDesk(open = !desk.open) {
   desk.open = open;
   $('desk').classList.toggle('open', open);
   $('btn-colin').setAttribute('aria-expanded', String(open));
   if (open && !$('desk-log').childElementCount) {
-    log('colin', 'Good evening. I’m Colin, the receptionist. Ask me about a compound, ask me to check a claim, say “compare BPC-157 and semaglutide”, or “give me the tour”. I don’t do doses, I’m afraid. Or tea.');
+    log('colin', line('deskIntro'));
   }
   if (open) setTimeout(() => $('desk-input').focus({ preventScroll: true }), 50);
 }
@@ -429,12 +484,12 @@ function setupDesk() {
     mic.classList.remove('live');
     mic.setAttribute('aria-pressed', 'false');
     if (heard) handle(heard);
-    else log('colin', 'Sorry, didn’t catch that. The acoustics in here are dreadful.');
+    else log('colin', line('micFail'));
   });
   const voiceBtn = $('desk-voice');
   const syncVoice = () => {
     voiceBtn.setAttribute('aria-pressed', String(voice.enabled));
-    voiceBtn.textContent = voice.enabled ? '🔊 Voice on' : '🔈 Voice off';
+    voiceBtn.textContent = voice.enabled ? line('ui').voiceOn : line('ui').voiceOff;
   };
   voiceBtn.addEventListener('click', () => { voice.enabled = !voice.enabled; if (!voice.enabled) voice.stop(); syncVoice(); });
   if (!voice.synth) { voice.enabled = false; voiceBtn.disabled = true; }
@@ -448,8 +503,32 @@ function setupDesk() {
     select.disabled = !voice.voices.length;
   };
   fillVoices();
-  window.speechSynthesis?.addEventListener?.('voiceschanged', fillVoices);
-  select.addEventListener('change', () => { voice.voice = voice.voices[Number(select.value)] || voice.voice; say('How’s this? Terribly distinguished, I think.'); });
+  voice.listeners.push(fillVoices);
+  select.addEventListener('change', () => { voice.voice = voice.voices[Number(select.value)] || voice.voice; say(line('voiceTest')); });
+  // Language: Colin's lines, voice and listening all follow it.
+  const langSelect = $('desk-lang');
+  langSelect.replaceChildren(...LANGS.map((l) => el('option', { value: l.id, text: l.label })));
+  const applyLang = () => {
+    const ui = line('ui');
+    $('desk-input').placeholder = ui.placeholder;
+    $('desk-narrate').textContent = ui.narrate;
+    $('desk-brief').textContent = ui.briefing;
+    $('desk-fine-text').textContent = ui.fine;
+    $('desk-role').textContent = ui.role;
+    document.querySelectorAll('.desk-quick button').forEach((b, i) => { b.textContent = ui.chipLabels[i]; b.dataset.say = ui.chips[i]; });
+    syncVoice();
+  };
+  langSelect.addEventListener('change', () => {
+    setLang(langSelect.value);
+    voice.load();
+    applyLang();
+    const intro = line('deskIntro');
+    log('colin', intro);
+    say(intro);
+  });
+  applyLang();
+  $('desk-brief').addEventListener('click', () => handle(line('ui').chips[4]));
+  $('desk-ar').addEventListener('click', () => openAR());
 }
 
 /* ------------------------------------------------------------------ loop */
@@ -484,7 +563,7 @@ function tick() {
     // The camera walks a small inner circle towards the station it faces, so
     // the station fills the view, and slides along its right vector for
     // parallax.
-    const orbit = 2.6;
+    const orbit = 4.6;
     camera.rotation.y = -(yaw + lx * 0.13);
     camera.rotation.x = -0.02 - state.lookY * 0.08;
     camera.position.set(
@@ -528,8 +607,19 @@ function boot() {
     if (e.target.closest('.card, button, a, input, select, textarea')) return;
     if (!room) return;
     room.stations[current].pulse = 1;
+    // Tap-to-pick: a hologram that exposes pickables (the holo-scan's organ
+    // zones) gets a raycast from the tap.
+    const holo = room.stations[current].holo;
+    if (holo.pickables) {
+      const ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(holo.pickables, false)[0];
+      if (hit) api[STATIONS[current].id]?.(holo.pick(hit.object));
+    }
     if (current === 0) openDesk(true);
   });
+  $('btn-ar').addEventListener('click', () => openAR());
   $('prev').addEventListener('click', () => go(target - 1));
   $('next').addEventListener('click', () => go(target + 1));
   $('btn-motion').addEventListener('click', async () => {
@@ -556,7 +646,11 @@ function boot() {
     $('gate').classList.add('gone');
     target = start;
     desk.lastArrival = start;
-    requestAnimationFrame(() => { t.scrollLeft = start * t.clientWidth; onScroll(); });
+    const land = (tries) => {
+      jumpTo(start);
+      if (Math.abs(t.scrollLeft - start * t.clientWidth) > 4 && tries > 0) setTimeout(() => land(tries - 1), 150);
+    };
+    setTimeout(() => land(20), 50);
   }
   markActive();
   if (ok) requestAnimationFrame(tick);

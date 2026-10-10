@@ -1,44 +1,63 @@
 /**
  * Colin — the chamber's holographic receptionist.
  *
- * He speaks with the device's British English male voice where one exists
- * (Daniel and Arthur on Apple devices, "Google UK English Male" in Chrome,
- * Ryan, George or Thomas on Windows) and listens through the browser's speech
- * recognition where it is offered. Everything runs on the device: no audio,
- * transcript or question leaves the browser.
+ * He speaks with the device's male voice for the chosen language where one
+ * exists (Daniel or Arthur, "Google UK English Male", Ryan or George in
+ * English; Otoya or Keita in Japanese; Jorge or Pablo in Spanish) and listens
+ * through the browser's speech recognition where it is offered. Everything
+ * runs on the device: no audio, transcript or question leaves the browser.
  *
- * His manner is dry, polite and a little self-deprecating. His content is
- * not: answers come from ASTRA's graded corpus through the same local
- * concierge the main platform uses, and he will not discuss doses, protocols
- * or what anyone personally should take.
+ * His manner is dry, polite and a little self-deprecating, in every language.
+ * His content is not: answers come from ASTRA's graded corpus through the
+ * same local concierge the main platform uses, and he will not discuss doses,
+ * protocols or what anyone personally should take.
  *
  * @module astra/showcase/colin
  */
 
 import { composeLocalAnswer } from '../js/astra.js';
 import { STATIONS, SUBJECTS } from './sections.js';
+import { COMMANDS, LANGS, PLACE_WORDS, T } from './i18n.js';
+
+/* --------------------------------------------------------------- language */
+
+let lang = 'en';
+
+export function setLang(id) {
+  if (T[id]) lang = id;
+}
+
+export function getLang() {
+  return lang;
+}
+
+/** The current language's copy for a key (function keys are called with args). */
+export function line(key, ...args) {
+  const value = T[lang][key] ?? T.en[key];
+  return typeof value === 'function' ? value(...args) : value;
+}
 
 /* ------------------------------------------------------------------ voice */
 
-const MALE_GB = /daniel|arthur|oliver|george|ryan|thomas|harry|brian|uk english male|male/i;
-const FEMALE = /female|kate|serena|stephanie|martha|libby|sonia|susan|hazel|emily|fiona|moira|tessa|karen|samantha/i;
-
 /**
- * Rank the device's voices for "British, male": en-GB with a known male name
- * first, then any en-GB voice not known to be female, then any English voice.
+ * Rank the device's voices for "male, in this language": the right language
+ * (British English for English) with a known male name first, then any voice
+ * in the language not known to be female.
  *
  * @param {SpeechSynthesisVoice[]} voices Available voices.
+ * @param {string} [langId] Language id.
  * @returns {SpeechSynthesisVoice[]} Candidates, best first.
  */
-export function rankVoices(voices) {
+export function rankVoices(voices, langId = lang) {
+  const spec = LANGS.find((l) => l.id === langId) || LANGS[0];
+  const base = spec.speech.slice(0, 2);
   const score = (v) => {
-    const gb = /en[-_]GB/i.test(v.lang);
-    const en = /^en/i.test(v.lang);
-    const male = MALE_GB.test(v.name);
-    const female = FEMALE.test(v.name);
-    return (gb ? 100 : en ? 20 : 0) + (male ? 50 : 0) - (female ? 60 : 0) + (v.localService ? 2 : 0);
+    const exact = v.lang.replace('_', '-').toLowerCase() === spec.speech.toLowerCase();
+    const male = spec.male.test(v.name);
+    const female = spec.female.test(v.name);
+    return (exact ? 100 : 20) + (male ? 50 : 0) - (female ? 60 : 0) + (v.localService ? 2 : 0);
   };
-  return voices.filter((v) => /^en/i.test(v.lang)).sort((a, b) => score(b) - score(a));
+  return voices.filter((v) => v.lang.toLowerCase().startsWith(base)).sort((a, b) => score(b) - score(a));
 }
 
 /** Text-to-speech with a level signal for the hologram's voice rings. */
@@ -51,51 +70,59 @@ export class Voice {
     this.onLevel = onLevel || (() => {});
     this.level = 0;
     this.speaking = false;
+    this.listeners = [];
     if (this.synth) {
-      const load = () => {
-        this.voices = rankVoices(this.synth.getVoices());
-        if (!this.voice || !this.voices.includes(this.voice)) this.voice = this.voices[0] || null;
-      };
-      load();
-      this.synth.addEventListener?.('voiceschanged', load);
+      this.load();
+      this.synth.addEventListener?.('voiceschanged', () => this.load());
     }
+  }
+
+  /** Re-rank voices for the current language. */
+  load() {
+    if (!this.synth) return;
+    this.voices = rankVoices(this.synth.getVoices(), lang);
+    if (!this.voice || !this.voices.includes(this.voice)) this.voice = this.voices[0] || null;
+    for (const fn of this.listeners) fn();
   }
 
   /** Whether the chosen voice is known to be male, so pitch can be left alone. */
   get knownMale() {
-    return Boolean(this.voice && MALE_GB.test(this.voice.name) && !FEMALE.test(this.voice.name));
+    const spec = LANGS.find((l) => l.id === lang) || LANGS[0];
+    return Boolean(this.voice && spec.male.test(this.voice.name) && !spec.female.test(this.voice.name));
   }
 
   /**
    * Speak, cancelling anything already queued.
    *
    * @param {string} text What to say.
+   * @param {{ pitch?: number, rate?: number }} [style] A delivery, for performances.
    * @returns {Promise<void>} Resolves when he stops.
    */
-  say(text) {
+  say(text, style = {}) {
     if (!this.synth || !this.enabled || !text) return Promise.resolve();
     this.synth.cancel();
     const token = (this.token = (this.token || 0) + 1);
     // Speak sentence-sized chunks: long utterances stall in some engines
     // (Chrome cuts off after roughly fifteen seconds), short ones never do.
-    const sentences = String(text).replace(/[“”]/g, '"').replace(/·/g, ',').match(/[^.!?]+[.!?]*\s*/g) || [String(text)];
+    const sentences = String(text).replace(/[“”]/g, '"').replace(/·/g, ',').match(/[^.!?。！？]+[.!?。！？]*\s*/g) || [String(text)];
     const chunks = [];
     for (const sentence of sentences) {
       if (chunks.length && (chunks[chunks.length - 1] + sentence).length < 180) chunks[chunks.length - 1] += sentence;
       else chunks.push(sentence);
     }
+    const spec = LANGS.find((l) => l.id === lang) || LANGS[0];
     return new Promise((resolve) => {
       let remaining = chunks.length;
       const finish = () => { if (this.token === token) this.speaking = false; resolve(); };
       // A safety net, so a silent or stalled engine never hangs the tour.
-      const timer = setTimeout(finish, 1500 + String(text).length * 75);
+      const timer = setTimeout(finish, 1500 + String(text).length * (lang === 'ja' ? 160 : 75));
       for (const chunk of chunks) {
         const utterance = new SpeechSynthesisUtterance(chunk.trim());
         if (this.voice) utterance.voice = this.voice;
-        utterance.lang = this.voice?.lang || 'en-GB';
-        // An unknown-gender British voice is nudged lower; a known male one is left alone.
-        utterance.pitch = this.knownMale ? 0.95 : 0.78;
-        utterance.rate = 0.98;
+        utterance.lang = this.voice?.lang || spec.speech;
+        // An unknown-gender voice is nudged lower; a known male one is left alone.
+        utterance.pitch = style.pitch ?? (this.knownMale ? 0.95 : 0.78);
+        utterance.rate = style.rate ?? 0.98;
         utterance.onstart = () => { this.speaking = true; this.level = 0.8; };
         utterance.onboundary = () => { this.level = 1; };
         const done = () => {
@@ -133,7 +160,7 @@ export class Ears {
   }
 
   /**
-   * Listen for one utterance.
+   * Listen for one utterance in the current language.
    *
    * @returns {Promise<string>} The transcript ('' if nothing was heard).
    */
@@ -142,7 +169,7 @@ export class Ears {
     this.stop();
     return new Promise((resolve) => {
       const rec = new this.Recognition();
-      rec.lang = 'en-GB';
+      rec.lang = (LANGS.find((l) => l.id === lang) || LANGS[0]).speech;
       rec.interimResults = false;
       rec.maxAlternatives = 1;
       let heard = '';
@@ -162,64 +189,36 @@ export class Ears {
 
 /* -------------------------------------------------------------- manners */
 
-/** Openers and sign-offs, picked in rotation so he never repeats himself twice running. */
-const ASIDES = {
-  thinking: ['Right then.', 'Let me have a look.', 'Splendid question.', 'Ah. Good one.', 'One moment, I’m consulting the archive. It’s very dusty.'],
-  closing: ['Do mind the hologram on your way out.', 'Tea’s not included, I’m afraid.', 'Any other questions, I’m right here. I can’t really leave.', 'Hope that helps. If not, the archive is to your left.'],
-  unknown: [
-    'I’m afraid that’s beyond my pay grade, and I’m paid in electricity.',
-    'Not one for me, sadly. Try asking about a compound, a claim, or a station.',
-  ],
-};
-
 const counters = new Map();
 function pick(kind) {
-  const list = ASIDES[kind];
+  const list = line(kind);
   const i = (counters.get(kind) || 0) % list.length;
   counters.set(kind, i + 1);
   return list[i];
 }
 
-/** Questions he answers himself, before the corpus is consulted. */
-const PERSONAL = [
-  {
-    match: /\b(who|what) are you\b|\byour name\b|\bintroduce yourself\b/i,
-    reply: 'I’m Colin, receptionist at COLIN Biomedical Technologies. Holographic, British, and entirely powered by your browser, so nothing you say to me leaves this device. I can walk you round the stations, answer questions from the graded library, read the debate room aloud, or check a claim you’ve seen online.',
-  },
-  {
-    match: /\b(should i (take|use|try)|what should i take|is it safe for me|how much (should|do) i|what dose|dosage|dose for me|my protocol|prescribe|inject|stack for me)\b/i,
-    reply: 'I’m afraid I don’t do doses, protocols or personal advice. I’m a hologram receptionist, not your GP, and frankly I can’t even hold a pen. What I can do is show you exactly what has been studied, in whom, and how strong it is — so the conversation with your clinician is a much better one.',
-  },
-  {
-    match: /\b(joke|funny|make me laugh)\b/i,
-    reply: 'A peptide walks into a bar. The barman says, we don’t serve your type here. The peptide says, that’s fine, I’m only here for the bonds. I’ll see myself out. Well. I would, but I’m bolted to the pedestal.',
-  },
-  {
-    match: /\b(how are you|you all right|you ok)\b/i,
-    reply: 'Mustn’t grumble. Bit flickery round the edges, but that’s the scanlines. Thanks for asking. Where shall we go?',
-  },
-  {
-    match: /\b(thank you|thanks|cheers|ta)\b/i,
-    reply: 'My pleasure. Genuinely. It’s quite lonely on this pedestal.',
-  },
-];
-
-/** Words that point at each station. */
+/** English station words, matched alongside the Japanese and Spanish ones. */
 const PLACES = [
   ['chamber', /\b(reception|lobby|home|start|beginning|front desk)\b/],
   ['map', /\b(map|graph|network|showcase map)\b/],
+  ['scan', /\b(scan|holo.?scan|organs?|body scan)\b/],
   ['analysis', /\b(analysis|tiers?|ceilings?|grading|scores?)\b/],
   ['compare', /\b(compar\w*|versus|vs\.?|balance)\b/],
+  ['arena', /\b(arena|multiplayer|two players?|versus mode)\b/],
   ['debate', /\b(debate|reviewers?|panel|argue)\b/],
+  ['roast', /\b(influencers?|roast|caption check)\b/],
   ['myth', /\b(myths?|fact.?check\w*|claims? checker|shatter)\b/],
   ['simulator', /\b(simulat\w*|study design|false positives?|power)\b/],
   ['studies', /\b(studies|archive|library|citations?|cited|references|sources)\b/],
-  ['studio', /\b(studio|content|creators?|influencers?|posts?|captions?|carousel|reel)\b/],
+  ['studio', /\b(studio|content|creators?|posts?|carousel|reel)\b/],
+  ['pk', /\b(half.?life|pharmacokinetic\w*|pk|accumulation|dosing interval)\b/],
   ['receptor', /\b(receptor|gpcr|lock and key)\b/],
   ['agonists', /\b(agonists?|glp-?1 drugs|incretins?|weight loss trials?)\b/],
   ['synthesis', /\b(synthesis|spps|resin|yield|manufactur\w*)\b/],
-  ['telemetry', /\b(telemetry|body map|heart|organs?|where .* act)\b/],
+  ['telemetry', /\b(telemetry|heart ?beat|where .* act)\b/],
   ['genome', /\b(gene|genome|dna|sequence|codons?)\b/],
+  ['globe', /\b(globe|regulat\w*|legal|countries|wada|banned)\b/],
+  ['future', /\b(future|pipeline|next generation|orforglipron|cagrisema|survodutide|maritide|amycretin)\b/],
 ];
 
 /** Find compounds named in a sentence, in the order they are mentioned. */
@@ -233,31 +232,41 @@ export function namedSubjects(text) {
 }
 
 /**
- * Work out what a visitor wants.
+ * Work out what a visitor wants, in any of the three languages.
  *
  * @param {string} said What they typed or said.
- * @returns {{ kind: string, station?: string, subjects?: object[], claim?: string, reply?: string }} The intent.
+ * @returns {{ kind: string, station?: string, subjects?: object[], claim?: string, reply?: string, by?: number }} The intent.
  */
 export function understand(said) {
   const text = String(said || '').trim();
   if (!text) return { kind: 'nothing' };
-  if (/\b(tour|show me around|walk me|guide me|give me the tour)\b/i.test(text)) return { kind: 'tour' };
-  if (/\b(stop|quiet|shush|be quiet|that'?s enough)\b/i.test(text)) return { kind: 'stop' };
-  if (/^(next|onward|carry on|go on)\b/i.test(text)) return { kind: 'step', by: 1 };
-  if (/^(back|previous|go back)\b/i.test(text)) return { kind: 'step', by: -1 };
-  for (const rule of PERSONAL) if (rule.match.test(text)) return { kind: 'reply', reply: rule.reply };
+  const C = COMMANDS;
+  if (C.tour.test(text)) return { kind: 'tour' };
+  if (C.stop.test(text) && text.length < 24) return { kind: 'stop' };
+  if (C.next.test(text)) return { kind: 'step', by: 1 };
+  if (C.back.test(text)) return { kind: 'step', by: -1 };
+  if (C.dose.test(text)) return { kind: 'reply', reply: line('dose') };
+  if (C.who.test(text)) return { kind: 'reply', reply: line('who') };
+  if (C.joke.test(text)) return { kind: 'reply', reply: line('joke') };
+  if (C.howAreYou.test(text)) return { kind: 'reply', reply: line('howAreYou') };
+  if (C.thanks.test(text) && text.length < 30) return { kind: 'reply', reply: line('thanks') };
+  if (C.briefing.test(text)) return { kind: 'briefing' };
+  if (C.ar.test(text)) return { kind: 'ar' };
 
   // "Is it true that…", "check this claim: …" → the myth checker.
-  const claim = text.match(/^(?:check|is it true that|myth|fact.?check|true or false)[:,]?\s*(?:this\s*(?:claim)?[:,]?\s*)?(.{8,})$/i);
+  const claim = text.match(/^(?:check|is it true that|myth|fact.?check|true or false|チェック|verifica)[:：,]?\s*(?:this\s*(?:claim)?[:,]?\s*)?(.{8,})$/i);
   if (claim) return { kind: 'myth', claim: claim[1] };
+  if (/^(roast|influencer)[:：,]\s*(.{8,})$/i.test(text)) return { kind: 'roast', caption: text.replace(/^(roast|influencer)[:：,]\s*/i, '') };
 
   const subjects = namedSubjects(text);
-  if (/\bcompar\w*|\bvs\.?\b|\bversus\b|\bbetter evidence\b/i.test(text) && subjects.length >= 2) return { kind: 'compare', subjects: subjects.slice(0, 2) };
-  if (/\bdebate\b|\breviewers?\b|\bpanel\b/i.test(text) && subjects.length) return { kind: 'debate', subjects: subjects.slice(0, 1) };
-  if (/\bstudio\b|\bcontent\b|\bpost\b|\bcaption\b/i.test(text) && subjects.length) return { kind: 'studio', subjects: subjects.slice(0, 1) };
+  if (/\bcompar\w*|\bvs\.?\b|\bversus\b|\bbetter evidence\b|比較|compara/i.test(text) && subjects.length >= 2) return { kind: 'compare', subjects: subjects.slice(0, 2) };
+  if (/\bdebate\b|\breviewers?\b|\bpanel\b|ディベート/i.test(text) && subjects.length) return { kind: 'debate', subjects: subjects.slice(0, 1) };
+  if (/\bstudio\b|\bcontent\b|\bpost\b|\bcaption\b|スタジオ|contenido/i.test(text) && subjects.length) return { kind: 'studio', subjects: subjects.slice(0, 1) };
+  if (/\b(legal|approved|banned|wada|regulat\w*)\b|規制|承認|legal|aprobad/i.test(text) && subjects.length) return { kind: 'globe', subjects: subjects.slice(0, 1) };
 
-  const go = /\b(take me|go|show me|open|navigate|bring up|let'?s see|where is|visit)\b/i.test(text);
+  const go = /\b(take me|go|show me|open|navigate|bring up|let'?s see|where is|visit)\b|連れて|見せて|行きたい|開いて|llévame|muéstrame|abre|ir a|vamos/i.test(text);
   if (go || text.split(/\s+/).length <= 3) {
+    for (const [station, pattern] of Object.entries(PLACE_WORDS)) if (pattern.test(text)) return { kind: 'go', station, subjects };
     for (const [station, pattern] of PLACES) if (pattern.test(text.toLowerCase())) return { kind: 'go', station, subjects };
   }
   return { kind: 'ask', subjects };
@@ -278,18 +287,22 @@ export function speakable(text, sentences = 3) {
 }
 
 /**
- * Answer a question from the corpus, in Colin's manner.
+ * Answer a question from the corpus, in Colin's manner. The library is in
+ * English; in Japanese or Spanish he says so and shows the English.
  *
  * @param {string} question The question.
  * @returns {{ spoken: string, full: string, sources: object[] }} His answer.
  */
 export function answer(question) {
   const local = composeLocalAnswer(question);
-  if (!local || !local.text) return { spoken: pick('unknown'), full: pick('unknown'), sources: [] };
+  if (!local || !local.text) { const u = pick('unknown'); return { spoken: u, full: u, sources: [] }; }
   // The concierge introduces itself as Astra; in here, Colin is on the desk.
   const body = local.text.replace(/\bI am Astra\b/g, 'I’m Colin').replace(/\bAstra\b/g, 'the library');
   const plain = body.replace(/\*\*(.+?)\*\*/g, '$1');
   const opener = pick('thinking');
+  if (lang !== 'en') {
+    return { spoken: `${opener} ${line('corpusNote')} ${pick('closing')}`, full: `${opener} ${line('corpusNote')}\n\n${plain}`, sources: local.sources || [] };
+  }
   return {
     spoken: `${opener} ${speakable(plain, 3)} ${pick('closing')}`,
     full: `${opener} ${plain}`,
@@ -299,5 +312,7 @@ export function answer(question) {
 
 /** What he says when arriving at a station. */
 export function arrivalLine(index) {
-  return STATIONS[index]?.colin || '';
+  const station = STATIONS[index];
+  if (!station) return '';
+  return lang === 'en' ? station.colin : (T[lang].stations[station.id] || station.colin);
 }

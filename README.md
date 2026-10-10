@@ -1314,27 +1314,32 @@ in code and assert in CI.
   until they are peer-reviewed.
 - **The Peptide Chamber** ([`public/astra/showcase/`](public/astra/showcase)):
   a 3D circular lab in black and gold for COLIN Biomedical Technologies,
-  built from Coach Colin's own key art. **Colin**, a holographic
-  receptionist, stands on the centre pedestal. He speaks with the device's
-  British English male voice, listens through the microphone where the
-  browser allows, and answers from the graded corpus with dry British humour.
-  He gives a guided tour, takes visitors to any station ("compare BPC-157 and
-  semaglutide", "debate retatrutide", "check: …") and reads the debate room
-  aloud. He will not do doses or personal advice. Fourteen stations sit round
-  the wall, each with a photographic screen, a hologram and an interactive
-  card:
-  - **Reference stations:** map, evidence analysis, the GLP-1 receptor,
-    incretin agonists, synthesis, telemetry and gene to drug.
-  - **ASTRA's own tools, rebuilt for the room:**
-    - a comparison balance;
-    - the four-reviewer debate room;
-    - a myth checker whose glass shatters;
-    - a study simulator showing how many of 100 positive results are false;
-    - the archive of all 38 cited studies;
-    - a content studio that writes governed content packs for creators.
-
-  Swipe, scroll or use the arrow keys to move round the room. Tilt the phone
-  or move a finger to look around. Everything runs on the device.
+  built from Coach Colin's own key art.
+  - **Colin, the holographic receptionist,** stands on the centre pedestal.
+    - He speaks English, Japanese or Spanish with the device's male voice and
+      listens through the microphone where the browser allows.
+    - He answers from the graded corpus with dry humour, gives a guided tour,
+      navigates on request, and reads the debate room aloud.
+    - He performs and fact-checks influencer captions, and reads a weekly
+      research briefing (live Europe PMC radar, falling back to the library
+      when offline).
+    - He refuses doses and personal advice in every language.
+  - **Twenty stations** sit round the wall: map, body holo-scan (tap an organ),
+    evidence analysis, comparison balance, debate room, two-player debate
+    arena, myth checker, Colin vs the influencer, study simulator, the archive
+    of all 38 cited studies, content studio, the half-life bench, GLP-1
+    receptor, incretin agonists, synthesis, telemetry, gene to drug, the
+    regulatory globe with WADA status, and the future-peptides wing.
+  - **Real maths:**
+    - Bateman pharmacokinetics with superposition and the accumulation ratio
+      R = 1/(1 − e^(−kₑτ)).
+    - SPPS yield p^(2(L−1)).
+    - Placebo-subtracted trial deltas.
+  - **AR mode:** a palm-sized Colin, or any hologram, on your table. True
+    surface placement uses WebXR on Android Chrome; everywhere else it uses
+    the camera plus gyro, and you can save a photo.
+  - **Navigation:** swipe or scroll round the room, and tilt the phone or move
+    a finger to look around. Everything runs on the device.
 - **A progression loop that only rewards research literacy** — points for
   opening primary sources, decoding papers and finding contradicting evidence;
   none for time on site. Calm mode switches the streaks and reward drops off,
