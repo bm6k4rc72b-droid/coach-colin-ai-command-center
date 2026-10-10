@@ -59,6 +59,11 @@ export function classify(name: string, roots: Set<RootKey>): Classification | nu
   if (/\btooth\b/.test(n)) return { system: 'skeleton', rule: 'dentition shown with skull' };
   if (roots.has('respiratory') && !roots.has('alimentary'))
     return { system: 'respiratory', rule: 'respiratory system subtree' };
+  // Digestive, urinary, endocrine and lymphoid organs. Genital organs, skin,
+  // hair and the lips stay out of the atlas (and in the unclassified log).
+  const visceral = roots.has('alimentary') || roots.has('urinary') || roots.has('endocrine') || roots.has('lymphoid');
+  if (visceral && !roots.has('genital') && !roots.has('integumentary') && !/labial part of mouth/.test(n))
+    return { system: 'viscera', rule: 'digestive/urinary/endocrine/lymphoid subtree' };
   return null;
 }
 
@@ -93,6 +98,11 @@ export function categoryFor(name: string, system: SystemId): string {
       if (/lung/.test(n)) return 'Lung';
       if (/cartilage/.test(n)) return 'Cartilage';
       return 'Airway';
+    case 'viscera':
+      if (/kidney|ureter|bladder|urethra/.test(n)) return 'Urinary organ';
+      if (/spleen|thymus/.test(n)) return 'Lymphoid organ';
+      if (/adrenal|pituitary|pancrea/.test(n)) return 'Gland';
+      return 'Digestive organ';
   }
 }
 

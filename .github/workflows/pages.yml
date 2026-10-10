@@ -128,6 +128,15 @@ jobs:
           rm -rf ../dist/superhuman-lab
           cp -r dist ../dist/superhuman-lab
 
+      # Peptide Journey copies the Human Atlas body meshes into its own dist at build time.
+      - name: Build Peptide Journey
+        run: |
+          cd peptide-journey
+          npm ci
+          npm run build
+          rm -rf ../dist/peptide-journey
+          cp -r dist ../dist/peptide-journey
+
       # Rocksalt has no Supabase keys here, so it builds in browser-only demo mode.
       - name: Build Rocksalt
         run: |

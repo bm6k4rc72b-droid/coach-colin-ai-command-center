@@ -9,6 +9,7 @@ export const SYSTEM_IDS = [
   'veins',
   'nervous',
   'respiratory',
+  'viscera',
 ] as const;
 
 export type SystemId = (typeof SYSTEM_IDS)[number];

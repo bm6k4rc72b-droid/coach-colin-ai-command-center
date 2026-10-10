@@ -1,10 +1,12 @@
 region: BP24 "left costal cartilage" not under a region node; placed in Thorax by name/position
 region: BP28 "right costal cartilage" not under a region node; placed in Thorax by name/position
 region: FMA10951 "inferior vena cava" not under a region node; placed in Thorax by name/position
+region: FMA13889 "pituitary gland" not under a region node; placed in Head by name/position
 region: FMA14331 "splenic vein" not under a region node; placed in Thorax by name/position
 region: FMA14332 "superior mesenteric vein" not under a region node; placed in Thorax by name/position
 region: FMA14335 "right renal vein" not under a region node; placed in Thorax by name/position
 region: FMA14336 "left renal vein" not under a region node; placed in Thorax by name/position
+region: FMA14542 "appendix" not under a region node; placed in Abdomen by name/position
 region: FMA14749 "superior mesenteric artery" not under a region node; placed in Thorax by name/position
 region: FMA14750 "inferior mesenteric artery" not under a region node; placed in Abdomen by name/position
 region: FMA14752 "right renal artery" not under a region node; placed in Thorax by name/position
@@ -22,6 +24,7 @@ region: FMA18885 "right external iliac vein" not under a region node; placed in 
 region: FMA18886 "left external iliac vein" not under a region node; placed in Abdomen by name/position
 region: FMA18887 "right internal iliac vein" not under a region node; placed in Abdomen by name/position
 region: FMA18888 "left internal iliac vein" not under a region node; placed in Abdomen by name/position
+region: FMA19667 "urethra" not under a region node; placed in Pelvis by name/position
 region: FMA21387 "right common iliac vein" not under a region node; placed in Abdomen by name/position
 region: FMA21388 "left common iliac vein" not under a region node; placed in Abdomen by name/position
 region: FMA23707 "interosseous membrane of right forearm" not under a region node; placed in Forearm by name/position
@@ -64,7 +67,9 @@ region: FMA62382 "right optic tract" not under a region node; placed in Brain by
 region: FMA66326 "pulmonary artery" not under a region node; placed in Thorax by name/position
 region: FMA66643 "pulmonary vein" not under a region node; placed in Thorax by name/position
 region: FMA67936 "left optic tract" not under a region node; placed in Brain by name/position
+region: FMA7131 "esophagus" not under a region node; placed in Thorax by name/position
 region: FMA71704 "set of nasal cartilages" not under a region node; placed in Head by name/position
+region: FMA7202 "gallbladder" not under a region node; placed in Thorax by name/position
 region: FMA72908 "anterior limb of right internal capsule" not under a region node; placed in Brain by name/position
 region: FMA72909 "anterior limb of left internal capsule" not under a region node; placed in Brain by name/position
 region: FMA72924 "right fornix of forebrain" not under a region node; placed in Brain by name/position
