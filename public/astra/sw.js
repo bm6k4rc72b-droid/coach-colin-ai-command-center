@@ -12,7 +12,7 @@
  * CACHED badge, which the radar handles itself with its own last-good store.
  */
 
-const CACHE = 'astra-v6';
+const CACHE = 'astra-v7';
 
 const SHELL = [
   './',

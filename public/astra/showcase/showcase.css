@@ -629,12 +629,9 @@ button { font: inherit; color: inherit; }
 .roast-line.v-hype { border-color: var(--gold); }
 .roast-line.v-holds { border-color: #3ef0b4; }
 .roast-line.on { background: rgba(240, 183, 90, 0.12); }
-.roast-line .said, .arena-entry .said { margin: 0 0 4px; font-size: 0.84rem; line-height: 1.5; }
+.roast-line .said { margin: 0 0 4px; font-size: 0.84rem; line-height: 1.5; }
 .roast-out pre, .card details pre { white-space: pre-wrap; font-family: var(--font); font-size: 0.8rem; line-height: 1.55; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.04); }
 
-.arena-log { display: grid; gap: 8px; margin-top: 8px; }
-.arena-entry { padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--gold); }
-.arena-entry.side-b { border-left-color: var(--ice); }
 
 .hud-actions .chip-btn#btn-ar { border-color: var(--ice); }
 
@@ -659,3 +656,55 @@ body.ar-open .hud-top, body.ar-open .colin-btn, body.ar-open .dots, body.ar-open
   .dot { width: 11px; }
   .dot.on { width: 22px; }
 }
+
+/* ------------------------------------------------ translation hub */
+
+.hub-status { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.pill { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.7rem; color: var(--dim); }
+.pill.ok { border-color: rgba(62, 240, 180, 0.6); color: #8ff5d2; }
+.pill.off { border-color: rgba(255, 255, 255, 0.16); }
+.hub-out { min-height: 1.5em; margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(240, 183, 90, 0.08); color: var(--gold-hi); font-size: 0.95rem; line-height: 1.55; white-space: pre-wrap; }
+.hub-out:empty { display: none; }
+.hub-cast { margin-top: 8px; }
+.hub-cast li { line-height: 1.5; }
+.hub-more { margin: 10px 0 0; padding: 8px 10px; border: 1px solid rgba(240, 183, 90, 0.18); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
+.hub-more summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--gold-hi); }
+.hub-more[open] summary { margin-bottom: 8px; }
+.gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.gloss-term { display: grid; gap: 2px; padding: 7px 9px; text-align: start; border: 1px solid var(--line); border-radius: 10px; background: rgba(255, 255, 255, 0.03); color: var(--text); font: inherit; cursor: pointer; }
+.gloss-term:hover, .gloss-term:focus-visible { border-color: var(--gold); outline: none; }
+.gloss-term .en { font-size: 0.68rem; color: var(--dim); }
+.gloss-term .tr { font-size: 0.9rem; color: var(--gold-hi); }
+.scripts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.scripts li { padding: 7px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); font-size: 0.84rem; line-height: 1.5; cursor: pointer; }
+.scripts li:hover { background: rgba(111, 211, 255, 0.08); }
+.script-tag { display: block; font-size: 0.64rem; letter-spacing: 0.06em; color: var(--ice); }
+.chip.live { border-color: #ff5a5a; color: #ffb0b0; animation: pulse 1s ease-in-out infinite; }
+
+/* ------------------------------------------------------- courtroom */
+
+.court-head { margin: 8px 0; }
+.court-head .case-no { margin: 0; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.78rem; letter-spacing: 0.08em; color: var(--ice); }
+.court-head .motion { margin: 4px 0; font-weight: 700; color: var(--gold-hi); }
+.exhibits { display: grid; gap: 6px; margin: 0 0 10px; }
+.exhibit { display: grid; grid-template-columns: 28px 1fr auto auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border-left: 3px solid var(--gold); }
+.exhibit.neg { border-left-color: #ff5a5a; }
+.exhibit.on { background: rgba(240, 183, 90, 0.14); }
+.exhibit .ex-letter { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--gold); font-weight: 800; color: var(--gold-hi); }
+.exhibit .ex-body { font-size: 0.78rem; line-height: 1.4; }
+.exhibit .ex-body b { font-weight: 600; }
+.objections .chip { font-size: 0.72rem; }
+.objections .chip[disabled], .jury .chip[disabled] { opacity: 0.4; cursor: default; }
+.jury { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.seats { display: inline-flex; gap: 4px; }
+.seat { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); }
+.seat.s-a { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.seat.s-b { background: var(--ice); box-shadow: 0 0 8px var(--ice); }
+.verdict { color: #8ff5d2 !important; }
+.sentence { font-style: italic; color: var(--gold-hi); }
+.court-record { max-height: 220px; overflow: auto; }
+@media (max-width: 820px) {
+  .exhibit { grid-template-columns: 26px 1fr; }
+  .exhibit .chip { grid-column: span 1; }
+}
+#arena .readout:empty, #translate .meta:empty { display: none; }

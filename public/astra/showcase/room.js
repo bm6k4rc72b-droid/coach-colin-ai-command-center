@@ -1,5 +1,5 @@
 /**
- * The chamber: a circular black-and-gold laboratory, twenty stations round
+ * The chamber: a circular black-and-gold laboratory, twenty-one stations round
  * its wall, each with a curved bank of screens, a pedestal and a hologram.
  *
  * Geometry is generated in code — no model files. Station i stands at angle
@@ -16,6 +16,7 @@ import { SITES, STATIONS } from './sections.js';
 import { DOT, GOLD, ICE, atomMaterial, atoms, glow, hot, label, mulberry32, radialTexture } from './kit.js';
 import { EXTRA_HOLOGRAMS } from './holograms.js';
 import { WING_HOLOGRAMS } from './holograms2.js';
+import { COURT_HOLOGRAMS } from './holograms3.js';
 
 export const STATION_COUNT = STATIONS.length;
 export const STEP = (Math.PI * 2) / STATION_COUNT;
@@ -580,7 +581,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const rand = mulberry32(100 + index);
   const moteSeeds = Array.from({ length: moteCount }, () => [rand() * Math.PI * 2, Math.sqrt(rand()) * 0.9, rand()]);
 
-  const holo = (WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
+  const holo = (COURT_HOLOGRAMS[id] || WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
   holo.group.position.y += 1.95;
   pedestal.add(holo.group);
 

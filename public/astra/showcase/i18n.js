@@ -1,20 +1,33 @@
 /**
- * Colin in three languages.
+ * Colin in seven languages: English, Japanese and Spanish here; French,
+ * German, Chinese and Arabic in i18n2.js.
  *
- * His lines — greetings, station introductions, manners, refusals, quips —
- * are written per language rather than machine-translated, so the dry
- * British humour survives the trip. The library itself (the corpus answers,
- * study titles and station cards) stays in English; in Japanese and Spanish
- * Colin says so, and shows the English on screen.
+ * His lines — greetings, station introductions, manners, refusals, quips,
+ * the judge's rulings — are written per language rather than
+ * machine-translated, so the dry British humour survives the trip. The
+ * library itself (the corpus answers, study titles and station cards) stays
+ * in English; in other languages Colin says so and shows the English, or,
+ * where the browser has an on-device translator, translates it live and
+ * says that instead.
  *
  * @module astra/showcase/i18n
  */
+
+import { AR, DE, FR, ZH } from './i18n2.js';
 
 export const LANGS = [
   { id: 'en', label: 'English', speech: 'en-GB', male: /daniel|arthur|oliver|george|ryan|thomas|harry|brian|uk english male|male/i, female: /female|kate|serena|stephanie|martha|libby|sonia|susan|hazel|emily|fiona|moira|tessa|karen|samantha/i },
   { id: 'ja', label: '日本語', speech: 'ja-JP', male: /otoya|hattori|keita|ichiro|daichi|naoki|male|男性/i, female: /kyoko|o-ren|nanami|ayumi|haruka|mayu|female|女性/i },
   { id: 'es', label: 'Español', speech: 'es-ES', male: /jorge|diego|juan|pablo|alvaro|álvaro|carlos|enrique|jorge|male|hombre/i, female: /monica|mónica|paulina|marisol|helena|laura|elvira|female|mujer/i },
+  { id: 'fr', label: 'Français', speech: 'fr-FR', male: /thomas|nicolas|daniel|henri|paul|mathieu|antoine|r[eé]my|male|homme/i, female: /am[eé]lie|audrey|aur[eé]lie|marie|julie|denise|c[eé]line|virginie|female|femme/i },
+  { id: 'de', label: 'Deutsch', speech: 'de-DE', male: /markus|yannick|stefan|conrad|klaus|hans|killian|male|mann/i, female: /anna|petra|helena|katja|hedda|marlene|vicki|female|frau/i },
+  { id: 'zh', label: '中文', speech: 'zh-CN', male: /yu-?shu|kangkang|yunxi|yunyang|yunjian|li-?mu|male|男/i, female: /ting-?ting|huihui|xiaoxiao|xiaoyi|yaoyao|mei-?jia|sin-?ji|female|女/i },
+  { id: 'ar', label: 'العربية', speech: 'ar-SA', male: /maged|tarik|hamed|naayf|majed|male|ذكر/i, female: /laila|zariyah|hoda|salma|mariam|female|أنثى/i, dir: 'rtl' },
 ];
+
+const OBJECTION_KEYS = ['hearsay', 'speculation', 'overstatement', 'relevance', 'ad-hominem'];
+const FALLACY_KEYS = ['Anecdote', 'Appeal to popularity', 'Unnamed authority', 'Absolute claim', 'Ad hominem', 'Conspiracy'];
+const zip = (keys, values) => Object.fromEntries(keys.map((k, i) => [k, values[i]]));
 
 const EN = {
   deskIntro: 'Good evening. I’m Colin, the receptionist. Ask me about a compound, ask me to check a claim, say “compare BPC-157 and semaglutide”, “give me the tour”, “briefing” or “AR”. I don’t do doses, I’m afraid. Or tea.',
@@ -46,11 +59,23 @@ const EN = {
   roastIntro: 'Ahem. And I quote:',
   roastVerdict: { holds: 'That bit actually holds up.', fails: 'That one doesn’t survive the library.', hype: 'That’s marketing, not science.', neutral: 'Harmless enough.' },
   roastScore: (n) => `Honesty score: ${n} out of 100. ${n > 70 ? 'Respectable.' : n > 40 ? 'Could do better.' : 'Dear oh dear.'}`,
-  arenaStart: (a, b) => `Welcome to the arena. ${a} argues for, ${b} argues against. Three rounds each. Keep it evidential.`,
-  arenaScore: (name, pts, minus) => `${name}, ${pts} points.${minus ? ` Deductions for ${minus}.` : ''}`,
-  arenaWinner: (name) => `And the winner is ${name}. Well argued. Mostly.`,
-  arenaDraw: 'A draw. How terribly British.',
-  arenaLean: (text) => `For the record, the library says: ${text}`,
+  corpusTranslated: '',
+  courtOpen: (no, a, b) => `Case ${no}. All rise. This court is in session. ${a} for the Defence, ${b} for the Prosecution. Keep it evidential.`,
+  courtScore: (name, pts) => `${name}, ${pts} points.`,
+  courtBench: (list) => `The bench objects on its own motion: ${list}. Sustained.`,
+  courtSustained: (label) => `Objection: ${label}. Sustained.`,
+  courtOverruled: (label) => `Objection: ${label}. Overruled. Do sit down.`,
+  courtWitness: (letter) => `Exhibit ${letter}, take the stand.`,
+  courtCross: 'Cross-examination.',
+  courtVerdict: (name, a, b) => `The jury votes ${a} to ${b}. Verdict for ${name}.`,
+  courtDraw: (a, b) => `The jury votes ${a} to ${b}. No majority. A draw. How terribly British.`,
+  courtLean: (text) => `For the record, the library says: ${text}`,
+  courtSentence: { contradicted: 'The claim is sentenced to life in the retraction archive, without parole.', unsupported: 'The claim is remanded to a rodent facility until it can produce a human trial.', overstated: 'A suspended sentence: the claim may return once it drops the word “proven”.', mixed: 'Bail granted, on condition the claim reports to a replication study every week.', supported: 'Case dismissed. The claim leaves court without a stain on its methods section.', unknown: 'Mistrial: the court cannot find the compound in its records.' },
+  courtOrder: 'Order! Order in court.',
+  courtObjections: zip(OBJECTION_KEYS, ['Hearsay', 'Speculation', 'Overstatement', 'Relevance', 'Ad hominem']),
+  courtFallacies: zip(FALLACY_KEYS, FALLACY_KEYS),
+  hubNoEngine: 'This browser has no built-in translator, so I’m working from my phrasebook.',
+  hubListen: (name) => `Go ahead, in ${name}. I’m listening.`,
   arIntro: 'Augmented reality. Point your phone at a table and I’ll appear on it. Palm-sized, but no less charming.',
   stations: {},
   ui: {
@@ -93,20 +118,33 @@ const JA = {
   roastIntro: 'えへん。では、原文のまま読み上げます：',
   roastVerdict: { holds: 'ここは本当に裏付けがあります。', fails: 'ここはライブラリの検証に耐えません。', hype: 'これは科学ではなく宣伝文句です。', neutral: '特に問題はありません。' },
   roastScore: (n) => `誠実度スコア、100点中${n}点。${n > 70 ? 'まずまずです。' : n > 40 ? '改善の余地あり。' : 'これはこれは。'}`,
-  arenaStart: (a, b) => `アリーナへようこそ。${a}さんが賛成、${b}さんが反対です。各3ラウンド。エビデンスでお願いします。`,
-  arenaScore: (name, pts, minus) => `${name}さん、${pts}点。${minus ? `減点：${minus}。` : ''}`,
-  arenaWinner: (name) => `勝者は${name}さん。見事な弁論でした。おおむね。`,
-  arenaDraw: '引き分けです。実に英国的ですね。',
-  arenaLean: (text) => `念のため、ライブラリの見解は：${text}`,
+  corpusTranslated: 'この端末で翻訳しました。正式なのは英語の原文です。',
+  courtOpen: (no, a, b) => `事件番号${no}。ご起立ください。開廷します。弁護側は${a}さん、検察側は${b}さん。エビデンスでお願いします。`,
+  courtScore: (name, pts) => `${name}さん、${pts}点。`,
+  courtBench: (list) => `裁判所が職権で異議を認めます：${list}。`,
+  courtSustained: (label) => `異議あり：${label}。認めます。`,
+  courtOverruled: (label) => `異議あり：${label}。却下します。お座りください。`,
+  courtWitness: (letter) => `証拠${letter}、証言台へ。`,
+  courtCross: '反対尋問。',
+  courtVerdict: (name, a, b) => `陪審の評決は${a}対${b}。${name}さんの勝訴です。`,
+  courtDraw: (a, b) => `陪審の評決は${a}対${b}。過半数に達せず、引き分けです。実に英国的ですね。`,
+  courtLean: (text) => `記録のために、ライブラリの見解は：${text}`,
+  courtSentence: { contradicted: '本法廷は、この主張を撤回論文アーカイブでの終身刑、仮釈放なしに処します。', unsupported: 'この主張は、ヒト試験を提出するまで動物実験施設に勾留されます。', overstated: '執行猶予：「証明済み」という言葉を外せば、この主張は戻ってきて構いません。', mixed: '保釈を認めます。ただし毎週、再現研究に出頭すること。', supported: '公訴棄却。この主張は、方法のセクションに一点の汚れもなく退廷します。', unknown: '審理無効：本法廷の記録にこの化合物は見当たりません。' },
+  courtOrder: '静粛に！静粛に！',
+  courtObjections: zip(OBJECTION_KEYS, ['伝聞', '憶測', '誇張', '関連性', '人身攻撃']),
+  courtFallacies: zip(FALLACY_KEYS, ['体験談', '多数派への訴え', '匿名の権威', '断定的主張', '人身攻撃', '陰謀論']),
+  hubNoEngine: 'このブラウザには内蔵翻訳がないので、私の用語集でお手伝いします。',
+  hubListen: (name) => `どうぞ、${name}でお話しください。聞いています。`,
   arIntro: '拡張現実モードです。机にスマホを向けてください。手のひらサイズの私が現れます。魅力は等身大のままで。',
   stations: {
     chamber: 'こんばんは、COLINバイオメディカル・テクノロジーズへようこそ。受付のコリンです。ホログラムですので、コートをお預かりできず失礼します。横にスワイプして始めるか、ツアーをご依頼ください。',
+    translate: '国際翻訳ハブです。ソンブレロは任意、正確さは必須。何か入力するか話しかけてください。この端末で通訳いたします。',
     map: 'マップです。すべての化合物、すべての身体系、そしてそれらをつなぐ糸。ロンドンの地下鉄のようなものです。ただし遅延は少なめで。',
     scan: 'ホロスキャンです。臓器をタップすると、そこで研究された化合物をお見せします。プライベートな場所はタップなさらぬよう。私はプロですので。',
     analysis: 'ペプチド分析です。エビデンスには7つの階層があり、それぞれ上限があります。マウスの研究は、どんなに可愛くても45％止まりです。',
     compare: '比較台です。二つ選べば、どちらのエビデンスが強いかをお伝えします。どちらがあなたに合うかではありません。それは医師の仕事で、私には手がありませんので。',
     debate: 'ディベートルームです。審査員4名、化合物1つ、ケーキの持参はなし。テーマを選べば、私が読み上げます。',
-    arena: 'アリーナです。お二人で3ラウンド、審判は私。厳しくも公平に。主に厳しく。',
+    arena: 'ご起立ください。第7セクター法廷、開廷です。裁判長は私。動議を選び、弁護人を指名し、証拠を引用して、ぜひ一度「異議あり」を。それが一番楽しいところです。',
     myth: '神話チェッカーです。ネットで見た主張を入力してください。粉砕して差し上げます。ごくまれに、謝って「本当でした」と申し上げることも。',
     roast: 'コリン対インフルエンサー。キャプションをどうぞ。しかるべき重々しさで朗読し、その後で検証いたします。',
     simulator: '研究シミュレーターです。サンプル数をいじると、偽陽性が暴れ出します。プチプチを潰すような快感です。統計版の。',
@@ -161,20 +199,33 @@ const ES = {
   roastIntro: 'Ejem. Y cito textualmente:',
   roastVerdict: { holds: 'Esta parte sí se sostiene.', fails: 'Esto no sobrevive a la biblioteca.', hype: 'Eso es marketing, no ciencia.', neutral: 'Inofensivo.' },
   roastScore: (n) => `Puntuación de honestidad: ${n} de 100. ${n > 70 ? 'Respetable.' : n > 40 ? 'Mejorable.' : 'Madre mía.'}`,
-  arenaStart: (a, b) => `Bienvenidos a la arena. ${a} defiende a favor, ${b} en contra. Tres rondas cada uno. Con evidencias, por favor.`,
-  arenaScore: (name, pts, minus) => `${name}, ${pts} puntos.${minus ? ` Descuentos por: ${minus}.` : ''}`,
-  arenaWinner: (name) => `Y el ganador es ${name}. Bien argumentado. Casi siempre.`,
-  arenaDraw: 'Empate. Qué británico.',
-  arenaLean: (text) => `Para que conste, la biblioteca dice: ${text}`,
+  corpusTranslated: 'La he traducido en el dispositivo; el original en inglés es el que vale.',
+  courtOpen: (no, a, b) => `Caso ${no}. En pie. Se abre la sesión. ${a} por la defensa, ${b} por la acusación. Con evidencias, por favor.`,
+  courtScore: (name, pts) => `${name}, ${pts} puntos.`,
+  courtBench: (list) => `El tribunal objeta de oficio: ${list}. Ha lugar.`,
+  courtSustained: (label) => `Objeción: ${label}. Ha lugar.`,
+  courtOverruled: (label) => `Objeción: ${label}. No ha lugar. Siéntese, por favor.`,
+  courtWitness: (letter) => `Prueba ${letter}, al estrado.`,
+  courtCross: 'Contrainterrogatorio.',
+  courtVerdict: (name, a, b) => `El jurado vota ${a} a ${b}. Veredicto a favor de ${name}.`,
+  courtDraw: (a, b) => `El jurado vota ${a} a ${b}. Sin mayoría. Empate. Qué británico.`,
+  courtLean: (text) => `Para que conste, la biblioteca dice: ${text}`,
+  courtSentence: { contradicted: 'El tribunal condena la afirmación a cadena perpetua en el archivo de retractaciones, sin libertad condicional.', unsupported: 'La afirmación queda recluida en un animalario hasta que presente un ensayo en humanos.', overstated: 'Condena suspendida: la afirmación podrá volver cuando renuncie a la palabra «demostrado».', mixed: 'Libertad bajo fianza, con la condición de presentarse cada semana ante un estudio de replicación.', supported: 'Caso sobreseído. La afirmación sale del tribunal sin una mancha en su sección de métodos.', unknown: 'Juicio nulo: el tribunal no encuentra el compuesto en sus registros.' },
+  courtOrder: '¡Orden! Orden en la sala.',
+  courtObjections: zip(OBJECTION_KEYS, ['Testimonio de oídas', 'Especulación', 'Exageración', 'Pertinencia', 'Ad hominem']),
+  courtFallacies: zip(FALLACY_KEYS, ['Anécdota', 'Apelación a la mayoría', 'Autoridad anónima', 'Afirmación absoluta', 'Ad hominem', 'Conspiración']),
+  hubNoEngine: 'Este navegador no tiene traductor integrado, así que trabajo con mi glosario.',
+  hubListen: (name) => `Adelante, en ${name}. Le escucho.`,
   arIntro: 'Realidad aumentada. Apunta el móvil a una mesa y apareceré sobre ella. Del tamaño de una mano, pero igual de encantador.',
   stations: {
     chamber: 'Buenas noches y bienvenidos a COLIN Biomedical Technologies. Soy Colin, el recepcionista. Técnicamente un holograma, así que disculpen que no les recoja el abrigo. Deslicen para empezar o pídanme el tour.',
+    translate: 'El centro internacional de traducción. El sombrero es opcional; la precisión, no. Escribe lo que quieras, o háblame, y lo interpreto en este dispositivo.',
     map: 'El mapa. Cada compuesto, cada sistema del cuerpo y los hilos que los unen. Como el metro de Londres, pero con mejor evidencia y menos retrasos.',
     scan: 'El holoescáner. Toca un órgano y te diré qué compuestos se han estudiado ahí. Nada de tocar zonas personales, por favor; soy un profesional.',
     analysis: 'Análisis de péptidos. Siete niveles de evidencia, cada uno con su techo. Un estudio en ratones llega como mucho al cuarenta y cinco por ciento, por encantador que sea el ratón.',
     compare: 'La balanza comparativa. Elige dos compuestos y te diré cuál tiene mejor evidencia. No cuál te conviene a ti; eso es cosa del médico, y yo no tengo manos.',
     debate: 'La sala de debate. Cuatro revisores, un compuesto y nadie trae tarta. Elige un tema y lo leo en voz alta.',
-    arena: 'La arena. Dos jugadores, tres rondas y yo de juez. Estricto pero justo. Sobre todo estricto.',
+    arena: 'En pie. La sala del Sector 7 abre la sesión, y presido yo. Elige una moción, nombra a tus abogados, cita tus pruebas y atrévete a objetar algo; es lo mejor.',
     myth: 'El verificador de mitos. Escribe algo que hayas visto en internet y lo haré añicos. O, muy de vez en cuando, me disculparé y admitiré que es cierto.',
     roast: 'Colin contra el influencer. Pásame un texto y lo leeré con toda la solemnidad que merece. Después lo verifico.',
     simulator: 'El simulador de estudios. Juega con el tamaño de muestra y verás cómo se descontrolan los falsos positivos. Muy satisfactorio. Como explotar plástico de burbujas, pero con estadística.',
@@ -199,46 +250,47 @@ const ES = {
   },
 };
 
-export const T = { en: EN, ja: JA, es: ES };
+export const T = { en: EN, ja: JA, es: ES, fr: FR, de: DE, zh: ZH, ar: AR };
 
 /**
  * Words that mean the same command in each language, matched before the
  * English intent parser so a Japanese or Spanish request still navigates.
  */
 export const COMMANDS = {
-  tour: /\b(tour|show me around|walk me|guide me)\b|ツアー|案内して|visita guiada|hazme el tour|\brecorrido\b/i,
-  stop: /\b(stop|quiet|shush|be quiet)\b|止めて|やめて|静かに|detente|cállate|silencio/i,
-  briefing: /\b(briefing|news|what'?s new|latest research)\b|ブリーフィング|ニュース|最新|\binforme\b|noticias|novedades/i,
-  ar: /\b(ar|augmented reality|on my table)\b|拡張現実|ＡＲ|realidad aumentada/i,
-  joke: /\b(joke|funny)\b|ジョーク|冗談|chiste/i,
-  who: /\b(who|what) are you\b|あなたは誰|お名前|quién eres|cómo te llamas/i,
-  dose: /\b(dose|dosage|how much should i|should i take|protocol|prescribe)\b|用量|何mg|どのくらい打|飲むべき|dosis|cuánto debo|debería tomar/i,
-  thanks: /\b(thanks|thank you|cheers)\b|ありがとう|gracias/i,
-  howAreYou: /\b(how are you)\b|元気|お元気|qué tal|cómo estás/i,
-  next: /^(next|onward|go on)\b|^次|siguiente/i,
-  back: /^(back|previous|go back)\b|^戻|^atrás|anterior/i,
+  tour: /\b(tour|show me around|walk me|guide me)\b|ツアー|案内して|visita guiada|hazme el tour|\brecorrido\b|fais-moi la visite|\bvisite\b|führung|rundgang|参观|导览|جولة/i,
+  stop: /\b(stop|quiet|shush|be quiet)\b|止めて|やめて|静かに|detente|cállate|silencio|tais-toi|\bsilence\b|\bruhe\b|sei still|停下|安静|توقف|اسكت/i,
+  briefing: /\b(briefing|news|what'?s new|latest research)\b|ブリーフィング|ニュース|最新|\binforme\b|noticias|novedades|actualités|nachrichten|简报|新闻|موجز|أخبار/i,
+  ar: /\b(ar|augmented reality|on my table)\b|拡張現実|ＡＲ|realidad aumentada|réalité augmentée|erweiterte realität|增强现实|الواقع المعزز/i,
+  joke: /\b(joke|funny)\b|ジョーク|冗談|chiste|blague|\bwitz\b|笑话|نكتة/i,
+  who: /\b(who|what) are you\b|あなたは誰|お名前|quién eres|cómo te llamas|qui es-tu|wer bist du|你是谁|من أنت/i,
+  dose: /\b(dose|dosage|how much should i|should i take|protocol|prescribe)\b|用量|何mg|どのくらい打|飲むべき|dosis|cuánto debo|debería tomar|posologie|combien dois|dosierung|wie viel soll|剂量|该用多少|جرعة|كم يجب/i,
+  thanks: /\b(thanks|thank you|cheers)\b|ありがとう|gracias|\bmerci\b|\bdanke\b|谢谢|شكرا|شكرًا/i,
+  howAreYou: /\b(how are you)\b|元気|お元気|qué tal|cómo estás|comment ça va|wie geht|你好吗|كيف حالك/i,
+  next: /^(next|onward|go on)\b|^次|siguiente|^suivant|^weiter|^下一个|^التالي/i,
+  back: /^(back|previous|go back)\b|^戻|^atrás|anterior|^retour|^précédent|^zurück|^返回|^上一个|^السابق|^ارجع/i,
 };
 
-/** Station names in Japanese and Spanish, for "take me to …" in any language. */
+/** Station names in the other six languages, for "take me to …" in any of them. */
 export const PLACE_WORDS = {
-  chamber: /受付|ロビー|recepción|vestíbulo/i,
-  map: /マップ|地図|mapa/i,
-  scan: /スキャン|臓器|holoesc|escáner|órgano/i,
-  analysis: /分析|análisis/i,
-  compare: /比較|compar/i,
-  debate: /ディベート|討論|debate/i,
-  arena: /アリーナ|対戦|arena/i,
-  myth: /神話|ファクトチェック|mito/i,
-  roast: /インフルエンサー|influencer/i,
-  simulator: /シミュレーター|simulador/i,
-  studies: /アーカイブ|研究一覧|archivo|estudios/i,
-  studio: /スタジオ|コンテンツ|estudio de contenido|contenido/i,
-  pk: /半減期|vida media|half.?life/i,
-  receptor: /受容体|receptor/i,
-  agonists: /作動薬|agonistas/i,
-  synthesis: /合成|síntesis/i,
-  telemetry: /テレメトリー|心拍|telemetría/i,
-  genome: /遺伝子|ゲノム|gen\b|genoma|adn/i,
-  globe: /規制|グローブ|地球儀|globo|regulaci/i,
-  future: /未来|futuro/i,
+  chamber: /受付|ロビー|recepción|vestíbulo|accueil|empfang|前台|大厅|الاستقبال/i,
+  translate: /翻訳|通訳|traduc|übersetz|dolmetsch|interpr[eè]t|翻译|ترجم/i,
+  map: /マップ|地図|mapa|\bcarte\b|\bkarte\b|图谱|地图|خريطة/i,
+  scan: /スキャン|臓器|holoesc|escáner|órgano|holoscan|organe|\borgan\b|扫描|器官|ماسح|عضو/i,
+  analysis: /分析|análisis|analyse|تحليل/i,
+  compare: /比較|compar|vergleich|比较|مقارنة/i,
+  debate: /ディベート|討論|debate|débat|debatte|辩论|نقاش/i,
+  arena: /アリーナ|対戦|法廷|裁判|arena|tribunal|juicio|procès|gericht|prozess|法庭|审判|محكمة|محاكمة/i,
+  myth: /神話|ファクトチェック|mito|\bmythe|mythos|谣言|خرافة/i,
+  roast: /インフルエンサー|influencer|influenceur|网红|مؤثر/i,
+  simulator: /シミュレーター|simulador|simulateur|simulator|模拟器|محاكي/i,
+  studies: /アーカイブ|研究一覧|archivo|estudios|archives|archiv|档案|أرشيف/i,
+  studio: /スタジオ|コンテンツ|estudio de contenido|contenido|studio de contenu|content-studio|工作室|استوديو/i,
+  pk: /半減期|vida media|half.?life|demi-vie|halbwertszeit|半衰期|عمر النصف/i,
+  receptor: /受容体|receptor|récepteur|rezeptor|受体|مستقبل/i,
+  agonists: /作動薬|agonistas|agonistes|agonisten|激动剂|ناهضات/i,
+  synthesis: /合成|síntesis|synthèse|synthese|تخليق/i,
+  telemetry: /テレメトリー|心拍|telemetría|télémétrie|telemetrie|遥测|心跳|القياس/i,
+  genome: /遺伝子|ゲノム|gen\b|genoma|adn|\bgène|génome|\bgenom|基因|جين/i,
+  globe: /規制|グローブ|地球儀|globo|regulaci|réglement|regulierung|globus|监管|地球仪|تنظيم/i,
+  future: /未来|futuro|\bfutur|zukunft|المستقبل/i,
 };

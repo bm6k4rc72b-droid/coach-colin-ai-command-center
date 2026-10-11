@@ -115,21 +115,6 @@ function roast(ctx, w, h, t, s) {
   gauge(ctx, w * 0.82, h * 0.5, h * 0.16, r.score / 100, r.score > 70 ? GREEN : r.score > 40 ? GOLD : RED, 'honesty score', h * 0.07);
 }
 
-function arena(ctx, w, h, t, s) {
-  chrome(ctx, w, h, 'DEBATE ARENA', 'Two players · Colin judges · the room votes');
-  const a = s.arena;
-  if (!a) return;
-  para(ctx, `Motion: “${a.motion}”`, 44, h * 0.29, w - 90, h * 0.05, { size: h * 0.038, color: GOLD, weight: 600, lines: 2 });
-  [['a', a.names.a, 'FOR', GOLD], ['b', a.names.b, 'AGAINST', ICE]].forEach(([k, name, side, colour], i) => {
-    const x = 44 + i * w * 0.48;
-    text(ctx, `${name} · ${side}`, x, h * 0.45, { size: h * 0.04, weight: 700, color: colour, glow: a.turn === k ? 10 : 0 });
-    text(ctx, String(a.totals[k]), x, h * 0.6, { size: h * 0.12, weight: 700, color: colour, glow: 10 });
-    text(ctx, `Colin’s points · ${a.votes[k]} votes`, x, h * 0.66, { size: h * 0.028, color: DIM });
-  });
-  text(ctx, a.done ? a.result : `Round ${Math.min(a.round, 3)} of 3 · ${a.turn === 'a' ? a.names.a : a.names.b} to speak`, 44, h * 0.82, { size: h * 0.034, color: TEXT, weight: 600 });
-  if (a.lean) para(ctx, a.lean, 44, h * 0.89, w - 90, h * 0.036, { size: h * 0.026, color: DIM, lines: 2 });
-}
-
 function future(ctx, w, h, t, s) {
   chrome(ctx, w, h, 'THE FUTURE WING', 'Pipeline snapshot · October 2026');
   STAGES.forEach((stage, i) => {
@@ -147,4 +132,4 @@ function future(ctx, w, h, t, s) {
   }
 }
 
-Object.assign(DRAWERS, { pk, scan, globe, roast, arena, future });
+Object.assign(DRAWERS, { pk, scan, globe, roast, future });

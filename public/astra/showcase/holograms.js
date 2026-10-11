@@ -28,25 +28,40 @@ const GREEN = new THREE.Color('#3ef0b4');
 const COLIN_CROP = { u0: 0.418, u1: 0.628, v0: 0.29, v1: 0.835 };
 
 /**
- * The receptionist: the caped figure from the reception plate, lifted off
- * the photograph by a luminance key and re-lit as a hologram — scanlines,
- * flicker, a voice ring at his feet, and a glitch band when he speaks.
+ * A figure lifted off one of the photographic plates by a luminance key and
+ * re-lit as a hologram: scanlines, flicker, three stacked layers for depth,
+ * and a glitch band while Colin speaks. Every Colin in the room — the
+ * receptionist, the interpreter, the judge — comes out of this one factory.
+ *
+ * @param {object} options Cut-out settings.
+ * @param {string} options.src Plate URL.
+ * @param {{u0: number, u1: number, v0: number, v1: number}} options.crop Figure bounds in UV space.
+ * @param {number} [options.height] Height in metres.
+ * @param {[number, number]} [options.size] Plate size in pixels, for the aspect ratio.
+ * @param {[number, number]} [options.key] Luminance key: below the first is gone, above the second is solid.
+ * @param {number} [options.warm] How hard to drop warm background light (0 keeps gold costumes).
+ * @param {[number, number]} [options.emblem] Where warm light is kept anyway (crop UV), or null.
+ * @param {[number, number, number, number]} [options.mask] Soft ellipse (cx, cy, rx, ry) in crop UV; outside fades out.
+ * @param {number} [options.tint] How far to push towards hologram blue (0–1).
+ * @param {number} [options.lift] Lift dark mid-tones (0–1) so a face in shadow still reads under additive blending.
+ * @returns {{ body: THREE.Group, layers: THREE.Mesh[], width: number, height: number }} The figure.
  */
-function colinHologram() {
-  const group = new THREE.Group();
-  // The station positions `group`; he bobs inside it.
+export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0.07, 0.3], warm = 1, emblem = null, mask = [0.5, 0.5, 9, 9], tint = 0.22, lift = 0 }) {
   const body = new THREE.Group();
-  group.add(body);
-  const texture = new THREE.TextureLoader().load(PLATES.reception);
+  const texture = new THREE.TextureLoader().load(src);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const aspect = ((COLIN_CROP.u1 - COLIN_CROP.u0) * 2352) / ((COLIN_CROP.v1 - COLIN_CROP.v0) * 1008);
-  const height = 2.45;
+  const aspect = ((crop.u1 - crop.u0) * size[0]) / ((crop.v1 - crop.v0) * size[1]);
   const uniforms = {
     map: { value: texture },
-    crop: { value: new THREE.Vector4(COLIN_CROP.u0, COLIN_CROP.v0, COLIN_CROP.u1, COLIN_CROP.v1) },
+    crop: { value: new THREE.Vector4(crop.u0, crop.v0, crop.u1, crop.v1) },
+    keyRange: { value: new THREE.Vector2(key[0], key[1]) },
+    ellipse: { value: new THREE.Vector4(...mask) },
+    emblemAt: { value: new THREE.Vector3(emblem ? emblem[0] : -9, emblem ? emblem[1] : -9, emblem ? 1 : 0) },
+    warm: { value: warm },
+    tint: { value: tint },
+    lift: { value: lift },
     time: { value: 0 },
     speak: { value: 0 },
-    layer: { value: 1 },
   };
   const material = (layer) => new THREE.ShaderMaterial({
     uniforms: { ...uniforms, layer: { value: layer } },
@@ -56,7 +71,8 @@ function colinHologram() {
     side: THREE.DoubleSide,
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `
-      uniform sampler2D map; uniform vec4 crop; uniform float time, speak, layer;
+      uniform sampler2D map; uniform vec4 crop; uniform vec2 keyRange; uniform vec4 ellipse; uniform vec3 emblemAt;
+      uniform float warm, tint, lift, time, speak, layer;
       varying vec2 vUv;
       float hash(float n){ return fract(sin(n) * 43758.5453); }
       void main(){
@@ -68,55 +84,88 @@ function colinHologram() {
         float lum = dot(c, vec3(0.299, 0.587, 0.114));
         // Key the figure off the dark room: bright and cool survives, the
         // dim set behind him falls away.
-        float key = smoothstep(0.07, 0.3, lum + max(0.0, c.b - c.r) * 0.35);
-        // The room's warm light rings run behind him; drop warm light except
-        // around his emblem and eye, which are meant to glow gold and red.
-        float emblem = 1.0 - smoothstep(0.08, 0.16, distance(vUv * vec2(0.8, 1.0), vec2(0.27, 0.74)));
-        key *= mix(1.0 - smoothstep(0.04, 0.22, c.r - c.b), 1.0, emblem);
+        float key = smoothstep(keyRange.x, keyRange.y, lum + max(0.0, c.b - c.r) * 0.35);
+        // Warm background light (gold rings, lamps) can be dropped, except
+        // around an emblem that is meant to glow gold.
+        float emblem = emblemAt.z * (1.0 - smoothstep(0.08, 0.16, distance(vUv * vec2(0.8, 1.0), emblemAt.xy)));
+        key *= mix(1.0, mix(1.0 - smoothstep(0.04, 0.22, c.r - c.b), 1.0, emblem), warm);
+        vec2 d = (vUv - ellipse.xy) / ellipse.zw;
+        float oval = 1.0 - smoothstep(0.75, 1.0, length(d));
         vec2 edge = smoothstep(vec2(0.0), vec2(0.1, 0.06), vUv) * smoothstep(vec2(0.0), vec2(0.1, 0.015), 1.0 - vUv);
         float scan = 0.8 + 0.2 * sin(vUv.y * 420.0 - time * 7.0);
         float flicker = 0.93 + 0.07 * sin(time * 31.0) * sin(time * 7.3);
-        vec3 holo = mix(c, vec3(0.42, 0.78, 1.0) * (lum * 1.7 + 0.05), 0.22);
-        float a = key * edge.x * edge.y * layer;
+        // Additive light cannot show dark: lift shadows (√ brightens 0.09 → 0.3).
+        vec3 lit = mix(c, sqrt(c), lift);
+        vec3 holo = mix(lit, vec3(0.42, 0.78, 1.0) * (lum * 1.7 + 0.05), tint);
+        float a = key * oval * edge.x * edge.y * layer;
         gl_FragColor = vec4(holo * scan * flicker * (1.05 + speak * 0.45), a);
       }`,
   });
+  const width = height * aspect;
   // Three stacked layers a few centimetres apart: as the camera moves they
   // part slightly, which reads as volume rather than a poster.
   const layers = [[0, 1], [-0.06, 0.35], [-0.12, 0.18]].map(([z, layer]) => {
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(height * aspect, height), material(layer));
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material(layer));
     mesh.position.set(0, -0.12, z);
     body.add(mesh);
     return mesh;
   });
-  // Voice rings at his feet.
+  return { body, layers, width, height };
+}
+
+/** Advance a cut-out's shader clock and voice level. */
+export function animateCutout(layers, t, speak) {
+  for (const mesh of layers) {
+    mesh.material.uniforms.time.value = t;
+    mesh.material.uniforms.speak.value = speak;
+  }
+}
+
+/**
+ * Voice rings and a gold base at a hologram's feet.
+ *
+ * @param {THREE.Group} group Where to put them.
+ * @param {number} [y] Floor height relative to the group.
+ * @returns {(t: number, speak: number) => void} Per-frame update.
+ */
+export function voiceRings(group, y = -1.3) {
   const rings = [0, 1, 2].map((i) => {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.52, 64), glow(hot(GOLD, 2), 0));
     ring.rotation.x = -Math.PI / 2;
-    ring.position.y = -1.3 + i * 0.002;
+    ring.position.y = y + i * 0.002;
     group.add(ring);
     return ring;
   });
   const base = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.66, 96), glow(hot(GOLD, 1.6), 0.8));
   base.rotation.x = -Math.PI / 2;
-  base.position.y = -1.31;
+  base.position.y = y - 0.01;
   group.add(base);
+  return (t, speak) => rings.forEach((ring, i) => {
+    const phase = (t * 0.9 + i / 3) % 1;
+    ring.scale.setScalar(1 + phase * 1.6);
+    ring.material.opacity = (0.15 + speak * 0.85) * (1 - phase);
+  });
+}
+
+/**
+ * The receptionist: the caped figure from the reception plate, lifted off
+ * the photograph and re-lit as a hologram, with a voice ring at his feet.
+ */
+function colinHologram() {
+  const group = new THREE.Group();
+  // The station positions `group`; he bobs inside it.
+  const { body, layers } = cutout({ src: PLATES.reception, crop: COLIN_CROP, emblem: [0.27, 0.74] });
+  group.add(body);
+  const rings = voiceRings(group);
   return {
     group,
     update(t, s) {
       const speak = s.speak || 0;
-      for (const mesh of layers) {
-        mesh.material.uniforms.time.value = t;
-        mesh.material.uniforms.speak.value = speak;
-      }
+      animateCutout(layers, t, speak);
       // He turns, very slightly, toward whoever is moving the room.
       body.rotation.y = s.lookX * 0.25;
       body.position.y = 0.03 * Math.sin(t * 1.3);
-      rings.forEach((ring, i) => {
-        const phase = (t * 0.9 + i / 3) % 1;
-        ring.scale.setScalar(1 + phase * 1.6);
-        ring.material.opacity = (0.15 + speak * 0.85) * (1 - phase);
-      });
+      rings(t, speak);
     },
   };
 }
