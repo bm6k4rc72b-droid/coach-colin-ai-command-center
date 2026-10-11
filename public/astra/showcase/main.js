@@ -25,6 +25,9 @@ import { buildWingCards } from './cards2.js';
 import { buildCourtCards } from './cards3.js';
 import './screens2.js';
 import './screens3.js';
+import './screens4.js';
+import { buildVaultCard } from './vault.js';
+import { BlackLab, CUSTODIAN } from './lab.js';
 import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, speakable, understand } from './colin.js';
 import { LANGS } from './i18n.js';
 import { engines, translate } from './hub.js';
@@ -69,6 +72,8 @@ const state = {
   futurePicked: null,
   hub: { from: 'en', to: 'es', at: -10, history: [], glossary: 'ja' },
   hubEngine: engines().translator,
+  vault: { phase: 'locked', signature: null, print: false, granted: false, codename: null },
+  lab: { open: false, panel: 0, focus: null, lookX: 0, lookY: 0, decay: null },
 };
 
 const look = { x: 0, y: 0, source: 'pointer' };
@@ -112,6 +117,10 @@ function buildStations() {
   const wing = buildWingCards(state, { ...hooks, api });
   const court = buildCourtCards(state, { ...hooks, api });
   Object.assign(built.cards, wing, court);
+  built.cards.classified = () => buildVaultCard(state, {
+    say: (text) => say(text, CUSTODIAN), go, index: indexOf, now: () => clock.elapsedTime, reduced,
+    openLab: () => blackLab.open(),
+  });
   const track = $('track');
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
@@ -256,8 +265,12 @@ function arrived() {
   if (Math.abs(progress - current) > 0.05) return;
   if (desk.lastArrival === current) return;
   desk.lastArrival = current;
-  if (desk.narrate && !desk.touring && voice.enabled && $('gate').classList.contains('gone')) say(arrivalLine(current));
+  if (state.lab.open) return;
+  if (desk.narrate && !desk.touring && voice.enabled && $('gate').classList.contains('gone')) say(arrivalLine(current), styleFor(current));
 }
+
+/** The custodian whispers at the classified door; everywhere else, the receptionist. */
+const styleFor = (i) => (STATIONS[i]?.id === 'classified' ? CUSTODIAN : undefined);
 
 function markActive() {
   document.querySelectorAll('.sec').forEach((sec, i) => sec.classList.toggle('active', i === current));
@@ -381,7 +394,7 @@ async function tour() {
     if (!desk.touring) break;
     const line = arrivalLine(i);
     const started = performance.now();
-    await say(line);
+    await say(line, styleFor(i));
     // If speech was off or failed instantly, give people time to read instead.
     const reading = 1500 + line.length * 45;
     const spent = performance.now() - started;
@@ -468,6 +481,12 @@ async function briefing() {
 }
 
 const arLab = new ARLab({ state, onSay: () => say(line('arIntro')) });
+
+// The Black Lab, behind the classified station's vault door.
+const blackLab = new BlackLab({
+  state, say, stop: stopTalking, reduced,
+  onClose: () => { desk.lastArrival = current; setTimeout(() => say(line('labWipe'), CUSTODIAN), 300); },
+});
 function openAR() {
   openDesk(false);
   return arLab.open();
@@ -577,7 +596,8 @@ function tick() {
     api.agonistsSync?.(state.agonist);
   }
 
-  if (ready) {
+  // While the Black Lab is open the chamber stands still and draws nothing.
+  if (ready && !state.lab.open) {
     yaw += (progress * STEP - yaw) * (reduced ? 1 : 1 - Math.exp(-dt * 7));
     const lx = state.lookX + idleDrift;
     // The camera walks a small inner circle towards the station it faces, so
@@ -675,7 +695,7 @@ function boot() {
   markActive();
   if (ok) requestAnimationFrame(tick);
 
-  window.__chamber = { go, state, handle, api: () => api, voice, get current() { return current; }, get progress() { return progress; }, get room() { return room; }, get camera() { return camera; }, renderer, motion, look };
+  window.__chamber = { blackLab, go, state, handle, api: () => api, voice, get current() { return current; }, get progress() { return progress; }, get room() { return room; }, get camera() { return camera; }, renderer, motion, look };
 }
 
 boot();

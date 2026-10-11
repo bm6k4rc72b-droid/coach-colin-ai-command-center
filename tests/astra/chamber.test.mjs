@@ -126,3 +126,63 @@ test('the phrasebook translates exactly what it holds, from any of its languages
   assert.equal(none.engine, 'none');
   assert.equal(none.text, '');
 });
+
+/* --------------------------------------------- the classified file, EX-039 */
+
+import {
+  CLAIMS, EXENATIDE, GLP1, IDENTITY, STUDIES as EX_STUDIES, TEASER_CHECK, alignment, kaFor, keFrom, lifetime, simulate, tmaxOf,
+} from '../../public/astra/showcase/classified.js';
+import { inkLength, signatureValid, strokeHash } from '../../public/astra/showcase/vault.js';
+
+test('exenatide is 39 residues and 53% identical to GLP-1 over GLP-1’s 30', () => {
+  assert.equal(EXENATIDE.length, 39);
+  assert.equal(GLP1.length, 30);
+  const a = alignment();
+  assert.equal(a.identical, 16);
+  assert.ok(Math.abs(a.percent - 53.33) < 0.01);
+  // Position 2: glycine against alanine — the DPP-4 resistance.
+  assert.deepEqual([a.positions[1].ex, a.positions[1].glp, a.positions[1].same], ['G', 'A', false]);
+  assert.equal(a.positions.filter((p) => p.tail).length, 9);
+});
+
+test('the kinetics reproduce the label: t½ 2.4 h, tmax 2.1 h', () => {
+  const ke = keFrom(IDENTITY.halfLife);
+  assert.ok(Math.abs(ke - Math.LN2 / 2.4) < 1e-12);
+  const ka = kaFor(IDENTITY.tmax, ke);
+  assert.ok(Math.abs(tmaxOf(ka, ke) - 2.1) < 1e-6);
+  const sim = simulate({ interval: 12 });
+  // Five half-lives in 12 h: 2⁻⁵ = 3.125% left; R = 1/(1 − 2⁻⁵).
+  assert.ok(Math.abs(sim.remaining - 2 ** -5) < 1e-12);
+  assert.ok(Math.abs(sim.accumulation - 1 / (1 - 2 ** -5)) < 1e-12);
+  // A single dose, scaled, peaks at 1 near 2.1 h.
+  const first = sim.points.filter(([t]) => t < 12);
+  const peak = first.reduce((m, p) => (p[1] > m[1] ? p : m));
+  assert.ok(Math.abs(peak[0] - 2.1) < 0.11 && Math.abs(peak[1] - 1) < 1e-3);
+});
+
+test('sampled lifetimes have the drug’s half-life as their median', () => {
+  assert.equal(lifetime(0.5, 2.4), 2.4);
+  assert.ok(Math.abs(lifetime(0.25, 2.4) - 4.8) < 1e-12);
+});
+
+test('the evidence file is graded and the teaser’s fiction is called fiction', () => {
+  assert.equal(EX_STUDIES.length, 7);
+  for (const s of EX_STUDIES) assert.ok(s.title && s.journal && s.year && s.tier && s.finding && s.limitation, s.id);
+  assert.equal(EX_STUDIES.find((s) => s.id === 'exenatide-pd3').direction, -1);
+  const byId = Object.fromEntries(CLAIMS.map((c) => [c.id, c]));
+  assert.equal(byId.parkinson.level, 'contradicted');
+  assert.equal(byId.muscle.score, 0);
+  assert.ok(byId.glycaemia.score > 0.6);
+  assert.equal(TEASER_CHECK.find((c) => /hypertrophy/.test(c.said)).verdict, 'false');
+  assert.equal(TEASER_CHECK.find((c) => /2\.4 hours/.test(c.said)).verdict, 'true');
+});
+
+test('a signature needs real ink across the pad; its reference is stable', () => {
+  const scribble = [[[10, 50], [12, 52]]];
+  assert.equal(signatureValid(scribble, 300), false);
+  const wave = [Array.from({ length: 40 }, (_, i) => [10 + i * 7, 50 + Math.sin(i / 3) * 25])];
+  assert.ok(inkLength(wave) > 280);
+  assert.equal(signatureValid(wave, 300), true);
+  assert.equal(strokeHash(wave.flat()), strokeHash(wave.flat()));
+  assert.match(strokeHash(wave.flat()), /^[0-9A-F]{8}$/);
+});

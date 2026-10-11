@@ -1,5 +1,5 @@
 /**
- * The chamber: a circular black-and-gold laboratory, twenty-one stations round
+ * The chamber: a circular black-and-gold laboratory, twenty-two stations round
  * its wall, each with a curved bank of screens, a pedestal and a hologram.
  *
  * Geometry is generated in code — no model files. Station i stands at angle
@@ -17,6 +17,7 @@ import { DOT, GOLD, ICE, atomMaterial, atoms, glow, hot, label, mulberry32, radi
 import { EXTRA_HOLOGRAMS } from './holograms.js';
 import { WING_HOLOGRAMS } from './holograms2.js';
 import { COURT_HOLOGRAMS } from './holograms3.js';
+import { VAULT_HOLOGRAMS } from './holograms4.js';
 
 export const STATION_COUNT = STATIONS.length;
 export const STEP = (Math.PI * 2) / STATION_COUNT;
@@ -526,9 +527,11 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   group.add(screen);
   // Its frame: gold edges top and bottom.
   for (const y of [1.89, 5.35]) {
-    const edge = new THREE.Mesh(new THREE.TorusGeometry(15.26, 0.02, 6, 48, 0.29), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
+    // Never wider than the station's own slice of the drum.
+    const arc = Math.min(0.29, STEP * 0.97);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(15.26, 0.02, 6, 48, arc), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
     edge.rotation.x = Math.PI / 2;
-    edge.rotation.z = Math.PI / 2 - 0.145 + Math.PI;
+    edge.rotation.z = Math.PI / 2 - arc / 2 + Math.PI;
     edge.position.y = y;
     group.add(edge);
   }
@@ -581,7 +584,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const rand = mulberry32(100 + index);
   const moteSeeds = Array.from({ length: moteCount }, () => [rand() * Math.PI * 2, Math.sqrt(rand()) * 0.9, rand()]);
 
-  const holo = (COURT_HOLOGRAMS[id] || WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
+  const holo = (VAULT_HOLOGRAMS[id] || COURT_HOLOGRAMS[id] || WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
   holo.group.position.y += 1.95;
   pedestal.add(holo.group);
 

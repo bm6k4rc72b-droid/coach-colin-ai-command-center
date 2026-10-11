@@ -472,12 +472,19 @@ public/astra/
     cards3.js           translation hub and courtroom cards; synthesised gavel
     holograms3.js       interpreter and judge Colin, network globe, gavel, scales, jury
     screens3.js         hub and courtroom wall screens
+    classified.js       EX-039 file: exenatide identity, GLP-1 alignment, PK maths, cited studies, teaser check
+    vault.js            classified station: signature pad, thumbprint scanner, vault-door unlock sequence
+    lab.js              the Black Lab: goo layer, 3D exendin-4 with falling drops, dossier panels, custodian
+    holograms4.js       the vault door on the classified pedestal
+    screens4.js         classified wall screen
+    sfx.js              synthesised vault sounds: bolts, hiss, creak, alarm, lab drone
+    i18n3.js            the custodian's lines in seven languages
     briefing.js         weekly research briefing via the Europe PMC radar, library fallback
     arlab.js            AR mode: WebXR hit-test placement, or camera + gyro; photo capture
     cards.js            each station's controls, driving ASTRA's own engines
     cards2.js           half-life bench, holo-scan, globe, influencer roast, future wing
     wing.js             PK model, body zones, regulatory snapshot, roast + argument scoring, pipeline
-    room.js             the circular room, twenty-one stations, reference holograms
+    room.js             the circular room, twenty-two stations, reference holograms
     holograms.js        the cut-out factory, Colin, map, balance, debate table, myth glass, simulator, archive, studio
     holograms2.js       PK ribbon, body scan, globe, influencer post, pipeline spiral
     screens2.js         wall screens for the new wing
