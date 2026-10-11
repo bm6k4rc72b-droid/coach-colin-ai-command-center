@@ -14,6 +14,7 @@
  */
 
 import { AR, DE, FR, ZH } from './i18n2.js';
+import { VAULT } from './i18n3.js';
 
 export const LANGS = [
   { id: 'en', label: 'English', speech: 'en-GB', male: /daniel|arthur|oliver|george|ryan|thomas|harry|brian|uk english male|male/i, female: /female|kate|serena|stephanie|martha|libby|sonia|susan|hazel|emily|fiona|moira|tessa|karen|samantha/i },
@@ -252,6 +253,13 @@ const ES = {
 
 export const T = { en: EN, ja: JA, es: ES, fr: FR, de: DE, zh: ZH, ar: AR };
 
+// The vault's lines: the custodian's, plus the classified station's arrival.
+for (const [id, extra] of Object.entries(VAULT)) {
+  const { classified, ...rest } = extra;
+  Object.assign(T[id], rest);
+  if (id !== 'en') T[id].stations.classified = classified;
+}
+
 /**
  * Words that mean the same command in each language, matched before the
  * English intent parser so a Japanese or Spanish request still navigates.
@@ -293,4 +301,5 @@ export const PLACE_WORDS = {
   genome: /遺伝子|ゲノム|gen\b|genoma|adn|\bgène|génome|\bgenom|基因|جين/i,
   globe: /規制|グローブ|地球儀|globo|regulaci|réglement|regulierung|globus|监管|地球仪|تنظيم/i,
   future: /未来|futuro|\bfutur|zukunft|المستقبل/i,
+  classified: /機密|金庫|エキセナチド|clasificad|exenatida|bóveda|classifié|exénatide|coffre|geheim|tresor|exenatid|机密|金库|艾塞那肽|سري|خزنة|إكسيناتيد/i,
 };

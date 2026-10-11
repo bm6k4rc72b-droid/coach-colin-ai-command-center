@@ -168,6 +168,7 @@ export const PLATES = {
   ligand: '../assets/showcase/ligand.webp',
   hub: '../assets/showcase/hub.webp',
   court: '../assets/showcase/court.webp',
+  exBanner: '../assets/showcase/ex-banner.webp',
 };
 
 /* ----------------------------------------------------------- tool helpers */
@@ -219,7 +220,7 @@ export const STATIONS = [
     plate: 'reception',
     kicker: 'Reception',
     title: 'COLIN Biomedical Technologies',
-    body: `A circular laboratory of twenty-one stations, with a holographic receptionist on the centre pedestal. Swipe or scroll sideways to walk the room; tilt your phone, or move a finger, to look around. Every number here is read from ASTRA’s graded corpus (${SIZE.peptides} compounds, ${SIZE.studies} studies, ${SIZE.claims} graded claims) or computed in front of you.`,
+    body: `A circular laboratory of twenty-two stations, with a holographic receptionist on the centre pedestal. Swipe or scroll sideways to walk the room; tilt your phone, or move a finger, to look around. Every number here is read from ASTRA’s graded corpus (${SIZE.peptides} compounds, ${SIZE.studies} studies, ${SIZE.claims} graded claims) or computed in front of you.`,
     facts: [
       'Tap “Ask Colin” to talk to him: type, or hold the mic',
       'Say “give me the tour” and he walks you round',
@@ -437,5 +438,15 @@ export const STATIONS = [
     facts: [],
     cite: 'Sponsor announcements and publications, 2025–26. Re-check as programmes move.',
     colin: 'The future wing. Some of this is in pharmacies, some is in trials, and some is frankly in films. I’ll tell you which is which.',
+  },
+  {
+    id: 'classified',
+    plate: 'exBanner',
+    kicker: 'CLASSIFIED · EX-039',
+    title: 'Warning: restricted specimen',
+    body: 'Behind this door is the file on EX-039 — a peptide that began in the venom of a desert lizard and became the first drug of its kind. Entry needs a signature and a thumbprint. The custodian would much rather you didn’t.',
+    facts: [],
+    cite: 'The vault is theatre; the file is cited — prescribing information and peer-reviewed trials (classified.js). Signature and print are simulated and never leave this device.',
+    colin: 'Ah. No. Not this one. This door is classified, and frankly so is the corridor you’re standing in. Turn back. … Still here? Then sign the form, and give me your thumb.',
   },
 ];

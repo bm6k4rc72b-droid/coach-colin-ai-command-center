@@ -1357,13 +1357,36 @@ in code and assert in CI.
       The room's votes take seats first; empty seats follow the scorecard.
     - The library then sentences the claim itself (never a person). The
       timestamped transcript downloads as .txt.
-  - **Twenty-one stations** sit round the wall: the translation hub, map, body
+  - **Classified · EX-039** (the last station, 21). A top-secret warning
+    with a redacted dossier and hazard tape.
+    - The visitor signs a virtual signature pad (hashed on the device into a
+      reference number) and holds a virtual thumbprint scanner. Both are
+      simulated, and nothing is stored or sent.
+    - Then an animated vault door unlocks: authentication readout, dial spin,
+      twelve bolts retracting, the wheel turning and the pressure seal
+      hissing (all sound synthesised), and the door swings open on to light.
+    - **The Black Lab** is a separate interface built from the user's
+      goo-lab art:
+      - Black goo drips from the top of the screen in free fall.
+      - A 3D exendin-4 chain: gold where it matches human GLP-1, glossy
+        black where it doesn't, ice for the lizard-only Trp-cage tail. Goo
+        drops fall from it under gravity.
+      - Six dossier panels on exenatide: identity from the label; the Gila
+        monster origin; a live 53% alignment with GLP-1; half-life maths
+        (t½ 2.4 h, absorption fitted to tmax 2.1 h, 3.1% left at 12 h,
+        accumulation ×1.03); an evidence file of 7 cited studies graded by
+        ASTRA's engine, including the negative 2025 Parkinson's phase 3;
+        and a line-by-line fact-check of the teaser posters.
+    - **Colin as the custodian:** whispering, paranoid and dryly funny in
+      all seven languages. He keeps telling you to leave, and leaving runs a
+      "memory wipe".
+  - **Twenty-two stations** sit round the wall: the translation hub, map, body
     holo-scan (tap an organ), evidence analysis, comparison balance, debate
     room, the courtroom, myth checker, Colin vs the influencer, study
     simulator, the archive of all 38 cited studies, content studio, the
     half-life bench, GLP-1 receptor, incretin agonists, synthesis, telemetry,
-    gene to drug, the regulatory globe with WADA status, and the
-    future-peptides wing.
+    gene to drug, the regulatory globe with WADA status, the
+    future-peptides wing, and the classified vault.
   - **Real maths:**
     - Bateman pharmacokinetics with superposition and the accumulation ratio
       R = 1/(1 − e^(−kₑτ)).
