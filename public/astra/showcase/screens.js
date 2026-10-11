@@ -35,12 +35,15 @@ function chrome(ctx, w, h, title, sub) {
   bg.addColorStop(1, '#020306');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
-  if (plate && plate.complete && plate.naturalWidth) {
+  // A plate is a loaded image or, on a phone, a shrunk canvas copy of one.
+  const pw = plate ? plate.naturalWidth || plate.width || 0 : 0;
+  const ph = plate ? plate.naturalHeight || plate.height || 0 : 0;
+  if (pw && ph && plate.complete !== false) {
     // Cover-fit the photograph, then shade it so the instruments stay legible:
     // heavier on the left, where the readouts sit.
-    const scale = Math.max(w / plate.naturalWidth, h / plate.naturalHeight);
-    const dw = plate.naturalWidth * scale;
-    const dh = plate.naturalHeight * scale;
+    const scale = Math.max(w / pw, h / ph);
+    const dw = pw * scale;
+    const dh = ph * scale;
     ctx.drawImage(plate, (w - dw) / 2, (h - dh) / 2, dw, dh);
     const shade = ctx.createLinearGradient(0, 0, w, 0);
     shade.addColorStop(0, `rgba(2,3,6,${0.55 + plateShade * 0.4})`);

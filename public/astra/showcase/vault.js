@@ -270,10 +270,12 @@ export function playUnlock({ say, signature, reduced, onOpen }) {
     swing(0);
     await wait(1500);
     overlay.classList.add('flash');
-    onOpen();
-    await wait(800);
+    await wait(450);
+    // Tear the door down before the lab is built, so the two never hold
+    // memory at the same time.
     overlay.remove();
     document.body.classList.remove('vault-running');
+    onOpen();
   })();
 }
 

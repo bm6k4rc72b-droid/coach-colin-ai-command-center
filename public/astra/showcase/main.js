@@ -82,12 +82,49 @@ const clock = new THREE.Clock();
 
 /* ------------------------------------------------------------- the plates */
 
+// The photographs are big (2352 × 1008 decodes to ~9.5 MB each). They are
+// loaded only for stations near the visitor, shrunk on a phone, and let go
+// again when the visitor walks on — a phone browser has little memory to spare.
 const plates = {};
-for (const [id, src] of Object.entries(PLATES)) {
-  const image = new Image();
-  image.decoding = 'async';
-  image.src = src;
-  plates[id] = image;
+const PLATE_MAX = phone ? 1024 : 2400;
+/** Stations apart, the short way round the circle. */
+const ringDistance = (a, b) => { const d = Math.abs(a - b); return Math.min(d, STATIONS.length - d); };
+
+function plateFor(id) {
+  if (!id) return null;
+  let entry = plates[id];
+  if (!entry) {
+    entry = { img: null };
+    plates[id] = entry;
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => {
+      if (plates[id] !== entry) return;
+      if (image.naturalWidth > PLATE_MAX) {
+        const c = document.createElement('canvas');
+        c.width = PLATE_MAX;
+        c.height = Math.round((image.naturalHeight * PLATE_MAX) / image.naturalWidth);
+        c.getContext('2d').drawImage(image, 0, 0, c.width, c.height);
+        image.src = '';
+        entry.img = c;
+      } else entry.img = image;
+      if (ready) STATIONS.forEach((s, i) => { if (s.plate === id) drawScreen(i, clock.elapsedTime); });
+    };
+    image.src = PLATES[id];
+  }
+  return entry.img;
+}
+
+/** Keep photographs (screens and card headers) only around the current station. */
+function managePlates() {
+  const near = new Set(STATIONS.filter((s, i) => s.plate && ringDistance(i, current) <= 2).map((s) => s.plate));
+  for (const id of Object.keys(plates)) if (!near.has(id)) delete plates[id];
+  document.querySelectorAll('.sec').forEach((sec, i) => {
+    const header = sec.querySelector('.card-plate');
+    if (!header) return;
+    const want = ringDistance(i, current) <= 1 ? `url("${header.dataset.src}")` : 'none';
+    if (header.style.backgroundImage !== want) header.style.backgroundImage = want;
+  });
 }
 
 /* ----------------------------------------------------------------- Colin */
@@ -125,7 +162,7 @@ function buildStations() {
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
     const card = el('article', { class: 'card', 'aria-labelledby': `t-${station.id}` }, [
-      station.plate ? el('div', { class: 'card-plate', style: `background-image:url('${PLATES[station.plate]}')`, 'aria-hidden': 'true' }) : null,
+      station.plate ? el('div', { class: 'card-plate', 'data-src': PLATES[station.plate], 'aria-hidden': 'true' }) : null,
       el('p', { class: 'kicker', text: `${String(i).padStart(2, '0')} · ${station.kicker}` }),
       el('h2', { id: `t-${station.id}`, text: station.title }),
       el('p', { text: station.body }),
@@ -155,7 +192,7 @@ function initStage() {
     document.body.classList.add('no-webgl');
     return false;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, phone ? 1.5 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, phone ? 1.25 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.9;
@@ -164,7 +201,7 @@ function initStage() {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-  const size = phone ? [768, 432] : [1024, 576];
+  const size = phone ? [640, 360] : [1024, 576];
   for (let i = 0; i < STATIONS.length; i += 1) {
     const c = document.createElement('canvas');
     [c.width, c.height] = size;
@@ -190,7 +227,6 @@ function initStage() {
   addEventListener('resize', resize);
   STATIONS.forEach((s, i) => drawScreen(i, 0));
   // Repaint once each photograph arrives, so no wall is left bare.
-  STATIONS.forEach((s, i) => { if (s.plate) plates[s.plate].addEventListener('load', () => drawScreen(i, clock.elapsedTime)); });
   ready = true;
   return true;
 }
@@ -213,7 +249,7 @@ function resize() {
 function drawScreen(i, t) {
   const c = canvases[i];
   const station = STATIONS[i];
-  draw(station.id, c.getContext('2d'), c.width, c.height, t, state, station.plate ? plates[station.plate] : null);
+  draw(station.id, c.getContext('2d'), c.width, c.height, t, state, station.plate && ringDistance(i, current) <= 2 ? plateFor(station.plate) : null);
   room.stations[i].screenTexture.needsUpdate = true;
 }
 
@@ -273,6 +309,7 @@ function arrived() {
 const styleFor = (i) => (STATIONS[i]?.id === 'classified' ? CUSTODIAN : undefined);
 
 function markActive() {
+  managePlates();
   document.querySelectorAll('.sec').forEach((sec, i) => sec.classList.toggle('active', i === current));
   document.querySelectorAll('.dot').forEach((dot, i) => { dot.classList.toggle('on', i === current); dot.setAttribute('aria-current', i === current ? 'step' : 'false'); });
   $('prev').disabled = current === 0;

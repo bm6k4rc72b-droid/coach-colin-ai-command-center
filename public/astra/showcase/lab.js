@@ -38,6 +38,9 @@ export const LAB_PLATES = {
 export const CUSTODIAN = { pitch: 0.7, rate: 0.86 };
 
 const G = 9.81;
+/** Phones get a lighter lab: lower resolution, no antialiasing, one photo at a time. */
+const LITE = matchMedia('(max-width: 820px)').matches || /Mobi|Android|iPhone|iPad/.test(navigator.userAgent);
+const DPR = Math.min(window.devicePixelRatio || 1, LITE ? 1.25 : 2);
 const FLOOR = -1.55;
 const SCALE = 0.11; // scene units per ångström
 
@@ -91,7 +94,7 @@ function gooLayer(canvas) {
   let drips = [];
   const make = (x) => ({ x, len: 4 + Math.random() * 20, max: 40 + Math.random() * 120, speed: 3 + Math.random() * 10, width: 3 + Math.random() * 7, drop: null });
   const resize = () => {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = LITE ? 1 : DPR;
     w = canvas.clientWidth; h = canvas.clientHeight;
     canvas.width = w * dpr; canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -148,13 +151,16 @@ function gooLayer(canvas) {
 /* ------------------------------------------------------------ the hero */
 
 function hero(canvas, state) {
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !LITE, powerPreference: 'default' });
+  renderer.setPixelRatio(DPR);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene();
-  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const envTarget = pmrem.fromScene(new RoomEnvironment(), 0.04);
+  pmrem.dispose();
+  scene.environment = envTarget.texture;
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
   camera.position.set(0, 0.2, 5.4);
   scene.add(new THREE.AmbientLight(0x404050, 0.6));
@@ -338,7 +344,17 @@ function hero(canvas, state) {
       const hit = ray.intersectObjects(beads.filter((b) => b.visible), false)[0];
       return hit ? hit.object.userData.i : null;
     },
-    dispose() { renderer.dispose(); },
+    /** Free everything, and the WebGL context itself — phones allow only a few. */
+    dispose() {
+      scene.traverse((o) => {
+        o.geometry?.dispose();
+        const m = o.material;
+        if (m) for (const mat of [].concat(m)) { mat.map?.dispose(); mat.dispose(); }
+      });
+      envTarget.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
+    },
   };
 }
 
@@ -508,7 +524,8 @@ export class BlackLab {
     this.entered = performance.now();
     this.lastTouch = performance.now();
     this.nag = 0;
-    const plates = el('div', { class: 'bl-plates' }, LAB_PANELS.map((p, i) => el('div', { class: `bl-plate${i === 0 ? ' on' : ''}`, style: `background-image:url('${LAB_PLATES[p.plate]}')` })));
+    // Photos are attached only to the current panel and its neighbours.
+    const plates = el('div', { class: 'bl-plates' }, LAB_PANELS.map((p, i) => el('div', { class: `bl-plate${i === 0 ? ' on' : ''}`, 'data-src': LAB_PLATES[p.plate] })));
     const goo = el('canvas', { class: 'bl-goo', 'aria-hidden': 'true' });
     const heroCanvas = el('canvas', { class: 'bl-hero', 'aria-label': 'Exendin-4 model: tap a residue' });
     const timer = el('span', { class: 'bl-timer', text: '00:00' });
@@ -547,7 +564,14 @@ export class BlackLab {
     this.built = built;
     this.gooLayer = gooLayer(goo);
     this.gooLayer.resize();
-    try { this.hero = hero(heroCanvas, s); this.hero.resize(); } catch (error) { this.hero = null; }
+    this.attachPlates(0);
+    // The 3D model starts a moment after the lab appears, so its set-up does
+    // not land on the same frame as the vault's last animation.
+    this.hero = null;
+    this.heroTimer = setTimeout(() => {
+      if (!this.root) return;
+      try { this.hero = hero(heroCanvas, s); this.hero.resize(); } catch (error) { this.hero = null; }
+    }, 350);
     this.onResize = () => { this.gooLayer.resize(); this.hero?.resize(); };
     addEventListener('resize', this.onResize);
     this.onMove = (e) => {
@@ -617,9 +641,18 @@ export class BlackLab {
     setTimeout(() => { if (this.root && this.state.lab.panel !== k) { this.track.style.scrollBehavior = 'auto'; this.track.scrollLeft = k * this.track.clientWidth; this.track.style.scrollBehavior = ''; this.arrive(k); } }, 1200);
   }
 
+  /** Give only panels within one of `i` their photograph; drop the rest. */
+  attachPlates(i) {
+    this.plates.forEach((p, k) => {
+      const want = Math.abs(k - i) <= (LITE ? 0 : 1) ? `url("${p.dataset.src}")` : 'none';
+      if (p.style.backgroundImage !== want) p.style.backgroundImage = want;
+    });
+  }
+
   arrive(i) {
     const s = this.state;
     s.lab.panel = i;
+    this.attachPlates(i);
     s.lab.focus = null;
     this.lastTouch = performance.now();
     this.plates.forEach((p, k) => p.classList.toggle('on', k === i));
@@ -648,6 +681,7 @@ export class BlackLab {
     if (!this.root) return;
     cancelAnimationFrame(this.raf);
     clearTimeout(this.arriveTimer);
+    clearTimeout(this.heroTimer);
     removeEventListener('resize', this.onResize);
     removeEventListener('pointermove', this.onMove);
     removeEventListener('keydown', this.onKey);
