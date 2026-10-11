@@ -21,10 +21,13 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EXTRA_HOLOGRAMS } from './holograms.js';
 import { WING_HOLOGRAMS } from './holograms2.js';
+import { COURT_HOLOGRAMS } from './holograms3.js';
 import { HOLOGRAMS } from './room.js';
 
 export const AR_SUBJECTS = [
   { id: 'chamber', label: 'Colin', scale: 0.13 },
+  { id: 'arena', label: 'Judge Colin', scale: 0.12 },
+  { id: 'translate', label: 'Interpreter Colin', scale: 0.12 },
   { id: 'genome', label: 'DNA', scale: 0.16 },
   { id: 'receptor', label: 'GLP-1 receptor', scale: 0.16 },
   { id: 'myth', label: 'Myth glass', scale: 0.2 },
@@ -129,7 +132,7 @@ export class ARLab {
 
   setSubject() {
     if (this.holo) { this.spin.remove(this.holo.group); }
-    const make = WING_HOLOGRAMS[this.subject.id] || EXTRA_HOLOGRAMS[this.subject.id] || HOLOGRAMS[this.subject.id];
+    const make = COURT_HOLOGRAMS[this.subject.id] || WING_HOLOGRAMS[this.subject.id] || EXTRA_HOLOGRAMS[this.subject.id] || HOLOGRAMS[this.subject.id];
     this.holo = make(this.envMap);
     this.spin.add(this.holo.group);
     this.applyScale();

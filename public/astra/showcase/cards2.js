@@ -1,16 +1,16 @@
 /**
  * Cards for the new wing: half-life bench, holo-scan, regulatory globe,
- * Colin vs the influencer, the debate arena and the future wing.
+ * Colin vs the influencer and the future wing. (The debate arena became
+ * the courtroom; its card is in cards3.js.)
  *
  * @module astra/showcase/cards2
  */
 
 import { PEPTIDES } from '../js/data/peptides.js';
-import { MYTHS } from './sections.js';
 import { chipRow, el, fill, picker } from './cards.js';
 import {
   CAPTIONS, FUTURE, PK, REGIONS, REGULATORY, STAGES, STATUS, SYSTEM_LABEL, ZONES,
-  compoundsFor, motionLean, roast, scoreArgument, simulatePK, wadaStatus,
+  compoundsFor, roast, simulatePK, wadaStatus,
 } from './wing.js';
 import { line } from './colin.js';
 
@@ -159,80 +159,6 @@ export function buildWingCards(state, hooks) {
       const samples = el('div', { class: 'chips' }, CAPTIONS.map((c, i) => el('button', { class: 'chip', type: 'button', text: `Example ${i + 1}`, title: c, onclick: () => perform(c) })));
       api.roast = (caption) => { hooks.go(hooks.index('roast')); perform(caption); };
       return [input, el('div', { class: 'pair' }, [go, stop]), samples, out];
-    },
-
-    arena() {
-      const motionPick = picker('Motion', MYTHS.map((m) => ({ id: m, name: m })), MYTHS[0], () => {});
-      const nameA = el('input', { type: 'text', value: 'Player 1', 'aria-label': 'Player for' });
-      const nameB = el('input', { type: 'text', value: 'Player 2', 'aria-label': 'Player against' });
-      const box = el('textarea', { rows: '3', placeholder: 'Your argument…', 'aria-label': 'Argument' });
-      const turnLabel = el('p', { class: 'speaker' });
-      const log = el('div', { class: 'arena-log' });
-      const votes = el('div', { class: 'pair' });
-      const out = el('div', { class: 'readout' });
-      const reset = () => {
-        const motion = motionPick.select.value;
-        const lean = motionLean(motion);
-        state.arena = {
-          motion, names: { a: nameA.value || 'Player 1', b: nameB.value || 'Player 2' },
-          round: 1, turn: 'a', totals: { a: 0, b: 0 }, votes: { a: 0, b: 0 }, done: false, result: '',
-          favoured: lean.favoured,
-          lean: lean.analysis.ok && lean.analysis.subject ? `${lean.analysis.verdict.headline}` : 'The library has no graded verdict on this motion.',
-        };
-        fill(log, []);
-        fill(out, []);
-        sync();
-        hooks.say(line('arenaStart', state.arena.names.a, state.arena.names.b));
-      };
-      const sync = () => {
-        const a = state.arena;
-        if (!a) { turnLabel.textContent = 'Pick a motion and names, then start.'; return; }
-        turnLabel.textContent = a.done ? 'Debate over.' : `Round ${a.round} of 3 — ${a.turn === 'a' ? `${a.names.a} (FOR)` : `${a.names.b} (AGAINST)`} to argue`;
-        fill(votes, [
-          el('button', { class: 'chip', type: 'button', text: `👍 ${a.names.a} · ${a.votes.a}`, onclick: () => { a.votes.a += 1; sync(); } }),
-          el('button', { class: 'chip', type: 'button', text: `👍 ${a.names.b} · ${a.votes.b}`, onclick: () => { a.votes.b += 1; sync(); } }),
-        ]);
-      };
-      const submit = () => {
-        const a = state.arena;
-        if (!a || a.done || !box.value.trim()) return;
-        const side = a.turn === 'a' ? 'for' : 'against';
-        const result = scoreArgument(box.value, side, { favoured: a.favoured });
-        a.totals[a.turn] += result.points;
-        const name = a.names[a.turn];
-        log.prepend(el('div', { class: `arena-entry side-${a.turn}` }, [
-          el('p', { class: 'said', text: `${name}: “${box.value.trim()}”` }),
-          el('p', { class: 'meta', text: `+${result.points} · ${[...result.plus.map((p) => `✓ ${p}`), ...result.minus.map((m) => `✕ ${m}`)].join(' · ') || 'No evidence cues'}` }),
-        ]));
-        hooks.say(line('arenaScore', name, result.points, result.minus.join(', ')));
-        box.value = '';
-        if (a.turn === 'a') a.turn = 'b';
-        else { a.turn = 'a'; a.round += 1; }
-        if (a.round > 3) finish();
-        sync();
-      };
-      const finish = () => {
-        const a = state.arena;
-        a.done = true;
-        const votesTotal = a.votes.a + a.votes.b;
-        const colin = a.totals.a + a.totals.b || 1;
-        const score = (k) => 0.7 * (a.totals[k] / colin) + 0.3 * (votesTotal ? a.votes[k] / votesTotal : 0.5);
-        const sa = score('a');
-        const sb = score('b');
-        const winner = Math.abs(sa - sb) < 0.02 ? null : sa > sb ? a.names.a : a.names.b;
-        a.result = winner ? `${winner} wins (${Math.round(Math.max(sa, sb) * 100)}–${Math.round(Math.min(sa, sb) * 100)})` : 'A draw';
-        fill(out, [el('b', { text: a.result }), el('br'), document.createTextNode(`Colin 70% · audience 30%. ${a.lean}`)]);
-        hooks.say(`${winner ? line('arenaWinner', winner) : line('arenaDraw')} ${line('arenaLean', a.lean)}`);
-      };
-      const start = el('button', { class: 'btn-small', type: 'button', text: 'Start debate', onclick: reset });
-      const send = el('button', { class: 'chip', type: 'button', text: 'Submit argument', onclick: submit });
-      const end = el('button', { class: 'chip', type: 'button', text: 'Call it now', onclick: () => { if (state.arena && !state.arena.done) { finish(); sync(); } } });
-      sync();
-      return [
-        motionPick.node,
-        el('div', { class: 'pair' }, [el('label', { class: 'field' }, [el('span', { text: 'For' }), nameA]), el('label', { class: 'field' }, [el('span', { text: 'Against' }), nameB]), start]),
-        turnLabel, box, el('div', { class: 'pair' }, [send, end]), votes, out, log,
-      ];
     },
 
     future() {

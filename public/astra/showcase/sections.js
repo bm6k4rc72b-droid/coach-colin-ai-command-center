@@ -166,6 +166,8 @@ export const PLATES = {
   archive: '../assets/showcase/archive.webp',
   golddna: '../assets/showcase/golddna.webp',
   ligand: '../assets/showcase/ligand.webp',
+  hub: '../assets/showcase/hub.webp',
+  court: '../assets/showcase/court.webp',
 };
 
 /* ----------------------------------------------------------- tool helpers */
@@ -217,13 +219,27 @@ export const STATIONS = [
     plate: 'reception',
     kicker: 'Reception',
     title: 'COLIN Biomedical Technologies',
-    body: `A circular laboratory of twenty stations, with a holographic receptionist on the centre pedestal. Swipe or scroll sideways to walk the room; tilt your phone, or move a finger, to look around. Every number here is read from ASTRA’s graded corpus (${SIZE.peptides} compounds, ${SIZE.studies} studies, ${SIZE.claims} graded claims) or computed in front of you.`,
+    body: `A circular laboratory of twenty-one stations, with a holographic receptionist on the centre pedestal. Swipe or scroll sideways to walk the room; tilt your phone, or move a finger, to look around. Every number here is read from ASTRA’s graded corpus (${SIZE.peptides} compounds, ${SIZE.studies} studies, ${SIZE.claims} graded claims) or computed in front of you.`,
     facts: [
       'Tap “Ask Colin” to talk to him: type, or hold the mic',
       'Say “give me the tour” and he walks you round',
       'Swipe, scroll or use ← → to change station',
     ],
     colin: 'Good evening, and welcome to COLIN Biomedical Technologies. I’m Colin, the receptionist. Technically a hologram, so do forgive me for not taking your coat. Swipe sideways to begin, or ask me for the tour.',
+  },
+  {
+    id: 'translate',
+    plate: 'hub',
+    kicker: 'International Translation Hub',
+    title: 'Peptide science in twelve languages',
+    body: 'Colin the interpreter, live. Where this browser has an on-device AI translator, the hub uses it — for any sentence, any station card, or a spoken conversation in two languages — and shows which engine answered and how many milliseconds it really took. Where it has none, the hub says so and falls back to its own phrasebook. Either way, nothing you type or say leaves the device.',
+    facts: [
+      'Engines: the browser’s built-in Translator and LanguageDetector (on-device AI), else the hub’s own phrasebook — labelled on every line',
+      'Glossary: 14 terms every study page uses, written per language in its medical register (随机对照试验, ランダム化比較試験, تجربة عشوائية مضبوطة …)',
+      'Colin himself speaks 7 languages: English, 日本語, Español, Français, Deutsch, 中文, العربية',
+    ],
+    cite: 'Translation runs on the device (hub.js). Glossary and safety lines are written per language, not machine-translated.',
+    colin: 'The International Translation Hub. Sombrero optional, accuracy not. Type anything, or talk to me, and I’ll interpret it on this device. I’ll even tell you which engine did the work, which is more than most interpreters will.',
   },
   {
     id: 'map',
@@ -276,17 +292,17 @@ export const STATIONS = [
   },
   {
     id: 'arena',
-    plate: 'brain',
-    kicker: 'Debate arena',
-    title: 'Two players. Three rounds. One judge.',
-    body: 'Pick a motion, give each side a name, and take turns arguing on this device — pass the phone, or put it on a big screen. Colin scores every argument for evidence and penalises fallacies; the room votes; the library has the last word on what the evidence actually says.',
+    plate: 'court',
+    kicker: 'Courtroom Sector 7 · AI judge',
+    title: 'Put a claim on trial',
+    body: 'A motion goes on trial with Judge Colin on the bench. The Defence argues for it, the Prosecution against, three rounds each — pass the phone, or put it on a big screen. The compound’s own studies come into court as lettered exhibits, and citing one is worth what its design is worth. Object to the other side’s argument; the judge sustains it only if the argument really does what you say. A jury of twelve decides with him, and the library sentences the motion.',
     facts: [
-      'Points for: trial design, sample sizes, naming the evidence tier, weighing limitations',
-      'Points off: anecdotes, appeals to popularity, unnamed experts, absolutes, insults, conspiracy',
-      'Final score: Colin 70% · audience vote 30%',
+      'Exhibits: a randomised trial is worth up to 10 points, a rat study 5, an anecdote 1 — and an exhibit that points the other way costs whoever leans on it',
+      'Objections: hearsay, speculation, overstatement, relevance, ad hominem — sustained +5 / −5, overruled −3',
+      'Verdict: judge’s scorecard 70% · jury of twelve 30% (the room’s votes first, empty seats follow the scorecard)',
     ],
-    cite: 'Scoring rules: wing.js · motion verdicts: js/claims.js.',
-    colin: 'The arena. Two of you, three rounds, and me as judge. I’m strict but fair. Mostly strict.',
+    cite: 'Court engine: court.js · argument cues: wing.js · motion verdicts and exhibits: js/claims.js and the corpus studies.',
+    colin: 'All rise. Courtroom Sector 7 is in session, and I’m presiding. Pick a motion, name your counsel, cite your exhibits, and do try to object to something; it’s the best bit.',
   },
   {
     id: 'myth',

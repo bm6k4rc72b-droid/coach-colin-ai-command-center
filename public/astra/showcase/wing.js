@@ -259,7 +259,7 @@ function honestVersion(lines) {
 
 /* ======================================================= 16 · the arena */
 
-const CUES = {
+export const CUES = {
   evidence: [
     [/\brandomi[sz]ed\b|\bRCT\b|\bplacebo\b|\bdouble.?blind/i, 'Cites trial design', 6],
     [/\bmeta.?analys[ie]s\b|\bsystematic review\b/i, 'Cites a synthesis', 6],

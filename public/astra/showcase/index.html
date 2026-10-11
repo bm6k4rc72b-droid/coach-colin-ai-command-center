@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ASTRA Chamber — COLIN Biomedical Technologies</title>
-<meta name="description" content="A 3D peptide intelligence chamber with a holographic voice receptionist who speaks English, Japanese and Spanish: twenty stations including a body holo-scan, half-life bench, regulatory globe, debate arena, influencer fact-check and the future-peptides wing, plus an AR mode that puts Colin on your table. Educational only.">
+<meta name="description" content="A 3D peptide intelligence chamber with a holographic voice receptionist who speaks seven languages: twenty-one stations including an on-device translation hub, an AI courtroom with Judge Colin, a body holo-scan, half-life bench, regulatory globe, influencer fact-check and the future-peptides wing, plus an AR mode that puts Colin on your table. Educational only.">
 <meta name="theme-color" content="#020203">
 <link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../assets/env/emblem.jpg">
@@ -20,7 +20,7 @@
   <div class="gate-inner">
     <p class="gate-brand"><span>COLIN</span> Biomedical Technologies</p>
     <h1>The Peptide Chamber</h1>
-    <p class="gate-copy">Twenty holographic stations in a circular lab, and Colin on reception — in English, 日本語 or Español. Swipe sideways to travel round the room, tilt your phone or move a finger to look around, and talk to Colin by voice or text.</p>
+    <p class="gate-copy">Twenty-one holographic stations in a circular lab, and Colin on reception — in English, 日本語, Español, Français, Deutsch, 中文 or العربية. Swipe sideways to travel round the room, tilt your phone or move a finger to look around, and talk to Colin by voice or text.</p>
     <button id="enter" class="btn-gold" type="button">Enter the chamber</button>
     <p class="gate-fine">Turn your sound on: Colin speaks. On a phone this also asks for motion-sensor access. Nothing is recorded or sent anywhere. Educational only: no diagnosis, no dosing.</p>
   </div>
@@ -48,7 +48,7 @@
   <span class="colin-face" aria-hidden="true"></span>
   <span class="colin-label">Ask Colin</span>
 </button>
-<p id="caption" class="caption" aria-live="polite"></p>
+<p id="caption" class="caption" aria-live="polite" dir="auto"></p>
 
 <aside id="desk" class="desk" aria-label="Colin, the receptionist">
   <header class="desk-head">
@@ -77,7 +77,7 @@
     <button type="button" data-say="Tell me a joke">Tell me a joke</button>
   </div>
   <form id="desk-form" class="desk-form">
-    <input id="desk-input" type="text" autocomplete="off" placeholder="Ask Colin anything about the library…" aria-label="Message Colin">
+    <input id="desk-input" type="text" dir="auto" autocomplete="off" placeholder="Ask Colin anything about the library…" aria-label="Message Colin">
     <button id="desk-mic" class="mic" type="button" aria-pressed="false" aria-label="Speak to Colin">🎙</button>
     <button class="send" type="submit" aria-label="Send">➤</button>
   </form>

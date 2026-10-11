@@ -22,9 +22,12 @@ import { draw } from './screens.js';
 import { AGONISTS, PLATES, READINGS, SITES, STATIONS, sppsYield } from './sections.js';
 import { buildCards, el } from './cards.js';
 import { buildWingCards } from './cards2.js';
+import { buildCourtCards } from './cards3.js';
 import './screens2.js';
-import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, understand } from './colin.js';
-import { LANGS, T } from './i18n.js';
+import './screens3.js';
+import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, speakable, understand } from './colin.js';
+import { LANGS } from './i18n.js';
+import { engines, translate } from './hub.js';
 import { fetchBriefing } from './briefing.js';
 import { ARLab } from './arlab.js';
 
@@ -62,8 +65,10 @@ const state = {
   globeBanned: false,
   roast: null,
   roastLine: -1,
-  arena: null,
+  court: null,
   futurePicked: null,
+  hub: { from: 'en', to: 'es', at: -10, history: [], glossary: 'ja' },
+  hubEngine: engines().translator,
 };
 
 const look = { x: 0, y: 0, source: 'pointer' };
@@ -101,11 +106,12 @@ function stopTalking() {
 let api = {};
 
 function buildStations() {
-  const hooks = { go, say, stop: stopTalking, now: () => clock.elapsedTime, index: indexOf };
+  const hooks = { go, say, stop: stopTalking, now: () => clock.elapsedTime, index: indexOf, listen: (langId) => ears.listen(langId) };
   const built = buildCards(state, hooks);
   api = built.api;
   const wing = buildWingCards(state, { ...hooks, api });
-  Object.assign(built.cards, wing);
+  const court = buildCourtCards(state, { ...hooks, api });
+  Object.assign(built.cards, wing, court);
   const track = $('track');
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
@@ -358,7 +364,7 @@ function showCaption(text) {
 }
 
 function log(who, text, extra) {
-  const entry = el('div', { class: `msg ${who}` }, [el('p', { text }), extra || null]);
+  const entry = el('div', { class: `msg ${who}` }, [el('p', { text, dir: 'auto' }), extra || null]);
   $('desk-log').append(entry);
   $('desk-log').scrollTop = $('desk-log').scrollHeight;
 }
@@ -401,6 +407,8 @@ async function handle(text) {
     case 'roast': api.roast?.(intent.caption); return log('colin', line('roastIntro'));
     case 'globe': api.globe?.(intent.subjects[0].id); return reply(arrivalLine(indexOf('globe')));
     case 'reply': return reply(intent.reply);
+    case 'translate': api.translate?.(intent.text, intent.target); return reply(arrivalLine(indexOf('translate')));
+    case 'trial': api.arena?.(intent.claim); return log('colin', line('courtOrder'));
     case 'go': {
       const i = indexOf(intent.station);
       go(i);
@@ -425,6 +433,17 @@ async function handle(text) {
     default: {
       const a = answer(said);
       const sources = a.sources.length ? el('p', { class: 'sources', text: `Sources: ${a.sources.slice(0, 3).map((s) => s.title || s.name || s.id).join(' · ')}` }) : null;
+      // In another language, translate the library's English answer on the
+      // device where the browser can — and say that it was translated.
+      const lang = getLang();
+      if (lang !== 'en' && a.english && engines().translator) {
+        const t = await translate(a.english, 'en', lang, { quick: true });
+        if (t.engine === 'on-device AI' && t.text) {
+          const original = el('details', {}, [el('summary', { text: `English original · translated on this device in ${t.ms.toFixed(0)} ms` }), el('p', { text: a.english })]);
+          log('colin', `${a.opener} ${t.text}\n\n${line('corpusTranslated')}`, el('div', {}, [original, sources]));
+          return say(`${a.opener} ${speakable(t.text, 3)}`);
+        }
+      }
       log('colin', a.full, sources);
       return say(a.spoken);
     }
@@ -520,6 +539,7 @@ function setupDesk() {
   };
   langSelect.addEventListener('change', () => {
     setLang(langSelect.value);
+    $('desk').setAttribute('lang', langSelect.value);
     voice.load();
     applyLang();
     const intro = line('deskIntro');

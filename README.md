@@ -1316,26 +1316,61 @@ in code and assert in CI.
   a 3D circular lab in black and gold for COLIN Biomedical Technologies,
   built from Coach Colin's own key art.
   - **Colin, the holographic receptionist,** stands on the centre pedestal.
-    - He speaks English, Japanese or Spanish with the device's male voice and
-      listens through the microphone where the browser allows.
+    - He speaks seven languages: English, Japanese, Spanish, French, German,
+      Chinese and Arabic. He uses the device's male voice and listens through
+      the microphone where the browser allows. His lines are written per
+      language, not machine-translated.
     - He answers from the graded corpus with dry humour, gives a guided tour,
-      navigates on request, and reads the debate room aloud.
+      navigates on request, and reads the debate room aloud. Where the browser
+      has an on-device AI translator, he translates the library's English
+      answers live and says so.
     - He performs and fact-checks influencer captions, and reads a weekly
       research briefing (live Europe PMC radar, falling back to the library
       when offline).
     - He refuses doses and personal advice in every language.
-  - **Twenty stations** sit round the wall: map, body holo-scan (tap an organ),
-    evidence analysis, comparison balance, debate room, two-player debate
-    arena, myth checker, Colin vs the influencer, study simulator, the archive
-    of all 38 cited studies, content studio, the half-life bench, GLP-1
-    receptor, incretin agonists, synthesis, telemetry, gene to drug, the
-    regulatory globe with WADA status, and the future-peptides wing.
+  - **International Translation Hub** (station 1). Colin appears as an
+    interpreter in a sombrero, with a spinning language-network globe and
+    "hello" orbiting in twelve scripts.
+    - Uses the browser's on-device Translator and LanguageDetector APIs where
+      they exist.
+    - Every line shows which engine answered and how many milliseconds it
+      really took. Without the APIs, the hub says so and falls back to its
+      own phrasebook.
+    - Features: interpreter mode (speak in one language, hear the other),
+      broadcast one line to six languages, and translate any station card.
+    - A 14-term peptide glossary in 12 languages, written in each language's
+      medical register; tap a term to hear it.
+    - The safety line in twelve writing systems, with Arabic right to left.
+  - **Courtroom Sector 7** (station 7). Judge Colin, a golden gavel that
+    really strikes, scales that tip with the scorecard, and a jury of twelve
+    lights.
+    - A motion goes on trial: the Defence argues for it and the Prosecution
+      against, three rounds each.
+    - The compound's studies come into court as lettered exhibits, each worth
+      what its design is worth (a randomised trial up to 10 points, a rat
+      study 5, and −4 for leaning on contrary evidence).
+    - Objections (hearsay, speculation, overstatement, relevance, ad hominem)
+      are sustained only when the argument really does what it is accused of.
+    - Exhibits can be called to the witness stand: finding on direct,
+      limitation on cross.
+    - Verdict: 70% from the judge's scorecard and 30% from a jury of twelve.
+      The room's votes take seats first; empty seats follow the scorecard.
+    - The library then sentences the claim itself (never a person). The
+      timestamped transcript downloads as .txt.
+  - **Twenty-one stations** sit round the wall: the translation hub, map, body
+    holo-scan (tap an organ), evidence analysis, comparison balance, debate
+    room, the courtroom, myth checker, Colin vs the influencer, study
+    simulator, the archive of all 38 cited studies, content studio, the
+    half-life bench, GLP-1 receptor, incretin agonists, synthesis, telemetry,
+    gene to drug, the regulatory globe with WADA status, and the
+    future-peptides wing.
   - **Real maths:**
     - Bateman pharmacokinetics with superposition and the accumulation ratio
       R = 1/(1 − e^(−kₑτ)).
     - SPPS yield p^(2(L−1)).
     - Placebo-subtracted trial deltas.
-  - **AR mode:** a palm-sized Colin, or any hologram, on your table. True
+  - **AR mode:** a palm-sized Colin (receptionist, judge or interpreter), or
+    any hologram, on your table. True
     surface placement uses WebXR on Android Chrome; everywhere else it uses
     the camera plus gyro, and you can save a photo.
   - **Navigation:** swipe or scroll round the room, and tilt the phone or move

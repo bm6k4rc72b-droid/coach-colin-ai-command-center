@@ -466,14 +466,20 @@ public/astra/
     main.js             scroll, wheel, keys, finger and device-tilt wiring; Colin's desk
     colin.js            the receptionist: voice choice, speech in/out, intents, manners
     i18n.js             Colin's lines in English, Japanese and Spanish; multilingual commands
+    i18n2.js            Colin's lines in French, German, Chinese and Arabic
+    hub.js              translation hub: on-device Translator/LanguageDetector, phrasebook, glossary
+    court.js            courtroom engine: exhibits, objections, witness, jury, verdict, transcript
+    cards3.js           translation hub and courtroom cards; synthesised gavel
+    holograms3.js       interpreter and judge Colin, network globe, gavel, scales, jury
+    screens3.js         hub and courtroom wall screens
     briefing.js         weekly research briefing via the Europe PMC radar, library fallback
     arlab.js            AR mode: WebXR hit-test placement, or camera + gyro; photo capture
     cards.js            each station's controls, driving ASTRA's own engines
-    cards2.js           half-life bench, holo-scan, globe, influencer roast, arena, future wing
-    wing.js             PK model, body zones, regulatory snapshot, roast + arena scoring, pipeline
-    room.js             the circular room, twenty stations, reference holograms
-    holograms.js        Colin, map, balance, debate table, myth glass, simulator, archive, studio
-    holograms2.js       PK ribbon, body scan, globe, influencer post, arena, pipeline spiral
+    cards2.js           half-life bench, holo-scan, globe, influencer roast, future wing
+    wing.js             PK model, body zones, regulatory snapshot, roast + argument scoring, pipeline
+    room.js             the circular room, twenty-one stations, reference holograms
+    holograms.js        the cut-out factory, Colin, map, balance, debate table, myth glass, simulator, archive, studio
+    holograms2.js       PK ribbon, body scan, globe, influencer post, pipeline spiral
     screens2.js         wall screens for the new wing
     screens.js          the wall screens: canvas instruments over the photographs
     sections.js         station copy, plates, trial numbers, SPPS yield maths

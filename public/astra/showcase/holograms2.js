@@ -1,6 +1,7 @@
 /**
  * Holograms for the new wing: the half-life ribbon, the body holo-scan, the
- * regulatory globe, the influencer post, the debate arena and the pipeline.
+ * regulatory globe, the influencer post and the pipeline. (The arena
+ * became the courtroom: see holograms3.js.)
  *
  * Same contract as holograms.js: `{ group, update(t, state) }`, plus an
  * optional `pickables` list and `pick(object)` for things you can tap.
@@ -264,62 +265,6 @@ function roastHologram() {
   };
 }
 
-/* =============================================================== arena */
-
-/** Two podiums, a tug-of-war beam between them, and the crowd. */
-function arenaHologram(envMap) {
-  const group = new THREE.Group();
-  const sides = [[-0.75, GOLD], [0.75, ICE]].map(([x, color]) => {
-    const podium = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.5, 32), new THREE.MeshStandardMaterial({ color: 0x0a0a0e, metalness: 0.9, roughness: 0.3, envMap }));
-    podium.position.set(x, -0.95, 0);
-    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.17, 28, 20), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.8, metalness: 0.2, roughness: 0.1, envMap }));
-    orb.position.set(x, -0.45, 0);
-    group.add(podium, orb);
-    return { orb };
-  });
-  const beam = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.03, 0.03), new THREE.MeshBasicMaterial({ color: hot(GOLD, 1.4) }));
-  beam.position.y = -0.45;
-  group.add(beam);
-  const knot = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-  knot.position.y = -0.45;
-  group.add(knot);
-  const crowd = 160;
-  const rand = mulberry32(21);
-  const seats = Array.from({ length: crowd }, () => [rand() * Math.PI, 0.9 + rand() * 0.35, rand() * 0.5]);
-  const points = new THREE.Points(
-    new THREE.BufferGeometry()
-      .setAttribute('position', new THREE.Float32BufferAttribute(seats.flatMap(([a, r, y]) => [Math.cos(a) * r, -0.9 + y, -Math.sin(a) * r * 0.6]), 3))
-      .setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(crowd * 3), 3)),
-    new THREE.PointsMaterial({ map: DOT, size: 0.06, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }),
-  );
-  group.add(points);
-  let pos = 0;
-  return {
-    group,
-    update(t, s) {
-      group.rotation.y = Math.sin(t * 0.2) * 0.25 + s.lookX * 0.5;
-      const a = s.arena?.totals?.a ?? 0;
-      const b = s.arena?.totals?.b ?? 0;
-      const target = a + b ? THREE.MathUtils.clamp((b - a) / (a + b), -1, 1) * 0.5 : 0;
-      pos += (target - pos) * 0.05;
-      knot.position.x = pos;
-      knot.rotation.y = t * 2;
-      sides[0].orb.scale.setScalar(1 + (s.arena?.turn === 'a' ? 0.15 * Math.sin(t * 8) : 0));
-      sides[1].orb.scale.setScalar(1 + (s.arena?.turn === 'b' ? 0.15 * Math.sin(t * 8) : 0));
-      const va = s.arena?.votes?.a || 0;
-      const vb = s.arena?.votes?.b || 0;
-      const share = va + vb ? va / (va + vb) : 0.5;
-      const colours = points.geometry.attributes.color.array;
-      for (let i = 0; i < crowd; i += 1) {
-        const c = i / crowd < share ? GOLD : ICE;
-        const flick = 0.6 + 0.4 * Math.sin(t * 3 + i);
-        colours.set([c.r * flick * 1.6, c.g * flick * 1.6, c.b * flick * 1.6], i * 3);
-      }
-      points.geometry.attributes.color.needsUpdate = true;
-    },
-  };
-}
-
 /* ============================================================== future */
 
 /** The pipeline: stage rings stacked upward, a capsule per candidate. */
@@ -367,6 +312,5 @@ export const WING_HOLOGRAMS = {
   scan: scanHologram,
   globe: globeHologram,
   roast: roastHologram,
-  arena: arenaHologram,
   future: futureHologram,
 };
