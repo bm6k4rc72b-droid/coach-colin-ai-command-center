@@ -27,6 +27,42 @@ const GREEN = new THREE.Color('#3ef0b4');
  */
 const COLIN_CROP = { u0: 0.418, u1: 0.628, v0: 0.29, v1: 0.835 };
 
+const crops = new Map();
+
+/**
+ * The crop of a plate as a canvas, cached by plate and rectangle. The full
+ * photograph is decoded once, cut, and then let go.
+ *
+ * @returns {Promise<HTMLCanvasElement>} The cropped figure.
+ */
+function croppedPlate(src, crop) {
+  const key = `${src}|${crop.u0},${crop.u1},${crop.v0},${crop.v1}`;
+  if (!crops.has(key)) {
+    crops.set(key, new Promise((resolve, reject) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        const W = image.naturalWidth;
+        const H = image.naturalHeight;
+        const sx = Math.floor(crop.u0 * W);
+        const sy = Math.floor((1 - crop.v1) * H);
+        const sw = Math.ceil((crop.u1 - crop.u0) * W);
+        const sh = Math.ceil((crop.v1 - crop.v0) * H);
+        const scale = Math.min(1, 1024 / Math.max(sw, sh));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(sw * scale);
+        canvas.height = Math.round(sh * scale);
+        canvas.getContext('2d').drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        image.src = '';
+        resolve(canvas);
+      };
+      image.onerror = reject;
+      image.src = src;
+    }));
+  }
+  return crops.get(key);
+}
+
 /**
  * A figure lifted off one of the photographic plates by a luminance key and
  * re-lit as a hologram: scanlines, flicker, three stacked layers for depth,
@@ -48,12 +84,15 @@ const COLIN_CROP = { u0: 0.418, u1: 0.628, v0: 0.29, v1: 0.835 };
  */
 export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0.07, 0.3], warm = 1, emblem = null, mask = [0.5, 0.5, 9, 9], tint = 0.22, lift = 0 }) {
   const body = new THREE.Group();
-  const texture = new THREE.TextureLoader().load(src);
+  // Upload only the figure, not the whole 2352-pixel photograph: a fifth of
+  // the GPU memory, which is what keeps a phone's browser alive.
+  const texture = new THREE.Texture();
   texture.colorSpace = THREE.SRGBColorSpace;
+  croppedPlate(src, crop).then((canvas) => { texture.image = canvas; texture.needsUpdate = true; }, () => {});
   const aspect = ((crop.u1 - crop.u0) * size[0]) / ((crop.v1 - crop.v0) * size[1]);
   const uniforms = {
     map: { value: texture },
-    crop: { value: new THREE.Vector4(crop.u0, crop.v0, crop.u1, crop.v1) },
+    crop: { value: new THREE.Vector4(0, 0, 1, 1) },
     keyRange: { value: new THREE.Vector2(key[0], key[1]) },
     ellipse: { value: new THREE.Vector4(...mask) },
     emblemAt: { value: new THREE.Vector3(emblem ? emblem[0] : -9, emblem ? emblem[1] : -9, emblem ? 1 : 0) },
@@ -79,7 +118,7 @@ export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0
         vec2 uv = vec2(mix(crop.x, crop.z, vUv.x), mix(crop.y, crop.w, vUv.y));
         // A glitch band slides through while he talks.
         float row = floor(vUv.y * 90.0 + time * 14.0);
-        uv.x += step(0.975, hash(row)) * (speak * 0.006 + 0.0008) * (hash(row + 3.0) - 0.5) * 2.0;
+        uv.x += step(0.975, hash(row)) * (speak * 0.025 + 0.003) * (hash(row + 3.0) - 0.5) * 2.0;
         vec3 c = texture2D(map, uv).rgb;
         float lum = dot(c, vec3(0.299, 0.587, 0.114));
         // Key the figure off the dark room: bright and cool survives, the

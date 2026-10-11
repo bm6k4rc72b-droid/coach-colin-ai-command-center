@@ -781,8 +781,10 @@ body.vault-running .colin-btn, body.vault-running .caption { visibility: hidden;
 .blacklab.on { opacity: 1; }
 body.lab-open .hud-top, body.lab-open .colin-btn, body.lab-open .dots, body.lab-open .nav-arrow:not(.bl-prev):not(.bl-next), body.lab-open .fine-print, body.lab-open .track, body.lab-open .caption, body.lab-open .desk { visibility: hidden; }
 .bl-plates, .bl-plate { position: absolute; inset: 0; }
-.bl-plate { background-size: cover; background-position: center; opacity: 0; transform: scale(1.06); transition: opacity 1.2s, transform 8s linear; filter: saturate(0.9) brightness(0.62); }
-.bl-plate.on { opacity: 1; transform: scale(1); }
+.bl-plate { background-size: cover; background-position: center; background-color: #000; opacity: 0; transition: opacity 1.2s; }
+.bl-plate.on { opacity: 1; }
+/* Darken with a plain overlay, not a CSS filter: filters cost a full-screen GPU layer each. */
+.bl-plates::after { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
 .bl-hero { position: absolute; right: 0; top: 0; width: 56%; height: 100%; }
 .bl-goo { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
 .bl-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(80% 80% at 60% 50%, transparent 40%, rgba(0, 0, 0, 0.85)); }
@@ -865,3 +867,10 @@ body.lab-open .hud-top, body.lab-open .colin-btn, body.lab-open .dots, body.lab-
 @media (prefers-reduced-motion: reduce) {
   .btn-vault.armed, .bl-leave, .door-svg .drip { animation: none; }
 }
+/* Phones: no backdrop blur or drop-shadow filters in the vault and lab — each one is another full-screen GPU surface. */
+@media (max-width: 820px), (pointer: coarse) {
+  .bl-card, .bl-custodian { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(4, 4, 6, 0.94); }
+  .door-svg { filter: none; }
+  .vault-light { transform: none; transition: opacity 1.2s; }
+}
+body.lab-open #stage { visibility: hidden; }

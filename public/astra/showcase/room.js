@@ -517,7 +517,10 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   // Main screen, slightly curved so it reads as part of the drum.
   const screenTexture = new THREE.CanvasTexture(screenCanvas);
   screenTexture.colorSpace = THREE.SRGBColorSpace;
-  screenTexture.anisotropy = 4;
+  // Redrawn every other frame: no mipmap chain to rebuild each time, and a
+  // third less memory per screen.
+  screenTexture.generateMipmaps = false;
+  screenTexture.minFilter = THREE.LinearFilter;
   const curve = new THREE.CylinderGeometry(15.3, 15.3, 3.4, 24, 1, true, Math.PI - 0.135, 0.27);
   // Viewed from inside, a cylinder's u runs right-to-left; flip it back.
   const uv = curve.attributes.uv;
