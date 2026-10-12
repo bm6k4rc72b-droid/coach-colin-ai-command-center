@@ -592,7 +592,7 @@ function setupDesk() {
     voiceBtn.textContent = voice.enabled ? line('ui').voiceOn : line('ui').voiceOff;
   };
   voiceBtn.addEventListener('click', () => { voice.enabled = !voice.enabled; if (!voice.enabled) voice.stop(); syncVoice(); });
-  if (!voice.synth) { voice.enabled = false; voiceBtn.disabled = true; }
+  if (!voice.enabled) voiceBtn.disabled = true;
   syncVoice();
   const narrate = $('desk-narrate');
   narrate.addEventListener('click', () => { desk.narrate = !desk.narrate; narrate.setAttribute('aria-pressed', String(desk.narrate)); });
@@ -604,7 +604,8 @@ function setupDesk() {
   };
   fillVoices();
   voice.listeners.push(fillVoices);
-  select.addEventListener('change', () => { voice.voice = voice.voices[Number(select.value)] || voice.voice; say(line('voiceTest')); });
+  // The picker chooses the understudy: the device voice for anything unrecorded.
+  select.addEventListener('change', () => { voice.voice = voice.voices[Number(select.value)] || voice.voice; say(line('voiceTest'), { studio: false }); });
   // Language: Colin's lines, voice and listening all follow it.
   const langSelect = $('desk-lang');
   langSelect.replaceChildren(...LANGS.map((l) => el('option', { value: l.id, text: l.label })));
