@@ -136,6 +136,7 @@ export function buildCards(state, hooks) {
       const swap = el('button', { class: 'chip', type: 'button', text: '⇄ Swap', onclick: () => { [left, right] = [right, left]; a.select.value = left; b.select.value = right; run(); } });
       run();
       api.compare = (l, r) => { left = l; right = r; a.select.value = l; b.select.value = r; run(); hooks.go(hooks.index('compare')); };
+      api.compareSides = () => [left, right];
       return [el('div', { class: 'pair' }, [a.node, b.node, swap]), verdict, table];
     },
 
@@ -190,6 +191,16 @@ export function buildCards(state, hooks) {
       });
       run(subject);
       api.debate = (id) => { pick.select.value = id; run(id); hooks.go(hooks.index('debate')); };
+      // For the debate-room picture: one reviewer, the verdict, or the lot.
+      api.debateSubject = () => subject;
+      api.debateSpeak = (k) => {
+        state.debate.speaker = k;
+        render();
+        const o = state.debateResult.opinions[k];
+        return hooks.say(`${o.reviewer.name}. ${o.body}`);
+      };
+      api.debateVerdict = () => hooks.say(`The verdict. ${state.debateResult.consensus.verdict}`);
+      api.debateAloud = () => aloud.click();
       return [el('div', { class: 'pair' }, [pick.node, aloud]), speakers, view];
     },
 
