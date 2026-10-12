@@ -36,8 +36,8 @@ function chrome(ctx, w, h, title, sub) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
   // A plate is a loaded image or, on a phone, a shrunk canvas copy of one.
-  const pw = plate ? plate.naturalWidth || plate.width || 0 : 0;
-  const ph = plate ? plate.naturalHeight || plate.height || 0 : 0;
+  const pw = plate ? plate.naturalWidth || plate.videoWidth || plate.width || 0 : 0;
+  const ph = plate ? plate.naturalHeight || plate.videoHeight || plate.height || 0 : 0;
   if (pw && ph && plate.complete !== false) {
     // Cover-fit the photograph, then shade it so the instruments stay legible:
     // heavier on the left, where the readouts sit.

@@ -28,6 +28,7 @@ import './screens3.js';
 import './screens4.js';
 import { buildVaultCard } from './vault.js';
 import { buildScene } from './scenes.js';
+import { judge } from './judge.js';
 import { BlackLab, CUSTODIAN } from './lab.js';
 import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, speakable, understand } from './colin.js';
 import { LANGS } from './i18n.js';
@@ -167,7 +168,7 @@ function buildStations() {
     const scene = station.plate ? buildScene(station.id, { state, api, hooks, src: PLATES[station.plate] }) : null;
     if (scene) scenes[i] = scene;
     const card = el('article', { class: 'card', 'aria-labelledby': `t-${station.id}` }, [
-      scene ? scene.node : station.plate ? el('div', { class: 'card-plate', 'data-src': PLATES[station.plate], 'aria-hidden': 'true' }) : null,
+      station.id === 'arena' ? judgeCam() : scene ? scene.node : station.plate ? el('div', { class: 'card-plate', 'data-src': PLATES[station.plate], 'aria-hidden': 'true' }) : null,
       el('p', { class: 'kicker', text: `${String(i).padStart(2, '0')} · ${station.kicker}` }),
       el('h2', { id: `t-${station.id}`, text: station.title }),
       el('p', { text: station.body }),
@@ -178,6 +179,19 @@ function buildStations() {
     track.append(el('section', { class: 'sec', id: station.id, 'data-index': String(i), 'aria-label': station.title }, [card]));
     dots.append(el('button', { class: 'dot', type: 'button', 'aria-label': station.title, title: station.title, onclick: () => go(i) }));
   });
+}
+
+/** The courtroom card's live judge cam: the judge's clips, in full colour. */
+function judgeCam() {
+  const status = el('span', { class: 'cam-status', text: 'IN SESSION' });
+  const LABELS = { idle: 'IN SESSION', speak: 'THE BENCH SPEAKS', gavel: 'ORDER!', verdict: 'VERDICT' };
+  const cam = judge.camera();
+  new MutationObserver(() => { status.textContent = LABELS[cam.dataset.clip] || 'IN SESSION'; }).observe(cam, { attributes: true, attributeFilter: ['data-clip'] });
+  return el('figure', { class: 'judge-cam-wrap', title: 'Tap for order in court' , onclick: () => api.courtOrder?.() }, [
+    cam,
+    el('span', { class: 'cam-live', text: '● LIVE · COURTROOM SECTOR 7' }),
+    status,
+  ]);
 }
 
 /* ------------------------------------------------------------- the stage */
@@ -254,7 +268,8 @@ function resize() {
 function drawScreen(i, t) {
   const c = canvases[i];
   const station = STATIONS[i];
-  draw(station.id, c.getContext('2d'), c.width, c.height, t, state, station.plate && ringDistance(i, current) <= 2 ? plateFor(station.plate) : null);
+  const live = station.id === 'arena' ? judge.currentVideo() : null;
+  draw(station.id, c.getContext('2d'), c.width, c.height, t, state, live || (station.plate && ringDistance(i, current) <= 2 ? plateFor(station.plate) : null));
   room.stations[i].screenTexture.needsUpdate = true;
 }
 
@@ -315,6 +330,8 @@ const styleFor = (i) => (STATIONS[i]?.id === 'classified' ? CUSTODIAN : undefine
 
 function markActive() {
   managePlates();
+  // The judge's clips load only at or beside the courtroom.
+  judge.setActive(ringDistance(indexOf('arena'), current) <= 1);
   document.querySelectorAll('.sec').forEach((sec, i) => sec.classList.toggle('active', i === current));
   document.querySelectorAll('.dot').forEach((dot, i) => { dot.classList.toggle('on', i === current); dot.setAttribute('aria-current', i === current ? 'step' : 'false'); });
   $('prev').disabled = current === 0;
@@ -624,6 +641,7 @@ function tick() {
   frame += 1;
   steer(dt);
   voice.tick(dt);
+  judge.update(state.speak);
   $('btn-colin').style.setProperty('--speak', state.speak.toFixed(2));
 
   const ease = 1 - Math.exp(-dt * 4.5);

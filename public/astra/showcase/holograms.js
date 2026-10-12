@@ -92,6 +92,13 @@ export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0
   const aspect = ((crop.u1 - crop.u0) * size[0]) / ((crop.v1 - crop.v0) * size[1]);
   const uniforms = {
     map: { value: texture },
+    // A second picture to cross-fade towards (video clips use both).
+    map2: { value: texture },
+    fade: { value: 0 },
+    // Video frames reach a custom shader still sRGB-encoded (three only
+    // decodes them in its own materials), so decode them here; a still
+    // texture is decoded by the GPU on sampling.
+    decodeVideo: { value: 0 },
     crop: { value: new THREE.Vector4(0, 0, 1, 1) },
     keyRange: { value: new THREE.Vector2(key[0], key[1]) },
     ellipse: { value: new THREE.Vector4(...mask) },
@@ -110,7 +117,7 @@ export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0
     side: THREE.DoubleSide,
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `
-      uniform sampler2D map; uniform vec4 crop; uniform vec2 keyRange; uniform vec4 ellipse; uniform vec3 emblemAt;
+      uniform sampler2D map, map2; uniform float fade, decodeVideo; uniform vec4 crop; uniform vec2 keyRange; uniform vec4 ellipse; uniform vec3 emblemAt;
       uniform float warm, tint, lift, time, speak, layer;
       varying vec2 vUv;
       float hash(float n){ return fract(sin(n) * 43758.5453); }
@@ -119,7 +126,10 @@ export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0
         // A glitch band slides through while he talks.
         float row = floor(vUv.y * 90.0 + time * 14.0);
         uv.x += step(0.975, hash(row)) * (speak * 0.025 + 0.003) * (hash(row + 3.0) - 0.5) * 2.0;
-        vec3 c = texture2D(map, uv).rgb;
+        vec3 c = mix(texture2D(map, uv).rgb, texture2D(map2, uv).rgb, fade);
+        // sRGB → linear, the exact piecewise curve.
+        vec3 lin = mix(pow(c * 0.9478672986 + 0.0521327014, vec3(2.4)), c * 0.0773993808, vec3(lessThanEqual(c, vec3(0.04045))));
+        c = mix(c, lin, decodeVideo);
         float lum = dot(c, vec3(0.299, 0.587, 0.114));
         // Key the figure off the dark room: bright and cool survives, the
         // dim set behind him falls away.
@@ -149,7 +159,7 @@ export function cutout({ src, crop, height = 2.45, size = [2352, 1008], key = [0
     body.add(mesh);
     return mesh;
   });
-  return { body, layers, width, height };
+  return { body, layers, width, height, uniforms, still: texture };
 }
 
 /** Advance a cut-out's shader clock and voice level. */

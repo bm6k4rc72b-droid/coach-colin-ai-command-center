@@ -477,6 +477,7 @@ public/astra/
     lab.js              the Black Lab: goo layer, 3D exendin-4 with falling drops, dossier panels, custodian
     holograms4.js       the vault door on the classified pedestal
     screens4.js         classified wall screen
+    judge.js            Judge Colin's AI clips: director, video textures, judge cam, gavel timing
     scenes.js           living pictures: five key-art scenes with tap-points, live overlays and moving light
     sfx.js              synthesised vault sounds: bolts, hiss, creak, alarm, lab drone
     i18n3.js            the custodian's lines in seven languages
