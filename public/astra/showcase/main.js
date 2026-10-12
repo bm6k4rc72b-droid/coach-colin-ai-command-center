@@ -27,6 +27,7 @@ import './screens2.js';
 import './screens3.js';
 import './screens4.js';
 import { buildVaultCard } from './vault.js';
+import { buildScene } from './scenes.js';
 import { BlackLab, CUSTODIAN } from './lab.js';
 import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, speakable, understand } from './colin.js';
 import { LANGS } from './i18n.js';
@@ -120,10 +121,10 @@ function managePlates() {
   const near = new Set(STATIONS.filter((s, i) => s.plate && ringDistance(i, current) <= 2).map((s) => s.plate));
   for (const id of Object.keys(plates)) if (!near.has(id)) delete plates[id];
   document.querySelectorAll('.sec').forEach((sec, i) => {
-    const header = sec.querySelector('.card-plate');
-    if (!header) return;
-    const want = ringDistance(i, current) <= 1 ? `url("${header.dataset.src}")` : 'none';
-    if (header.style.backgroundImage !== want) header.style.backgroundImage = want;
+    for (const header of sec.querySelectorAll('.card [data-src]')) {
+      const want = ringDistance(i, current) <= 1 ? `url("${header.dataset.src}")` : 'none';
+      if (header.style.backgroundImage !== want) header.style.backgroundImage = want;
+    }
   });
 }
 
@@ -146,6 +147,7 @@ function stopTalking() {
 /* ------------------------------------------------------------- the cards */
 
 let api = {};
+const scenes = {};
 
 function buildStations() {
   const hooks = { go, say, stop: stopTalking, now: () => clock.elapsedTime, index: indexOf, listen: (langId) => ears.listen(langId) };
@@ -161,8 +163,11 @@ function buildStations() {
   const track = $('track');
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
+    // Five stations have a living picture in place of the plain header.
+    const scene = station.plate ? buildScene(station.id, { state, api, hooks, src: PLATES[station.plate] }) : null;
+    if (scene) scenes[i] = scene;
     const card = el('article', { class: 'card', 'aria-labelledby': `t-${station.id}` }, [
-      station.plate ? el('div', { class: 'card-plate', 'data-src': PLATES[station.plate], 'aria-hidden': 'true' }) : null,
+      scene ? scene.node : station.plate ? el('div', { class: 'card-plate', 'data-src': PLATES[station.plate], 'aria-hidden': 'true' }) : null,
       el('p', { class: 'kicker', text: `${String(i).padStart(2, '0')} · ${station.kicker}` }),
       el('h2', { id: `t-${station.id}`, text: station.title }),
       el('p', { text: station.body }),
@@ -652,6 +657,7 @@ function tick() {
     state.receptorPhase = room.stations[indexOf('receptor')].holo.phase || 0;
     if (frame % 2 === 0) {
       for (let i = 0; i < STATIONS.length; i += 1) if (Math.abs(i - progress) < 1.6) drawScreen(i, t);
+      scenes[current]?.update(state, t);
     }
     composer.render();
   }

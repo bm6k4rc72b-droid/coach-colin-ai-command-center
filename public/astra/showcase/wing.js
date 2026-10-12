@@ -179,12 +179,14 @@ export const CAPTIONS = [
 
 const HYPE = [
   [/\b(doctors|big pharma|they) (hate|don['’]?t want|doesn['’]?t want)\b/i, 'Conspiracy hook'],
-  [/\blink in (bio|my bio)\b/i, 'Sales link'],
+  [/\blink in (bio|my bio)\b/i, 'Sales link', 8],
   [/\b100\s?%|\bguarantee(d)?\b/i, 'Absolute promise'],
   [/\b(miracle|magic|insane|crazy|literally)\b/i, 'Hype word'],
-  [/\b(before they(['’]re| get)? banned|limited|hurry|grab)\b/i, 'Urgency pressure'],
+  [/\b(before they(['’]re| get)? banned|limited|hurry|grab|only \d+ left|last chance|selling (out|fast)|buy now|act now)\b/i, 'Urgency pressure', 10],
   [/\b(totally|completely) safe\b|\bno side effects\b/i, 'Safety promise'],
-  [/\bmy (skin|body|friend|results?)\b|\bworked for me\b|\bchanged my life\b/i, 'Anecdote as proof'],
+  [/\b(safe\s*(&|and)\s*natural|all[- ]natural|100%\s*natural|chemical[- ]free|natural(ly)? safe)\b/i, 'Appeal to nature (natural ≠ safe)', 14],
+  [/\b(heal(ed|s)?|cure[sd]?|fix(ed|es)?|clear(ed|s)?|got rid of)\b.{0,40}?\b(in|within)\s*(\d+\s*(h|hrs?|hours?|days?)\b|a (day|week)\b)|\bovernight\b/i, 'Health claim on a miracle timescale', 22],
+  [/\bmy (skin|body|friend|results?|acne)\b|\bworked for me\b|\bchanged my life\b/i, 'Anecdote as proof'],
   [/\b[A-Z]{4,}\b/, 'SHOUTING'],
 ];
 
@@ -200,13 +202,14 @@ export function roast(caption) {
   let score = 100;
   let hypeCount = 0;
   const out = lines.map((line) => {
-    const hype = HYPE.filter(([re]) => re.test(line)).map(([, label]) => label);
+    const hits = HYPE.filter(([re]) => re.test(line));
+    const hype = hits.map(([, label]) => label);
     hypeCount += hype.length;
     const compliance = complianceCheck(line);
     const words = line.split(/\s+/).length;
     const analysis = words >= 3 ? analyseClaim(line) : { ok: false };
     const level = analysis.ok && analysis.subject ? analysis.verdict.level : null;
-    let penalty = hype.length * 6;
+    let penalty = hits.reduce((sum, [, , weight]) => sum + (weight ?? 6), 0);
     penalty += compliance.findings.filter((f) => f.severity === 'block').length * 20;
     penalty += compliance.findings.filter((f) => f.severity === 'warn').length * 8;
     if (level === 'contradicted') penalty += 30;

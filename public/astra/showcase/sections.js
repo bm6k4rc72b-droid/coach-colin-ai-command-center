@@ -169,6 +169,11 @@ export const PLATES = {
   hub: '../assets/showcase/hub.webp',
   court: '../assets/showcase/court.webp',
   exBanner: '../assets/showcase/ex-banner.webp',
+  influencer: '../assets/showcase/influencer.webp',
+  holoscan: '../assets/showcase/holoscan.webp',
+  comparison: '../assets/showcase/comparison.jpg',
+  showmap: '../assets/showcase/showmap.webp',
+  debateroom: '../assets/showcase/debateroom.webp',
 };
 
 /* ----------------------------------------------------------- tool helpers */
@@ -244,7 +249,7 @@ export const STATIONS = [
   },
   {
     id: 'map',
-    plate: 'cells',
+    plate: 'showmap',
     kicker: 'Peptide showcase map',
     title: 'The whole field as one structure',
     body: 'Every compound on the outer shell, every body system on the inner one, and a thread for every link between them. Pick a compound to light up what it touches and what it is related to.',
@@ -254,6 +259,7 @@ export const STATIONS = [
   },
   {
     id: 'scan',
+    plate: 'holoscan',
     kicker: 'Body holo-scan',
     title: 'Tap an organ, see what touches it',
     body: 'A full-body scan with a glowing zone for each body system. Tap a zone on the hologram, or pick a system below, and every compound with graded evidence for that system orbits it, coloured by how strong that evidence is.',
@@ -273,7 +279,7 @@ export const STATIONS = [
   },
   {
     id: 'compare',
-    plate: 'assembly',
+    plate: 'comparison',
     kicker: 'Comparison bench',
     title: 'Which has the better evidence?',
     body: 'Put two compounds on the balance. The heavier side has the stronger evidence base — design, size, replication — which is a different question from which works better for anyone.',
@@ -283,7 +289,7 @@ export const STATIONS = [
   },
   {
     id: 'debate',
-    plate: 'brain',
+    plate: 'debateroom',
     kicker: 'Debate room',
     title: 'Four reviewers, one compound',
     body: 'A research scientist, a clinical reviewer, a sceptic and a statistician read the same evidence and argue. Where four different priorities agree, the conclusion is robust; where they split, the split names the study that would settle it.',
@@ -317,7 +323,7 @@ export const STATIONS = [
   },
   {
     id: 'roast',
-    plate: 'shattered',
+    plate: 'influencer',
     kicker: 'Colin vs the influencer',
     title: 'Read it with feeling. Then check every line.',
     body: 'Paste a caption, or pick one of the made-up examples. Colin performs it, dramatically, then fact-checks it line by line against the library and the advertising rules, gives it an honesty score, and writes the version that could actually have been posted.',

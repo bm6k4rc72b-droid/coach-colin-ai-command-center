@@ -1380,6 +1380,26 @@ in code and assert in CI.
     - **Colin as the custodian:** whispering, paranoid and dryly funny in
       all seven languages. He keeps telling you to leave, and leaving runs a
       "memory wipe".
+  - **Living pictures.** Five stations open with the user's key art made
+    animated and interactive. Each picture drifts with finger, mouse or
+    tilt under moving light, and its tap-points drive the station's real
+    tool:
+    - **Colin vs the Influencer:** marquee bulbs chase and camera lasers
+      lock on to the caption on trial. Tap a speech bubble and Colin reads
+      it, then fact-checks it line by line, and the "LINE — VERIFYING" boxes
+      light as he goes. The gavel gives the score.
+    - **Body holo-scan:** a scan beam sweeps head to toe. Tap an organ or a
+      panel to see the compounds studied there; it is labelled as an
+      illustration, not a scan of you.
+    - **Comparison bench:** tap a glass dome to load another compound. The
+      beam tilts to the heavier evidence, and live scores cover the
+      picture's printed ones.
+    - **Peptide showcase map:** golden threads flow to the core. Tap a
+      plate to light its links to body systems, or a system to see what
+      touches it. Gaps (respiratory, renal, hepatic) are named, not hidden.
+    - **Debate room:** the reviewers' orbs float. Tap an orb or a chair to
+      give that reviewer the floor, the diamond for the verdict, the brain
+      for a new subject, or the podium to hear the whole debate.
   - **Twenty-two stations** sit round the wall: the translation hub, map, body
     holo-scan (tap an organ), evidence analysis, comparison balance, debate
     room, the courtroom, myth checker, Colin vs the influencer, study
