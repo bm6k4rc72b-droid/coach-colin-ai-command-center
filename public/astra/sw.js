@@ -6,13 +6,15 @@
  * decoder and the renderer are all local, so there is no reason for the app
  * shell to need the network either.
  *
- * Strategy: precache the shell on install and serve it cache-first. The
+ * Strategy: precache the shell on install. Code and pages are served
+ * network-first (cache when offline) so releases land at once; images and
+ * other assets are served cache-first. The
  * research radar's requests are cross-origin and deliberately never cached
  * here — a stale literature sweep presented as fresh is worse than an honest
  * CACHED badge, which the radar handles itself with its own last-good store.
  */
 
-const CACHE = 'astra-v11';
+const CACHE = 'astra-v12';
 
 const SHELL = [
   './',
@@ -73,20 +75,38 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Code and pages: always the newest copy when online, the cached one when not. */
+const FRESH = /\.(?:html|js|mjs|css|json|webmanifest)$|\/$/;
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  // The radar and any literature link go straight to the network.
+  // The radar, any literature link and streamed media (the judge's clips)
+  // go straight to the network: a partial (206) answer cannot be cached,
+  // and Safari plays video only from range requests it makes itself.
   if (url.origin !== self.location.origin) return;
+  if (request.headers.has('range') || request.destination === 'video' || request.destination === 'audio') return;
+
+  const keep = (response) => {
+    if (response.ok && response.status === 200) {
+      const copy = response.clone();
+      caches.open(CACHE).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  };
+
+  // Network first for code, so a new release reaches every visitor on their
+  // next load instead of waiting behind a stale offline copy.
+  if (request.mode === 'navigate' || FRESH.test(url.pathname)) {
+    event.respondWith(
+      fetch(request, { cache: 'no-cache' }).then(keep)
+        .catch(() => caches.match(request).then((hit) => hit || caches.match('./index.html'))),
+    );
+    return;
+  }
 
   event.respondWith(
-    caches.match(request).then((hit) => hit || fetch(request).then((response) => {
-      if (response.ok) {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy));
-      }
-      return response;
-    }).catch(() => caches.match('./index.html'))),
+    caches.match(request).then((hit) => hit || fetch(request).then(keep).catch(() => caches.match('./index.html'))),
   );
 });

@@ -186,7 +186,10 @@ function judgeCam() {
   const status = el('span', { class: 'cam-status', text: 'IN SESSION' });
   const LABELS = { idle: 'IN SESSION', speak: 'THE BENCH SPEAKS', gavel: 'ORDER!', verdict: 'VERDICT' };
   const cam = judge.camera();
-  new MutationObserver(() => { status.textContent = LABELS[cam.dataset.clip] || 'IN SESSION'; }).observe(cam, { attributes: true, attributeFilter: ['data-clip'] });
+  const FEED = { loading: 'CONNECTING…', tap: '▶ TAP FOR LIVE FEED', offline: 'FEED OFFLINE' };
+  const label = () => { status.textContent = FEED[cam.dataset.feed] || LABELS[cam.dataset.clip] || 'IN SESSION'; };
+  new MutationObserver(label).observe(cam, { attributes: true, attributeFilter: ['data-clip', 'data-feed'] });
+  label();
   return el('figure', { class: 'judge-cam-wrap', title: 'Tap for order in court' , onclick: () => api.courtOrder?.() }, [
     cam,
     el('span', { class: 'cam-live', text: '● LIVE · COURTROOM SECTOR 7' }),
