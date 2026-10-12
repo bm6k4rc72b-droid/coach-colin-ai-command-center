@@ -13,6 +13,7 @@ import {
   JURY_SIZE, OBJECTIONS, ROUNDS, SIDES, argue, callWitness, deliberate, object, openCase, transcript, vote,
 } from './court.js';
 import { getLang, line } from './colin.js';
+import { judge } from './judge.js';
 
 /** The judge's delivery: slower and lower than the receptionist's. */
 const JUDGE = { pitch: 0.8, rate: 0.9 };
@@ -265,10 +266,23 @@ export function buildCourtCards(state, hooks) {
       const cited = new Set();
 
       const say = (text) => hooks.say(text, JUDGE);
+      // The gavel: when the judge is on video he picks it up and strikes, and
+      // the knock waits for the moment it lands.
       const strike = () => {
+        const delay = judge.cue('gavel');
+        if (delay != null) {
+          if (state.court) state.court.gavelAt = hooks.now() + delay - 0.26;
+          gavelSound(delay);
+          return;
+        }
         if (state.court) state.court.gavelAt = hooks.now();
         gavelSound();
       };
+      judge.onQueuedGavel = (hit) => {
+        if (state.court) state.court.gavelAt = hooks.now() + hit - 0.26;
+        gavelSound(hit);
+      };
+      api.courtOrder = () => { strike(); say(line('courtOrder')); };
 
       const sync = () => {
         const k = state.court;
@@ -364,8 +378,13 @@ export function buildCourtCards(state, hooks) {
         const k = state.court;
         if (!k || k.done) return;
         const v = deliberate(k, { at: hooks.now() });
-        gavelSound();
-        setTimeout(() => { if (state.court === k) { k.gavelAt = hooks.now(); gavelSound(); } }, 700);
+        // On video: he points and pronounces, then brings the gavel down.
+        // Otherwise: the double knock.
+        if (judge.ready('verdict')) judge.cue('verdict');
+        else {
+          gavelSound();
+          setTimeout(() => { if (state.court === k) { k.gavelAt = hooks.now(); gavelSound(); } }, 700);
+        }
         sync();
         const sentence = (line('courtSentence') || {})[k.level] || '';
         fill(verdictBox, [

@@ -15,6 +15,7 @@ import { PLATES } from './sections.js';
 import { cutout, animateCutout, voiceRings } from './holograms.js';
 import { CITIES, GREETINGS, HUB_LANGS } from './hub.js';
 import { JURY_SIZE } from './court.js';
+import { VIDEO_CROP, judge } from './judge.js';
 import { DOT, GOLD, ICE, glow, hot, label, mulberry32 } from './kit.js';
 
 const RED = new THREE.Color('#ff5a5a');
@@ -259,7 +260,7 @@ function scales(envMap) {
 
 function courtHologram(envMap) {
   const group = new THREE.Group();
-  const { body, layers } = cutout({
+  const { body, layers, uniforms, still } = cutout({
     src: PLATES.court, crop: COURT_CROP, height: 2.3, warm: 0, key: [0.08, 0.3], mask: [0.5, 0.5, 0.74, 0.78], tint: 0.1, lift: 0.35,
   });
   group.add(body);
@@ -313,10 +314,27 @@ function courtHologram(envMap) {
       const speak = s.speak || 0;
       const kase = s.court;
       animateCutout(layers, t, speak);
+      // Alive when the clips are rolling: the judge himself breathes, talks,
+      // strikes and points; otherwise the still plate.
+      const clip = judge.frame();
+      if (clip) {
+        uniforms.map.value = clip.from;
+        uniforms.map2.value = clip.to;
+        uniforms.fade.value = clip.k;
+        uniforms.decodeVideo.value = 1;
+        uniforms.crop.value.set(VIDEO_CROP.u0, VIDEO_CROP.v0, VIDEO_CROP.u1, VIDEO_CROP.v1);
+      } else {
+        uniforms.map.value = still;
+        uniforms.map2.value = still;
+        uniforms.fade.value = 0;
+        uniforms.decodeVideo.value = 0;
+        uniforms.crop.value.set(0, 0, 1, 1);
+      }
       body.rotation.y = s.lookX * 0.2;
       body.position.y = 0.025 * Math.sin(t * 1.1);
       rings(t, speak);
-      g.update(t, kase?.gavelAt ?? -10);
+      // The judge on video strikes his own gavel; the 3D one then rests.
+      g.update(t, clip ? -10 : kase?.gavelAt ?? -10);
       sc.update(kase?.totals);
       counsel.forEach((c, i) => {
         const turn = kase && !kase.closed && kase.turn === (i ? 'b' : 'a');

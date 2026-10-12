@@ -1341,6 +1341,18 @@ in code and assert in CI.
     - A 14-term peptide glossary in 12 languages, written in each language's
       medical register; tap a term to hear it.
     - The safety line in twelve writing systems, with Arabic right to left.
+  - **Judge Colin is alive.** Four AI video clips made with Kling 3.0 from
+    the court plate's own frame: idle (breathing, glancing), speaking,
+    striking the gavel, and pointing to deliver the verdict.
+    - A director plays the right clip for the trial: he talks while
+      Colin's voice speaks, objections and openings make him strike, and the
+      verdict is a point and then a final gavel.
+    - The knock waits for the frame where his gavel lands (3.12 s).
+    - The clips drive the 3D hologram as video textures, the courtroom wall
+      screen, and a full-colour LIVE judge cam at the top of the card (tap
+      it for order).
+    - They are loaded only at or beside the courtroom and released when
+      you walk on.
   - **Courtroom Sector 7** (station 7). Judge Colin, a golden gavel that
     really strikes, scales that tip with the scorecard, and a jury of twelve
     lights.
