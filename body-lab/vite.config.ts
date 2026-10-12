@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 // Reuse Human Atlas's BodyParts3D assets instead of duplicating them in git:
 // served from ../human-atlas in dev, copied into dist/atlas/ at build time.
 const ATLAS_DIR = path.resolve(import.meta.dirname, '../human-atlas/public/anatomy');
-const ATLAS_FILES = ['manifest.json', 'heart.glb', 'respiratory.glb', 'skeleton.glb', 'nervous.glb'];
+const ATLAS_FILES = ['manifest.json', 'skeleton.glb', 'muscles.glb', 'heart.glb', 'sensory.glb', 'arteries.glb', 'veins.glb', 'nervous.glb', 'respiratory.glb', 'viscera.glb'];
 
 function atlasAssets(): Plugin {
   return {

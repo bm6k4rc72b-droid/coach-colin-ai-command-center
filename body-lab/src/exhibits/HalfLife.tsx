@@ -68,7 +68,8 @@ function Column({ index }: { index: number }) {
   );
 }
 
-function Player() {
+/** Runs the race clock; mounted once so it plays in either view. */
+export function RacePlayer() {
   useFrame((_, dt) => {
     const { race, set } = useLab.getState();
     if (!race.playing) return;
@@ -81,7 +82,6 @@ function Player() {
 export function HalfLifeScene() {
   return (
     <group>
-      <Player />
       {RACERS.map((r, i) => (
         <Column key={r.id} index={i} />
       ))}

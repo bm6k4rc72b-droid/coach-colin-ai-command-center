@@ -18,8 +18,9 @@ list, data-source catalogue and operating notes.
 
 ## Also in here: Body Lab · a gallery of physiology exhibits
 
-At [`body-lab/`](body-lab): six interactive 3D exhibits on glowing plinths in a dark gallery, built on
-real BodyParts3D anatomy and published physiology. Pump the heart and watch blood pressure follow,
+At [`body-lab/`](body-lab): a whole 3D body to explore like Human Atlas (orbit, hover, select, layers,
+X-ray) with six exhibits that run published physiology live on the real organs, each also shown as an
+apparatus on a glowing plinth. Pump the heart and watch blood pressure follow,
 split the airway tree 23 times, race a nerve impulse with and without myelin, load a real femur with
 the forces measured in hip implants, run the GLP-1 half-life race, and test your reaction time against
 the brain's fast and slow systems.
