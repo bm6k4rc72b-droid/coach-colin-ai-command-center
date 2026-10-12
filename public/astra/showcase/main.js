@@ -30,6 +30,9 @@ import { buildVaultCard } from './vault.js';
 import { buildScene } from './scenes.js';
 import { judge } from './judge.js';
 import { BlackLab, CUSTODIAN } from './lab.js';
+import './screens5.js';
+import { FaceScanner } from './scan.js';
+import { DermalLab } from './dermlab.js';
 import { Ears, Voice, answer, arrivalLine, getLang, line, setLang, speakable, understand } from './colin.js';
 import { LANGS } from './i18n.js';
 import { engines, translate } from './hub.js';
@@ -76,6 +79,7 @@ const state = {
   hubEngine: engines().translator,
   vault: { phase: 'locked', signature: null, print: false, granted: false, codename: null },
   lab: { open: false, panel: 0, focus: null, lookX: 0, lookY: 0, decay: null },
+  derm: { open: false, scanning: false, entered: false, via: null, confidence: null },
 };
 
 const look = { x: 0, y: 0, source: 'pointer' };
@@ -161,6 +165,10 @@ function buildStations() {
     say: (text) => say(text, CUSTODIAN), go, index: indexOf, now: () => clock.elapsedTime, reduced,
     openLab: () => blackLab.open(),
   });
+  built.cards.dermal = () => [el('div', { class: 'derm-entry' }, [
+    el('button', { class: 'btn-derm', type: 'button', text: '◉ Face scan to enter', onclick: () => openDermScan() }),
+    el('p', { class: 'derm-note', text: 'Works with the front camera on iPhone, Android or a laptop. Analysed on this device; nothing is recorded or sent. No camera? There is a questionnaire door.' }),
+  ])];
   const track = $('track');
   const dots = $('dots');
   STATIONS.forEach((station, i) => {
@@ -324,7 +332,7 @@ function arrived() {
   if (Math.abs(progress - current) > 0.05) return;
   if (desk.lastArrival === current) return;
   desk.lastArrival = current;
-  if (state.lab.open) return;
+  if (state.lab.open || state.derm.open) return;
   if (desk.narrate && !desk.touring && voice.enabled && $('gate').classList.contains('gone')) say(arrivalLine(current), styleFor(current));
 }
 
@@ -549,6 +557,27 @@ const blackLab = new BlackLab({
   state, say, stop: stopTalking, reduced,
   onClose: () => { desk.lastArrival = current; setTimeout(() => say(line('labWipe'), CUSTODIAN), 300); },
 });
+// COLIN Dermal Technologies: the face scan at the door, then the room.
+const dermLab = new DermalLab({
+  say, stop: stopTalking, reduced,
+  onClose: () => { state.derm.open = false; desk.lastArrival = current; },
+  onRescan: () => openDermScan(),
+});
+const scanner = new FaceScanner({
+  say, reduced,
+  onDone: ({ report, snapshot, via }) => {
+    Object.assign(state.derm, { scanning: false, entered: true, via, confidence: report?.quality.confidence || null });
+    dermLab.open({ report, snapshot, via });
+  },
+  onCancel: () => { Object.assign(state.derm, { open: false, scanning: false }); },
+});
+function openDermScan() {
+  openDesk(false);
+  stopTalking();
+  Object.assign(state.derm, { open: true, scanning: true });
+  scanner.open();
+}
+
 function openAR() {
   openDesk(false);
   return arLab.open();
@@ -661,7 +690,7 @@ function tick() {
   }
 
   // While the Black Lab is open the chamber stands still and draws nothing.
-  if (ready && !state.lab.open) {
+  if (ready && !state.lab.open && !state.derm.open) {
     yaw += (progress * STEP - yaw) * (reduced ? 1 : 1 - Math.exp(-dt * 7));
     const lx = state.lookX + idleDrift;
     // The camera walks a small inner circle towards the station it faces, so
