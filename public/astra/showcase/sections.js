@@ -174,6 +174,7 @@ export const PLATES = {
   comparison: '../assets/showcase/comparison.jpg',
   showmap: '../assets/showcase/showmap.webp',
   debateroom: '../assets/showcase/debateroom.webp',
+  dermLab: '../assets/showcase/derm-lab.webp',
 };
 
 /* ----------------------------------------------------------- tool helpers */
@@ -444,6 +445,16 @@ export const STATIONS = [
     facts: [],
     cite: 'Sponsor announcements and publications, 2025–26. Re-check as programmes move.',
     colin: 'The future wing. Some of this is in pharmacies, some is in trials, and some is frankly in films. I’ll tell you which is which.',
+  },
+  {
+    id: 'dermal',
+    plate: 'dermLab',
+    kicker: 'COLIN Dermal Technologies',
+    title: 'Skin, scanned — then explained',
+    body: 'A new wing for skin care and anti-ageing peptides. Entry is by face scan: your front camera reads tone evenness, redness, shine, texture and under-eye contrast, on this device only. Inside, it takes you from your pain points to what actually helps, strongest evidence first, and through the peptides — GHK-Cu, Matrixyl, Argireline and more — with the maths of how far each gets into skin.',
+    facts: [],
+    cite: 'Potts & Guy, Pharm Res 1992; Bos & Meinardi, Exp Dermatol 2000; Robinson et al. 2005; Blanes-Mira et al. 2002; Pickart & Margolina 2018; Hughes et al., Ann Intern Med 2013. The camera is analysed on-device; nothing is stored or sent.',
+    colin: 'COLIN Dermal Technologies. The door would like to see your face. Not your passport, your face. I promise not to comment on your pores.',
   },
   {
     id: 'classified',
