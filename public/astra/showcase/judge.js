@@ -57,12 +57,51 @@ class Director {
     this.queue = [];
     this.quietSince = 0;
     this.cam = null;
+    this.blessed = new Set();
+    this.blocked = false;
+    this.kicked = 0;
+    this.since = 0;
+    this.feed = 'loading';
+    this.unlocking = false;
+  }
+
+  /**
+   * iPhones only let a page start a video on its own while the video is on
+   * screen and the phone is not in Low Power Mode. A video once started from
+   * a tap is free of that rule, so the first taps anywhere start every clip
+   * (and park the ones not on screen), after which the director can cut
+   * between them at will.
+   */
+  listen() {
+    if (this.unlocking || typeof window === 'undefined') return;
+    this.unlocking = true;
+    const unlock = () => {
+      if (!this.active) return;
+      for (const [name, v] of Object.entries(this.videos)) {
+        if (!v.getAttribute('src') || (this.blessed.has(name) && name !== this.current)) continue;
+        if (name === this.current && !v.paused) continue;
+        v.play()?.then?.(() => {
+          this.blessed.add(name);
+          if (name !== this.current && name !== this.previous) { v.pause(); try { v.currentTime = 0; } catch (error) { /* seeking */ } }
+        }).catch?.(() => {});
+      }
+    };
+    for (const type of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(type, unlock, { capture: true, passive: true });
+  }
+
+  /** Buffer a clip that is not on screen yet: start it silently and park it. */
+  prime(name) {
+    const v = this.videos[name];
+    v.play()?.then?.(() => {
+      if (name !== this.current && name !== this.previous) { v.pause(); try { v.currentTime = 0; } catch (error) { /* seeking */ } }
+    }).catch?.(() => {});
   }
 
   /** Clip elements, created once; sources attached only while active. */
   video(name) {
     if (!this.videos[name]) {
       const v = document.createElement('video');
+      v.addEventListener('playing', () => { if (name === this.current) this.blocked = false; });
       v.crossOrigin = 'anonymous';
       v.muted = true;
       v.defaultMuted = true;
@@ -82,6 +121,8 @@ class Director {
   setActive(on) {
     if (on === this.active) return;
     this.active = on;
+    this.listen();
+    this.since = performance.now() / 1000;
     for (const name of Object.keys(CLIPS)) {
       const v = this.video(name);
       if (on) {
@@ -92,7 +133,11 @@ class Director {
         v.load();
       }
     }
-    if (on) this.play('idle');
+    if (on) {
+      this.play('idle');
+      for (const name of Object.keys(CLIPS)) if (name !== 'idle') this.prime(name);
+    }
+    this.syncCam();
   }
 
   ready(name) {
@@ -109,9 +154,26 @@ class Director {
       this.fadeStart = performance.now() / 1000;
     }
     this.current = name;
+    this.since = Math.max(this.since, performance.now() / 1000 - 3);
     try { v.currentTime = 0; } catch (error) { /* not loaded yet */ }
-    v.play()?.catch?.(() => {});
+    this.kick(v);
     this.syncCam();
+  }
+
+  /** Start a clip, noting when the browser refuses (it wants a tap first). */
+  kick(v) {
+    this.kicked = performance.now() / 1000;
+    v.play()?.then?.(() => { this.blocked = false; }).catch?.((error) => { if (error?.name === 'NotAllowedError') this.blocked = true; });
+  }
+
+  /** What the judge cam can honestly say about its feed. */
+  feedState(now) {
+    const v = this.videos[this.current];
+    if (!v) return 'loading';
+    if (v.error) return 'offline';
+    if (!v.paused && v.readyState >= 2) { this.since = now; return 'live'; }
+    if (this.blocked || now - this.since > 5) return 'tap';
+    return 'loading';
   }
 
   /**
@@ -160,6 +222,11 @@ class Director {
       this.previous = null;
       this.syncCam();
     }
+    // A looping clip that has been paused under us (iPhones pause muted
+    // video that scrolls off screen) is nudged back into motion.
+    if (v && v.paused && !v.ended && !v.error && now - this.kicked > 1.5) this.kick(v);
+    const feed = this.feedState(now);
+    if (feed !== this.feed) { this.feed = feed; this.syncCam(); }
   }
 
   /** The textures to show and how far through the cross-fade we are. */
@@ -202,6 +269,7 @@ class Director {
     if (!this.cam) return;
     for (const [name, v] of Object.entries(this.videos)) v.classList.toggle('on', name === this.current);
     this.cam.dataset.clip = this.current;
+    this.cam.dataset.feed = this.active ? this.feed : 'loading';
   }
 }
 
