@@ -1,13 +1,16 @@
 /**
  * Colin — the chamber's holographic receptionist.
  *
- * He speaks with the device's male voice for the chosen language where one
+ * In English his scripted lines play from studio recordings of the owner's
+ * custom voice (voicebank.js); everything else, and every other language,
+ * is spoken with the device's male voice for the chosen language where one
  * exists (Daniel or Arthur, "Google UK English Male", Ryan or George in
  * English; Otoya or Keita in Japanese; Jorge or Pablo in Spanish; Thomas in
  * French; Markus in German; Yunxi in Chinese; Maged in Arabic) and listens
  * through the browser's speech recognition where it is offered. As the
  * hub's interpreter he can also speak any of its twelve languages. Everything
- * runs on the device: no audio, transcript or question leaves the browser.
+ * runs on the device: no audio, transcript or question leaves the browser
+ * (the recordings are only downloaded, never anything sent).
  *
  * His manner is dry, polite and a little self-deprecating, in every language.
  * His content is not: answers come from ASTRA's graded corpus through the
@@ -21,6 +24,7 @@ import { composeLocalAnswer } from '../js/astra.js';
 import { STATIONS, SUBJECTS } from './sections.js';
 import { COMMANDS, LANGS, PLACE_WORDS, T } from './i18n.js';
 import { HUB_LANGS } from './hub.js';
+import { studioClip } from './voicebank.js';
 
 /* --------------------------------------------------------------- language */
 
@@ -72,17 +76,80 @@ function voiceSpec(langId) {
   return LANGS[0];
 }
 
+/* ----------------------------------------------------------- studio voice */
+
+/** A quiet instant of WAV, to wake an iPhone's audio element inside a tap. */
+const SILENCE = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+
+function studioAudio() {
+  const audio = new Audio();
+  audio.crossOrigin = 'anonymous';
+  audio.preload = 'auto';
+  audio.setAttribute('playsinline', '');
+  return audio;
+}
+
+/**
+ * iPhones only let a page play sound from an element that has already
+ * played inside a tap, so the first tap plays a moment of silence on the
+ * one element every recording will use.
+ */
+function unlockOnGesture(getAudio) {
+  if (typeof window === 'undefined') return;
+  const types = ['pointerdown', 'touchend', 'click', 'keydown'];
+  const unlock = () => {
+    const audio = getAudio();
+    if (!audio.paused || audio.dataset.unlocked) return;
+    audio.dataset.unlocked = '1';
+    audio.src = SILENCE;
+    audio.play()?.then?.(() => {
+      audio.pause();
+      for (const type of types) window.removeEventListener(type, unlock, true);
+    }).catch?.(() => { delete audio.dataset.unlocked; });
+  };
+  for (const type of types) window.addEventListener(type, unlock, { capture: true, passive: true });
+}
+
+/**
+ * Cut a line into recorded and unrecorded parts: the whole line if he
+ * recorded it, otherwise the longest recorded runs of sentences (openers,
+ * sign-offs, verdicts), with the rest left for the device voice.
+ *
+ * @param {string} text What he is to say.
+ * @returns {{ text: string, clip?: string }[]} The parts, in order.
+ */
+export function studioParts(text) {
+  const whole = studioClip(text);
+  if (whole) return [{ text, clip: whole }];
+  const sentences = text.match(/[^.!?…]+[.!?…]+["”’)]*\s*|[^.!?…]+$/g) || [text];
+  const parts = [];
+  for (let i = 0; i < sentences.length;) {
+    let j = sentences.length;
+    let clip = null;
+    for (; j > i; j -= 1) if ((clip = studioClip(sentences.slice(i, j).join('')))) break;
+    if (clip) { parts.push({ text: sentences.slice(i, j).join('').trim(), clip }); i = j; continue; }
+    const last = parts[parts.length - 1];
+    if (last && !last.clip) last.text += ` ${sentences[i].trim()}`;
+    else parts.push({ text: sentences[i].trim() });
+    i += 1;
+  }
+  return parts.filter((p) => p.text);
+}
+
 /** Text-to-speech with a level signal for the hologram's voice rings. */
 export class Voice {
   constructor({ onLevel } = {}) {
     this.synth = window.speechSynthesis || null;
-    this.enabled = Boolean(this.synth);
+    // His recorded voice plays wherever audio does; the device voice is the understudy.
+    this.studio = typeof Audio !== 'undefined';
+    this.enabled = Boolean(this.synth || this.studio);
     this.voice = null;
     this.voices = [];
     this.onLevel = onLevel || (() => {});
     this.level = 0;
     this.speaking = false;
     this.listeners = [];
+    if (this.studio) unlockOnGesture(() => (this.audio || (this.audio = studioAudio())));
     if (this.synth) {
       this.load();
       this.synth.addEventListener?.('voiceschanged', () => this.load());
@@ -104,16 +171,59 @@ export class Voice {
   }
 
   /**
-   * Speak, cancelling anything already queued.
+   * Speak, cancelling anything already queued. In English, every scripted
+   * line he has is played from his recorded studio voice; whatever is
+   * composed on the spot (a claim, a score, an answer from the library) is
+   * spoken by the device, sentence by sentence, between the recordings.
    *
    * @param {string} text What to say.
-   * @param {{ pitch?: number, rate?: number, lang?: string }} [style] A delivery, for performances; `lang` speaks in another language (the interpreter).
+   * @param {{ pitch?: number, rate?: number, lang?: string, studio?: boolean }} [style] A delivery, for performances; `lang` speaks in another language (the interpreter); `studio: false` uses the device voice only.
    * @returns {Promise<void>} Resolves when he stops.
    */
-  say(text, style = {}) {
-    if (!this.synth || !this.enabled || !text) return Promise.resolve();
-    this.synth.cancel();
+  async say(text, style = {}) {
+    if (!this.enabled || !text) return;
     const token = (this.token = (this.token || 0) + 1);
+    this.halt();
+    const english = (style.lang || lang) === 'en';
+    const parts = english && this.studio && style.studio !== false ? studioParts(String(text)) : [{ text: String(text) }];
+    this.speaking = true;
+    for (const part of parts) {
+      if (this.token !== token) return;
+      const played = part.clip ? await this.playClip(part.clip, token) : false;
+      if (!played && this.token === token) await this.tts(part.text, style, token);
+    }
+    if (this.token === token) this.speaking = false;
+  }
+
+  /** Play one recorded line; false if it could not be played. */
+  playClip(src, token) {
+    const audio = this.audio || (this.audio = studioAudio());
+    return new Promise((resolve) => {
+      let settled = false;
+      const done = (ok) => {
+        if (settled) return;
+        settled = true;
+        audio.onended = audio.onerror = audio.onpause = null;
+        clearInterval(this.pulse);
+        resolve(ok);
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => done(false);
+      audio.onpause = () => { if (this.token !== token) done(true); };
+      audio.src = src;
+      audio.play().then(() => {
+        if (this.token !== token) { audio.pause(); done(true); return; }
+        // No word boundaries from a recording, so the rings follow a
+        // syllable-rate flutter instead (about four a second).
+        clearInterval(this.pulse);
+        this.pulse = setInterval(() => { this.level = 0.7 + 0.3 * Math.random(); }, 240);
+      }).catch(() => done(false));
+    });
+  }
+
+  /** The device's own speech, for anything not recorded. */
+  tts(text, style, token) {
+    if (!this.synth || !text) return Promise.resolve();
     // Speak sentence-sized chunks: long utterances stall in some engines
     // (Chrome cuts off after roughly fifteen seconds), short ones never do.
     const sentences = String(text).replace(/[“”]/g, '"').replace(/·/g, ',').match(/[^.!?。！？؟।]+[.!?。！？؟।]*\s*/g) || [String(text)];
@@ -130,9 +240,8 @@ export class Voice {
     const perChar = /^(ja|zh|ko)$/.test(speakLang) ? 160 : 75;
     return new Promise((resolve) => {
       let remaining = chunks.length;
-      const finish = () => { if (this.token === token) this.speaking = false; resolve(); };
       // A safety net, so a silent or stalled engine never hangs the tour.
-      const timer = setTimeout(finish, 1500 + String(text).length * perChar);
+      const timer = setTimeout(resolve, 1500 + String(text).length * perChar);
       for (const chunk of chunks) {
         const utterance = new SpeechSynthesisUtterance(chunk.trim());
         if (chosen) utterance.voice = chosen;
@@ -140,11 +249,11 @@ export class Voice {
         // An unknown-gender voice is nudged lower; a known male one is left alone.
         utterance.pitch = style.pitch ?? (male ? 0.95 : 0.78);
         utterance.rate = style.rate ?? 0.98;
-        utterance.onstart = () => { this.speaking = true; this.level = 0.8; };
-        utterance.onboundary = () => { this.level = 1; };
+        utterance.onstart = () => { if (this.token === token) this.level = 0.8; };
+        utterance.onboundary = () => { if (this.token === token) this.level = 1; };
         const done = () => {
           remaining -= 1;
-          if (remaining <= 0) { clearTimeout(timer); finish(); }
+          if (remaining <= 0) { clearTimeout(timer); resolve(); }
         };
         utterance.onend = done;
         utterance.onerror = done;
@@ -153,9 +262,16 @@ export class Voice {
     });
   }
 
+  /** Silence whatever is playing, without ending the current turn's bookkeeping. */
+  halt() {
+    this.synth?.cancel();
+    clearInterval(this.pulse);
+    if (this.audio && !this.audio.paused) this.audio.pause();
+  }
+
   stop() {
     this.token = (this.token || 0) + 1;
-    this.synth?.cancel();
+    this.halt();
     this.speaking = false;
   }
 
