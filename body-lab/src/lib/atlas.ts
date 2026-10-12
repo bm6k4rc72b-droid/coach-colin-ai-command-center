@@ -17,7 +17,7 @@ export function loadManifest() {
 }
 
 /** Suspends until the manifest is loaded. */
-function useManifest(): AtlasManifest {
+export function useManifest(): AtlasManifest {
   if (manifest) return manifest;
   throw loadManifest();
 }

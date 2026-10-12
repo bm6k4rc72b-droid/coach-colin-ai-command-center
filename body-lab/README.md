@@ -1,8 +1,13 @@
 # Body Lab
 
-**A gallery of interactive physiology exhibits.** Six apparatus stand on glowing plinths in a dark
-room. Each one is built on real BodyParts3D anatomy and runs a small, published physiology model live,
-so every number on screen comes from tested code.
+**A 3D body you can explore, with physiology you can run.** A whole BodyParts3D body (nearly 900
+structures) stands in a dark gallery. Orbit, zoom and pan; hover anything for its name; click to select
+it; switch layers (skeleton, muscles, organs, brain, vessels) or X-ray. Six glowing hotspots open
+exhibits that run a small, published physiology model live **on the real organs**: the heart beats at
+your heart rate, the lungs breathe, a nerve impulse races from heel to brain, the femur heats under
+load, the pancreas fades with the drug, the amygdala fires before the cortex. Every exhibit also has
+an apparatus **on the bench**: a museum-style rig on a glowing plinth. Every number on screen comes
+from tested code.
 
 ```bash
 npm install
@@ -11,9 +16,10 @@ npm test        # physiology model tests
 npm run build   # typecheck + production build in dist/
 ```
 
-Use the arrows, the ← → keys or the tabs to move between exhibits. Each has a deep link
-(`#heart`, `#airways`, `#nerve`, `#hip`, `#halflife`, `#reaction`). Add `?lite` to the URL to turn off
-the reflective floor and bloom on slow devices.
+Use the hotspots, arrows, ← → keys or tabs to move between exhibits; Esc goes back. Deep links:
+`#explore`, `#heart`, `#airways`, `#nerve`, `#hip`, `#halflife`, `#reaction`, and `/bench` for the
+apparatus (e.g. `#hip/bench`). Add `?lite` to the URL to turn off the reflective floor and bloom on
+slow devices. Muscles (5 MB) load only when that layer is first switched on.
 
 ## The exhibits
 

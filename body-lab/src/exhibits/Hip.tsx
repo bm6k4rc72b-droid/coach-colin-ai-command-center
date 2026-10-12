@@ -13,7 +13,7 @@ import { Chips, Group, Slider, Tile, fmt } from '../ui/kit';
 const FEMUR_H = 0.6;
 const BASE = PLINTH_TOP + 0.05;
 const RIG_TOP = BASE + FEMUR_H + 0.3;
-const MAX_BW = 8.7;
+export const MAX_BW = 8.7;
 
 const boneMat = new THREE.MeshPhysicalMaterial({ color: '#E6DDC8', roughness: 0.55, clearcoat: 0.2 });
 const BONE = new THREE.Color('#E6DDC8');
@@ -24,7 +24,7 @@ const meterMat = new THREE.MeshBasicMaterial({ color: glow('#FFB35C', 2.4), tone
 const gauss = (x: number, m: number, s: number) => Math.exp(-((x - m) ** 2) / (2 * s * s));
 
 /** Fraction of peak load through one cycle of each activity, and cycles per second. */
-const PROFILE: Record<ActivityId, { hz: number; f: (phi: number) => number }> = {
+export const PROFILE: Record<ActivityId, { hz: number; f: (phi: number) => number }> = {
   walk: { hz: 0.95, f: (p) => Math.max(gauss(p, 0.16, 0.06), 0.92 * gauss(p, 0.46, 0.07), 0.12) },
   upstairs: { hz: 0.8, f: (p) => Math.max(0.9 * gauss(p, 0.18, 0.07), gauss(p, 0.44, 0.08), 0.12) },
   downstairs: { hz: 0.8, f: (p) => Math.max(gauss(p, 0.14, 0.05), 0.85 * gauss(p, 0.42, 0.08), 0.12) },

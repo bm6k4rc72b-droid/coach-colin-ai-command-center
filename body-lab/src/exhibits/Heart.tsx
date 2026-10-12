@@ -15,7 +15,7 @@ const heartMat = new THREE.MeshPhysicalMaterial({ color: '#B04B48', roughness: 0
 const valveMat = new THREE.MeshPhysicalMaterial({ color: '#E3C9B8', roughness: 0.5 });
 
 /** Contraction curve: quick squeeze in systole (first ~35% of the beat), slow refill. */
-function squeeze(phase: number) {
+export function squeeze(phase: number) {
   return phase < 0.35 ? Math.sin((Math.PI * phase) / 0.35) : 0;
 }
 

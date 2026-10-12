@@ -68,7 +68,27 @@ export function Plinth() {
   );
 }
 
-export function Room({ lite = false }: { lite?: boolean }) {
+/** The low round stage the whole body stands on. */
+function Dais() {
+  return (
+    <group>
+      <mesh position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[0.62, 0.66, 0.08, 72]} />
+        <meshStandardMaterial color="#20262d" roughness={0.45} metalness={0.3} />
+      </mesh>
+      <mesh position={[0, 0.081, 0]} rotation-x={-Math.PI / 2}>
+        <ringGeometry args={[0.56, 0.575, 96]} />
+        <meshBasicMaterial color={glow('#FFB35C', 2.2)} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, 0.081, 0]} rotation-x={-Math.PI / 2}>
+        <ringGeometry args={[0.3, 0.306, 96]} />
+        <meshBasicMaterial color={glow('#59D8F0', 1.3)} toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+export function Room({ lite = false, bench = true }: { lite?: boolean; bench?: boolean }) {
   const strips = useMemo(() => [-3.4, -2.9, 2.9, 3.4], []);
   return (
     <group>
@@ -117,7 +137,7 @@ export function Room({ lite = false }: { lite?: boolean }) {
       <Tree position={[-2.6, 0, -1.2]} s={1.15} />
       <Tree position={[-3.3, 0, -0.4]} s={0.8} />
       <Tree position={[2.9, 0, -1.0]} s={1} />
-      <Plinth />
+      {bench ? <Plinth /> : <Dais />}
     </group>
   );
 }
