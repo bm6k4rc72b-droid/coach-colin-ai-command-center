@@ -14,7 +14,7 @@
  * @module black-optic-6/sw
  */
 
-const CACHE = 'black-optic-6-v1';
+const CACHE = 'black-optic-6-v2';
 const SHELL = [
   './',
   'index.html',
@@ -42,6 +42,29 @@ const SHELL = [
   'js/aerial.js',
   'js/argus.js',
   'js/mariachi.js',
+  'js/ranch-sim.js',
+  'js/twin3d.js',
+  'js/vision-ops.js',
+  '../vision-kit/bytetrack.js',
+  '../vision-kit/latency.js',
+  '../vision-kit/pointcloud.js',
+  '../vision-kit/twin.js',
+  '../vision-kit/vps.js',
+  '../vision-kit/detector.js',
+  '../vision-kit/depth.js',
+  '../vision-kit/cinema.js',
+  '../vision-kit/vendor/three.module.min.js',
+  '../vision-kit/vendor/addons/controls/OrbitControls.js',
+  '../vision-kit/vendor/addons/postprocessing/EffectComposer.js',
+  '../vision-kit/vendor/addons/postprocessing/RenderPass.js',
+  '../vision-kit/vendor/addons/postprocessing/UnrealBloomPass.js',
+  '../vision-kit/vendor/addons/postprocessing/OutputPass.js',
+  '../vision-kit/vendor/addons/postprocessing/ShaderPass.js',
+  '../vision-kit/vendor/addons/postprocessing/Pass.js',
+  '../vision-kit/vendor/addons/postprocessing/MaskPass.js',
+  '../vision-kit/vendor/addons/shaders/CopyShader.js',
+  '../vision-kit/vendor/addons/shaders/LuminosityHighPassShader.js',
+  '../vision-kit/vendor/addons/shaders/OutputShader.js',
   '../sentry/js/scene.js',
   '../sentry/js/tracker.js',
   '../sentry/js/ground.js',
