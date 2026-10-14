@@ -3,6 +3,7 @@ import { buildHome } from './sim/home.js';
 import { HAZARDS, hazardIndex, routeRisk, CHECKLIST, steadi, fallPhysics, SCAMS } from './sim/model.js';
 import { i18n } from './core/i18n.js';
 import { sfx } from './core/audio.js';
+import { Sentinel } from './sentinel.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GUARDIAN · the app: tabs, home walk-through, balance check, scam trainer, care.
@@ -28,6 +29,7 @@ export class Guardian {
     this.pickables = this.home.markers.map((m) => m.hit);
     app.stage.use(this.home.scene, this.camera);
     this.updateRoute();
+    this.sentinel = new Sentinel(this);
   }
 
   // ── Tabs ───────────────────────────────────────────
@@ -39,6 +41,7 @@ export class Guardian {
     this.render();
     const G = this.cam.goal;
     if (t === 'home') Object.assign(G, { pitch: 0.95, r: 17 }), G.t.set(0, 0, 0.3);
+    else if (t === 'sentinel') Object.assign(G, { pitch: 1.0, r: 19 }), G.t.set(-0.6, 0, 0);
     else Object.assign(G, { pitch: 0.55, r: 22 }), G.t.set(0, 0, 0);
   }
   render() {
@@ -46,6 +49,7 @@ export class Guardian {
     if (this.tab === 'balance') this.renderBalance();
     if (this.tab === 'scams') this.renderScam();
     if (this.tab === 'care') this.renderCare();
+    if (this.tab === 'sentinel') this.sentinel.render();
     this.updateIndex();
   }
 
@@ -318,9 +322,10 @@ export class Guardian {
   }
   pointerUp(e) {
     const d = this.cam.drag; this.cam.drag = null;
-    if (!d || d.moved > 6 || this.tab !== 'home' || !e) return;
+    if (!d || d.moved > 6 || !e || (this.tab !== 'home' && this.tab !== 'sentinel')) return;
     this.ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
     this.ray.setFromCamera(this.ndc, this.camera);
+    if (this.tab === 'sentinel') { this.sentinel.pick(this.ray); return; }
     const hit = this.ray.intersectObjects(this.pickables, false)[0];
     if (hit) this.select(hit.object.userData.hazard);
   }
@@ -329,7 +334,7 @@ export class Guardian {
   // ── Frame ──────────────────────────────────────────
   update(dt, t) {
     const c = this.cam, G = c.goal, k = 1 - Math.exp(-dt * 2.5);
-    if (!c.drag && this.tab !== 'home') G.yaw += dt * 0.04;
+    if (!c.drag && this.tab !== 'home' && !(this.tab === 'sentinel' && this.sentinel.drill)) G.yaw += dt * (this.tab === 'sentinel' ? 0.025 : 0.04);
     c.yaw += (G.yaw - c.yaw) * k; c.pitch += (G.pitch - c.pitch) * k; c.r += (G.r - c.r) * k; c.target.lerp(G.t, k);
     this.camera.position.set(c.target.x + Math.sin(c.yaw) * Math.cos(c.pitch) * c.r, c.target.y + Math.sin(c.pitch) * c.r, c.target.z + Math.cos(c.yaw) * Math.cos(c.pitch) * c.r);
     this.camera.lookAt(c.target);
@@ -343,7 +348,7 @@ export class Guardian {
       m.g.scale.setScalar(m.id === this.sel ? 1.25 : 1);
     }
     // Night mode lighting for the walk; the fixes that add light switch on.
-    const nightT = this.walk ? 1 : 0;
+    const nightT = this.walk || this.sentinel.nightOn ? 1 : this.tab === 'sentinel' ? 0.62 : 0;
     this.night += (nightT - this.night) * (1 - Math.exp(-dt * 2));
     const n = this.night, Hm = this.home;
     for (const l of Hm.warm) l.intensity = 0.9 * (1 - 0.85 * n);
@@ -351,7 +356,9 @@ export class Guardian {
     for (const [id, base] of [['dimHall', 2.2], ['stairs', 1.6], ['bedLight', 1.4]]) { const L = Hm.H[id].light; if (L) L.intensity = this.fixed.has(id) ? base * (0.35 + 0.65 * n) : 0; }
     // The resident: idle by the bed, or walking the route at a pace that slows where it is risky.
     const P = Hm.person;
-    if (this.walk) {
+    if (this.tab === 'sentinel') {
+      this.sentinel.update(dt, t);
+    } else if (this.walk) {
       const W = this.walk, pt = Hm.routeCurve.getPointAt(Math.min(1, W.u)), ahead = Hm.routeCurve.getPointAt(Math.min(1, W.u + 0.01));
       const risk = routeRisk(this.fixed, pt.x, pt.z);
       W.u += dt * (0.055 * (1 - 0.55 * risk)); W.sum += risk; W.n++; W.maxR = Math.max(W.maxR, risk);
@@ -361,7 +368,8 @@ export class Guardian {
       P.rotation.z = risk > 0.35 ? Math.sin(t * 9) * 0.06 * risk : 0;               // unsteady where it is risky
       if (W.u >= 1) { const avg = W.sum / W.n; this.app.feed.push('feed.walkDone', avg > 0.3 ? 'warn' : 'ok', { r: Math.round(avg * 100) }); this.walk = null; this.cam.goal.r = 17; this.cam.goal.t.set(0, 0, 0.3); if (this.tab === 'home') this.renderHome(); }
     } else { const s = Hm.routeCurve.getPointAt(0); P.position.set(s.x, 0, s.z); Hm.legs[0].rotation.x = Hm.legs[1].rotation.x = 0; P.rotation.set(0, Math.PI * 0.75, 0); }
-    P.visible = this.tab === 'home'; Hm.route.visible = this.tab === 'home';
+    if (this.tab !== 'sentinel') this.sentinel.update(dt, t);
+    P.visible = this.tab === 'home' || this.tab === 'sentinel'; Hm.route.visible = this.tab === 'home';
     this.tickBalance();
   }
 }
