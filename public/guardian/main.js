@@ -2,6 +2,8 @@
 // Shell: loop, input, guided tour, report. The app lives in app.js.
 
 import { i18n } from './core/i18n.js';
+import { SENTINEL_STR } from './core/i18n-sentinel.js';
+import { LiveLab } from './sentinel-live.js';
 import { createStage } from './core/scene.js';
 import { Feed } from './core/feed.js';
 import { initAudio, sfx, ambience } from './core/audio.js';
@@ -13,11 +15,14 @@ const boot = $('#boot');
 const KEYART = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20260927_054137_0e63bc5e-0e24-43b0-8212-7f5b6a241a43.png';
 
 try {
+  i18n.extend(SENTINEL_STR);
   i18n.apply();
   { const img = new Image(); img.onload = () => { $('#keyart').style.backgroundImage = `url("${KEYART}")`; $('#keyart').classList.add('on'); }; img.src = KEYART; }
   const app = { stage: createStage($('#scene')), feed: new Feed($('#feed')), state: { time: 0 } };
   app.stage.renderer.toneMappingExposure = 0.8;
   app.stage.bloom.strength = 0.4; app.stage.bloom.threshold = 0.9; app.stage.grade.uniforms.uHolo.value = 0.4;
+  const live = new LiveLab();
+  app.openLive = () => live.open();
   const G = new Guardian(app);
   let entered = false;
 
@@ -28,7 +33,10 @@ try {
     [11, () => { G.applyFix('bathFloor'); G.applyFix('stairs'); G.applyFix('bedLight'); G.render(); }], [12.5, () => { G.closeDetail(); app.feed.push('tour.3', 'ok'); G.startWalk(); }],
     [28, () => G.setTab('balance')], [31, () => { G.bal.answers = { worried: true, push: true, rush: true }; G.bal.tug = 10.4; G.bal.chair = 11; G.bal.tandem = 10; G.render(); }],
     [35, () => G.setTab('scams')], [37, () => G.scam.found.add('p2')], [37.2, () => { G.scam.found.add('p3'); G.scam.found.add('p4'); G.scam.found.add('p5'); G.scam.answered = true; G.scam.choice = true; G.render(); }],
-    [42, () => G.setTab('care')], [44, () => { G.care.meds.noon = 'taken'; G.care.checkin = '09:12'; G.render(); }], [47, () => G.showReport()], [52, () => stopTour()],
+    [42, () => G.setTab('care')], [44, () => { G.care.meds.noon = 'taken'; G.care.checkin = '09:12'; G.render(); }],
+    [47, () => G.setTab('sentinel')], [50, () => { G.sentinel.overlay = 'cov'; G.sentinel.render(); }], [53, () => G.sentinel.toggle('night')], [56, () => G.sentinel.toggle('ir')],
+    [59, () => { G.sentinel.toggle('night'); G.sentinel.toggle('ir'); G.sentinel.overlay = 'heat'; G.sentinel.startDrill(); }], [74, () => { G.sentinel.selected = 'c2'; G.sentinel.toggleDepth(); }],
+    [80, () => { G.sentinel.toggleDepth(); G.sentinel.resetDrill(); G.showReport(); }], [85, () => stopTour()],
   ];
   let tour = null;
   const startTour = () => { $('#report').classList.add('hidden'); tour = { t: 0, i: 0 }; $('#demo-bar').classList.remove('hidden'); $('#btn-tour span').textContent = i18n.t('app.tourStop'); };
@@ -66,8 +74,9 @@ try {
   canvas.addEventListener('wheel', (e) => { e.preventDefault(); if (entered) G.wheel(e); }, { passive: false });
   addEventListener('keydown', (e) => {
     if (!entered || e.target.matches?.('input, select, textarea')) return;
-    if (e.key === 'Escape') { $('#report').classList.add('hidden'); G.closeDetail(); return; }
-    if (/^[1-4]$/.test(e.key)) G.setTab(['home', 'balance', 'scams', 'care'][+e.key - 1]);
+    if (e.key === 'Escape') { $('#report').classList.add('hidden'); G.closeDetail(); live.close(); return; }
+    if (document.querySelector('#live-lab:not(.hidden)')) return;
+    if (/^[1-5]$/.test(e.key)) G.setTab(['home', 'balance', 'scams', 'care', 'sentinel'][+e.key - 1]);
     if (e.key.toLowerCase() === 'n' && G.tab === 'home') G.startWalk();
   });
 
