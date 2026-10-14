@@ -6,7 +6,7 @@
     <title>Black Optic 6 — ranch perimeter console</title>
     <meta
       name="description"
-      content="A perimeter security console that states where every number came from: live optics, acoustic watch, geofence, orbital imagery and an honest capability ledger."
+      content="A ranch perimeter console that states where every number came from: live optics, a 3D ranch twin you can build, flock and crew tracking, depth point clouds, a latency lab, acoustic watch, geofence and an honest capability ledger."
     />
     <meta name="theme-color" content="#04060a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,6 +16,9 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <script type="importmap">
+      { "imports": { "three": "../vision-kit/vendor/three.module.min.js", "three/addons/": "../vision-kit/vendor/addons/" } }
+    </script>
   </head>
   <body>
     <div class="console">
@@ -522,6 +525,88 @@
           </div>
         </section>
 
+        <!-- --------------------------------------------------------- twin -->
+        <section class="deck" id="deck-twin">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Ranch twin</h2><span class="spacer"></span>
+              <span class="prov" data-tone="caution">Modelled</span>
+              <span class="prov" id="twin-layout-prov" data-tone="primary">Sample layout</span>
+            </div>
+            <div class="twin-view" id="twin-view">
+              <canvas id="twin-canvas"></canvas>
+              <div class="twin-loading" id="twin-loading">Loading the 3D twin…</div>
+            </div>
+            <div class="tally twin-tools" id="twin-tools" style="margin-top: 10px"></div>
+            <p class="note" id="twin-hint" style="margin-top: 8px">Drag an object to move it. R rotates, Delete removes. Drag empty ground to orbit, right-drag to pan, wheel to zoom.</p>
+            <div class="controls" style="margin-top: 10px">
+              <div class="tally seg" id="twin-overlay"><button type="button" data-v="heat" aria-pressed="true">Activity heat</button><button type="button" data-v="cov" aria-pressed="false">Coverage</button><button type="button" data-v="off" aria-pressed="false">No overlay</button></div>
+              <div class="tally seg" id="twin-time"><button type="button" data-v="gold" aria-pressed="true">Golden hour</button><button type="button" data-v="night" aria-pressed="false">Night</button></div>
+              <div class="tally seg"><button type="button" id="twin-cinema" aria-pressed="false">Cinema fly-through</button></div>
+            </div>
+            <div class="controls" style="margin-top: 8px">
+              <button class="ghost" id="twin-rotate" type="button">Rotate 15°</button>
+              <button class="ghost danger" id="twin-delete" type="button">Delete selected</button>
+              <button class="ghost" id="twin-unfence" type="button">Remove last fence</button>
+              <button class="ghost" id="twin-export" type="button">Export layout</button>
+              <label class="ghost file-btn">Import layout<input id="twin-import" type="file" accept="application/json,.json" hidden /></label>
+              <button class="ghost" id="twin-reset" type="button">Sample ranch</button>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Selected</h2><span class="spacer"></span><span class="prov" data-tone="primary">Your layout</span></div>
+              <div id="twin-sel"><p class="empty">Nothing selected. Pick an object on the twin, or choose a tool and click the ground to build.</p></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Coverage and what-if</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <div class="readouts" id="twin-cov"></div>
+              <label class="check" style="margin-top: 10px"><input type="checkbox" id="twin-ir" /> Fit infrared to every camera</label>
+              <p class="note" style="margin-top: 8px">Select a camera to rename it or take it offline; switch to night to see which views go dark. Solid buildings block sight lines, the way the digital-twin coverage model treats walls.</p>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>On the twin now</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <div class="readouts" id="twin-live"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- flock -->
+        <section class="deck" id="deck-flock">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Flock and crew feed</h2><span class="spacer"></span><span class="prov" id="flock-prov" data-tone="caution">Modelled feed</span></div>
+              <div class="flock-view"><canvas id="flock-canvas" width="1280" height="720"></canvas><video id="flock-video" playsinline muted></video></div>
+              <div class="controls" style="margin-top: 10px">
+                <button class="act" id="flock-pen" type="button">Send flock to the pen</button>
+                <button class="ghost" id="flock-graze" type="button">Release to graze</button>
+                <button class="ghost danger" id="flock-dog" type="button">Simulate a stray dog</button>
+                <button class="ghost" id="flock-cam" type="button">Use a camera (COCO-SSD)</button>
+              </div>
+              <p class="note" id="flock-status" style="margin-top: 8px">Every animal is tracked by ByteTrack: high-confidence boxes first, then low-confidence boxes rescue animals half hidden in the mob. The gate line counts each crossing once.</p>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Headcount</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <div class="readouts" id="flock-count"></div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head"><h2>Crew</h2><span class="spacer"></span><span class="prov" data-tone="primary">Opt-in tags</span></div>
+              <ul class="rows" id="flock-crew"></ul>
+              <p class="note" style="margin-top: 10px">A crew member is on the map only while they carry an opted-in tag and are on shift. Off the clock is off the map. No cameras identify anyone, and no position history is kept.</p>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Assets and items</h2><span class="spacer"></span><span class="prov" data-tone="primary">Tags</span></div>
+              <ul class="rows" id="flock-assets"></ul>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Rules firing</h2><span class="spacer"></span><span class="prov" data-tone="caution">Modelled</span></div>
+              <ul class="rows" id="flock-events"></ul>
+            </div>
+          </div>
+        </section>
+
         <!-- ------------------------------------------------------- aerial -->
         <section class="deck" id="deck-aerial">
           <div class="panel">
@@ -543,6 +628,61 @@
                 and altitude come from the aircraft. Route it in on the links deck.
               </p>
             </div>
+          </div>
+        </section>
+
+        <!-- -------------------------------------------------------- depth -->
+        <section class="deck" id="deck-depth">
+          <div class="panel">
+            <div class="panel-head"><h2>Depth to point cloud</h2><span class="spacer"></span><span class="prov" id="depth-prov" data-tone="caution">Synthetic scene</span></div>
+            <div class="depth-view"><canvas id="depth-canvas"></canvas></div>
+            <div class="controls" style="margin-top: 10px">
+              <button class="act" id="depth-run" type="button">Capture one frame · Depth Anything V2</button>
+              <button class="ghost" id="depth-synth" type="button">Synthetic ranch scene</button>
+            </div>
+            <div class="controls" style="margin-top: 10px">
+              <label class="field" style="flex: 0 1 120px"><span>Downsample</span><select id="depth-stride"><option value="1">every pixel</option><option value="2" selected>every 2nd</option><option value="3">every 3rd</option><option value="4">every 4th</option></select></label>
+              <label class="field" style="flex: 1 1 160px"><span>Max depth · <b id="depth-max-v"></b></span><input id="depth-max" type="range" min="3" max="40" value="20" /></label>
+              <label class="field" style="flex: 1 1 160px"><span>Horizontal FOV · <b id="depth-fov-v"></b></span><input id="depth-fov" type="range" min="40" max="110" value="70" /></label>
+              <label class="field" style="flex: 0 1 140px"><span>Colour</span><select id="depth-colour"><option value="depth">by distance</option><option value="rgb">camera colour</option></select></label>
+            </div>
+            <div class="readouts" id="depth-stats" style="margin-top: 12px"></div>
+            <p class="note" id="depth-note" style="margin-top: 10px">The same chain a ROS 2 depth node runs: monocular depth, pinhole back-projection through fx, fy, cx, cy, sky and far points dropped, downsampled and colourised. That node runs Depth Anything V3 on TensorRT and publishes metric PointCloud2; this runs the smaller V2 model in the browser and stays in relative units until you calibrate against one known distance.</p>
+          </div>
+        </section>
+
+        <!-- ----------------------------------------------------- speedlab -->
+        <section class="deck" id="deck-speedlab">
+          <div class="grid wide">
+            <div class="panel">
+              <div class="panel-head"><h2>Latency lab</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Measured · this device</span></div>
+              <div class="controls" id="speed-runtimes">
+                <label class="check"><input type="checkbox" value="webgl" checked /> WebGL</label>
+                <label class="check"><input type="checkbox" value="wasm" checked /> WASM</label>
+                <label class="check"><input type="checkbox" value="cpu" /> CPU</label>
+                <label class="check"><input type="checkbox" id="speed-usecam" /> Use the camera</label>
+              </div>
+              <div class="controls" style="margin-top: 9px">
+                <label class="field" style="flex: 0 1 140px"><span>Input width</span><select id="speed-size"><option>320</option><option selected>480</option><option>640</option></select></label>
+                <label class="field" style="flex: 0 1 120px"><span>Frames</span><select id="speed-n"><option>10</option><option selected>20</option><option>40</option></select></label>
+                <button class="act" id="speed-run" type="button" style="align-self: flex-end">Run benchmark</button>
+              </div>
+              <p class="note" id="speed-status" style="margin-top: 9px">Each frame is timed in stages: capture, inference, tracking and rules, and the full loop. Medians and p95, never a single average. The first three frames warm up and are thrown away.</p>
+              <ul class="rows" id="speed-results" style="margin-top: 10px"></ul>
+              <canvas id="speed-chart" class="speed-chart"></canvas>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><h2>Ask once, answer many</h2><span class="spacer"></span><span class="prov" data-tone="caution">Model</span></div>
+              <label class="field"><span>Questions per frame · <b id="speed-q-v"></b></span><input id="speed-q" type="range" min="1" max="8" value="4" /></label>
+              <div class="readouts" id="speed-batch" style="margin-top: 10px"></div>
+              <p class="note" style="margin-top: 10px">Is a sheep down? Is the gate open? Is anyone by the tractor? Running the detector once and every rule on its output beats running the pipeline per question. glance-speedlab measured the same effect on a camera VLM: batching several questions per frame was 2.4× faster on its rig.</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Tracker cost</h2><span class="spacer"></span><span class="prov" data-tone="confirm">Measured · this device</span></div>
+            <div class="controls"><button class="ghost" id="speed-track" type="button">Time ByteTrack at 10, 50 and 200 objects</button></div>
+            <div class="readouts" id="speed-tracker" style="margin-top: 10px"></div>
+            <p class="note" style="margin-top: 10px">Needs no model and no network, so it runs anywhere. Timed in batches of ten frames because browsers coarsen the clock. Tracking even a mob of two hundred sheep should stay around a millisecond per frame, small next to the detector.</p>
           </div>
         </section>
 

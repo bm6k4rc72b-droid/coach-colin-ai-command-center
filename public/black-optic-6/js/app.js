@@ -60,6 +60,10 @@ import {
 import { VIEWS, accumulate, render as renderView } from '../../sentry/js/views.js';
 import { pose } from '../../sentry/js/ground.js';
 import { capability as rfCapability, RfLink } from '../../sentry/js/rf.js';
+import { VisionOps } from './vision-ops.js';
+
+/** Twin, flock, depth and speed-lab decks; created before the first deck opens. */
+let visionOps = null;
 
 const $ = (id) => document.getElementById(id);
 const STORE = 'black-optic-6:state:v1';
@@ -131,6 +135,8 @@ const state = {
 const DECKS = [
   ['optics', 'Optics', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z'],
   ['watch', 'Watch', 'M3 20V8l9-5 9 5v12 M9 20v-6h6v6'],
+  ['twin', 'Twin', 'M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7'],
+  ['flock', 'Flock', 'M4 14a4 3 0 108 0 4 3 0 00-8 0z M12 13a4 3 0 108 0 4 3 0 00-8 0z M8 9V6 M16 8V5 M3 20h18'],
   ['acoustic', 'Acoustic', 'M4 10v4 M8 6v12 M12 3v18 M16 7v10 M20 10v4'],
   ['perimeter', 'Fence', 'M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z M12 6v6'],
   ['satellite', 'Orbital', 'M12 3a9 9 0 100 18 9 9 0 000-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18'],
@@ -140,6 +146,8 @@ const DECKS = [
   ['bio', 'Bio', 'M3 12h4l2-5 3 10 2-5h7'],
   ['harvest', 'Harvest', 'M5 20c4-8 10-12 14-14 M12 20c0-5 2-9 5-12 M5 20h14'],
   ['aerial', 'Aerial', 'M12 4l8 14H4z M12 10v8'],
+  ['depth', 'Depth', 'M4 17l8 4 8-4 M4 12l8 4 8-4 M12 3l8 4-8 4-8-4z'],
+  ['speedlab', 'Speed', 'M4 17a8 8 0 1116 0 M12 17l4-6 M8 21h8'],
   ['world', 'World', 'M12 3a9 9 0 100 18 9 9 0 000-18z M3.6 9h16.8 M3.6 15h16.8 M12 3c2.5 3 2.5 15 0 18 M12 3c-2.5 3-2.5 15 0 18'],
   ['links', 'Links', 'M9 15l6-6 M8 8a4 4 0 015.6 0l1 1 M16 16a4 4 0 01-5.6 0l-1-1'],
   ['ledger', 'Ledger', 'M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'],
@@ -430,6 +438,7 @@ function openDeck(id) {
     button.setAttribute('aria-current', String(button.dataset.deck === id));
   }
   if (id === 'satellite' && !$('sat-mosaic').children.length) renderLooks();
+  visionOps?.onDeck(id);
 }
 
 /**
@@ -2679,6 +2688,8 @@ setInterval(() => {
   if (state.deck === 'optics' && state.view === 'thermal') renderThermalReadouts();
 }, 1000);
 
+visionOps = new VisionOps();
+visionOps.init();
 restore();
 buildRail();
 buildViews();

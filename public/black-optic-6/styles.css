@@ -580,3 +580,64 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
   .bar-music { padding: 6px 8px; }
   .bar-music .label { display: none; }
 }
+
+/* ----------------------------------------------------- vision operations */
+/* The twin, the drone feed and the point cloud are the one place this console
+   allows a picture to glow: they are shot like film (anamorphic 2.39:1, warm
+   grade, lens streaks) because they are views, not readouts. Every number
+   around them stays in hairlines. */
+
+.twin-view, .flock-view, .depth-view {
+  position: relative;
+  margin-top: 4px;
+  background: #000;
+  border: 1px solid var(--hair);
+  overflow: hidden;
+}
+
+.twin-view { aspect-ratio: 2.39 / 1; min-height: 320px; }
+.twin-view canvas, .depth-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.twin-view::after, .flock-view::after, .depth-view::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(79, 232, 255, 0.12), inset 0 0 80px rgba(0, 0, 0, 0.5);
+}
+.twin-view.cinema { box-shadow: 0 0 60px rgba(255, 150, 70, 0.12); }
+.twin-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-dim); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+.twin-loading[hidden] { display: none; }
+
+.flock-view canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+.flock-view video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.depth-view { aspect-ratio: 2.39 / 1; min-height: 280px; }
+
+.tally.seg { margin: 0; gap: 0; }
+.tally.seg button + button { border-left: 0; }
+.twin-tools button[aria-pressed='true'] { background: rgba(79, 232, 255, 0.12); box-shadow: var(--glow-primary); }
+
+label.file-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid var(--hair);
+  color: var(--ink-dim);
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+label.file-btn:hover { border-color: var(--hair-strong); color: var(--ink); }
+
+label.check { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: var(--ink-dim); cursor: pointer; }
+label.check input { accent-color: var(--primary); }
+label.field b { color: var(--primary); font-weight: 600; }
+input[type='range'] { width: 100%; accent-color: var(--primary); }
+
+.speed-chart { display: block; width: 100%; height: auto; margin-top: 10px; }
+
+@media (max-width: 860px) {
+  .twin-view { aspect-ratio: 4 / 3; min-height: 260px; }
+  .depth-view { aspect-ratio: 4 / 3; }
+}
