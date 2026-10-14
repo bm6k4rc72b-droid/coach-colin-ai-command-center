@@ -101,6 +101,14 @@ jobs:
           rm -rf ../dist/quantum-clone-lab
           cp -r dist ../dist/quantum-clone-lab
 
+      - name: Build SUNFORGE fusion lab
+        run: |
+          cd fusion-lab
+          npm ci
+          npm run build
+          rm -rf ../dist/fusion-lab
+          cp -r dist ../dist/fusion-lab
+
       # Human Atlas ships its compressed anatomy GLBs in public/anatomy; no asset build needed here.
       - name: Build Human Atlas
         run: |

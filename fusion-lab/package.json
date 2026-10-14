@@ -1,0 +1,22 @@
+{
+  "name": "fusion-lab",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SUNFORGE: a 3D interactive breakdown of a tokamak fusion reactor with live D-T fusion physics. Made by Colin Cook.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}

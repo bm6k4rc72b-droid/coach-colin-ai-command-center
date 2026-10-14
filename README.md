@@ -16,6 +16,20 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: SUNFORGE · nuclear fusion in 3D (made by Colin Cook)
+
+At [`fusion-lab/`](fusion-lab): an interactive 3D breakdown of a tokamak fusion reactor at ITER
+scale, made by Colin Cook. Orbit a cutaway machine and click each part: superconducting coils,
+central solenoid, poloidal coils, vacuum vessel, blanket, divertor and heating systems. Then drive
+the plasma from cold gas to breakeven and ignition with real physics: Bosch–Hale D–T reactivity,
+Lawson criterion, power balance, and the Troyon and Greenwald limits. Visuals include a neon
+plasma, field-following particles, neutrons, bloom and an exploded view. Standalone Vite +
+TypeScript + Three.js project.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/fusion-lab/>**
+
+---
+
 ## Also in here: Body Lab · a gallery of physiology exhibits
 
 At [`body-lab/`](body-lab): a whole 3D body to explore like Human Atlas (orbit, hover, select, layers,
