@@ -16,6 +16,19 @@ list, data-source catalogue and operating notes.
 
 ---
 
+## Also in here: Anti Theft System V1 · retail loss-prevention concept (by Coach Colin)
+
+At [`public/anti-theft/`](public/anti-theft): a dark/gold concept showcase for an AI retail
+loss-prevention system. It has six views: mobile dashboard, thermal modes, smart-glasses AR,
+laptop command center, analytics, and the system feature list (body-language and joint-angle
+kinetics, speed and trajectory sensing, thermal fusion, YOLO-style detection, multi-device
+alerts). It is a prototype demo: the stats and alerts are simulated, and the visuals are static
+renders. Single self-contained HTML page plus images.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/anti-theft/>**
+
+---
+
 ## Also in here: SUNFORGE · nuclear fusion in 3D (made by Colin Cook)
 
 At [`fusion-lab/`](fusion-lab): an interactive 3D breakdown of a tokamak fusion reactor at ITER
