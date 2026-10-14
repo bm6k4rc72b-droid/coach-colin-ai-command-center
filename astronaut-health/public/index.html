@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astronaut Blood Panels</title>
+<meta name="description" content="Inspiration4 crew blood panels from NASA OSDR, each crew member compared with their own preflight baseline. Made by Colin Cook.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface: #fcfcfb;
+  --border: #e4e3df;
+  --grid: #ecebe7;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #7a7974;
+  --accent: #2a78d6;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100;
+  --pre-shade: rgba(42, 120, 214, 0.07);
+  --mid: #f0efec; --neg: #256abf; --pos: #d03b3b;
+  --good: #0a7d0a; --warn: #a86a00; --muted-pill: #e9e8e4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --border: #2e2e2b; --grid: #262624;
+    --text: #f0efec; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500;
+    --pre-shade: rgba(57, 135, 229, 0.10);
+    --mid: #383835; --neg: #5598e7; --pos: #e66767;
+    --good: #3ec43e; --warn: #f0b443; --muted-pill: #2a2a28;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --border: #2e2e2b; --grid: #262624;
+  --text: #f0efec; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500;
+  --pre-shade: rgba(57, 135, 229, 0.10);
+  --mid: #383835; --neg: #5598e7; --pos: #e66767;
+  --good: #3ec43e; --warn: #f0b443; --muted-pill: #2a2a28;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 40px; }
+header h1 { font-size: 26px; line-height: 1.2; margin: 0 0 6px; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--text-2); max-width: 70ch; }
+.byline { margin-top: 8px !important; font-size: 13px; color: var(--text-3) !important; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0 8px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--text-2); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 16px; }
+.card h2 { font-size: 17px; margin: 0 0 2px; }
+.card .sub { color: var(--text-2); font-size: 13px; margin: 0 0 14px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; margin-bottom: 12px; }
+label.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-2); min-width: 0; }
+select {
+  font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; max-width: 100%;
+}
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.seg button, .chip {
+  font: inherit; font-size: 13px; color: var(--text-2); background: transparent;
+  border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.seg button[aria-pressed="true"] { color: var(--text); background: var(--bg); border-color: var(--text-3); font-weight: 600; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+.chart-box { position: relative; height: 340px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 13px; color: var(--text-2); }
+.legend .item { display: inline-flex; align-items: center; gap: 6px; }
+.flagdot { width: 12px; height: 12px; border-radius: 50%; border: 2.5px solid var(--text); display: inline-block; }
+.note { font-size: 12px; color: var(--text-3); margin: 10px 0 0; }
+/* heatmap */
+.hm-scroll { overflow-x: auto; }
+.hm { display: grid; grid-template-columns: minmax(120px, 1.6fr) repeat(4, minmax(52px, 1fr)); gap: 2px; font-size: 12px; min-width: 330px; }
+.hm .h { color: var(--text-2); font-weight: 600; padding: 4px 6px; text-align: center; position: sticky; top: 0; background: var(--surface); }
+.hm .h.l { text-align: left; }
+.hm .grp { grid-column: 1 / -1; font-weight: 600; color: var(--text-2); padding: 10px 6px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.hm .name { padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); cursor: pointer; border-radius: 4px; }
+.hm .name:hover { background: var(--bg); }
+.hm .cell {
+  border: 0; border-radius: 4px; padding: 4px 2px; text-align: center; font: inherit; font-size: 12px;
+  font-variant-numeric: tabular-nums; cursor: pointer; color: var(--text); min-height: 26px;
+}
+.hm .cell.flag { box-shadow: inset 0 0 0 2px var(--text); font-weight: 700; }
+.hm .cell.na { background: repeating-linear-gradient(135deg, transparent 0 4px, var(--grid) 4px 6px); color: var(--text-3); }
+.hm .cell:focus-visible, .hm .name:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.scale { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); margin: 12px 0 0; flex-wrap: wrap; }
+.scale .bar { width: 160px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--neg), var(--mid), var(--pos)); }
+/* moved */
+.moved-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.mv-group { border-top: 1px solid var(--border); padding: 10px 0; }
+.mv-group:first-child { border-top: 0; padding-top: 0; }
+.mv-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.mv-head button { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; color: var(--text); cursor: pointer; text-align: left; }
+.mv-head button:hover { text-decoration: underline; }
+.mv-head small { color: var(--text-3); font-size: 12px; white-space: nowrap; }
+.mv-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; }
+.mv-row .crew { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.mv-row .detail { color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 0; }
+.pill { font-size: 12px; border-radius: 999px; padding: 2px 9px; white-space: nowrap; background: var(--muted-pill); color: var(--text-2); font-weight: 600; }
+.pill.back { color: var(--good); }
+.pill.out { color: var(--warn); }
+details { margin-top: 16px; }
+summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.miss { font-size: 13px; color: var(--text-2); columns: 2 260px; margin: 8px 0 0; padding-left: 18px; }
+footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+footer p { margin: 4px 0; }
+footer a { color: var(--accent); }
+.edu { font-weight: 600; color: var(--text); }
+@media (max-width: 640px) {
+  .wrap { padding-top: 16px; }
+  header h1 { font-size: 22px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-box { height: 280px; }
+  .card { padding: 14px; }
+  .mv-row { grid-template-columns: 52px 1fr; }
+  .mv-row .pill { grid-column: 2; justify-self: start; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Astronaut blood panels: Inspiration4</h1>
+    <p>Routine blood tests (complete blood count and metabolic panel) from the four Inspiration4 crew members,
+      before and after their 3-day flight in September 2021. Each person is compared only with their own
+      preflight baseline.</p>
+    <p class="byline">Made by Colin Cook</p>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="card" aria-labelledby="t-trend">
+    <h2 id="t-trend">Marker over time</h2>
+    <p class="sub">One line per crew member. Shaded area = preflight period. Pick a single crew member to see their baseline band (mean ± 2 SD).</p>
+    <div class="controls">
+      <label class="field">Marker
+        <select id="marker"></select>
+      </label>
+      <div class="field"><span>Crew</span><div class="seg" id="crewSeg" role="group" aria-label="Crew focus"></div></div>
+    </div>
+    <div class="chart-box"><canvas id="trend" aria-label="Line chart of the selected marker by day from launch" role="img"></canvas></div>
+    <div class="legend" id="legend"></div>
+    <p class="note" id="trendNote"></p>
+  </section>
+
+  <section class="card" aria-labelledby="t-heat">
+    <h2 id="t-heat">Change from own baseline (z score)</h2>
+    <p class="sub">Every marker × postflight timepoint for one crew member. Outlined cells have |z| &gt; 2. Tap a row to chart it.</p>
+    <div class="controls"><div class="seg" id="hmSeg" role="group" aria-label="Heatmap crew"></div></div>
+    <div class="hm-scroll"><div class="hm" id="heatmap"></div></div>
+    <div class="scale"><span>z ≤ −4</span><span class="bar"></span><span>z ≥ +4</span>
+      <span style="margin-left:8px">Striped = no z score (missing value or no baseline)</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-moved">
+    <h2 id="t-moved">What moved</h2>
+    <p class="sub" id="movedSub"></p>
+    <div class="moved-filters seg" id="movedSeg" role="group" aria-label="Filter by status"></div>
+    <div id="moved"></div>
+    <details>
+      <summary id="missSummary">Missing values</summary>
+      <p class="note">These values are absent or reported as “NA” in the source files. They are left empty here, never filled in.</p>
+      <ul class="miss" id="missing"></ul>
+    </details>
+  </section>
+
+  <footer>
+    <p>Data: NASA Open Science Data Repository (OSDR), Inspiration4 crew
+      <a href="https://osdr.nasa.gov/bio/repo/data/studies/OSD-569" target="_blank" rel="noopener">OSD-569</a> (complete blood count, LSDS-7) and
+      <a href="https://osdr.nasa.gov/bio/repo/data/studies/OSD-575" target="_blank" rel="noopener">OSD-575</a> (comprehensive metabolic panel, LSDS-8),
+      SUBMITTED files. Crew IDs are the anonymized IDs from the source.</p>
+    <p>eGFR is excluded (outdated race-based formula). BUN/creatinine ratio is shown but not scored (mostly missing).</p>
+    <p class="edu">For education only, not medical interpretation.</p>
+    <p>Made by Colin Cook</p>
+  </footer>
+</div>
+
+<script>
+(async function () {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const ACR = new Set(["MCV","MCH","MCHC","RDW","MPV","AST","ALT","BUN","CBC","CMP"]);
+  const nice = s => s.split(/(\s+|\/|\(|\)|;)/).map(w => ACR.has(w) ? w : w.charAt(0) + w.slice(1).toLowerCase()).join("");
+  const fmt = (v, d = 2) => v == null ? "–" : (+v.toFixed(d)).toString();
+  const signed = z => z == null ? "–" : (z > 0 ? "+" : z < 0 ? "−" : "") + Math.abs(z).toFixed(1);
+  const rangeTxt = r => (r.range_min == null && r.range_max == null) ? "not given"
+    : `${r.range_min ?? "–"} to ${r.range_max ?? "–"} ${r.unit}`;
+
+  let D;
+  try {
+    D = await (await fetch("data.json")).json();
+  } catch (e) {
+    document.querySelector(".wrap").insertAdjacentHTML("afterbegin",
+      '<p class="card">Could not load data.json. Open this page through a local web server (see README), not as a file.</p>');
+    return;
+  }
+
+  const CREW = D.crew;
+  const crewVar = i => `--c${i + 1}`;
+  const crewColor = c => css(crewVar(CREW.indexOf(c)));
+  const POST = D.timepoints.filter(t => t.days_from_launch > 0);
+  const byKey = new Map(D.records.map(r => [`${r.crew}|${r.marker}|${r.timepoint}`, r]));
+  const rec = (c, m, t) => byKey.get(`${c}|${m}|${t}`);
+
+  // ---- headline stats
+  const flags = D.records.filter(r => r.flag).length;
+  const zs = D.records.filter(r => r.z != null).length;
+  const back = D.moved.filter(m => m.status === "back within baseline").length;
+  document.getElementById("stats").innerHTML = [
+    [CREW.length, "crew members"],
+    [D.markers.length, "markers tracked"],
+    [flags, `flagged points (of ${zs} scored)`],
+    [`${back}/${D.moved.length}`, "flagged markers back by R+194"],
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
+
+  // ---- state
+  const state = { marker: null, focus: "all", hmCrew: CREW[0], movedFilter: "all" };
+  const params = new URLSearchParams(location.hash.slice(1));
+
+  // ---- marker select
+  const sel = document.getElementById("marker");
+  for (const panel of ["CBC", "CMP"]) {
+    const g = document.createElement("optgroup");
+    g.label = panel === "CBC" ? "Complete blood count" : "Metabolic panel";
+    D.markers.filter(m => m.panel === panel).forEach(m => {
+      const o = new Option(`${nice(m.marker)} (${m.unit})`, m.marker);
+      g.appendChild(o);
+    });
+    sel.appendChild(g);
+  }
+  const firstFlagged = D.moved[0]?.marker ?? D.markers[0].marker;
+  state.marker = D.markers.some(m => m.marker === params.get("m")) ? params.get("m") : "WHITE BLOOD CELL COUNT";
+  if (!D.markers.some(m => m.marker === state.marker)) state.marker = firstFlagged;
+  sel.value = state.marker;
+  sel.addEventListener("change", () => setMarker(sel.value));
+
+  // ---- segmented controls
+  function seg(el, items, current, onPick) {
+    el.innerHTML = "";
+    items.forEach(([val, label, color]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(val === current));
+      b.innerHTML = (color ? `<span class="swatch" style="background:var(${color})"></span>` : "") + label;
+      b.addEventListener("click", () => { onPick(val); [...el.children].forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+      el.appendChild(b);
+    });
+  }
+  seg(document.getElementById("crewSeg"), [["all", "All"], ...CREW.map((c, i) => [c, c, crewVar(i)])], "all",
+    v => { state.focus = v; drawChart(); });
+  seg(document.getElementById("hmSeg"), CREW.map((c, i) => [c, c, crewVar(i)]), state.hmCrew,
+    v => { state.hmCrew = v; drawHeatmap(); });
+
+  // ---- line chart
+  const TP = D.timepoints;
+  const xMin = TP[0].days_from_launch - 6, xMax = TP[TP.length - 1].days_from_launch + 3;
+
+  const backdrop = {
+    id: "backdrop",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea: a, scales: { x, y } } = chart;
+      ctx.save();
+      const focus = state.focus;
+      if (focus === "all") {
+        ctx.fillStyle = css("--pre-shade");
+        ctx.fillRect(a.left, a.top, x.getPixelForValue(0) - a.left, a.bottom - a.top);
+      } else {
+        const r = rec(focus, state.marker, POST[0].timepoint) || D.records.find(r => r.crew === focus && r.marker === state.marker);
+        if (r && r.baseline_mean != null && r.baseline_sd != null && r.baseline_n >= D.meta.min_baseline) {
+          const top = y.getPixelForValue(r.baseline_mean + 2 * r.baseline_sd);
+          const bot = y.getPixelForValue(r.baseline_mean - 2 * r.baseline_sd);
+          ctx.globalAlpha = 0.14;
+          ctx.fillStyle = crewColor(focus);
+          ctx.fillRect(a.left, Math.max(a.top, top), a.right - a.left, Math.min(a.bottom, bot) - Math.max(a.top, top));
+          ctx.globalAlpha = 0.6;
+          ctx.strokeStyle = crewColor(focus);
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1;
+          const mid = y.getPixelForValue(r.baseline_mean);
+          ctx.beginPath(); ctx.moveTo(a.left, mid); ctx.lineTo(a.right, mid); ctx.stroke();
+        }
+      }
+      // launch line
+      const lx = x.getPixelForValue(0);
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      ctx.strokeStyle = css("--text-2");
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(lx, a.top); ctx.lineTo(lx, a.bottom); ctx.stroke();
+      ctx.fillStyle = css("--text-2");
+      ctx.font = "600 11px system-ui, sans-serif";
+      ctx.textBaseline = "top";
+      ctx.fillText("Launch", lx + 5, a.top + 2);
+      ctx.fillStyle = css("--text-3");
+      ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText("Preflight", a.left + 6, a.top + 2);
+      ctx.restore();
+    },
+    afterDatasetsDraw(chart) {
+      // direct labels at the last point of each visible line, nudged apart
+      const { ctx, chartArea: a } = chart;
+      const labels = [];
+      chart.data.datasets.forEach((ds, i) => {
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden) return;
+        for (let k = ds.data.length - 1; k >= 0; k--) {
+          if (ds.data[k].y != null) { labels.push({ t: ds.label, y: meta.data[k].y, x: meta.data[k].x }); break; }
+        }
+      });
+      labels.sort((p, q) => p.y - q.y);
+      for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+      ctx.save();
+      ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillStyle = css("--text-2");
+      ctx.textBaseline = "middle";
+      labels.forEach(l => ctx.fillText(l.t, a.right + 6, Math.min(Math.max(l.y, a.top + 6), a.bottom - 6)));
+      ctx.restore();
+    }
+  };
+
+  const chart = new Chart(document.getElementById("trend"), {
+    type: "line",
+    data: { datasets: [] },
+    plugins: [backdrop],
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      layout: { padding: { right: 42, top: 4 } },
+      interaction: { mode: "index", intersect: false },
+      spanGaps: false,
+      scales: {
+        x: {
+          type: "linear", min: xMin, max: xMax,
+          title: { display: true, text: "Days from launch" },
+          grid: { color: () => css("--grid") },
+          ticks: { color: () => css("--text-2"), autoSkip: false, maxRotation: 0,
+            // on narrow screens day -3 and day 4 collide; keep the postflight label
+            callback: function (v) { return this.chart.width < 520 && v === -3 ? "" : v; } },
+          afterBuildTicks: s => { s.ticks = TP.map(t => ({ value: t.days_from_launch })); },
+        },
+        y: { grid: { color: () => css("--grid") }, ticks: { color: () => css("--text-2") },
+             title: { display: true, text: "" } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: () => css("--surface"), titleColor: () => css("--text"), bodyColor: () => css("--text"),
+          borderColor: () => css("--border"), borderWidth: 1, padding: 10, boxPadding: 4, usePointStyle: true,
+          filter: item => item.raw.y != null,
+          callbacks: {
+            title: items => {
+              const r = items[0]?.raw.r;
+              return r ? `${r.timepoint} · day ${r.days_from_launch}` : "";
+            },
+            label: item => {
+              const r = item.raw.r;
+              let s = `${r.crew}: ${fmt(r.value)} ${r.unit}`;
+              if (r.z != null) s += `  z ${signed(r.z)}`;
+              if (r.flag) s += "  ⚑ |z|>2";
+              return s;
+            },
+            afterLabel: item => {
+              const r = item.raw.r;
+              return r.flag ? `   lab range ${rangeTxt(r)}` : "";
+            },
+            labelColor: item => ({ borderColor: crewColor(item.dataset.label), backgroundColor: crewColor(item.dataset.label) }),
+          },
+        },
+      },
+    },
+  });
+
+  function drawChart() {
+    const m = state.marker;
+    const meta = D.markers.find(x => x.marker === m);
+    const text = css("--text");
+    chart.data.datasets = CREW.map(c => {
+      const pts = TP.map(t => {
+        const r = rec(c, m, t.timepoint);
+        return { x: t.days_from_launch, y: r ? r.value : null, r: r || { crew: c, timepoint: t.timepoint, days_from_launch: t.days_from_launch, value: null, unit: meta.unit } };
+      });
+      const col = crewColor(c);
+      const dim = state.focus !== "all" && state.focus !== c;
+      const ring = p => p.r.flag && !dim;
+      return {
+        label: c, data: pts, borderColor: col, backgroundColor: col,
+        borderWidth: dim ? 1.25 : 2, tension: 0,
+        pointRadius: pts.map(p => ring(p) ? 6.5 : dim ? 2.5 : 3.5),
+        pointHoverRadius: pts.map(p => ring(p) ? 8 : 5.5),
+        pointBorderColor: pts.map(p => ring(p) ? text : col),
+        pointBorderWidth: pts.map(p => ring(p) ? 2.5 : 0),
+        pointBackgroundColor: dim ? col + "77" : col,
+        segment: { borderColor: () => dim ? col + "55" : col },
+        hidden: false,
+        order: dim ? 2 : 1,
+      };
+    });
+    chart.options.scales.y.title.text = meta.unit;
+    chart.update();
+
+    document.getElementById("legend").innerHTML =
+      CREW.map((c, i) => `<span class="item"><span class="swatch" style="background:var(${crewVar(i)})"></span>${c}</span>`).join("") +
+      `<span class="item"><span class="flagdot"></span>|z| &gt; 2 vs own baseline</span>`;
+
+    const notes = [];
+    if (D.meta.no_zscore_markers.includes(m)) notes.push("Not z scored: most values are missing in the source file.");
+    D.meta.zscore_skipped.filter(s => s.marker === m).forEach(s => notes.push(`${s.crew}: no z score (only ${s.baseline_n} preflight values).`));
+    const miss = D.missing.filter(x => x.marker === m);
+    if (miss.length) notes.push("Missing: " + miss.map(x => `${x.crew} ${x.timepoint}`).join(", ") + ".");
+    notes.push("R+N means N days after splashdown; the flight lasted about 3 days.");
+    document.getElementById("trendNote").textContent = notes.join(" ");
+  }
+
+  function setMarker(m, scroll) {
+    state.marker = m;
+    sel.value = m;
+    history.replaceState(null, "", "#m=" + encodeURIComponent(m));
+    drawChart();
+    if (scroll) document.getElementById("t-trend").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // ---- heatmap
+  function zColor(z) {
+    if (z == null) return "";
+    const t = Math.min(Math.abs(z), 4) / 4;
+    const pole = z < 0 ? "var(--neg)" : "var(--pos)";
+    return `color-mix(in oklab, ${pole} ${Math.round(t * 85)}%, var(--mid))`;
+  }
+  function drawHeatmap() {
+    const c = state.hmCrew;
+    const el = document.getElementById("heatmap");
+    let h = `<div class="h l">Marker</div>` + POST.map(t => `<div class="h">${t.timepoint}</div>`).join("");
+    for (const panel of ["CBC", "CMP"]) {
+      h += `<div class="grp">${panel === "CBC" ? "Complete blood count" : "Metabolic panel"}</div>`;
+      D.markers.filter(m => m.panel === panel).forEach(m => {
+        h += `<div class="name" role="button" tabindex="0" data-m="${m.marker}" title="${nice(m.marker)}">${nice(m.marker)}</div>`;
+        POST.forEach(t => {
+          const r = rec(c, m.marker, t.timepoint);
+          const z = r ? r.z : null;
+          const why = !r || r.value == null ? "value missing" : D.meta.no_zscore_markers.includes(m.marker) ? "not scored" : "no baseline";
+          const tip = z == null ? `${c} · ${nice(m.marker)} · ${t.timepoint}: ${why}`
+            : `${c} · ${nice(m.marker)} · ${t.timepoint}: ${fmt(r.value)} ${r.unit}, z ${signed(z)}` +
+              (r.flag ? ` (flagged) · lab range ${rangeTxt(r)}` : "");
+          h += `<button class="cell${z == null ? " na" : ""}${r && r.flag ? " flag" : ""}" data-m="${m.marker}" ` +
+               `style="${z == null ? "" : "background:" + zColor(z)}" title="${tip}" aria-label="${tip}">${z == null ? "–" : signed(z)}</button>`;
+        });
+      });
+    }
+    el.innerHTML = h;
+  }
+  document.getElementById("heatmap").addEventListener("click", e => {
+    const t = e.target.closest("[data-m]");
+    if (t) setMarker(t.dataset.m, true);
+  });
+  document.getElementById("heatmap").addEventListener("keydown", e => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches(".name")) { e.preventDefault(); setMarker(e.target.dataset.m, true); }
+  });
+
+  // ---- what moved
+  const STATUS = {
+    "back within baseline": ["back", "✓ Back within baseline"],
+    "still outside baseline": ["out", "! Still outside baseline"],
+    "no data at last timepoint": ["", "? No data at last timepoint"],
+  };
+  const lastTp = POST[POST.length - 1].timepoint;
+  document.getElementById("movedSub").textContent =
+    `Every crew member × marker with at least one postflight |z| > 2, and whether it was back within ±2 SD of their own baseline at the last timepoint (${lastTp}).`;
+  const counts = s => D.moved.filter(m => s === "all" || m.status === s).length;
+  seg(document.getElementById("movedSeg"), [
+    ["all", `All (${counts("all")})`],
+    ["still outside baseline", `Still outside (${counts("still outside baseline")})`],
+    ["back within baseline", `Back (${counts("back within baseline")})`],
+    ["no data at last timepoint", `No data (${counts("no data at last timepoint")})`],
+  ], "all", v => { state.movedFilter = v; drawMoved(); });
+
+  function drawMoved() {
+    const rows = D.moved.filter(m => state.movedFilter === "all" || m.status === state.movedFilter);
+    const groups = new Map();
+    rows.forEach(r => { if (!groups.has(r.marker)) groups.set(r.marker, []); groups.get(r.marker).push(r); });
+    document.getElementById("moved").innerHTML = [...groups].map(([marker, rs]) => `
+      <div class="mv-group">
+        <div class="mv-head"><button type="button" data-m="${marker}">${nice(marker)}</button><small>${rs[0].panel} · ${rs[0].unit}</small></div>
+        ${rs.map(r => {
+          const [cls, label] = STATUS[r.status];
+          return `<div class="mv-row">
+            <span class="crew"><span class="swatch" style="background:var(${crewVar(CREW.indexOf(r.crew))})"></span>${r.crew}</span>
+            <span class="detail">Flagged ${r.flagged_timepoints.join(", ")} · peak |z| ${r.max_abs_z.toFixed(1)} · ${r.last_timepoint} z ${signed(r.last_z)}</span>
+            <span class="pill ${cls}">${label}</span></div>`;
+        }).join("")}
+      </div>`).join("") || `<p class="note">Nothing in this group.</p>`;
+  }
+  document.getElementById("moved").addEventListener("click", e => {
+    const b = e.target.closest("button[data-m]");
+    if (b) setMarker(b.dataset.m, true);
+  });
+
+  document.getElementById("missSummary").textContent = `Missing values (${D.missing.length})`;
+  document.getElementById("missing").innerHTML = D.missing
+    .map(m => `<li>${m.crew} · ${m.timepoint} · ${nice(m.marker)} <span style="color:var(--text-3)">(${m.reason})</span></li>`).join("");
+
+  drawChart(); drawHeatmap(); drawMoved();
+
+  // repaint chart colors when the OS theme flips
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => drawChart());
+})();
+</script>
+</body>
+</html>
