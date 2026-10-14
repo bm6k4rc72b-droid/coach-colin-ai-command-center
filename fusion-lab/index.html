@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="SUNFORGE: an interactive 3D breakdown of a tokamak nuclear fusion reactor with live D-T fusion physics. Made by Colin Cook." />
+    <meta name="author" content="Colin Cook" />
+    <title>SUNFORGE — nuclear fusion in 3D · Made by Colin Cook</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff6c2'/%3E%3Cstop offset='.5' stop-color='%23ff2bd6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='16' cy='16' rx='14' ry='8' fill='none' stroke='url(%23g)' stroke-width='4'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23fff6c2'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand"><span class="logo">SUNFORGE</span> <small>nuclear fusion · in 3D</small></div>
+      <a class="credit" href="#" id="credit-top" aria-label="Made by Colin Cook">✦ Made by <b>Colin Cook</b></a>
+      <div class="spacer"></div>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+    <main id="layout">
+      <aside class="panel glass" id="controls"></aside>
+      <section id="stage">
+        <div class="viewport">
+          <canvas id="view" aria-label="3D tokamak"></canvas>
+          <div class="hud" id="hud"></div>
+          <div class="chips" id="parts"></div>
+          <div class="toggles" id="toggles"></div>
+          <div class="vcredit">Made by Colin Cook</div>
+        </div>
+        <div class="row2">
+          <div class="panel glass" id="chart-card"><h3>Fusion rate vs temperature</h3><canvas id="react-chart" width="560" height="230"></canvas><p class="hint">D–T reactivity ⟨σv⟩ (Bosch–Hale). It climbs steeply up to ~65 keV — that is why the plasma must be so hot.</p></div>
+          <div class="panel glass" id="lawson-card"><h3>Lawson diagram — the road to ignition</h3><canvas id="lawson-chart" width="560" height="230"></canvas><p class="hint">Density × confinement time needed for breakeven, Q = 10 and ignition. Your plasma is the yellow dot.</p></div>
+        </div>
+        <div class="panel glass" id="why"></div>
+      </section>
+      <aside class="panel glass" id="info"></aside>
+    </main>
+    <footer>SUNFORGE · an educational 3D fusion explorer · <b>Made by Colin Cook</b> · physics: Bosch–Hale D–T reactivity, Lawson criterion, Troyon &amp; Greenwald limits (ITER-scale teaching model)</footer>
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="overlay" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
