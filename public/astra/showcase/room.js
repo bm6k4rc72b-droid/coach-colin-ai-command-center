@@ -19,6 +19,7 @@ import { WING_HOLOGRAMS } from './holograms2.js';
 import { COURT_HOLOGRAMS } from './holograms3.js';
 import { VAULT_HOLOGRAMS } from './holograms4.js';
 import { DERM_HOLOGRAMS } from './holograms5.js';
+import { HOLLY_HOLOGRAMS } from './holograms6.js';
 
 export const STATION_COUNT = STATIONS.length;
 export const STEP = (Math.PI * 2) / STATION_COUNT;
@@ -588,7 +589,7 @@ function buildStation(scene, index, id, { envMap, screenCanvas, consoleTex, logo
   const rand = mulberry32(100 + index);
   const moteSeeds = Array.from({ length: moteCount }, () => [rand() * Math.PI * 2, Math.sqrt(rand()) * 0.9, rand()]);
 
-  const holo = (DERM_HOLOGRAMS[id] || VAULT_HOLOGRAMS[id] || COURT_HOLOGRAMS[id] || WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
+  const holo = (HOLLY_HOLOGRAMS[id] || DERM_HOLOGRAMS[id] || VAULT_HOLOGRAMS[id] || COURT_HOLOGRAMS[id] || WING_HOLOGRAMS[id] || EXTRA_HOLOGRAMS[id] || HOLOGRAMS[id])(envMap);
   holo.group.position.y += 1.95;
   pedestal.add(holo.group);
 

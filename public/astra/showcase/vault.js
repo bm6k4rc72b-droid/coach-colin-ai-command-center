@@ -115,7 +115,7 @@ function ridges(seed) {
   return paths;
 }
 
-function thumbScanner({ onDone, onFail, hold = 1800 }) {
+export function thumbScanner({ onDone, onFail, hold = 1800 }) {
   const canvas = el('canvas', { class: 'thumb-pad', width: '120', height: '156', 'aria-label': 'Thumbprint scanner: press and hold' });
   const ring = el('div', { class: 'thumb-ring' });
   const box = el('div', { class: 'thumb', role: 'button', tabindex: '0', title: 'Press and hold' }, [canvas, ring, el('span', { class: 'thumb-scan' })]);
