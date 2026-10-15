@@ -29,12 +29,8 @@ import { beep } from './sfx.js';
 /** Coach Colin's 72-Hour Deflate guide (the claude.ai artifact). */
 export const GUIDE_URL = 'https://claude.ai/code/artifact/6c696f03-d030-441a-be4c-5b9c4cfa0df2';
 
-/**
- * Where "Hire Coach Colin" goes. Set this to the booking page, DM link or
- * application form; until then the button opens the guide, whose report-back
- * section is how clients reach him.
- */
-export const COACHING_URL = GUIDE_URL;
+/** Where "Hire Coach Colin" goes: his Instagram, where clients DM him. */
+export const COACHING_URL = 'https://www.instagram.com/coachcolinc/';
 
 /* --------------------------------------------------------------- the data */
 
@@ -627,7 +623,7 @@ export class HollywoodRoom {
               el('li', { text: 'Training and habits built around your life — and a maintenance exit.' }),
               el('li', { text: 'GLP-1 specialist: protein, muscle and the habits that outlast the medication.' }),
             ]),
-            el('a', { class: 'btn-holly', href: COACHING_URL, target: '_blank', rel: 'noopener', text: '⭐ Hire Coach Colin' }),
+            el('a', { class: 'btn-holly', href: COACHING_URL, target: '_blank', rel: 'noopener', text: '⭐ Hire Coach Colin · DM @coachcolinc' }),
           ]),
         ]),
         el('p', { class: 'hs-fine', text: 'Honest small print: the deflate is cosmetic and temporary — water, not fat. Coaching is general wellness coaching, not medical care; on medication, your prescriber stays in charge.' }),

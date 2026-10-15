@@ -81,7 +81,8 @@ test('the room stays honest: water not fat, banned shortcuts, potassium caution'
 
 test('the guide and coaching links are real https URLs, not the Instagram wrapper', () => {
   assert.match(GUIDE_URL, /^https:\/\/claude\.ai\/code\/artifact\/[0-9a-f-]{36}$/);
-  assert.match(COACHING_URL, /^https:\/\//);
+  assert.equal(COACHING_URL, 'https://www.instagram.com/coachcolinc/');
+  assert.doesNotMatch(COACHING_URL, /rpxt|igsh|utm_/);
   assert.doesNotMatch(GUIDE_URL, /instagram/);
 });
 
