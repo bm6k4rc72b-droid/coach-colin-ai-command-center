@@ -457,6 +457,15 @@ export const STATIONS = [
     colin: 'COLIN Dermal Technologies. The door would like to see your face. Not your passport, your face. I promise not to comment on your pores.',
   },
   {
+    id: 'hollywood',
+    kicker: 'The Hollywood Secret',
+    title: 'The 72-Hour Deflate — closed set',
+    body: 'What actors really do in the three days before a red carpet — and why it has nothing to do with fat. Clear studio security with your digital fingerprint and one honest answer about why the fat isn\'t coming off, then step onto a closed set where Colin reads your plan back to you, scene by scene, from Coach Colin\'s 72-Hour Deflate guide.',
+    facts: [],
+    cite: 'From Coach Colin\'s 72-Hour Deflate guide. Three days move water, gas, transit and glycogen — not fat. Fingerprint simulated; answers stay on this device. Not medical advice.',
+    colin: 'Quiet on set. Behind this door is the oldest secret in Hollywood, and it isn\'t a pill. Give me your fingerprint and an honest answer, and you can come in.',
+  },
+  {
     id: 'classified',
     plate: 'exBanner',
     kicker: 'CLASSIFIED · EX-039',

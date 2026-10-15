@@ -353,6 +353,7 @@ const PLACES = [
   ['telemetry', /\b(telemetry|heart ?beat|where .* act)\b/],
   ['genome', /\b(gene|genome|dna|sequence|codons?)\b/],
   ['globe', /\b(globe|regulat\w*|legal|countries|wada|banned)\b/],
+  ['hollywood', /\b(hollywood|deflate|debloat|de-bloat|bloat(ed|ing)?|puffy|water weight|72[- ]?hours?|red carpet|premiere)\b/],
   ['dermal', /\b(skin|skincare|skin care|dermal|derm\w*|wrinkles?|collagen|face scan|anti-?ag(e)?ing|ghk(-cu)?|copper peptide|matrixyl|argireline|snap-?8|leuphasyl)\b/],
   ['classified', /\b(classified|vault|top secret|secret|exenatide|ex-?039|black lab|gila)\b/],
   ['future', /\b(future|pipeline|next generation|orforglipron|cagrisema|survodutide|maritide|amycretin)\b/],
