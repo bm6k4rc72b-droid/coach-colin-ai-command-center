@@ -141,3 +141,27 @@ export const GradeShader = {
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
+
+/**
+ * Scrubs non-finite pixels and caps HDR peaks before bloom. Mobile GPUs (iPhone) render to
+ * half-float targets that overflow to Inf on very bright highlights; the bloom blur then
+ * spreads Inf/NaN into large black blocks. Comparisons with NaN are false, so `!(x < CAP)`
+ * catches NaN and +Inf alike.
+ */
+export const SanitizeShader = {
+  uniforms: { tDiffuse: { value: null }, cap: { value: 48.0 } },
+  vertexShader: /* glsl */ `
+    varying vec2 vUv;
+    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+  `,
+  fragmentShader: /* glsl */ `
+    uniform sampler2D tDiffuse;
+    uniform float cap;
+    varying vec2 vUv;
+    float fix1(float x) { return (x >= 0.0 && x < cap) ? x : (x >= cap ? cap : 0.0); }
+    void main() {
+      vec4 c = texture2D(tDiffuse, vUv);
+      gl_FragColor = vec4(fix1(c.r), fix1(c.g), fix1(c.b), 1.0);
+    }
+  `,
+};

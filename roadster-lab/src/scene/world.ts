@@ -18,7 +18,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { PART_ORDER, PARTS, type PartId } from '../core/parts';
 import type { StuntSample } from '../core/stunt';
-import { FLOW_FRAG, FLOW_VERT, GradeShader, plumeMaterial, rimMaterial, SKY_FRAG, SKY_VERT } from './shaders';
+import { FLOW_FRAG, FLOW_VERT, GradeShader, plumeMaterial, rimMaterial, SanitizeShader, SKY_FRAG, SKY_VERT } from './shaders';
 
 const FRONT_AXLE = 1.27;
 const REAR_AXLE = -1.33;
@@ -260,6 +260,7 @@ export class World {
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.composer.addPass(new ShaderPass(SanitizeShader));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.55, 0.5, 0.82);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
