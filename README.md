@@ -45,21 +45,25 @@ TypeScript + Three.js project.
 
 ## Also in here: VOLTFORGE · the Tesla Roadster in 3D (made by Colin Cook)
 
-At [`roadster-lab/`](roadster-lab): a cinematic, interactive 3D breakdown of the Tesla Roadster,
-made by Colin Cook and built the same way as SUNFORGE.
+At [`roadster-lab/`](roadster-lab): a cinematic, interactive 3D rebuild of the 2026 Tesla Roadster
+reveal (15 October 2026), made by Colin Cook and built the same way as SUNFORGE.
 
-- **The car.** A procedurally lofted body with clearcoat paint, a glass canopy and light blades.
-  X-ray and exploded views show the 200 kWh floor pack, the three motors, the brakes, the active
-  aero and the claimed SpaceX cold-gas thruster package.
-- **Launch.** Runs play out in real time, with energy-flow particles, squat, glowing brakes,
-  thruster plumes, speed streaks and an anamorphic grade.
-- **Physics.** Every number is computed live: torque → force → g, the tyre-grip ceiling μg,
-  load transfer, constant-torque/constant-power motors, aero drag and downforce, battery current
-  and I²R heat, range against speed, v²/(2μg) braking, regeneration, cornering and the rocket
-  equation.
-- **Orbit.** A Kepler solver tracks the Falcon Heavy Roadster around the Sun.
-- **Honesty.** The new Roadster's figures are labelled as Tesla's announced targets; unpublished
-  values are labelled assumptions. Not affiliated with Tesla or SpaceX.
+- **The stunt.** The reported demo is replayed in a floodlit arena: the car drives up a curling
+  ramp until it hangs upside down on fan suction, leaves the top, rolls 180° in mid-air on
+  compressed-air thrusters and lands on its wheels, with a director camera and slow motion.
+- **The maths of the stunt.** A tested simulation covers the loop dynamics (N = mv²/R + mg cos θ +
+  F_suction), the suction needed below √(gR), fan pressure and power, the free fall, the roll
+  torque and inertia, the landing burn, the compressed-air budget (pV = mRT, the cold-gas exhaust
+  speed, F = ṁvₑ), the 0.81 s launch and the jump. Every line updates with the ramp radius,
+  speeds, suction and thrust sliders. Turn the suction down and the car falls off.
+- **The car.** Its look follows the reported design cues: Ano White paint, gold-tinted glass,
+  sharp geometric surfacing, hidden headlights, a full-width tail bar and thin-spoke wheels.
+  X-ray and exploded views show the suction fans, ten thrusters and twin air tanks, twin rear
+  motors, battery, brakes and cabin.
+- **Physics.** The 2026 trims (Performance, Thrust, Rocket) and the 2017 and 2008 cars are
+  modelled, with range, braking, battery maths and the Kepler orbit of the Falcon Heavy Roadster.
+- **Honesty.** Figures are labelled as reported; unpublished values are labelled assumptions.
+  Not affiliated with Tesla or SpaceX.
 
 **Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/roadster-lab/>**
 

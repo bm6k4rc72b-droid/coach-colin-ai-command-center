@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="VOLTFORGE: an interactive, cinematic 3D breakdown of the Tesla Roadster with live launch, battery, aero, braking and orbital physics. Made by Colin Cook." />
+    <meta name="description" content="VOLTFORGE: the 2026 Tesla Roadster reveal rebuilt in cinematic 3D: the inverted ramp, fan suction, the mid-air half-roll on compressed-air thrusters, the 0.81 s launch, with the physics of every moment. Made by Colin Cook." />
     <meta name="author" content="Colin Cook" />
     <title>VOLTFORGE — the Tesla Roadster in 3D · Made by Colin Cook</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M18 2 6 18h8l-2 12 12-16h-8z' fill='%23ff2b4e' stroke='%2338e1ff' stroke-width='1.5'/%3E%3C/svg%3E" />
@@ -24,6 +24,11 @@
           <div class="chips" id="parts"></div>
           <div class="toggles" id="toggles"></div>
           <div class="vcredit">Made by Colin Cook</div>
+        </div>
+        <div class="panel glass" id="stunt-card">
+          <h3>The reveal stunt · up the curl inverted, half-roll in mid-air, land on four wheels</h3>
+          <div class="stunt-row"><canvas id="stunt-chart" class="chart"></canvas><div id="stunt-controls"></div></div>
+          <div id="demo-maths"></div>
         </div>
         <div class="row2">
           <div class="panel glass" id="launch-card"><h3>Launch trace: speed and g</h3><canvas id="launch-chart" class="chart"></canvas><p class="hint">Cyan = speed, magenta = acceleration. Amber shading marks where tyre grip, not the motors, is the limit. The plateau is μ·g or τ/(r·m); the fall-off is constant power, F = P/v.</p></div>

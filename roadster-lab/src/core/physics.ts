@@ -6,10 +6,12 @@
  * battery pack (energy, voltage, current, I²R heat, C-rate), range at steady speed, braking,
  * cornering, and the heliocentric orbit of the 2008 Roadster launched on Falcon Heavy.
  *
- * Honesty: the second-generation Roadster's performance figures are Tesla's *announced* targets
- * (2017 reveal). Mass, drag coefficient, gearing, cell format and pack voltage were never
- * published; the values below are labelled assumptions chosen so the model is self-consistent
- * with the announced numbers. The original Roadster figures are published production specs.
+ * Honesty: the 2026 Roadster figures are what Tesla and its engineers said at the 15 October
+ * 2026 reveal, as reported (rear-drive twin motors, about 1,000 kW, about 3,700 lb not final,
+ * 10 compressed-air thrusters on a 600 L tank, about 80 kN from the rear ports, fan suction,
+ * over 300 miles, 500 kW charging). Pack size, tank pressure, drag, gearing and fan size were not
+ * disclosed; the values below are labelled assumptions. The 2017 figures were announced targets;
+ * the original Roadster figures are published specs.
  *
  * Pure: numbers in, numbers out.
  */
@@ -59,6 +61,11 @@ export interface Car {
   ve: number;
   /** Auxiliary load (W): cooling, cabin, electronics. */
   aux: number;
+  /** Fan suction downforce (N), present at any speed. 0 = none. */
+  suction: number;
+  /** Compressed-air tank: volume (L) and fill pressure (bar). 0 L = use the fixed gasKg model. */
+  tankL: number;
+  tankBar: number;
 }
 
 /** Second-generation Roadster, announced 2017. Performance targets announced; the rest assumed. */
@@ -86,6 +93,9 @@ export const ROADSTER_2: Car = {
   gasKg: 0,
   ve: 716,
   aux: 900,
+  suction: 0,
+  tankL: 0,
+  tankBar: 0,
 };
 
 /** The optional "SpaceX package": cold-gas thrusters fed from a composite pressure vessel. */
@@ -116,7 +126,67 @@ export const ROADSTER_1: Car = {
   gasKg: 0,
   ve: 716,
   aux: 400,
+  suction: 0,
+  tankL: 0,
+  tankBar: 0,
 };
+
+/**
+ * 2026 production Roadster as revealed on 15 October 2026 (Performance trim): rear-wheel drive,
+ * twin rear motors with torque vectoring, fan suction. Mass ≈ 3,700 lb (not final).
+ */
+export const ROADSTER_2026: Car = {
+  name: 'Roadster 2026 · Performance',
+  mass: 1680,
+  mu: 1.5,
+  power: 800e3,
+  wheelTorque: 1400 * 8.5 * 0.96,
+  vLimit: 230 * MPH,
+  cd: 0.25,
+  area: 1.85,
+  crr: 0.011,
+  radius: 0.35,
+  drive: 'rwd',
+  rearWeight: 0.57,
+  wheelbase: 2.65,
+  cgHeight: 0.4,
+  clA: 0.3,
+  packWh: 80e3,
+  packV: 800,
+  packR: 0.08,
+  eta: 0.9,
+  thrust: 0,
+  gasKg: 0,
+  ve: 650,
+  aux: 900,
+  suction: 9000,
+  tankL: 0,
+  tankBar: 0,
+};
+
+/**
+ * Thrust trim: rear cold-gas ports fed from the 600 L air tank (fill pressure assumed 300 bar).
+ * About 80 kN was reported, but with 80 kN for the whole run this model reaches 60 mph in about
+ * 0.45 s; the 0.81 s shown live implies about 27.5 kN on average, which is what this preset uses.
+ */
+export const ROADSTER_THRUST: Car = { ...ROADSTER_2026, name: 'Roadster 2026 · Thrust', mass: 1760, power: 1000e3, thrust: 27500, tankL: 600, tankBar: 300 };
+/** "What if all 80 kN pushed the whole way?" */
+export const ROADSTER_THRUST_80: Car = { ...ROADSTER_THRUST, name: 'Thrust at a full 80 kN', thrust: 80000 };
+/** Rocket trim: single seat, lighter; thrust sized to the < 0.59 s claim (assumption). */
+export const ROADSTER_ROCKET: Car = { ...ROADSTER_THRUST, name: 'Roadster 2026 · Rocket', mass: 1690, thrust: 50000 };
+
+/** Thrust needed (N) for this car to reach 0–60 mph in `target` seconds (bisection on the sim). */
+export function thrustForTime(c: Car, target: number): number {
+  let lo = 0;
+  let hi = 400000;
+  for (let i = 0; i < 36; i++) {
+    const mid = (lo + hi) / 2;
+    const t = launch({ ...c, thrust: mid }, { tMax: 4, every: 1 }).t60 ?? 99;
+    if (t > target) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
 
 export interface Preset {
   id: string;
@@ -126,9 +196,13 @@ export interface Preset {
 }
 
 export const PRESETS: Preset[] = [
-  { id: 'gen2', name: 'Roadster', blurb: 'Tesla\'s announced targets: 0–60 mph in 1.9 s, 0–100 in 4.2 s, ¼ mile in 8.8 s, over 250 mph, 620 miles of range. Mass, drag and gearing are assumptions.', car: ROADSTER_2 },
-  { id: 'spacex', name: '+ SpaceX package', blurb: 'The claimed option: cold-gas thrusters push the car beyond what tyre grip allows. Claimed 0–60 mph in about 1.1 s.', car: { ...ROADSTER_2, ...SPACEX_PACKAGE } },
-  { id: 'street', name: 'Street tyres', blurb: 'The same car on ordinary road tyres (μ ≈ 1.0). The motors are no longer the limit; the rubber is.', car: { ...ROADSTER_2, mu: 1.0, name: 'Roadster on street tyres' } },
+  { id: 'perf', name: '2026 Performance', blurb: 'Revealed 15 Oct 2026: rear-drive twin motors and a fan-and-ground-seal suction system that sucks the car onto the road. Claimed 0–60 mph under 1.6 s.', car: ROADSTER_2026 },
+  { id: 'thrust', name: '2026 Thrust', blurb: 'Adds rear compressed-air thrusters (≈80 kN reported) fed from a 600-litre tank. Claimed under 0.9 s; 0.81 s was shown live at the reveal.', car: ROADSTER_THRUST },
+  { id: 'thrust80', name: 'What if 80 kN?', blurb: 'The reported ≈80 kN applied for the whole run. The model then hits 60 mph in about 0.45 s, much quicker than the 0.81 s shown live, so 80 kN is likely a peak or a total across all ten thrusters.', car: ROADSTER_THRUST_80 },
+  { id: 'rocket', name: '2026 Rocket', blurb: 'Invite-only, single seat. Claimed 0–60 mph under 0.59 s. Its thrust here is an assumption sized to meet that claim.', car: ROADSTER_ROCKET },
+  { id: 'gen2', name: '2017 targets', blurb: 'What Tesla announced in 2017: 0–60 mph in 1.9 s, 620 miles, all-wheel drive with three motors. The 2026 car changed course.', car: ROADSTER_2 },
+  { id: 'spacex', name: '2017 + SpaceX pkg', blurb: 'The 2017 claimed option: cold-gas thrusters for about 1.1 s 0–60 mph.', car: { ...ROADSTER_2, ...SPACEX_PACKAGE } },
+  { id: 'street', name: 'Street tyres', blurb: 'The 2017-spec car on ordinary road tyres (μ ≈ 1.0). The rubber, not the motors, sets the pace.', car: { ...ROADSTER_2, mu: 1.0, name: 'Roadster on street tyres' } },
   { id: 'gen1', name: 'Original 2008', blurb: 'The first Roadster: a Lotus-based, rear-drive two-seater with 6,831 laptop cells. 0–60 mph in 3.7 s (Sport), 244 miles of range.', car: ROADSTER_1 },
 ];
 
@@ -145,7 +219,7 @@ export const rolling = (c: Car, m = c.mass) => c.crr * m * G0;
  * (N_r = m g·w_r + m a h / L).
  */
 export function tractionLimit(c: Car, v: number, a: number, m = c.mass): number {
-  const N = m * G0 + downforce(c, v);
+  const N = m * G0 + downforce(c, v) + c.suction;
   if (c.drive === 'awd') return c.mu * N;
   const Nr = N * c.rearWeight + (m * a * c.cgHeight) / c.wheelbase;
   return c.mu * Math.max(0, Math.min(N, Nr));
@@ -203,6 +277,7 @@ export function launch(c: Car, { tMax = 60, dt = 0.002, every = 0.02 } = {}): Ru
   let x = 0;
   let a = 0;
   let gas = c.gasKg;
+  let air = tankAirKg(c);
   let m = c.mass;
   let energy = 0;
   const out: RunResult = { samples: [], t60: null, t60Rollout: null, tRollout: null, t100: null, tQuarter: null, trapMph: null, topSpeed: 0, peakG: 0, peakBattW: 0, peakAmps: 0, energyWh: 0 };
@@ -212,7 +287,15 @@ export function launch(c: Car, { tMax = 60, dt = 0.002, every = 0.02 } = {}): Ru
     const ft = tractionLimit(c, v, a, m);
     const wheel = Math.min(fm, ft);
     let thrust = 0;
-    if (gas > 0 && c.thrust > 0) {
+    if (c.tankL > 0 && c.thrust > 0) {
+      const p = tankPressure(c, air);
+      if (p > MIN_BAR) {
+        thrust = c.thrust * (p / c.tankBar);
+        const used = Math.min(air, (thrust / exhaustVelocity(p)) * dt);
+        air -= used;
+        m -= used;
+      }
+    } else if (gas > 0 && c.thrust > 0) {
       thrust = c.thrust;
       const mdot = c.thrust / c.ve;
       const used = Math.min(gas, mdot * dt);
@@ -242,7 +325,7 @@ export function launch(c: Car, { tMax = 60, dt = 0.002, every = 0.02 } = {}): Ru
     if (t >= nextSample) {
       nextSample += every;
       const limit: Sample['limit'] = v >= c.vLimit * 0.999 ? 'rpm' : ft < fm ? 'grip' : v < baseSpeed(c) ? 'torque' : 'power';
-      out.samples.push({ t, v, x, a, limit, wheelForce: wheel, thrust, gas, battW, amps, heatW: amps * amps * c.packR });
+      out.samples.push({ t, v, x, a, limit, wheelForce: wheel, thrust, gas: c.tankL > 0 ? air : gas, battW, amps, heatW: amps * amps * c.packR });
     }
     if (out.tQuarter !== null && a < 0.02 && t > 5) break;
   }
@@ -317,12 +400,68 @@ export const CELLS = {
 } as const;
 export const cellCount = (packWh: number, format: keyof typeof CELLS) => Math.round(packWh / CELLS[format].wh);
 
+/* --------------------------------------------------------- compressed air */
+
+export const R_AIR = 287.05; // J/(kg·K)
+export const CP_AIR = 1005; // J/(kg·K)
+export const GAMMA_AIR = 1.4;
+export const T_TANK = 293; // K
+export const P_ATM = 1.01325; // bar
+/** Thrusters stop when the tank falls below this pressure, bar. */
+export const MIN_BAR = 20;
+/** Nozzle efficiency applied to the ideal expansion speed. */
+export const NOZZLE_ETA = 0.9;
+
+/** Air in a tank at fill pressure (ideal gas, m = pV/RT), kg. */
+export const tankAirKg = (c: Car) => (c.tankL > 0 ? (c.tankBar * 1e5 * (c.tankL / 1000)) / (R_AIR * T_TANK) : 0);
+
+/** Tank pressure once only `kg` of air remains (isothermal blow-down), bar. */
+export const tankPressure = (c: Car, kg: number) => (c.tankL > 0 ? (kg * R_AIR * T_TANK) / (c.tankL / 1000) / 1e5 : 0);
+
+/**
+ * Exhaust speed of cold air expanded from p (bar) to the atmosphere:
+ * vₑ = η·√(2·cₚ·T·(1 − (pₐ/p)^((γ−1)/γ))).
+ */
+export function exhaustVelocity(pBar: number, T = T_TANK): number {
+  if (pBar <= P_ATM) return 0;
+  return NOZZLE_ETA * Math.sqrt(2 * CP_AIR * T * (1 - (P_ATM / pBar) ** ((GAMMA_AIR - 1) / GAMMA_AIR)));
+}
+
+/** Usable gas (kg) and effective exhaust speed for the car's thruster system. */
+function gasSupply(c: Car) {
+  if (c.tankL > 0) {
+    const air = tankAirKg(c);
+    const left = (MIN_BAR * 1e5 * (c.tankL / 1000)) / (R_AIR * T_TANK);
+    return { kg: air - left, ve: exhaustVelocity((c.tankBar + MIN_BAR) / 2), m0: c.mass };
+  }
+  return { kg: c.gasKg, ve: c.ve, m0: c.mass };
+}
+
 /** Tsiolkovsky: Δv a thruster package can add to the car. */
-export const thrusterDeltaV = (c: Car) => c.ve * Math.log(c.mass / Math.max(1, c.mass - c.gasKg));
-/** How long the gas lasts at full thrust, s. */
-export const burnTime = (c: Car) => (c.thrust > 0 ? (c.gasKg * c.ve) / c.thrust : 0);
+export const thrusterDeltaV = (c: Car) => {
+  const g = gasSupply(c);
+  return g.ve * Math.log(g.m0 / Math.max(1, g.m0 - g.kg));
+};
+/** How long the gas lasts at full thrust, s (blow-down tanks: time constant τ = m·vₑ/F). */
+export const burnTime = (c: Car) => {
+  if (c.thrust <= 0) return 0;
+  const g = gasSupply(c);
+  return (g.kg * g.ve) / c.thrust;
+};
 /** Specific impulse, s. */
-export const isp = (c: Car) => c.ve / G0;
+export const isp = (c: Car) => (c.tankL > 0 ? exhaustVelocity(c.tankBar) : c.ve) / G0;
+
+/** Upper bound on pack energy from a charging claim: ΔSoC of the pack in `minutes` at ≤ `kw`. */
+export const packBoundKWh = (kw: number, socFrom: number, socTo: number, minutes: number) => (kw * minutes) / 60 / (socTo - socFrom);
+
+/** Fan suction: pressure difference under a floor area that produces force F (Pa). */
+export const suctionPressure = (forceN: number, floorM2: number) => forceN / floorM2;
+
+/** Fan power to hold a pressure drop against leakage through a perimeter gap. */
+export function fanPower(deltaP: number, perimeterM: number, gapM: number, eta = 0.5, cd = 0.6) {
+  const leak = cd * perimeterM * gapM * Math.sqrt((2 * deltaP) / RHO_AIR);
+  return { flow: leak, watts: (leak * deltaP) / eta };
+}
 
 /** Kinetic energy at speed v, J. */
 export const kinetic = (c: Car, v: number) => 0.5 * c.mass * v * v;

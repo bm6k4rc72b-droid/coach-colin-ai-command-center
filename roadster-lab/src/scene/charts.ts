@@ -267,3 +267,120 @@ export function drawOrbit(c: HTMLCanvasElement, date: Date, t: number) {
   ];
   lines.forEach((l, i) => g.fillText(l, 10, h - 8 - (lines.length - 1 - i) * 14));
 }
+
+/**
+ * The reveal stunt in side elevation: the curling ramp, the path coloured by phase, the car's
+ * attitude at intervals, and strips for felt g and tank pressure. `cursor` < 0 hides the marker.
+ */
+export function drawStunt(c: HTMLCanvasElement, r: import('../core/stunt').StuntResult, R: number, cursor: number) {
+  const { g, w, h } = setup(c);
+  const S = r.samples;
+  const stripH = 46;
+  const top = 12;
+  const bottom = h - stripH - 26;
+  const xs = S.map((s) => s.x).filter((x) => x > -24);
+  const xMin = Math.min(-4, ...xs) - 2;
+  const xMax = Math.max(R + 5, 6);
+  const yMax = 2 * R + 2;
+  const scale = Math.min((w - 24) / (xMax - xMin), (bottom - top) / yMax);
+  const X = (x: number) => 12 + (x - xMin) * scale;
+  const Y = (y: number) => bottom - y * scale;
+  // Ground and ramp.
+  g.strokeStyle = 'rgba(255,255,255,0.25)';
+  g.beginPath();
+  g.moveTo(0, Y(0));
+  g.lineTo(w, Y(0));
+  g.stroke();
+  g.save();
+  g.strokeStyle = '#38e1ff';
+  g.lineWidth = 3;
+  g.shadowColor = '#38e1ff';
+  g.shadowBlur = 12;
+  g.beginPath();
+  for (let i = 0; i <= 80; i++) {
+    const th = (i / 80) * Math.PI;
+    const x = X(R * Math.sin(th));
+    const y = Y(R - R * Math.cos(th));
+    if (i) g.lineTo(x, y);
+    else g.moveTo(x, y);
+  }
+  g.stroke();
+  g.restore();
+  g.fillStyle = 'rgba(56,225,255,0.7)';
+  g.fillText(`R = ${R.toFixed(1)} m`, X(R) + 6, Y(R));
+  g.fillText(`top ${(2 * R).toFixed(1)} m`, X(0) + 6, Y(2 * R) - 6);
+  // Path by phase.
+  const col: Record<string, string> = { runup: '#94a3b8', ramp: '#38e1ff', flight: '#f472b6', landing: '#fbbf24', done: '#4ade80' };
+  for (let i = 1; i < S.length; i++) {
+    const a = S[i - 1];
+    const b = S[i];
+    if (b.x < xMin) continue;
+    g.strokeStyle = col[b.phase];
+    g.lineWidth = b.phase === 'flight' ? 2.4 : 1.6;
+    g.beginPath();
+    g.moveTo(X(a.x), Y(a.y + 0.5));
+    g.lineTo(X(b.x), Y(b.y + 0.5));
+    g.stroke();
+  }
+  // Car glyphs: a box whose roof stripe shows which way up the car is.
+  const glyph = (s: import('../core/stunt').StuntSample, alpha: number) => {
+    const L = 4.2 * scale;
+    const H = 1.1 * scale;
+    g.save();
+    g.globalAlpha = alpha;
+    g.translate(X(s.x), Y(s.y));
+    g.rotate(-s.pitch);
+    const upright = Math.cos(s.roll);
+    g.fillStyle = 'rgba(230,232,234,0.85)';
+    g.fillRect(-L / 2, 0, L, -H * Math.max(0.15, Math.abs(upright)) * Math.sign(upright || 1));
+    g.fillStyle = '#b8862b';
+    g.fillRect(-L * 0.15, -H * 0.85 * Math.sign(upright || 1) * Math.max(0.15, Math.abs(upright)), L * 0.35, H * 0.25 * Math.sign(upright || 1));
+    g.restore();
+  };
+  const step = Math.max(1, Math.floor(S.length / 26));
+  for (let i = 0; i < S.length; i += step) if (S[i].phase !== 'runup' || S[i].x > xMin + 2) glyph(S[i], 0.22);
+  if (cursor >= 0) {
+    const s = S.reduce((best, x) => (Math.abs(x.t - cursor) < Math.abs(best.t - cursor) ? x : best), S[0]);
+    glyph(s, 1);
+  }
+  // Strips: felt g (pink) and tank pressure (gold) against time.
+  const tMax = S[S.length - 1].t;
+  const sy = h - stripH - 8;
+  g.fillStyle = 'rgba(255,255,255,0.04)';
+  g.fillRect(12, sy, w - 24, stripH);
+  const gMax = Math.max(4, ...S.map((s) => s.gSeat));
+  const pMax = Math.max(1, S[0].tankBar);
+  const line = (f: (s: import('../core/stunt').StuntSample) => number, max: number, colr: string) => {
+    g.strokeStyle = colr;
+    g.lineWidth = 1.4;
+    g.beginPath();
+    S.forEach((s, i) => {
+      const x = 12 + (s.t / tMax) * (w - 24);
+      const y = sy + stripH - (Math.min(max, Math.max(0, f(s))) / max) * stripH;
+      if (i) g.lineTo(x, y);
+      else g.moveTo(x, y);
+    });
+    g.stroke();
+  };
+  line((s) => s.gSeat, gMax, '#ff4fd8');
+  line((s) => s.tankBar, pMax, '#fbbf24');
+  g.fillStyle = 'rgba(240,235,255,0.75)';
+  g.fillText(`felt g (max ${gMax.toFixed(1)})`, 16, sy + 11);
+  g.fillStyle = 'rgba(251,191,36,0.9)';
+  g.fillText(`tank ${S[0].tankBar.toFixed(0)} → ${S[S.length - 1].tankBar.toFixed(0)} bar`, w - 150, sy + 11);
+  if (cursor >= 0) {
+    const x = 12 + (Math.min(cursor, tMax) / tMax) * (w - 24);
+    g.strokeStyle = 'rgba(255,255,255,0.8)';
+    g.beginPath();
+    g.moveTo(x, sy);
+    g.lineTo(x, sy + stripH);
+    g.stroke();
+  }
+  // Legend.
+  [['run-up', '#94a3b8'], ['curl', '#38e1ff'], ['air', '#f472b6'], ['landing', '#fbbf24']].forEach(([t, cc], i) => {
+    g.fillStyle = cc;
+    g.fillRect(16 + i * 74, 8, 10, 3);
+    g.fillStyle = 'rgba(240,235,255,0.8)';
+    g.fillText(t, 30 + i * 74, 12);
+  });
+}
