@@ -190,3 +190,12 @@ footer b { color: #fff; }
   .chart { height: 210px; }
   .lights .light b { font-size: 12px; }
 }
+/* Reveal stunt */
+#stunt-card { border-color: rgba(56, 225, 255, 0.4); box-shadow: 0 0 40px rgba(56, 225, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.stunt-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); gap: 14px; align-items: start; }
+#stunt-chart { height: 330px; }
+.stunt-btn { border-color: rgba(56, 225, 255, 0.7); background: rgba(56, 225, 255, 0.14); }
+.stunt-btn.on, #st-replay.on { box-shadow: 0 0 16px rgba(56, 225, 255, 0.5); }
+#demo-maths { margin-top: 12px; }
+#demo-maths .banner { margin: 0 0 10px; }
+@media (max-width: 860px) { .stunt-row { grid-template-columns: 1fr; } #stunt-chart { height: 260px; } }

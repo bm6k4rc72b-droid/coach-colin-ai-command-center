@@ -17,6 +17,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { PART_ORDER, PARTS, type PartId } from '../core/parts';
+import type { StuntSample } from '../core/stunt';
 import { FLOW_FRAG, FLOW_VERT, GradeShader, plumeMaterial, rimMaterial, SKY_FRAG, SKY_VERT } from './shaders';
 
 const FRONT_AXLE = 1.27;
@@ -44,7 +45,7 @@ function profile(pts: [number, number][]): (x: number) => number {
   };
 }
 
-const TOP = profile([[-2.12, 0.6], [-2.02, 0.79], [-1.72, 0.85], [-1.3, 0.88], [-0.95, 0.94], [-0.55, 1.08], [-0.1, 1.13], [0.3, 1.09], [0.78, 0.86], [1.25, 0.73], [1.75, 0.63], [2.12, 0.46]]);
+const TOP = profile([[-2.12, 0.62], [-2.02, 0.8], [-1.72, 0.86], [-1.3, 0.89], [-0.95, 0.95], [-0.55, 1.07], [-0.1, 1.11], [0.3, 1.07], [0.78, 0.85], [1.25, 0.71], [1.75, 0.58], [2.12, 0.4]]);
 const BASE = profile([[-2.12, 0.34], [-1.8, 0.2], [-1.2, 0.13], [0.8, 0.13], [1.7, 0.16], [2.12, 0.27]]);
 const HALF_W = profile([[-2.12, 0.8], [-1.85, 0.95], [-1.35, 1.0], [-0.6, 0.95], [0.2, 0.93], [1.25, 0.97], [1.75, 0.9], [2.12, 0.66]]);
 const BELT = 0.83;
@@ -66,7 +67,7 @@ function sectionPoint(x: number, phi: number): [number, number] {
   const H = Math.max(0.02, top - bot);
   const s = Math.sin(phi);
   const c = Math.cos(phi);
-  const n = phi < 0 ? 5 : 2.3;
+  const n = phi < 0 ? 5 : 3.1;
   const yn = Math.sign(s) * Math.abs(s) ** (2 / n);
   const zn = Math.abs(c) ** (2 / n);
   const y = bot + H * (0.5 + 0.5 * yn);
@@ -84,8 +85,8 @@ interface BodyGeo {
 
 /** Loft the body. Triangles in the cabin greenhouse go to group 1 (glass), the rest to group 0. */
 function buildBody(): BodyGeo {
-  const NX = 150;
-  const NR = 72; // ring points (full ring)
+  const NX = 64;
+  const NR = 30; // ring points (full ring): coarse on purpose, for crisp geometric facets
   const pos: number[] = [];
   const glass: boolean[] = [];
   for (let i = 0; i <= NX; i++) {
@@ -180,6 +181,19 @@ export class World {
   private cells!: THREE.InstancedMesh;
   private cellMat!: THREE.MeshStandardMaterial;
   private coilMats: THREE.MeshStandardMaterial[] = [];
+  private fanBlades: THREE.Object3D[] = [];
+  private skirtMat!: THREE.MeshBasicMaterial;
+  private thrusterFx: { mat: THREE.ShaderMaterial; kind: 'rear' | 'rollPos' | 'rollNeg' | 'lift' }[] = [];
+  private studioBits: THREE.Object3D[] = [];
+  private rig = new THREE.Group();
+  private ramp = new THREE.Group();
+  private rampLeds: THREE.MeshBasicMaterial[] = [];
+  private landingPad!: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+  private dust!: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
+  private dustT = -1;
+  private lastPhase = '';
+  private userCam = false;
+  private camOrbit = 0;
   private lanes!: THREE.InstancedMesh;
   private streaks!: THREE.LineSegments;
   private streakPos!: Float32Array;
@@ -199,6 +213,12 @@ export class World {
   thrusterPackage = false;
   cinema = false;
   drive: DriveState = { v: 0, a: 0, power: 0, thrust: 0, braking: 0 };
+  /** Reveal-stunt playback: the sample to pose the car at, the ramp radius and where it lands. */
+  stunt: { active: boolean; sample: StuntSample | null; radius: number; landingX: number } = { active: false, sample: null, radius: 6, landingX: -16 };
+  /** Tests only: jump the director camera straight to its mark. */
+  snapCam = false;
+  /** Suction fans running (always shown spinning in the stunt). */
+  fansOn = false;
   onPick: ((p: PartId | null) => void) | null = null;
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -219,7 +239,10 @@ export class World {
     this.controls.minDistance = 2.4;
     this.controls.maxDistance = 22;
     this.controls.maxPolarAngle = Math.PI * 0.495;
-    this.controls.addEventListener('start', () => (this.flyTo = null));
+    this.controls.addEventListener('start', () => {
+      this.flyTo = null;
+      this.userCam = true;
+    });
 
     this.studio();
     this.scene.add(this.car);
@@ -233,6 +256,7 @@ export class World {
     this.buildCabin();
     this.buildFlow();
     this.buildMotion();
+    this.buildRig();
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
@@ -276,7 +300,7 @@ export class World {
     const sky = new THREE.Mesh(new THREE.SphereGeometry(120, 48, 24), new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: { uTime: { value: 0 } }, side: THREE.BackSide, depthWrite: false }));
     this.scene.add(sky);
     // Mirror floor, darkened by a radial veil so it reads as polished concrete.
-    const mirror = new Reflector(new THREE.CircleGeometry(60, 64), { textureWidth: 1024, textureHeight: 1024, color: 0x6a6a74 });
+    const mirror = new Reflector(new THREE.CircleGeometry(110, 96), { textureWidth: 1024, textureHeight: 1024, color: 0x6a6a74 });
     mirror.rotation.x = -Math.PI / 2;
     this.scene.add(mirror);
     const veilTex = (() => {
@@ -291,7 +315,7 @@ export class World {
       g.fillRect(0, 0, 256, 256);
       return new THREE.CanvasTexture(c);
     })();
-    const veil = new THREE.Mesh(new THREE.CircleGeometry(60, 64), new THREE.MeshBasicMaterial({ color: 0x06050a, transparent: true, alphaMap: veilTex, opacity: 0.94, depthWrite: false }));
+    const veil = new THREE.Mesh(new THREE.CircleGeometry(110, 96), new THREE.MeshBasicMaterial({ color: 0x06050a, transparent: true, alphaMap: veilTex, opacity: 0.94, depthWrite: false }));
     veil.rotation.x = -Math.PI / 2;
     veil.position.y = 0.004;
     veil.material.alphaMap!.colorSpace = THREE.NoColorSpace;
@@ -307,10 +331,12 @@ export class World {
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 4.6;
     this.scene.add(ring);
+    this.studioBits.push(ring);
     for (const z of [-3.4, 3.4]) {
       const strip = new THREE.Mesh(new THREE.BoxGeometry(18, 0.02, 0.05), new THREE.MeshBasicMaterial({ color: z < 0 ? new THREE.Color(0.2, 1.3, 2.2) : new THREE.Color(2.2, 0.3, 0.6) }));
       strip.position.set(0, 0.01, z);
       this.scene.add(strip);
+      this.studioBits.push(strip);
     }
     const key = new THREE.SpotLight('#fff1e0', 40, 30, 0.75, 0.8, 1.6);
     key.position.set(3, 7, 4);
@@ -359,9 +385,11 @@ export class World {
     const body = this.part('body');
     const roof = this.part('roof');
     const { geo } = buildBody();
-    this.paint = this.mat('body', { color: '#8a0716', metalness: 0.35, roughness: 0.42, clearcoat: 1, clearcoatRoughness: 0.07, envMapIntensity: 0.55 } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
-    this.glass = this.mat('roof', { color: '#010103', metalness: 0.0, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.12, transparent: true, opacity: 0.96, envMapIntensity: 0.55 } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
-    this.carbon = this.mat('body', { color: '#09090c', metalness: 0.5, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1 } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
+    // "Ano White": a satin aerospace-coating white with a faint pearl shift.
+    this.paint = this.mat('body', { color: '#d9dcdf', metalness: 0.22, roughness: 0.34, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.7, iridescence: 0.18, iridescenceIOR: 1.6, flatShading: true } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
+    // Gold-tinted glass, after a spacesuit visor.
+    this.glass = this.mat('roof', { color: '#b8862b', metalness: 0.95, roughness: 0.09, clearcoat: 1, clearcoatRoughness: 0.1, transparent: true, opacity: 0.97, envMapIntensity: 1.25, flatShading: true } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
+    this.carbon = this.mat('body', { color: '#0b0b0e', metalness: 0.5, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.1, flatShading: true } as THREE.MeshPhysicalMaterialParameters, true) as THREE.MeshPhysicalMaterial;
     const shell = new THREE.Mesh(geo, [this.paint, this.glass, this.carbon]);
     this.add(body, shell, 'body');
     this.rim = rimMaterial('#5eead4');
@@ -370,11 +398,10 @@ export class World {
     rimMesh.renderOrder = 5;
     body.add(rimMesh);
     // Light blades: front and a full-width tail bar.
-    const lightMat = this.mat('body', { color: '#000', emissive: new THREE.Color('#dff4ff'), emissiveIntensity: 4 });
-    for (const s of [-1, 1]) {
-      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(1.86, 0.66, s * 0.84), new THREE.Vector3(1.98, 0.62, s * 0.66), new THREE.Vector3(2.06, 0.56, s * 0.42)]);
-      this.add(body, new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.014, 8), lightMat), 'body', false);
-    }
+    // Hidden headlights: a single hairline slit across the nose.
+    const lightMat = this.mat('body', { color: '#000', emissive: new THREE.Color('#e8f6ff'), emissiveIntensity: 3.6 });
+    const slit = new THREE.CatmullRomCurve3([-0.8, -0.4, 0, 0.4, 0.8].map((z) => new THREE.Vector3(2.02 - Math.abs(z) * 0.18 - z * z * 0.1, 0.49 + Math.abs(z) * 0.08, z)));
+    this.add(body, new THREE.Mesh(new THREE.TubeGeometry(slit, 40, 0.008, 6), lightMat), 'body', false);
     const tail = new THREE.CatmullRomCurve3([-0.86, -0.5, 0, 0.5, 0.86].map((z) => new THREE.Vector3(-2.04 + Math.abs(z) * 0.08, 0.76, z)));
     this.add(body, new THREE.Mesh(new THREE.TubeGeometry(tail, 40, 0.016, 8), this.mat('body', { color: '#000', emissive: new THREE.Color('#ff1530'), emissiveIntensity: 5 })), 'body', false);
     // Splitter, side skirts, diffuser fins, mirrors.
@@ -431,21 +458,47 @@ export class World {
   }
 
   private buildMotors(): void {
-    const front = this.part('motorFront');
-    this.motor(front, 'motorFront', FRONT_AXLE, 0, 0.42);
+    // Rear-wheel drive: one motor per rear wheel (the 2026 car has no front motor).
     const rear = this.part('motorsRear');
     this.motor(rear, 'motorsRear', REAR_AXLE, -0.24, 0.36);
     this.motor(rear, 'motorsRear', REAR_AXLE, 0.24, 0.36);
     const shaftMat = this.mat('motorsRear', { color: '#9ca3af', metalness: 1, roughness: 0.25 });
-    for (const [x, g] of [[FRONT_AXLE, front], [REAR_AXLE, rear]] as [number, THREE.Group][]) {
-      for (const s of [-1, 1]) {
-        const shaft = this.add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.5, 10), shaftMat), x > 0 ? 'motorFront' : 'motorsRear');
-        shaft.rotation.x = Math.PI / 2;
-        shaft.position.set(x, WHEEL_R, s * 0.52);
-      }
+    for (const s of [-1, 1]) {
+      const shaft = this.add(rear, new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.5, 10), shaftMat), 'motorsRear');
+      shaft.rotation.x = Math.PI / 2;
+      shaft.position.set(REAR_AXLE, WHEEL_R, s * 0.52);
     }
-    this.explodeOffset.motorFront = new THREE.Vector3(0.9, 0.2, 0);
     this.explodeOffset.motorsRear = new THREE.Vector3(-0.9, 0.2, 0);
+    // Suction fans and the ground seal: two ducted fans in the floor and a skirt round the edge.
+    const fans = this.part('fans');
+    const duct = this.mat('fans', { color: '#14171c', metalness: 0.8, roughness: 0.3 });
+    const bladeMat = this.mat('fans', { color: '#9aa3ad', metalness: 0.9, roughness: 0.25, emissive: new THREE.Color('#38e1ff'), emissiveIntensity: 0.15 });
+    for (const x of [0.85, -0.75]) {
+      const ring = this.add(fans, new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.035, 10, 40), duct), 'fans');
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(x, 0.1, 0);
+      const rotor = new THREE.Group();
+      rotor.position.set(x, 0.1, 0);
+      fans.add(rotor);
+      for (let i = 0; i < 9; i++) {
+        const b = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.06), bladeMat);
+        const a = (i / 9) * Math.PI * 2;
+        b.position.set(Math.cos(a) * 0.14, 0, Math.sin(a) * 0.14);
+        b.rotation.y = -a;
+        b.rotation.x = 0.35;
+        b.userData.part = 'fans';
+        rotor.add(b);
+        this.pickables.push(b);
+      }
+      this.fanBlades.push(rotor);
+    }
+    this.skirtMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#38e1ff'), transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const skirt = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 6, 120), this.skirtMat);
+    skirt.rotation.x = Math.PI / 2;
+    skirt.scale.set(2.0, 0.92, 1);
+    skirt.position.y = 0.06;
+    fans.add(skirt);
+    this.explodeOffset.fans = new THREE.Vector3(0, -0.55, 0);
   }
 
   private buildWheels(): void {
@@ -459,8 +512,8 @@ export class World {
     const tyreGeo = new THREE.LatheGeometry(tyreProfile, 48);
     tyreGeo.rotateX(Math.PI / 2);
     const tyre = this.mat('wheels', { color: '#101012', roughness: 0.85 });
-    const rimMat = this.mat('wheels', { color: '#2a2d33', metalness: 0.95, roughness: 0.22 });
-    const accent = this.mat('wheels', { color: '#c7ccd6', metalness: 1, roughness: 0.15 });
+    const rimMat = this.mat('wheels', { color: '#1a1c20', metalness: 0.95, roughness: 0.3 });
+    const accent = this.mat('wheels', { color: '#e3e6ea', metalness: 1, roughness: 0.12 });
     const caliperMat = this.mat('brakes', { color: '#d9112b', metalness: 0.4, roughness: 0.35 });
     for (const [x, z] of [[FRONT_AXLE, TRACK], [FRONT_AXLE, -TRACK], [REAR_AXLE, TRACK], [REAR_AXLE, -TRACK]]) {
       const hub = new THREE.Group();
@@ -477,11 +530,12 @@ export class World {
       disc.rotation.x = Math.PI / 2;
       disc.position.z = face * 0.1;
       spin.add(disc);
-      for (let i = 0; i < 10; i++) {
-        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.035, WHEEL_R - 0.11, 0.03), i % 2 ? rimMat : accent);
-        const a = (i / 10) * Math.PI * 2;
+      // Super-light wheels with many thin spokes.
+      for (let i = 0; i < 20; i++) {
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.012, WHEEL_R - 0.1, 0.014), accent);
+        const a = (i / 20) * Math.PI * 2;
         spoke.position.set(Math.cos(a) * 0.14, Math.sin(a) * 0.14, face * 0.115);
-        spoke.rotation.z = a - Math.PI / 2 + 0.25;
+        spoke.rotation.z = a - Math.PI / 2 + 0.18;
         spin.add(spoke);
       }
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.03, 20), accent);
@@ -535,28 +589,42 @@ export class World {
 
   private buildThrusters(): void {
     const g = this.part('thrusters');
+    // 600 litres of compressed air in two carbon-overwrapped pressure vessels behind the seats.
     const tankMat = this.mat('thrusters', { color: '#1e1b24', metalness: 0.4, roughness: 0.25, emissive: new THREE.Color('#f472b6'), emissiveIntensity: 0.12 });
-    const tank = this.add(g, new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.85, 8, 24), tankMat), 'thrusters');
-    tank.rotation.x = Math.PI / 2;
-    tank.position.set(-0.95, 0.56, 0);
     const bandMat = this.mat('thrusters', { color: '#f472b6', emissive: new THREE.Color('#f472b6'), emissiveIntensity: 1.2 });
-    for (const z of [-0.3, 0, 0.3]) {
-      const band = this.add(g, new THREE.Mesh(new THREE.TorusGeometry(0.172, 0.008, 6, 32), bandMat), 'thrusters', false);
-      band.position.set(-0.95, 0.56, z);
+    for (const x of [-0.95, -1.45]) {
+      const tank = this.add(g, new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 1.25, 8, 24), tankMat), 'thrusters');
+      tank.rotation.x = Math.PI / 2;
+      tank.position.set(x, 0.6, 0);
+      for (const z of [-0.45, 0, 0.45]) {
+        const band = this.add(g, new THREE.Mesh(new THREE.TorusGeometry(0.242, 0.008, 6, 32), bandMat), 'thrusters', false);
+        band.position.set(x, 0.6, z);
+      }
     }
     const nozzleMat = this.mat('thrusters', { color: '#cbd5e1', metalness: 1, roughness: 0.2 });
-    const nozzles: [number, number, number][] = [[-2.08, 0.42, 0.45], [-2.08, 0.42, -0.45], [-2.06, 0.58, 0.22], [-2.06, 0.58, -0.22]];
-    for (const [x, y, z] of nozzles) {
+    // [x, y, z, plume direction ('back' | 'up' | 'down'), role, plume length]
+    const T: [number, number, number, 'back' | 'up' | 'down', 'rear' | 'rollPos' | 'rollNeg' | 'lift', number][] = [
+      [-2.08, 0.42, 0.45, 'back', 'rear', 1.8], [-2.08, 0.42, -0.45, 'back', 'rear', 1.8], [-2.06, 0.58, 0.22, 'back', 'rear', 1.8], [-2.06, 0.58, -0.22, 'back', 'rear', 1.8],
+      // Side thrusters fire as couples to roll the car: left-up with right-down, or the reverse.
+      [-0.3, 0.98, 0.95, 'up', 'rollPos', 0.9], [-0.3, 0.18, -0.95, 'down', 'rollPos', 0.9],
+      [-0.3, 0.18, 0.95, 'down', 'rollNeg', 0.9], [-0.3, 0.98, -0.95, 'up', 'rollNeg', 0.9],
+      // Two underneath for lift and a soft landing.
+      [0.95, 0.08, 0, 'down', 'lift', 1.4], [-1.25, 0.08, 0, 'down', 'lift', 1.4],
+    ];
+    for (const [x, y, z, dir, kind, len] of T) {
       const n = this.add(g, new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.055, 0.1, 16, 1, true), nozzleMat), 'thrusters');
-      n.rotation.z = Math.PI / 2;
       n.position.set(x, y, z);
+      if (dir === 'back') n.rotation.z = Math.PI / 2;
       const pm = plumeMaterial();
       this.plumes.push(pm);
-      const geo = new THREE.ConeGeometry(0.16, 1.6, 24, 1, true);
-      geo.translate(0, -0.8, 0);
+      this.thrusterFx.push({ mat: pm, kind });
+      const geo = new THREE.ConeGeometry(0.15 * (len / 1.6), len, 24, 1, true);
+      geo.translate(0, -len / 2, 0);
       const plume = new THREE.Mesh(geo, pm);
-      plume.rotation.z = -Math.PI / 2;
-      plume.position.set(x - 0.05, y, z);
+      if (dir === 'back') plume.rotation.z = -Math.PI / 2;
+      if (dir === 'up') plume.rotation.z = Math.PI;
+      plume.position.set(x + (dir === 'back' ? -0.05 : 0), y + (dir === 'up' ? 0.05 : dir === 'down' ? -0.05 : 0), z);
+      plume.frustumCulled = false;
       g.add(plume);
     }
     this.explodeOffset.thrusters = new THREE.Vector3(0, 1.5, 0);
@@ -590,7 +658,7 @@ export class World {
 
   private buildFlow(): void {
     const packC = new THREE.Vector3(-0.05, 0.34, 0);
-    const targets = [new THREE.Vector3(FRONT_AXLE, WHEEL_R + 0.12, 0), new THREE.Vector3(REAR_AXLE, WHEEL_R + 0.12, -0.24), new THREE.Vector3(REAR_AXLE, WHEEL_R + 0.12, 0.24)];
+    const targets = [new THREE.Vector3(0.85, 0.16, 0), new THREE.Vector3(REAR_AXLE, WHEEL_R + 0.12, -0.24), new THREE.Vector3(REAR_AXLE, WHEEL_R + 0.12, 0.24)];
     for (const t of targets) {
       for (const dz of [-0.35, 0, 0.35]) {
         const start = packC.clone().add(new THREE.Vector3(0, 0, dz));
@@ -640,6 +708,151 @@ export class World {
     this.scene.add(this.streaks);
   }
 
+  /* ------------------------------------------------- the reveal arena */
+
+  private buildRig(): void {
+    this.rig.visible = false;
+    this.scene.add(this.rig);
+    this.rig.add(this.ramp);
+    const deckMat = new THREE.MeshStandardMaterial({ color: '#15171c', metalness: 0.6, roughness: 0.45 });
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(84, 0.04, 3.8), deckMat);
+    deck.position.set(-42, 0.0, 0);
+    deck.receiveShadow = true;
+    this.rig.add(deck);
+    const led = (c: string) => new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(2.2) });
+    for (const z of [-1.92, 1.92]) {
+      const e = new THREE.Mesh(new THREE.BoxGeometry(84, 0.03, 0.04), led('#38e1ff'));
+      e.position.set(-42, 0.03, z);
+      this.rig.add(e);
+    }
+    for (let x = -80; x < 0; x += 4) {
+      const d = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.01, 0.06), led('#e2e8f0'));
+      d.position.set(x, 0.025, 0);
+      this.rig.add(d);
+    }
+    // Landing pad and dust ring.
+    this.landingPad = new THREE.Mesh(new THREE.RingGeometry(2.6, 2.75, 64), new THREE.MeshBasicMaterial({ color: new THREE.Color('#fbbf24').multiplyScalar(1.6), transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
+    this.landingPad.rotation.x = -Math.PI / 2;
+    this.landingPad.position.y = 0.03;
+    this.rig.add(this.landingPad);
+    this.dust = new THREE.Mesh(new THREE.RingGeometry(0.6, 1.6, 64), new THREE.MeshBasicMaterial({ color: '#d6cfc4', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+    this.dust.rotation.x = -Math.PI / 2;
+    this.dust.position.y = 0.05;
+    this.rig.add(this.dust);
+    // Floodlight towers with light cones.
+    const coneMat = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color('#cfe6ff') } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: 'uniform vec3 uColor; varying vec2 vUv; void main(){ float a = pow(vUv.y, 2.2) * 0.07 * (1.0 - abs(vUv.x - 0.5) * 1.6); gl_FragColor = vec4(uColor * a, 1.0); }',
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const poleMat = new THREE.MeshStandardMaterial({ color: '#202329', metalness: 0.7, roughness: 0.5 });
+    const aim = new THREE.Vector3(-4, 5, 0);
+    for (const [x, z] of [[-34, 15], [-34, -15], [16, 13], [16, -13]]) {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, 18, 10), poleMat);
+      pole.position.set(x, 9, z);
+      this.rig.add(pole);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 0.5), new THREE.MeshBasicMaterial({ color: new THREE.Color(3, 3, 3.2) }));
+      head.position.set(x, 18.2, z);
+      head.lookAt(aim);
+      this.rig.add(head);
+      const len = new THREE.Vector3(x, 18, z).distanceTo(aim) + 6;
+      const cg = new THREE.ConeGeometry(5.5, len, 32, 1, true);
+      cg.translate(0, -len / 2, 0);
+      const cone = new THREE.Mesh(cg, coneMat);
+      cone.position.set(x, 18, z);
+      const dir = aim.clone().sub(cone.position).normalize();
+      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
+      this.rig.add(cone);
+    }
+    for (const [x, z] of [[-30, 14], [14, -12]]) {
+      const sl = new THREE.SpotLight('#e7f0ff', 140, 90, 0.42, 0.6, 1.4);
+      sl.position.set(x, 18, z);
+      sl.target.position.copy(aim);
+      sl.castShadow = true;
+      sl.shadow.mapSize.set(1024, 1024);
+      this.rig.add(sl, sl.target);
+    }
+    this.setRampRadius(6);
+  }
+
+  /** (Re)build the curling ramp for radius R: a half loop from the deck up to the inverted top. */
+  setRampRadius(R: number): void {
+    this.stunt.radius = R;
+    this.ramp.clear();
+    this.rampLeds = [];
+    const W = 3.6;
+    const N = 90;
+    const th0 = -0.02;
+    const th1 = Math.PI + 0.05;
+    const pt = (th: number, r: number, z: number) => new THREE.Vector3(r * Math.sin(th), R - r * Math.cos(th), z);
+    const build = (r: number) => {
+      const pos: number[] = [];
+      const uv: number[] = [];
+      const idx: number[] = [];
+      for (let i = 0; i <= N; i++) {
+        const th = th0 + ((th1 - th0) * i) / N;
+        for (const [j, z] of [[0, -W / 2], [1, W / 2]] as [number, number][]) {
+          const p = pt(th, r, z);
+          pos.push(p.x, p.y, p.z);
+          uv.push(j, i / N);
+        }
+        if (i < N) idx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      g.setIndex(idx);
+      g.computeVertexNormals();
+      return g;
+    };
+    const steel = new THREE.MeshStandardMaterial({ color: '#2a2e35', metalness: 0.75, roughness: 0.38, side: THREE.DoubleSide });
+    const surface = new THREE.Mesh(build(R), steel);
+    surface.receiveShadow = true;
+    surface.castShadow = true;
+    const back = new THREE.Mesh(build(R + 0.28), new THREE.MeshStandardMaterial({ color: '#111317', metalness: 0.5, roughness: 0.6, side: THREE.DoubleSide }));
+    this.ramp.add(surface, back);
+    // Glowing edge rails and chevrons.
+    for (const z of [-W / 2 - 0.04, W / 2 + 0.04]) {
+      const pts = Array.from({ length: 60 }, (_, i) => pt(th0 + ((th1 - th0) * i) / 59, R - 0.03, z));
+      const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#38e1ff').multiplyScalar(2) });
+      this.rampLeds.push(m);
+      this.ramp.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.035, 8), m));
+      const side = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => p.clone().setZ(z * 1.0))), 120, 0.06, 6), new THREE.MeshStandardMaterial({ color: '#0e1014', metalness: 0.6, roughness: 0.4 }));
+      side.scale.set(1, 1, 1);
+      this.ramp.add(side);
+    }
+    for (let k = 1; k < 18; k++) {
+      const th = (k / 18) * Math.PI;
+      const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#e2e8f0').multiplyScalar(1.6) });
+      this.rampLeds.push(m);
+      const c = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, 1.2), m);
+      c.position.copy(pt(th, R - 0.015, 0));
+      c.rotation.z = th;
+      this.ramp.add(c);
+    }
+    // Truss legs from the ground to the back of the ramp.
+    const legMat = new THREE.MeshStandardMaterial({ color: '#1b1e24', metalness: 0.7, roughness: 0.5 });
+    for (let k = 2; k <= 12; k++) {
+      const th = (k / 12) * Math.PI;
+      const top = pt(th, R + 0.3, 0);
+      if (top.y < 0.8) continue;
+      // Legs stand outside the track width and reach in with a short arm, so nothing crosses the ramp.
+      for (const z of [-W / 2 - 0.5, W / 2 + 0.5]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, top.y, 8), legMat);
+        leg.position.set(top.x, top.y / 2, z);
+        leg.castShadow = true;
+        this.ramp.add(leg);
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.55), legMat);
+        arm.position.set(top.x, top.y, z - Math.sign(z) * 0.27);
+        this.ramp.add(arm);
+      }
+    }
+  }
+
   private resetStreak(i: number, x: number): void {
     const side = Math.random() < 0.5 ? -1 : 1;
     const z = side * (1.6 + Math.random() * 6);
@@ -670,12 +883,12 @@ export class World {
       body: [[5.8, 1.8, 4.8], [0, 0.6, 0]],
       roof: [[2.2, 3.6, 3.2], [0, 1.0, 0]],
       battery: [[1.6, 2.7, 3.4], [-0.05, 0.3, 0]],
-      motorFront: [[3.6, 1.4, 2.0], [FRONT_AXLE, 0.4, 0]],
+      fans: [[3.4, 0.9, 3.0], [0.2, 0.15, 0]],
       motorsRear: [[-3.6, 1.4, 2.2], [REAR_AXLE, 0.4, 0]],
       wheels: [[2.6, 0.7, 3.0], [FRONT_AXLE, 0.36, TRACK]],
       brakes: [[2.0, 0.6, 2.4], [FRONT_AXLE, 0.36, TRACK]],
       aero: [[-4.6, 1.8, 2.4], [-1.8, 0.8, 0]],
-      thrusters: [[-4.4, 1.0, 2.6], [-1.6, 0.5, 0]],
+      thrusters: [[-3.6, 2.2, 3.6], [-1.0, 0.5, 0]],
       cabin: [[1.2, 2.6, 2.2], [0, 0.6, 0]],
     };
     const v = id ? views[id] : null;
@@ -690,9 +903,79 @@ export class World {
 
   /* ---------------------------------------------------------- frame */
 
+  /** Start a fresh stunt playback: hand the camera back to the director. */
+  beginStunt(landingX: number): void {
+    this.userCam = false;
+    this.camOrbit = 0;
+    this.lastPhase = '';
+    this.stunt.landingX = landingX;
+    this.flyTo = null;
+  }
+
+  private stuntFrame(dt: number): void {
+    const S = this.stunt.sample!;
+    const R = this.stunt.radius;
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), S.pitch);
+    q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), S.roll));
+    this.car.position.set(S.x, S.y, 0);
+    this.car.quaternion.copy(q);
+    this.landingPad.position.x = this.stunt.landingX;
+    this.landingPad.material.opacity = 0.45 + 0.35 * Math.sin(this.t * 4);
+    // Dust burst at touchdown.
+    if (S.phase === 'landing' && this.lastPhase !== 'landing') {
+      this.dustT = 0;
+      this.dust.position.x = S.x;
+    }
+    this.lastPhase = S.phase;
+    if (this.dustT >= 0) {
+      this.dustT += dt;
+      const k = this.dustT / 1.6;
+      this.dust.scale.setScalar(1 + k * 5);
+      this.dust.material.opacity = Math.max(0, 0.55 * (1 - k));
+      if (k >= 1) this.dustT = -1;
+    }
+    for (const m of this.rampLeds) m.color.setScalar(0).add(new THREE.Color('#38e1ff').multiplyScalar(1.4 + 0.8 * Math.sin(this.t * 6)));
+    // The director: tracking shot on the run-up, wide on the curl, orbit in the air, low on landing.
+    if (!this.userCam) {
+      const car = new THREE.Vector3(S.x, S.y, 0);
+      let pos: THREE.Vector3;
+      let look: THREE.Vector3;
+      if (S.phase === 'runup' && S.x < -10) {
+        pos = car.clone().add(new THREE.Vector3(-6.5, 1.3, 6.2));
+        look = car.clone().add(new THREE.Vector3(3, 0.6, 0));
+      } else if (S.phase === 'runup' || S.phase === 'ramp') {
+        pos = new THREE.Vector3(-R * 0.6, R * 0.95, R * 2.4 + 9);
+        look = new THREE.Vector3(R * 0.25, R * 0.95, 0);
+      } else if (S.phase === 'flight') {
+        // Slow side dolly well clear of the ramp, drifting round as the car rolls.
+        this.camOrbit += dt * 0.35;
+        const a = -0.35 - this.camOrbit;
+        pos = car.clone().add(new THREE.Vector3(Math.sin(a) * 10, 0.8, Math.cos(a) * 10));
+        look = car.clone().add(new THREE.Vector3(-0.5, 0.2, 0));
+      } else {
+        pos = new THREE.Vector3(S.x - 6.5, 1.1, 6.5);
+        look = car.clone().add(new THREE.Vector3(0, 0.5, 0));
+      }
+      const k = this.snapCam ? 1 : 1 - Math.exp(-dt * (S.phase === 'flight' ? 3.2 : 2.2));
+      this.camera.position.lerp(pos, k);
+      this.controls.target.lerp(look, k);
+    }
+  }
+
   update(dt: number): void {
     this.t += dt;
     const D = this.drive;
+    const stunt = this.stunt.active && !!this.stunt.sample;
+    this.rig.visible = stunt;
+    for (const o of this.studioBits) o.visible = !stunt;
+    this.lanes.visible = this.streaks.visible = !stunt;
+    this.controls.maxDistance = stunt ? 90 : 22;
+    (this.scene.fog as THREE.Fog).far = stunt ? 160 : 70;
+    if (stunt) this.stuntFrame(dt);
+    else {
+      this.car.position.set(0, 0, 0);
+      this.car.quaternion.identity();
+    }
     // Fly-to camera.
     if (this.flyTo) {
       const k = 1 - Math.exp(-dt * 2.6);
@@ -720,7 +1003,8 @@ export class World {
       const hub = w.spin.parent!;
       const side = i % 2 === 0 ? 1 : -1;
       hub.position.z = side * (TRACK + this.explode * 0.75);
-      w.spin.rotation.z -= (D.v / WHEEL_R) * dt;
+      const onGround = !stunt || this.stunt.sample!.phase !== 'flight';
+      w.spin.rotation.z -= ((stunt ? (onGround ? this.stunt.sample!.speed : 0) : D.v) / WHEEL_R) * dt;
       // Brake heat: rises with braking power, cools exponentially.
       w.disc.emissiveIntensity = Math.min(3, this.brakeHeat * (w.front ? 1.2 : 0.8));
     }
@@ -728,8 +1012,8 @@ export class World {
     // Body pitch: squat under acceleration, dive under braking.
     const targetPitch = THREE.MathUtils.clamp(D.a * 0.0024 - D.braking * 0.02, -0.03, 0.04);
     this.pitch += (targetPitch - this.pitch) * (1 - Math.exp(-dt * 6));
-    this.chassis.rotation.z = this.pitch;
-    this.chassis.position.y = -Math.abs(this.pitch) * 0.6;
+    this.chassis.rotation.z = stunt ? 0 : this.pitch;
+    this.chassis.position.y = stunt ? 0 : -Math.abs(this.pitch) * 0.6;
     // X-ray: paint fades, rim glows.
     this.xrayAmt += ((this.xray ? 1 : 0) - this.xrayAmt) * (1 - Math.exp(-dt * 4));
     const xa = this.xrayAmt;
@@ -744,8 +1028,12 @@ export class World {
     this.rim.uniforms.uTime.value = this.t;
     // Hidden machinery is shown in x-ray and exploded views (and the cabin through the glass).
     const inside = xa > 0.05 || this.explode > 0.05;
-    for (const id of ['battery', 'motorFront', 'motorsRear'] as PartId[]) this.groups[id]!.visible = inside || this.selected === id;
-    this.groups.thrusters!.visible = this.thrusterPackage || (inside && this.selected === 'thrusters');
+    for (const id of ['battery', 'motorsRear'] as PartId[]) this.groups[id]!.visible = inside || this.selected === id;
+    this.groups.thrusters!.visible = this.thrusterPackage || stunt || (inside && this.selected === 'thrusters');
+    // Fans spin and the ground seal glows whenever suction is on.
+    const fanOn = this.fansOn || stunt || this.selected === 'fans';
+    for (const f of this.fanBlades) f.rotation.y += dt * (fanOn ? 38 : 0.5);
+    this.skirtMat.opacity += ((fanOn ? 0.75 + 0.25 * Math.sin(this.t * 9) : 0) - this.skirtMat.opacity) * Math.min(1, dt * 5);
     // Energy flow and cell glow follow battery power.
     const pw = D.power;
     const flow = Math.min(1, Math.abs(pw) / 6e5);
@@ -764,11 +1052,17 @@ export class World {
       posAttr.setXYZ(i, p.x, p.y, p.z);
     }
     posAttr.needsUpdate = true;
-    // Thruster plumes.
-    const th = Math.min(1, D.thrust / 22000);
-    for (const pm of this.plumes) {
-      pm.uniforms.uAmount.value = th * 0.45 * (0.85 + 0.15 * Math.sin(this.t * 90));
-      pm.uniforms.uTime.value = this.t;
+    // Thruster plumes, by role.
+    const S = stunt ? this.stunt.sample! : null;
+    const th = Math.min(1, (S ? S.thrustRear : D.thrust) / 22000);
+    const rollP = S ? Math.min(1, Math.max(0, S.thrustRoll) / 9000) : 0;
+    const rollN = S ? Math.min(1, Math.max(0, -S.thrustRoll) / 9000) : 0;
+    const lift = S ? Math.min(1, S.thrustLift / 30000) : 0;
+    const flick = 0.85 + 0.15 * Math.sin(this.t * 90);
+    for (const f of this.thrusterFx) {
+      const amt = f.kind === 'rear' ? th : f.kind === 'rollPos' ? rollP : f.kind === 'rollNeg' ? rollN : lift;
+      f.mat.uniforms.uAmount.value = amt * (f.kind === 'rear' ? 0.45 : f.kind === 'lift' ? 0.28 : 0.5) * flick;
+      f.mat.uniforms.uTime.value = this.t;
     }
     // Spoiler rises with speed.
     const up = THREE.MathUtils.clamp((D.v - 20) / 30, 0, 1) + (this.selected === 'aero' ? 0.6 : 0);

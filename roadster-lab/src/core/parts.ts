@@ -1,5 +1,5 @@
 /** Every labelled part of the Roadster: what it does, key figures and the maths behind it. Pure. */
-export type PartId = 'body' | 'roof' | 'battery' | 'motorFront' | 'motorsRear' | 'wheels' | 'brakes' | 'aero' | 'thrusters' | 'cabin';
+export type PartId = 'body' | 'roof' | 'battery' | 'fans' | 'motorsRear' | 'wheels' | 'brakes' | 'aero' | 'thrusters' | 'cabin';
 
 export interface Part {
   id: PartId;
@@ -15,15 +15,15 @@ export interface Part {
 export const PARTS: Record<PartId, Part> = {
   body: {
     id: 'body',
-    name: 'Carbon body shell',
-    color: '#ff2b4e',
-    short: 'A low, wide teardrop that has to slip through air at 250 mph.',
-    body: 'At motorway speed, more than half the energy a car uses goes into pushing air aside, and the force grows with the square of speed. The power needed grows with the cube, so a slippery shape matters most at the top end. A low frontal area and a long tapering tail keep the wake small.',
+    name: 'Ano White body',
+    color: '#e5e7eb',
+    short: 'Long, low and wedge-shaped, with sharp geometric surfacing.',
+    body: 'The 2026 car shown on 15 October has sharper, faceted surfaces than the rounded 2017 prototype. Its paint, called "Ano White", is inspired by aerospace coatings. The glass is gold-tinted, after a spacesuit visor. At speed, more than half the energy goes into pushing air aside: drag grows with the square of speed, and the power to beat it with the cube.',
     facts: [
-      ['Length · width · height', '≈ 4.2 × 2.0 × 1.1 m (est.)'],
-      ['Drag coefficient Cd', '≈ 0.28 (assumed)'],
-      ['Frontal area A', '≈ 1.9 m² (assumed)'],
-      ['Drag at 70 mph', 'see live readout'],
+      ['Paint', 'Ano White (aerospace-coating inspired)'],
+      ['Glass', 'gold-tinted, visor style'],
+      ['Headlights', 'hidden slit · full-width tail bar'],
+      ['Drag coefficient Cd', '≈ 0.25 (assumed)'],
     ],
     math: ['F_drag = ½ ρ Cd A v²', 'P_drag = F_drag · v = ½ ρ Cd A v³', 'double the speed → 4× the force, 8× the power'],
   },
@@ -42,57 +42,57 @@ export const PARTS: Record<PartId, Part> = {
   },
   battery: {
     id: 'battery',
-    name: '200 kWh battery pack',
+    name: 'Battery pack',
     color: '#22d3ee',
-    short: 'Thousands of cells in the floor: the energy store and a structural part of the chassis.',
-    body: 'The pack sits flat between the axles, which keeps the centre of mass low and the car stiff. Its job is twice as hard as an ordinary EV\'s. It must hold a huge amount of energy for range, yet also deliver close to a megawatt for a launch. Higher pack voltage means less current for the same power, and the heat lost in the pack\'s resistance falls with the square of the current.',
+    short: 'A floor pack built to charge from 15 to 85 % in about 10 minutes.',
+    body: 'Tesla did not give the pack size at the reveal, but it said 500 kW peak charging and 15→85 % in about 10 minutes. That alone bounds the pack. Moving 70 % of the energy in a sixth of an hour at no more than 500 kW means the pack can hold at most about 119 kWh. This model assumes 80 kWh, which matches the "over 300 miles" quoted. The 2017 car promised 200 kWh and 620 miles.',
     facts: [
-      ['Energy (announced)', '200 kWh'],
-      ['Pack voltage', 'unannounced · ≈ 800 V assumed'],
-      ['Cells (if 2170 format)', '≈ 11,400'],
-      ['Cells (if 4680 format)', '≈ 2,100'],
-      ['Original Roadster', '53 kWh · 6,831 × 18650 cells'],
+      ['Charging (stated)', '500 kW peak · 15→85 % ≈ 10 min'],
+      ['Pack bound from that claim', '≤ 119 kWh'],
+      ['Assumed here', '80 kWh · 800 V'],
+      ['Range (stated)', 'over 300 miles'],
     ],
-    math: ['E = Σ cells · V_cell · Ah', 'P = V · I   →   I = P / V', 'heat = I² R   (½ the current → ¼ the heat)', 'C-rate = P / E   (1 MW from 200 kWh ≈ 5 C)'],
+    math: ['E ≤ P·t / ΔSoC = 500 kW × (10/60) h / 0.70 = 119 kWh', 'P = V · I   →   I = P / V', 'heat = I² R', 'C-rate = P / E'],
   },
-  motorFront: {
-    id: 'motorFront',
-    name: 'Front motor',
-    color: '#a78bfa',
-    short: 'Drives the front wheels, so all four tyres can push.',
-    body: 'An electric motor gives its full torque from zero rpm. Up to the base speed it is limited by current, which means constant torque. Above that it is limited by voltage, which means constant power, so the torque falls as speed rises. With a front motor the launch can use every tyre\'s grip, not just the rear pair\'s.',
+  fans: {
+    id: 'fans',
+    name: 'Suction fans and ground seal',
+    color: '#38e1ff',
+    short: 'Fans pull air out from under the car, so the atmosphere presses it onto the road, or onto an upside-down ramp.',
+    body: 'Tesla calls it a multi-mode fan and ground-sealing system. Fans pump air out from under the floor, and skirts seal the gap, so the pressure under the car drops below the air pressure above it. The difference times the floor area is a downforce that works even at walking pace, unlike wings, which need speed. It is the same idea as the 1970 Chaparral 2J and the 1978 Brabham BT46B "fan car". The 2026 car used it to stay stuck to an inverted ramp.',
     facts: [
-      ['Motors in total', '3 (1 front · 2 rear)'],
-      ['Drive', 'all-wheel'],
-      ['Combined wheel torque (announced)', '10,000 N·m'],
+      ['Pressure drop for 9 kN', '≈ 1.5 kPa (1.5 % of an atmosphere)'],
+      ['Floor area (est.)', '≈ 6 m²'],
+      ['Fan power (est.)', 'about 5–20 kW'],
+      ['Precedent', 'Chaparral 2J (1970), Brabham BT46B (1978)'],
     ],
-    math: ['τ_wheel = τ_motor · G · η', 'F = τ_wheel / r', 'P = τ ω   (ω = v · G / r)'],
+    math: ['F = ΔP · A_floor', 'leak flow Q = C·(perimeter·gap)·√(2ΔP/ρ)', 'fan power P = Q·ΔP / η'],
   },
   motorsRear: {
     id: 'motorsRear',
     name: 'Twin rear motors',
     color: '#c084fc',
-    short: 'One motor per rear wheel: torque vectoring without a differential.',
-    body: 'With one motor per rear wheel, the car can push the outside wheel harder in a corner and help the car turn. Under hard acceleration, weight shifts backwards, so the rear tyres carry more load and can take more torque.',
+    short: 'Rear-wheel drive: one motor per rear wheel, with torque vectoring.',
+    body: 'The 2026 car dropped the 2017 car\'s front motor. The top trim was quoted at over 1,000 kW (1,341 hp), with about 1,400 N·m of motor torque. Rear drive means only two tyres push, so grip depends on the rear load. Acceleration shifts weight backwards, and suction adds more.',
     facts: [
-      ['Layout', 'one motor per rear wheel'],
-      ['Benefit', 'torque vectoring'],
-      ['Load transfer at 1.4 g', '≈ +23 % on the rear axle'],
+      ['Power (stated)', '> 1,000 kW top trim · > 800 kW base'],
+      ['Motor torque (reported)', '≈ 1,400 N·m'],
+      ['Drive', 'rear-wheel, torque vectoring'],
     ],
-    math: ['ΔN_rear = m · a · h / L', 'yaw moment M = (F_out − F_in) · track / 2'],
+    math: ['N_rear = (m g + F_suction)·w_r + m a h / L', 'F_max = μ · N_rear', 'yaw moment M = (F_out − F_in) · track / 2'],
   },
   wheels: {
     id: 'wheels',
     name: 'Wheels and tyres',
     color: '#fbbf24',
-    short: 'Four small contact patches carry every newton of the launch.',
-    body: 'All the motors\' force has to pass through four patches of rubber, each about the size of a hand. A tyre can push at most μ times the load on it. If the motor asks for more, the wheel spins. That is why "0–60 mph in 1.9 s" is really a statement about tyres. It needs an average push of about 1.44 g, more than ordinary road tyres can give.',
+    short: 'Super-light thin-spoke wheels; every newton of the launch passes through two rear contact patches.',
+    body: 'A tyre can push at most μ times the load on it. On rear tyres alone, with μ ≈ 1.5, about 1.5 g is the ceiling. The fans raise it by adding load without adding mass. Anything faster than that has to come from thrust, which does not go through the tyres at all.',
     facts: [
-      ['Tyre radius', '≈ 0.36 m (assumed)'],
-      ['Grip μ (street tyre)', '≈ 0.9–1.1'],
-      ['Grip μ (sticky track tyre)', '≈ 1.3–1.6'],
+      ['Design', 'super-light, thin spokes'],
+      ['Grip μ (assumed)', '≈ 1.5'],
+      ['Tyre radius', '≈ 0.35 m (assumed)'],
     ],
-    math: ['F_max = μ · N = μ · (m g + downforce)', 'a_max = μ · g  (AWD, no aero)', 't(0→v) ≥ v / (μ g)'],
+    math: ['F_max = μ · N', 't(0→60) ≥ 26.8 m/s ÷ a', 'a = (F_tyres + F_thrust − drag) / m'],
   },
   brakes: {
     id: 'brakes',
@@ -120,16 +120,17 @@ export const PARTS: Record<PartId, Part> = {
   },
   thrusters: {
     id: 'thrusters',
-    name: 'Cold-gas thrusters (SpaceX package)',
+    name: '10 compressed-air thrusters',
     color: '#f472b6',
-    short: 'Claimed option: rocket-style thrusters fed from a high-pressure tank.',
-    body: 'Tesla said this option would replace the rear seats with a composite pressure vessel and fit about ten small cold-gas thrusters. Thrust does not depend on the tyres, so it can push acceleration past μg. The catch is the rocket equation: the gas runs out in about a second.',
+    short: 'Ten cold-gas thrusters on a 600-litre compressed-air tank: launch, lift, roll and soften the landing.',
+    body: 'Engineering VP Lars Moravy said the demo car used 10 thrusters fed from 600 litres of compressed air, rechargeable, developed with SpaceX. About 80 kN was reported from the rear ports. Cold gas means no fire: high-pressure air expands through a nozzle and the reaction pushes the car. Here: four rear thrusters for launch, four side thrusters that fire as couples to roll the car, and two underneath for lift and landing. The tank pressure was not disclosed; this model assumes 300 bar.',
     facts: [
-      ['Status', 'claimed, not delivered'],
-      ['Claimed 0–60 mph', '≈ 1.1 s'],
-      ['Nitrogen cold gas Isp', '≈ 73 s (vₑ ≈ 716 m/s)'],
+      ['Thrusters (stated)', '10'],
+      ['Tank (stated)', '600 L compressed air, rechargeable'],
+      ['Rear thrust (reported)', '≈ 80 kN'],
+      ['Air at 300 bar (assumed)', '≈ 214 kg'],
     ],
-    math: ['F = ṁ · vₑ', 'burn time = m_gas · vₑ / F', 'Δv = vₑ · ln(m₀ / m₁)  (Tsiolkovsky)'],
+    math: ['m_air = p V / (R T)', 'vₑ = η √(2 cₚ T (1 − (pₐ/p)^((γ−1)/γ)))', 'F = ṁ · vₑ', 'Δv = vₑ · ln(m₀ / m₁)'],
   },
   cabin: {
     id: 'cabin',
@@ -146,13 +147,14 @@ export const PARTS: Record<PartId, Part> = {
   },
 };
 
-export const PART_ORDER: PartId[] = ['body', 'battery', 'motorFront', 'motorsRear', 'wheels', 'brakes', 'aero', 'roof', 'thrusters', 'cabin'];
+export const PART_ORDER: PartId[] = ['body', 'fans', 'thrusters', 'motorsRear', 'battery', 'wheels', 'brakes', 'aero', 'roof', 'cabin'];
 
 export const MILESTONES: [string, string][] = [
   ['2006', 'The original Roadster is unveiled: a lithium-ion sports car built on a Lotus Elise chassis.'],
   ['2008', 'Deliveries begin: 6,831 laptop-style cells, 53 kWh, 244 miles of range.'],
   ['2012', 'Production ends after about 2,450 cars.'],
-  ['Nov 2017', 'Second-generation Roadster revealed with 1.9 s 0–60 mph and 620 miles of range as announced targets.'],
+  ['Nov 2017', 'Second-generation Roadster prototype shown: 1.9 s 0–60 mph and 620 miles as announced targets.'],
   ['Feb 2018', 'Falcon Heavy launches an original Roadster with "Starman" into orbit around the Sun.'],
-  ['Today', 'The new Roadster\'s figures remain announced targets until customer cars are independently tested.'],
+  ['15 Oct 2026', 'Production Roadster revealed in Texas: it drives up a curling ramp upside down on suction, rolls 180° in mid-air on compressed-air thrusters, lands on its wheels, and does 0–60 mph in 0.81 s live.'],
+  ['2028', 'Production target given at the reveal. Price and road approval for the thruster car not yet announced.'],
 ];

@@ -106,7 +106,7 @@ describe('content and tour', () => {
   });
   it('the tour runs end to end', () => {
     const calls: string[] = [];
-    const a: TourActions = { select: () => calls.push('s'), preset: () => calls.push('p'), explode: () => calls.push('e'), xray: () => calls.push('x'), run: () => calls.push('r'), highlight: () => calls.push('h') };
+    const a: TourActions = { select: () => calls.push('s'), preset: () => calls.push('p'), explode: () => calls.push('e'), xray: () => calls.push('x'), run: () => calls.push('r'), stunt: () => calls.push('u'), highlight: () => calls.push('h') };
     const t = new TourRunner(a);
     t.start();
     for (let i = 0; i < 400; i++) t.update(1);

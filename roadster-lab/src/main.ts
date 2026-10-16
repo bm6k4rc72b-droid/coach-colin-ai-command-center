@@ -2,11 +2,13 @@
 import './style.css';
 import { MILESTONES, PART_ORDER, PARTS, type PartId } from './core/parts';
 import {
-  baseSpeed, bestRangeSpeed, braking, burnTime, cellCount, consumption, cornerSpeed, downforce, drag, G0, isp, kinetic, launch, LAUNCH_DATE, MPH, pack,
-  PRESETS, range, regenWh, RHO_AIR, ROADSTER_1, thrusterDeltaV, topSpeed, type Car, type RunResult, type Sample,
+  baseSpeed, bestRangeSpeed, braking, burnTime, cellCount, consumption, cornerSpeed, downforce, drag, exhaustVelocity, fanPower, G0, isp, kinetic, launch,
+  LAUNCH_DATE, MIN_BAR, MPH, pack, packBoundKWh, PRESETS, range, regenWh, RHO_AIR, ROADSTER_1, ROADSTER_THRUST, suctionPressure, tankAirKg, thrusterDeltaV,
+  thrustForTime, topSpeed, type Car, type RunResult, type Sample,
 } from './core/physics';
+import { carJump, entrySpeedFor, simulateStunt, STUNT_DEFAULTS, type StuntParams, type StuntResult, type StuntSample } from './core/stunt';
 import { TOUR, TourRunner, type TourActions } from './core/tour';
-import { drawForces, drawLaunch, drawOrbit, drawRange } from './scene/charts';
+import { drawForces, drawLaunch, drawOrbit, drawRange, drawStunt } from './scene/charts';
 import { World } from './scene/world';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
@@ -17,9 +19,72 @@ const f2 = (x: number) => x.toFixed(2);
 
 const world = new World($('#view') as HTMLCanvasElement);
 let car: Car = { ...PRESETS[0].car };
-let presetId: string | null = 'gen2';
+let presetId: string | null = 'perf';
 let selected: PartId | null = null;
 let run: RunResult = launch(car);
+
+/* ---------------------------------------------------------------- stunt */
+
+let sp: StuntParams = { ...STUNT_DEFAULTS };
+/** The stunt always uses a thruster car: the current one if it carries a tank, else the Thrust trim. */
+const stuntCar = () => (car.tankL > 0 ? car : { ...ROADSTER_THRUST, suction: car.suction || ROADSTER_THRUST.suction });
+let stuntRes: StuntResult = simulateStunt(stuntCar(), sp);
+const stuntPlay = { on: false, t: 0, playing: false };
+
+function recomputeStunt(): void {
+  stuntRes = simulateStunt(stuntCar(), sp);
+  world.setRampRadius(sp.radius);
+  world.stunt.landingX = stuntRes.landingX;
+}
+
+function stuntSampleAt(t: number): StuntSample {
+  const S = stuntRes.samples;
+  let lo = 0;
+  let hi = S.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (S[mid].t < t) lo = mid;
+    else hi = mid;
+  }
+  const a = S[lo];
+  const b = S[hi];
+  const k = Math.max(0, Math.min(1, (t - a.t) / Math.max(1e-6, b.t - a.t)));
+  const L = (u: number, v: number) => u + (v - u) * k;
+  return { ...b, t, x: L(a.x, b.x), y: L(a.y, b.y), pitch: L(a.pitch, b.pitch), roll: L(a.roll, b.roll), speed: L(a.speed, b.speed), gSeat: L(a.gSeat, b.gSeat), normal: L(a.normal, b.normal), airKg: L(a.airKg, b.airKg), tankBar: L(a.tankBar, b.tankBar) };
+}
+
+function setStunt(on: boolean): void {
+  stuntPlay.on = on;
+  world.stunt.active = on;
+  if (on) {
+    play.mode = 'idle';
+    world.drive = { v: 0, a: 0, power: 0, thrust: 0, braking: 0 };
+    recomputeStunt();
+    stuntPlay.t = 0;
+    stuntPlay.playing = true;
+    world.beginStunt(stuntRes.landingX);
+    world.stunt.sample = stuntRes.samples[0];
+    setXray(false);
+    setExplode(false);
+  } else {
+    world.stunt.sample = null;
+    world.focus(null);
+  }
+  document.getElementById('st-replay')?.classList.toggle('on', on);
+}
+
+function stepStunt(dt: number): void {
+  if (!stuntPlay.on) return;
+  const last = stuntRes.samples[stuntRes.samples.length - 1];
+  if (stuntPlay.playing) {
+    // Slow motion from the top of the curl through the roll and the landing.
+    const cur = stuntSampleAt(stuntPlay.t);
+    const slow = (cur.phase === 'ramp' && cur.pitch > 2.3) || cur.phase === 'flight' || cur.phase === 'landing';
+    stuntPlay.t = Math.min(last.t, stuntPlay.t + dt * (slow ? 0.42 : 1));
+    if (stuntPlay.t >= last.t) stuntPlay.playing = false;
+  }
+  world.stunt.sample = stuntSampleAt(stuntPlay.t);
+}
 
 /* ------------------------------------------------------------- playback */
 
@@ -41,6 +106,7 @@ function sampleAt(t: number): Sample {
 }
 
 function startRun(kind: Mode): void {
+  if (stuntPlay.on && kind !== 'idle') setStunt(false);
   run = launch(car);
   play.mode = kind;
   play.t = 0;
@@ -100,8 +166,9 @@ const SLIDERS: SliderDef[] = [
   { key: 'power', label: 'Peak power', min: 100, max: 1500, step: 5, to: (v) => v * 1000, from: (x) => x / 1000, fmt: (x) => `${f0(x / 1000)} kW · ${f0(x / 745.7)} hp` },
   { key: 'wheelTorque', label: 'Wheel torque', min: 2000, max: 16000, step: 50, to: (v) => v, from: (x) => x, fmt: (x) => `${f0(x)} N·m` },
   { key: 'cd', label: 'Drag coefficient Cd', min: 0.18, max: 0.45, step: 0.005, to: (v) => v, from: (x) => x, fmt: (x) => x.toFixed(3) },
+  { key: 'suction', label: 'Fan suction', min: 0, max: 20, step: 0.5, to: (v) => v * 1000, from: (x) => x / 1000, fmt: (x) => (x ? `${f1(x / 1000)} kN · ΔP ${f1(suctionPressure(x, 6) / 1000)} kPa` : 'off') },
   { key: 'thrust', label: 'Cold-gas thrust', min: 0, max: 40, step: 0.5, to: (v) => v * 1000, from: (x) => x / 1000, fmt: (x) => (x ? `${f1(x / 1000)} kN` : 'off') },
-  { key: 'gasKg', label: 'Nitrogen on board', min: 0, max: 80, step: 1, to: (v) => v, from: (x) => x, fmt: (x) => `${f0(x)} kg` },
+  { key: 'tankBar', label: 'Air tank pressure (600 L)', min: 0, max: 450, step: 5, to: (v) => v, from: (x) => x, fmt: (x) => (x ? `${f0(x)} bar · ${f0(x * 14.5038)} psi` : 'no tank') },
   { key: 'packWh', label: 'Battery energy', min: 40, max: 250, step: 1, to: (v) => v * 1000, from: (x) => x / 1000, fmt: (x) => `${f0(x / 1000)} kWh` },
   { key: 'packV', label: 'Pack voltage', min: 300, max: 1000, step: 10, to: (v) => v, from: (x) => x, fmt: (x) => `${f0(x)} V` },
 ];
@@ -111,7 +178,7 @@ function renderControls(): void {
     <h3>Car setup</h3>
     <div class="presets">${PRESETS.map((x) => `<button data-preset="${x.id}">${esc(x.name)}</button>`).join('')}</div>
     <p class="hint" id="preset-blurb"></p>
-    <div class="runbar"><button class="primary" id="go-launch">⚡ Launch</button><button id="go-brake">⏹ 60–0 stop</button><button id="go-slow">◔ Slow-mo</button></div>
+    <div class="runbar"><button class="primary" id="go-launch">⚡ Launch</button><button id="go-brake">⏹ 60–0 stop</button><button id="go-slow">◔ Slow-mo</button><button id="go-stunt" class="stunt-btn">🌀 Ramp stunt</button></div>
     ${SLIDERS.map((s) => `<div class="slider"><label>${s.label}<span id="v-${s.key}"></span></label><input type="range" data-k="${s.key}" min="${s.min}" max="${s.max}" step="${s.step}"></div>`).join('')}
     <div id="readouts"></div>`;
   $('#controls').querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((b) => b.addEventListener('click', () => manual(() => setPreset(b.dataset.preset!))));
@@ -120,13 +187,16 @@ function renderControls(): void {
       manual(() => {
         const s = SLIDERS.find((x) => x.key === inp.dataset.k)!;
         car = { ...car, [s.key]: s.to(Number(inp.value)), name: 'Custom' };
+        if (s.key === 'tankBar') car.tankL = car.tankBar > 0 ? 600 : 0;
         presetId = null;
         run = launch(car);
+        if (stuntPlay.on) recomputeStunt();
       }),
     ),
   );
   $('#go-launch').addEventListener('click', () => manual(() => startRun('launch')));
   $('#go-brake').addEventListener('click', () => manual(() => startRun('brake')));
+  $('#go-stunt').addEventListener('click', () => manual(() => setStunt(true)));
   $('#go-slow').addEventListener('click', () => {
     play.slow = !play.slow;
     $('#go-slow').classList.toggle('on', play.slow);
@@ -151,7 +221,8 @@ function syncControls(): void {
     if (document.activeElement !== inp) inp.value = String(s.from(car[s.key] as number));
     $(`#v-${s.key}`).textContent = s.fmt(car[s.key] as number);
   }
-  world.thrusterPackage = car.thrust > 0 && car.gasKg > 0;
+  world.thrusterPackage = car.thrust > 0 && (car.gasKg > 0 || car.tankL > 0);
+  world.fansOn = car.suction > 0 && play.mode !== 'idle';
   const top = topSpeed(car);
   const b60 = braking(car, 60 * MPH);
   $('#readouts').innerHTML = `
@@ -200,6 +271,90 @@ function renderMaths(): void {
   </div>`;
 }
 
+/* ------------------------------------------------------- the reveal maths */
+
+const STUNT_SLIDERS: { key: keyof StuntParams; label: string; min: number; max: number; step: number; fmt: (x: number) => string }[] = [
+  { key: 'radius', label: 'Ramp radius R', min: 3, max: 12, step: 0.25, fmt: (x) => `${f2(x)} m · top at ${f1(2 * x)} m` },
+  { key: 'entrySpeed', label: 'Entry speed', min: 8, max: 26, step: 0.5, fmt: (x) => `${f1(x)} m/s · ${f0(x / MPH)} mph` },
+  { key: 'topTarget', label: 'Speed over the top', min: 2, max: 14, step: 0.25, fmt: (x) => `${f2(x)} m/s` },
+  { key: 'suction', label: 'Fan suction on the ramp', min: 0, max: 20000, step: 250, fmt: (x) => `${f1(x / 1000)} kN` },
+  { key: 'rollThrust', label: 'Roll thruster (each)', min: 1000, max: 20000, step: 250, fmt: (x) => `${f1(x / 1000)} kN` },
+  { key: 'liftThrust', label: 'Landing thrust', min: 0, max: 60000, step: 500, fmt: (x) => `${f1(x / 1000)} kN` },
+];
+
+function renderStuntControls(): void {
+  $('#stunt-controls').innerHTML = `
+    <div class="runbar"><button class="primary" id="st-replay">▶ Replay the reveal stunt</button><button id="st-pause">❚❚</button><button id="st-exit">Back to studio</button></div>
+    ${STUNT_SLIDERS.map((d) => `<div class="slider"><label>${d.label}<span id="sv-${d.key}"></span></label><input type="range" data-sk="${d.key}" min="${d.min}" max="${d.max}" step="${d.step}"></div>`).join('')}
+    <button id="st-reset" style="margin-top:4px">Reset to the reveal setup</button>`;
+  $('#st-replay').addEventListener('click', () => manual(() => setStunt(true)));
+  $('#st-pause').addEventListener('click', () => {
+    if (!stuntPlay.on) return;
+    stuntPlay.playing = !stuntPlay.playing;
+  });
+  $('#st-exit').addEventListener('click', () => manual(() => setStunt(false)));
+  $('#st-reset').addEventListener('click', () => manual(() => {
+    sp = { ...STUNT_DEFAULTS };
+    setStunt(true);
+  }));
+  $('#stunt-controls').querySelectorAll<HTMLInputElement>('[data-sk]').forEach((inp) =>
+    inp.addEventListener('input', () => {
+      sp = { ...sp, [inp.dataset.sk!]: Number(inp.value) };
+      recomputeStunt();
+      if (stuntPlay.on) {
+        stuntPlay.t = 0;
+        stuntPlay.playing = true;
+        world.beginStunt(stuntRes.landingX);
+      }
+      renderDemoMaths();
+      syncStuntControls();
+    }),
+  );
+}
+
+function syncStuntControls(): void {
+  for (const d of STUNT_SLIDERS) {
+    const inp = document.querySelector<HTMLInputElement>(`[data-sk="${d.key}"]`);
+    if (!inp) continue;
+    if (document.activeElement !== inp) inp.value = String(sp[d.key]);
+    $(`#sv-${d.key}`).textContent = d.fmt(sp[d.key]);
+  }
+}
+
+function renderDemoMaths(): void {
+  const r = stuntRes;
+  const c = stuntCar();
+  const m = c.mass;
+  const R = sp.radius;
+  const vTop = r.topSpeed;
+  const holdNeed = m * (G0 - (vTop * vTop) / R);
+  const dP = suctionPressure(sp.suction, 6);
+  const fp = fanPower(dP, 11, 0.005);
+  const air0 = tankAirKg(c);
+  const ve = exhaustVelocity(c.tankBar);
+  const t81 = 0.81;
+  const a81 = (60 * MPH) / t81;
+  const thr81 = thrustForTime(ROADSTER_THRUST, 0.81);
+  const jump = carJump(m, 2.4, 16);
+  const v0need = entrySpeedFor(vTop, R);
+  const block = (title: string, col: string, lines: string[], note: string) => `
+    <div class="mblock" style="--c:${col}"><b>${title}</b>${lines.map((l) => `<code>${l}</code>`).join('')}<p>${note}</p></div>`;
+  $('#demo-maths').innerHTML = `<h3>The reveal demo, in maths: every line uses the settings above</h3>
+    <div class="banner ${r.ok ? 'good' : 'bad'}">${r.ok ? `✓ The stunt works: it stays on the ramp (minimum contact ${f1(r.minNormal / 1000)} kN), rolls 180° in ${f2(r.rollTime)} s, and touches down at ${f2(r.touchdownSpeed)} m/s (${f2(r.landingG)} g).` : r.fellAt !== null ? `✕ The car leaves the ramp at ${f0((r.fellAt * 180) / Math.PI)}° and falls ${f1(2 * R)} m without rolling, hitting at ${f1(r.touchdownSpeed)} m/s (${f0(r.landingG)} g). Add suction or speed.` : `✕ It reaches the top but the landing is too hard (${f1(r.touchdownSpeed)} m/s). Add landing thrust.`}</div>
+    <div class="mgrid">
+    ${block('1 · Up the curl', '#38e1ff', [`radial: N = m v²/R + m g cos θ + F_suction`, `bottom: ${f1(sp.entrySpeed)}²/${f2(R)} + g = ${f2(r.peakRampG)} g on the occupants`, `energy: ½mv₀² = ½mv² + m g·2R + losses`, `frictionless entry needed for ${f1(vTop)} m/s on top: ${f1(v0need)} m/s`], 'Motors keep pushing up the climb and brake over the top to the planned speed.')}
+    ${block('2 · Upside down, held by suction', '#22d3ee', [`top: falls off unless v²/R + F_s/m ≥ g`, `loop-the-loop speed √(gR) = ${f2(r.speedNoSuction)} m/s; car is at ${f2(vTop)} m/s`, `suction needed ≥ m(g − v²/R) = ${f1(Math.max(0, holdNeed) / 1000)} kN`, `fans give ${f1(sp.suction / 1000)} kN → margin ${f1(r.minNormal / 1000)} kN`], 'Below √(gR), only the fans keep it on the track.')}
+    ${block('3 · The fans', '#7dd3fc', [`ΔP = F/A = ${f0(sp.suction)} N / 6 m² = ${f0(dP)} Pa (${f2(dP / 1013.25)} % atm)`, `leak Q = 0.6·(11 m × 5 mm)·√(2ΔP/ρ) = ${f2(fp.flow)} m³/s`, `fan power = Q·ΔP/η = ${f1(fp.watts / 1000)} kW`], 'Chaparral 2J (1970) and Brabham BT46B (1978) used the same trick.')}
+    ${block('4 · Release and fall', '#a78bfa', [`released at h = 2R = ${f1(2 * R)} m, moving ${f1(vTop)} m/s backwards`, `free fall t = √(2h/g) = ${f2(r.freeFall)} s`, `unbraked impact v = √(2gh) = ${f1(r.impactNoThrust)} m/s = ${f0(r.impactNoThrust / MPH)} mph`, `lands ${f1(Math.abs(r.landingX))} m behind the ramp`], 'An Immelmann turn: half a loop, then half a roll.')}
+    ${block('5 · Half-roll on thrusters', '#f472b6', [`I_roll ≈ m(w² + h²)/12 = ${f0(r.rollInertia)} kg·m²`, `τ = 2·F·r = 2 × ${f1(sp.rollThrust / 1000)} kN × ${sp.rollArm} m = ${f1(r.rollTorque / 1000)} kN·m`, `α = τ/I = ${f1(r.rollTorque / r.rollInertia)} rad/s² · bang-bang: θ = α t²/4`, `180° in ${f2(r.rollTime)} s, peak ${f0((r.rollRate * 180) / Math.PI)}°/s`], 'Fire to spin, then fire the opposite pair to stop exactly upright.')}
+    ${block('6 · The landing burn', '#fbbf24', [`start when h = (v² − v_td²) / (2(F/m − g))`, `F = ${f1(sp.liftThrust / 1000)} kN → a = ${f2(sp.liftThrust / m - G0)} m/s² upward net`, `touchdown ${f2(r.touchdownSpeed)} m/s · suspension: a = v²/(2s) + g = ${f2(r.landingG)} g`], 'Without the burn the suspension would see tens of g.')}
+    ${block('7 · The air budget', '#e879f9', [`m_air = pV/RT = ${f0(c.tankBar * 1e5)} × 0.6 / (287 × 293) = ${f0(air0)} kg`, `vₑ = 0.9 √(2·1005·293·(1 − (1/${f0(c.tankBar)})^0.286)) = ${f0(ve)} m/s`, `stunt used ${f1(r.airUsed)} kg → ${f0(r.barLeft)} bar left (stops at ${MIN_BAR})`], 'Cold gas is clean and refillable, but each kilogram only buys about 600 N·s.')}
+    ${block('8 · 0–60 mph in 0.81 s', '#fb7185', [`a = 26.82 / 0.81 = ${f1(a81)} m/s² = ${f2(a81 / G0)} g average`, `rear tyres + suction (with load transfer) ≈ ${f2(launch({ ...ROADSTER_THRUST, thrust: 0 }, { tMax: 3, every: 1 }).peakG)} g`, `thrust needed on average ≈ ${f1(thr81 / 1000)} kN (80 kN reported → 0.45 s)`], 'The rest of the push comes from air, not rubber.')}
+    ${block('9 · Over five cars', '#34d399', [`apex 2.4 m: v_y = √(2gh) = ${f2(jump.vy)} m/s · impulse ${f1(jump.impulse / 1000)} kN·s`, `time aloft 2v_y/g = ${f2(jump.tAir)} s`, `at 16 m/s it clears ${f1(jump.distance)} m (five cars side by side ≈ 11 m)`], 'Jump numbers are illustrative: the hop was not measured.')}
+    ${block('10 · The battery, from one sentence', '#22d3ee', [`"15→85 % in ~10 min at up to 500 kW"`, `E ≤ 500 kW × (1/6) h / 0.70 = ${f0(packBoundKWh(500, 0.15, 0.85, 10))} kWh`, `this model: ${f0(car.packWh / 1000)} kWh → ${f0(range(car, 70 * MPH) / 1.609)} mi at 70 mph`], 'A charging claim limits how big the pack can be.')}
+  </div>`;
+}
+
 /* ------------------------------------------------------------- part info */
 
 function renderParts(): void {
@@ -228,7 +383,7 @@ function select(id: PartId | null): void {
   selected = id;
   world.selected = id;
   world.focus(id);
-  if (id && ['battery', 'motorFront', 'motorsRear', 'thrusters', 'cabin'].includes(id) && !world.xray && world.explodeTarget < 0.5) setXray(true);
+  if (id && ['battery', 'fans', 'motorsRear', 'thrusters', 'cabin'].includes(id) && !world.xray && world.explodeTarget < 0.5 && !stuntPlay.on) setXray(true);
   renderInfo();
 }
 
@@ -243,14 +398,25 @@ function renderInfo(): void {
            <div class="pmath">${part.math.map((l) => `<code>${esc(l)}</code>`).join('')}</div>`
         : `<h3>Explore the car</h3><p style="margin:0;font-size:13px;color:#e8d9e2">Click any part, or a chip under the 3D view, to see what it does and the maths behind it. X-ray shows the battery, motors and thrusters inside. Drag to orbit, scroll or pinch to zoom.</p>`
     }
-    <div class="honest"><b>What is real here</b>The new Roadster's figures are Tesla's announced targets from 2017. Mass, drag, gearing, cell format and pack voltage were never published, so they are labelled assumptions chosen to fit those targets. The original Roadster figures are published specs.</div>
+    <div class="honest"><b>What is real here</b>The 2026 figures are as reported from the 15 October 2026 reveal: rear-drive twin motors, about 1,000 kW, about 3,700 lb (not final), 10 compressed-air thrusters on a 600 L tank, about 80 kN rear thrust, fan suction, 0–60 mph in 0.81 s live, claims of under 1.6, 0.9 and 0.59 s, over 300 miles and 500 kW charging. Tesla did not publish the ramp size, speeds, tank pressure, thrust profile, pack size, drag or gearing, so those are labelled assumptions. The car's look follows the reported design cues (Ano White, gold glass, hidden headlights, full-width tail bar, thin-spoke wheels, sharp geometric surfacing); it is a stylised model, not a scan.</div>
     <div style="margin-top:12px"><h3>Timeline</h3><div class="timeline">${MILESTONES.map(([y, t]) => `<div><b>${y}</b>${esc(t)}</div>`).join('')}</div></div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-part]').forEach((b) => b.classList.toggle('on', b.dataset.part === selected));
 }
 
 /* ------------------------------------------------------------------ HUD */
 
+function renderStuntHud(): void {
+  const S = world.stunt.sample!;
+  const label: Record<string, string> = { runup: 'RUN-UP · fans sealing', ramp: S.pitch > 1.6 ? 'INVERTED · held by suction' : 'UP THE CURL', flight: S.roll < Math.PI - 0.01 ? 'AIRBORNE · thrusters rolling the car' : S.thrustLift > 0 ? 'LANDING BURN' : 'AIRBORNE · upright', landing: 'TOUCHDOWN', done: stuntRes.ok ? 'LANDED ✓' : 'CRASHED ✕' };
+  const col = S.phase === 'done' ? (stuntRes.ok ? '#4ade80' : '#ef4444') : S.phase === 'flight' ? '#f472b6' : '#38e1ff';
+  $('#hud').innerHTML = `<span class="status-chip" style="color:${col}">${label[S.phase]}</span>
+    <span class="big">${f1(S.y)}<small> m up</small></span>
+    <span class="sub">${f1(S.speed)} m/s · ${f0(S.speed / MPH)} mph · pitch ${f0((S.pitch * 180) / Math.PI)}° · roll ${f0((S.roll * 180) / Math.PI)}° · ${f2(S.gSeat)} g felt</span>
+    <span class="sub">${S.phase === 'ramp' ? `track contact ${f1(S.normal / 1000)} kN` : S.thrustLift > 0 ? `lift ${f1(S.thrustLift / 1000)} kN` : S.thrustRoll !== 0 ? `roll couple 2 × ${f1(Math.abs(S.thrustRoll) / 1000)} kN` : ''} · air ${f0(S.airKg)} kg · tank ${f0(S.tankBar)} bar · t ${f2(S.t)} s</span>`;
+}
+
 function renderHud(): void {
+  if (stuntPlay.on && world.stunt.sample) return renderStuntHud();
   const d = world.drive;
   const mph = d.v / MPH;
   const light = (on: boolean, label: string, val: number | null) => `<span class="light ${on ? 'on' : ''}">${label}<b>${on && val !== null ? f2(val) + ' s' : '—'}</b></span>`;
@@ -291,6 +457,7 @@ const actions: TourActions = {
   explode: setExplode,
   xray: setXray,
   run: (k) => startRun(k ?? 'idle'),
+  stunt: (on) => setStunt(on),
   highlight: (sel) => {
     highlighted?.classList.remove('highlight');
     highlighted = sel ? document.querySelector(sel) : null;
@@ -360,16 +527,20 @@ world.onPick = (id) => manual(() => select(id));
 function startScreen(): void {
   $('#overlay').classList.remove('hidden');
   $('#overlay').innerHTML = `<div class="panel" role="dialog" aria-labelledby="st">
-    <div class="kicker">TESLA ROADSTER · IN 3D</div>
+    <div class="kicker">TESLA ROADSTER · THE 2026 REVEAL · IN 3D</div>
     <h1 class="hero-title" id="st">VOLTFORGE</h1>
     <div class="made">✦ Made by Colin Cook ✦</div>
-    <p style="font-size:16px;margin:4px 0 10px"><b>What does it actually take to reach 60 mph in under two seconds?</b></p>
-    <p style="margin:0 0 10px;color:#f1dde4">Take apart a full 3D model of the Tesla Roadster: the carbon body, the 200 kWh floor pack, three motors, the brakes, the active aero and the claimed SpaceX thruster package. Then launch it. Every number is computed live, from tyre grip and motor torque to battery current, drag, range, stopping distance and the rocket equation. It ends in deep space, with the original Roadster that Falcon Heavy sent around the Sun.</p>
-    <p class="hint">An educational model, not affiliated with Tesla or SpaceX. The new Roadster's figures are announced targets; unpublished values are labelled assumptions.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button class="primary" id="st-tour">▶ Take the guided tour</button><button id="st-free">Explore freely</button><button id="st-launch">⚡ Just launch it</button></div>
+    <p style="font-size:16px;margin:4px 0 10px"><b>Up a curling ramp upside down, a half-roll in mid-air, 0–60 mph in 0.81 seconds: how?</b></p>
+    <p style="margin:0 0 10px;color:#f1dde4">On 15 October 2026 Tesla revealed the production Roadster by driving it up a curling ramp until it hung upside down on fan suction, launching it off the top, rolling it 180° in mid-air on compressed-air thrusters and landing it on its wheels. This rebuilds that demo in 3D with the physics behind every moment: the loop dynamics, the suction, the roll torque, the landing burn, the air tank, and the 0.81 s launch. Then take the car apart: suction fans, ten thrusters, twin rear motors, battery and more.</p>
+    <p class="hint">An educational model, not affiliated with Tesla or SpaceX. Figures are as reported from the reveal; anything Tesla did not publish (ramp size, speeds, tank pressure, thrust profile) is a labelled assumption.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><button class="primary" id="st-tour">▶ Take the guided tour</button><button id="st-free">Explore freely</button><button id="st-launch">⚡ Just launch it</button><button id="st-stunt" class="stunt-btn">🌀 Replay the reveal stunt</button></div>
   </div>`;
   $('#st-tour').addEventListener('click', startTour);
   $('#st-free').addEventListener('click', () => $('#overlay').classList.add('hidden'));
+  $('#st-stunt').addEventListener('click', () => {
+    $('#overlay').classList.add('hidden');
+    manual(() => setStunt(true));
+  });
   $('#st-launch').addEventListener('click', () => {
     $('#overlay').classList.add('hidden');
     manual(() => startRun('launch'));
@@ -380,11 +551,15 @@ function renderAll(): void {
   syncControls();
   renderInfo();
   renderMaths();
+  renderDemoMaths();
+  syncStuntControls();
 }
 
 renderControls();
 renderParts();
 renderOrbitControls();
+renderStuntControls();
+syncStuntControls();
 renderAll();
 startScreen();
 
@@ -396,6 +571,7 @@ function frame(now: number): void {
   last = now;
   t += dt;
   stepPlayback(dt);
+  stepStunt(dt);
   world.update(dt);
   if (orbit.playing) {
     orbit.date = new Date(orbit.date.getTime() + dt * 86400000 * 6);
@@ -410,6 +586,7 @@ function frame(now: number): void {
     drawForces($('#force-chart') as HTMLCanvasElement, car, world.drive.v);
     drawRange($('#range-chart') as HTMLCanvasElement, car, presetId === 'gen1' ? undefined : ROADSTER_1);
     drawOrbit($('#orbit-chart') as HTMLCanvasElement, orbit.date, t);
+    drawStunt($('#stunt-chart') as HTMLCanvasElement, stuntRes, sp.radius, stuntPlay.on ? stuntPlay.t : -1);
     if (tour.active) drawTour();
   }
   tour.update(dt, paused);
@@ -417,4 +594,4 @@ function frame(now: number): void {
 }
 requestAnimationFrame(frame);
 
-(window as unknown as Record<string, unknown>).__roadster = { get car() { return car; }, get run() { return run; }, world, tour, setPreset, select, startRun, play, setXray, setExplode };
+(window as unknown as Record<string, unknown>).__roadster = { get car() { return car; }, get run() { return run; }, get stuntRes() { return stuntRes; }, world, tour, setPreset, select, startRun, play, setXray, setExplode, setStunt, stuntPlay };
