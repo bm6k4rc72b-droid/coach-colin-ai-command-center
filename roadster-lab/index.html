@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="VOLTFORGE: an interactive, cinematic 3D breakdown of the Tesla Roadster with live launch, battery, aero, braking and orbital physics. Made by Colin Cook." />
+    <meta name="author" content="Colin Cook" />
+    <title>VOLTFORGE — the Tesla Roadster in 3D · Made by Colin Cook</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M18 2 6 18h8l-2 12 12-16h-8z' fill='%23ff2b4e' stroke='%2338e1ff' stroke-width='1.5'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header id="top">
+      <div class="brand"><span class="logo">VOLTFORGE</span> <small>the Tesla Roadster · in 3D</small></div>
+      <a class="credit" href="#" id="credit-top" aria-label="Made by Colin Cook">✦ Made by <b>Colin Cook</b></a>
+      <div class="spacer"></div>
+      <button id="tour-btn" class="primary">▶ Guided tour</button>
+    </header>
+    <main id="layout">
+      <aside class="panel glass" id="controls"></aside>
+      <section id="stage">
+        <div class="viewport">
+          <canvas id="view" aria-label="3D Tesla Roadster"></canvas>
+          <div class="hud" id="hud"></div>
+          <div class="chips" id="parts"></div>
+          <div class="toggles" id="toggles"></div>
+          <div class="vcredit">Made by Colin Cook</div>
+        </div>
+        <div class="row2">
+          <div class="panel glass" id="launch-card"><h3>Launch trace: speed and g</h3><canvas id="launch-chart" class="chart"></canvas><p class="hint">Cyan = speed, magenta = acceleration. Amber shading marks where tyre grip, not the motors, is the limit. The plateau is μ·g or τ/(r·m); the fall-off is constant power, F = P/v.</p></div>
+          <div class="panel glass" id="force-card"><h3>Force budget: where the grip runs out</h3><canvas id="force-chart" class="chart"></canvas><p class="hint">The car accelerates by the gap between what it can push (the lower of motors and grip) and what the air takes. Where the lines meet is top speed.</p></div>
+        </div>
+        <div class="row2">
+          <div class="panel glass" id="range-card"><h3>Range against steady speed</h3><canvas id="range-chart" class="chart"></canvas><p class="hint">Green = this car, amber = the original Roadster. Drag rises with v², so range falls fast above motorway speed.</p></div>
+          <div class="panel glass" id="orbit-card"><h3>The Roadster in orbit · Kepler's laws</h3><canvas id="orbit-chart" class="chart"></canvas><div id="orbit-ctl"></div><p class="hint">Solves E − e·sin E = M for each date. Two-body model: approximate, no planetary perturbations.</p></div>
+        </div>
+        <div class="panel glass" id="maths"></div>
+      </section>
+      <aside class="panel glass" id="info"></aside>
+    </main>
+    <footer>VOLTFORGE · an educational 3D explorer of the Tesla Roadster · <b>Made by Colin Cook</b> · not affiliated with Tesla or SpaceX · physics: Newton's laws, tyre friction, aerodynamic drag, I²R, Tsiolkovsky, Kepler</footer>
+    <div id="tourbar" class="hidden" role="status" aria-live="polite"></div>
+    <div id="overlay" class="overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
