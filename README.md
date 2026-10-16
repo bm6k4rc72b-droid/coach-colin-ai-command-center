@@ -43,6 +43,28 @@ TypeScript + Three.js project.
 
 ---
 
+## Also in here: VOLTFORGE · the Tesla Roadster in 3D (made by Colin Cook)
+
+At [`roadster-lab/`](roadster-lab): a cinematic, interactive 3D breakdown of the Tesla Roadster,
+made by Colin Cook and built the same way as SUNFORGE.
+
+- **The car.** A procedurally lofted body with clearcoat paint, a glass canopy and light blades.
+  X-ray and exploded views show the 200 kWh floor pack, the three motors, the brakes, the active
+  aero and the claimed SpaceX cold-gas thruster package.
+- **Launch.** Runs play out in real time, with energy-flow particles, squat, glowing brakes,
+  thruster plumes, speed streaks and an anamorphic grade.
+- **Physics.** Every number is computed live: torque → force → g, the tyre-grip ceiling μg,
+  load transfer, constant-torque/constant-power motors, aero drag and downforce, battery current
+  and I²R heat, range against speed, v²/(2μg) braking, regeneration, cornering and the rocket
+  equation.
+- **Orbit.** A Kepler solver tracks the Falcon Heavy Roadster around the Sun.
+- **Honesty.** The new Roadster's figures are labelled as Tesla's announced targets; unpublished
+  values are labelled assumptions. Not affiliated with Tesla or SpaceX.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/roadster-lab/>**
+
+---
+
 ## Also in here: Body Lab · a gallery of physiology exhibits
 
 At [`body-lab/`](body-lab): a whole 3D body to explore like Human Atlas (orbit, hover, select, layers,

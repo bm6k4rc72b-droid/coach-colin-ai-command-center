@@ -109,6 +109,14 @@ jobs:
           rm -rf ../dist/fusion-lab
           cp -r dist ../dist/fusion-lab
 
+      - name: Build VOLTFORGE roadster lab
+        run: |
+          cd roadster-lab
+          npm ci
+          npm run build
+          rm -rf ../dist/roadster-lab
+          cp -r dist ../dist/roadster-lab
+
       # Human Atlas ships its compressed anatomy GLBs in public/anatomy; no asset build needed here.
       - name: Build Human Atlas
         run: |
