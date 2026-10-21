@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Neon Keys · Miami</title>
+  <meta name="description" content="Exotic car experiences in Miami. Lamborghini Aventador S, Ferrari 296 GTB, Rolls-Royce Cullinan and Mercedes-AMG G 63 — pick a key.">
+  <meta name="theme-color" content="#050507">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050507'/%3E%3Cpath d='M18 46V18l28 28V18' fill='none' stroke='%23ff2d95' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__mark">NEON<span>KEYS</span></div>
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+    <div class="loader__label" id="loaderLabel">Warming up the V12</div>
+  </div>
+
+  <header class="nav" id="nav">
+    <a class="nav__logo" href="#top" data-jump="0" aria-label="Neon Keys, back to the top">NEON<span>KEYS</span><em>Miami</em></a>
+    <nav class="nav__menu" aria-label="Fleet">
+      <a href="#hero" data-jump="hero">Aventador</a>
+      <a href="#gtb" data-jump="gtb">296 GTB</a>
+      <a href="#cullinan" data-jump="cullinan">Cullinan</a>
+      <a href="#keys" data-jump="keys">Keys</a>
+    </nav>
+    <a class="btn btn--pink nav__book" href="#keys" data-jump="keys">Book</a>
+  </header>
+
+  <main class="film" id="film">
+    <div class="stage" id="stage">
+
+      <!-- 1 · Hero -->
+      <section class="scene scene--hero" data-scene="hero" aria-labelledby="h-hero">
+        <div class="media" data-media="hero"></div>
+        <div class="shade shade--left"></div>
+        <div class="copy copy--left">
+          <p class="eyebrow"><b>01</b> Lamborghini Aventador S · Ocean Drive, 1 a.m.</p>
+          <h1 class="headline" id="h-hero">The bull<br><i>wakes up.</i></h1>
+          <ul class="specs" aria-label="Aventador S specs">
+            <li><strong>730</strong> hp</li>
+            <li><strong>2.9</strong>s 0–60</li>
+            <li><strong>$1,200</strong>/day</li>
+          </ul>
+          <a class="btn btn--ghost" href="#keys" data-jump="keys">Reserve the bull</a>
+        </div>
+        <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><i></i></div>
+      </section>
+
+      <!-- 2 · Aventador cockpit -->
+      <section class="scene" data-scene="aventador-cockpit" aria-labelledby="h-av-int">
+        <div class="media" data-media="aventador-cockpit"></div>
+        <div class="shade shade--bottom"></div>
+        <div class="copy copy--bottom">
+          <p class="eyebrow"><b>02</b> Inside the Aventador</p>
+          <h2 class="headline" id="h-av-int">Flip the cover.<br><i>Press start.</i></h2>
+        </div>
+      </section>
+
+      <!-- 3 · Aventador spin -->
+      <section class="scene scene--spin" data-scene="aventador-spin" aria-labelledby="h-av-spin">
+        <div class="media" data-media="aventador-spin"></div>
+        <div class="copy copy--top">
+          <p class="eyebrow"><b>03</b> 360° walkaround</p>
+          <h2 class="headline headline--sm" id="h-av-spin">Spin the <i>Aventador S</i></h2>
+        </div>
+        <div class="dial" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><circle class="dial__arc" cx="50" cy="50" r="46" pathLength="360"/></svg><span class="dial__deg">0°</span></div>
+      </section>
+
+      <!-- 4 · Ferrari golden hour -->
+      <section class="scene scene--gold" data-scene="gtb" aria-labelledby="h-gtb">
+        <div class="media" data-media="gtb"></div>
+        <div class="shade shade--right"></div>
+        <div class="copy copy--right">
+          <p class="eyebrow"><b>04</b> Ferrari 296 GTB · Biscayne Bay</p>
+          <h2 class="headline" id="h-gtb">Golden hour,<br><i>door open.</i></h2>
+          <ul class="specs" aria-label="296 GTB specs">
+            <li><strong>296</strong> GTB</li>
+            <li><strong>819</strong> hp</li>
+            <li><strong>$1,100</strong>/day</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 5 · Ferrari cockpit -->
+      <section class="scene scene--gold" data-scene="gtb-cockpit" aria-labelledby="h-gtb-int">
+        <div class="media" data-media="gtb-cockpit"></div>
+        <div class="shade shade--bottom"></div>
+        <div class="copy copy--bottom">
+          <p class="eyebrow"><b>05</b> Rickenbacker Causeway</p>
+          <h2 class="headline" id="h-gtb-int">The causeway<br><i>is yours.</i></h2>
+        </div>
+      </section>
+
+      <!-- 6 · Ferrari spin -->
+      <section class="scene scene--spin" data-scene="gtb-spin" aria-labelledby="h-gtb-spin">
+        <div class="media" data-media="gtb-spin"></div>
+        <div class="copy copy--top">
+          <p class="eyebrow"><b>06</b> 360° walkaround</p>
+          <h2 class="headline headline--sm" id="h-gtb-spin">Spin the <i>296 GTB</i></h2>
+        </div>
+        <div class="dial" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><circle class="dial__arc" cx="50" cy="50" r="46" pathLength="360"/></svg><span class="dial__deg">0°</span></div>
+      </section>
+
+      <!-- 7 · Cullinan twilight -->
+      <section class="scene scene--white" data-scene="cullinan" aria-labelledby="h-cul">
+        <div class="media" data-media="cullinan"></div>
+        <div class="shade shade--left"></div>
+        <div class="copy copy--left">
+          <p class="eyebrow"><b>07</b> Rolls-Royce Cullinan · Star Island, dusk</p>
+          <h2 class="headline" id="h-cul">They open<br><i>the other way.</i></h2>
+          <ul class="specs" aria-label="Cullinan specs">
+            <li><strong>563</strong> hp</li>
+            <li>Coach doors</li>
+            <li><strong>$1,400</strong>/day</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 8 · Cullinan side -->
+      <section class="scene scene--white" data-scene="cullinan-side" aria-labelledby="h-cul-side">
+        <div class="media" data-media="cullinan-side"></div>
+        <div class="shade shade--bottom"></div>
+        <div class="copy copy--bottom copy--center">
+          <p class="eyebrow"><b>08</b> Four doors, all open</p>
+          <h2 class="headline" id="h-cul-side">Nothing else <i>looks like it.</i></h2>
+        </div>
+      </section>
+
+      <!-- 9 · Lambswool -->
+      <section class="scene scene--white" data-scene="lambswool" aria-labelledby="h-lamb">
+        <div class="media" data-media="lambswool"></div>
+        <div class="shade shade--right"></div>
+        <div class="copy copy--right">
+          <p class="eyebrow"><b>09</b> The rear cabin</p>
+          <h2 class="headline" id="h-lamb">Lambswool<br><i>underfoot.</i></h2>
+        </div>
+      </section>
+
+      <!-- 10 · Starlight -->
+      <section class="scene scene--white" data-scene="starlight" aria-labelledby="h-star">
+        <div class="media" data-media="starlight"></div>
+        <div class="shade shade--bottom"></div>
+        <div class="copy copy--bottom copy--center">
+          <p class="eyebrow"><b>10</b> Starlight headliner</p>
+          <h2 class="headline" id="h-star">A sky <i>of your own.</i></h2>
+        </div>
+      </section>
+
+      <!-- 11 · Cullinan spin -->
+      <section class="scene scene--spin" data-scene="cullinan-spin" aria-labelledby="h-cul-spin">
+        <div class="media" data-media="cullinan-spin"></div>
+        <div class="copy copy--top">
+          <p class="eyebrow"><b>11</b> 360° walkaround</p>
+          <h2 class="headline headline--sm" id="h-cul-spin">Spin the <i>Cullinan</i></h2>
+        </div>
+        <div class="dial" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><circle class="dial__arc" cx="50" cy="50" r="46" pathLength="360"/></svg><span class="dial__deg">0°</span></div>
+      </section>
+
+      <!-- 12 · Keys -->
+      <section class="scene scene--keys" data-scene="keys" aria-labelledby="h-keys">
+        <div class="keys">
+          <header class="keys__head copy">
+            <p class="eyebrow"><b>12</b> The tray</p>
+            <h2 class="headline headline--sm" id="h-keys">Four keys. <i>Choose wisely.</i></h2>
+          </header>
+          <ul class="keys__grid" id="keyGrid"></ul>
+        </div>
+      </section>
+
+      <!-- 13 · Final -->
+      <section class="scene scene--final" data-scene="final" aria-labelledby="h-final">
+        <div class="media" data-media="final"></div>
+        <div class="shade shade--bottom"></div>
+        <div class="copy copy--bottom copy--center">
+          <p class="eyebrow"><b>13</b> Delivered to your door, anywhere in Miami-Dade</p>
+          <h2 class="headline headline--xl" id="h-final">Pick a key.<br><i>Miami’s waiting.</i></h2>
+          <a class="btn btn--pink btn--lg" href="#keys" data-jump="keys">Book your key</a>
+        </div>
+      </section>
+
+    </div>
+
+    <ol class="rail" id="rail" aria-hidden="true"></ol>
+  </main>
+
+  <footer class="foot">
+    <p>Neon Keys · Miami — a concept site. Imagery and motion generated with Higgsfield (GPT Image &amp; Seedance 2.5); cars shown are for illustration.</p>
+  </footer>
+
+  <dialog class="book" id="book" aria-labelledby="bookTitle">
+    <form method="dialog" class="book__inner" id="bookForm">
+      <button class="book__close" value="cancel" aria-label="Close">×</button>
+      <p class="eyebrow" id="bookEyebrow">Your key</p>
+      <h3 class="headline headline--sm" id="bookTitle">Reserve</h3>
+      <div class="book__row">
+        <label>Pick-up<input type="date" name="from" required></label>
+        <label>Return<input type="date" name="to" required></label>
+      </div>
+      <p class="book__total" id="bookTotal" aria-live="polite">Choose your dates</p>
+      <button class="btn btn--pink btn--lg" id="bookGo" value="go">Request this key</button>
+      <p class="book__note" id="bookNote">Concept site — nothing is sent or charged.</p>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1031,6 +1031,35 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: Neon Keys · Miami
+
+A scroll-driven exotic-car rental site at [`public/miami-keys/`](public/miami-keys):
+dark, neon, and paced like a film. Thirteen scenes run in a fixed order: the Aventador S
+on a wet Ocean Drive (*"The bull wakes up."*), its cockpit, a 360° spin, the Ferrari
+296 GTB at golden hour, the causeway, a spin, the Rolls-Royce Cullinan's coach doors,
+lambswool, the starlight headliner, a spin, four keys, and *"Pick a key. Miami's waiting."*
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/miami-keys/>** — locally it is `/miami-keys/`.
+
+- **Every picture is generated.** The stills are GPT Image renders and the motion is
+  Seedance 2.5 (1080p, 5 s), both made on Higgsfield for this page.
+- **The scroll drives the clips.** One GSAP ScrollTrigger pins the stage and scrubs a
+  single timeline. Each clip's playhead follows the scroll, so the scissor doors open,
+  the coach doors swing and the cars turn on their platforms only as fast as you scroll.
+  Scenes cross-fade into each other rather than cutting to black.
+- **The pacing is data.** [`js/scenes.js`](public/miami-keys/js/scenes.js) holds the running order, the hold
+  lengths and the copy timing as pure functions, and `npm run test:miami-keys` checks
+  them: the order matches the brief, scenes overlap by exactly one cross-fade, each spin
+  finishes its 360° on screen, and every line of copy holds long enough to read, on desktop and on phones.
+- **Phones get the same film, shorter.** On a phone the holds are shorter and the
+  clips loop instead of scrubbing, because iOS seeks video poorly.
+  Without GSAP the scenes stack, and with reduced motion only the stills are shown.
+- **Media.** The page streams from Higgsfield's CDN. `npm run media:miami-keys` downloads
+  everything into `public/miami-keys/media/`. It re-encodes the clips with dense
+  keyframes for frame-accurate scrubbing and rewrites `js/media.js` to the local copies.
+
+---
+
 ## Also in here: Vice Command
 
 A scroll-driven 1986 crime picture at [`public/vice/`](public/vice) with three
