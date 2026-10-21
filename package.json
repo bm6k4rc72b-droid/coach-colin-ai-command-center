@@ -53,6 +53,8 @@
     "test:touchline": "node --test tests/touchline/*.test.mjs",
     "test:emberline": "node --test tests/emberline/*.test.mjs",
     "test:vice": "node --test tests/vice/*.test.mjs",
+    "test:miami-keys": "node --test tests/miami-keys/*.test.mjs",
+    "media:miami-keys": "node scripts/miami-keys-localize.mjs",
     "test:makecns-fly": "node --test tests/makecns-fly/*.test.mjs",
     "test:agents": "node --test src/agents/*.test.mjs",
     "qa:agent-swarm": "node scripts/qa-agent-swarm.mjs",
