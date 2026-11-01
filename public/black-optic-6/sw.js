@@ -14,7 +14,7 @@
  * @module black-optic-6/sw
  */
 
-const CACHE = 'black-optic-6-v2';
+const CACHE = 'black-optic-6-v3';
 const SHELL = [
   './',
   'index.html',
@@ -41,10 +41,36 @@ const SHELL = [
   'js/harvest.js',
   'js/aerial.js',
   'js/argus.js',
-  'js/mariachi.js',
   'js/ranch-sim.js',
   'js/twin3d.js',
   'js/vision-ops.js',
+  'js/world.js',
+  'js/trafficcam.js',
+  'js/newsfeed.js',
+  'js/mariachi.js',
+  'js/ai/ai-ui.js',
+  'js/ai/audio-classes.js',
+  'js/ai/depth-calib.js',
+  'js/ai/detect.js',
+  'js/ai/evidence.js',
+  'js/ai/geophone.js',
+  'js/ai/installs.js',
+  'js/ai/isotherm.js',
+  'js/ai/mavlink.js',
+  'js/ai/meshtastic.js',
+  'js/ai/ndvi.js',
+  'js/ai/pcd.js',
+  'js/ai/reid.js',
+  'js/ai/runtime.js',
+  'js/ai/vlm.js',
+  'js/ai/zenoh.js',
+  'vendor/noble/blake3.js',
+  'vendor/noble/_md.js',
+  'vendor/noble/_u64.js',
+  'vendor/noble/blake2.js',
+  'vendor/noble/_blake.js',
+  'vendor/noble/utils.js',
+  'vendor/noble/crypto.js',
   '../vision-kit/bytetrack.js',
   '../vision-kit/latency.js',
   '../vision-kit/pointcloud.js',
@@ -90,19 +116,29 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/** Code changes between deploys; fetch it fresh when online, fall back to the cache offline. */
+const FRESH = /\.(?:html|js|mjs|css|json|webmanifest)$/;
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
-  // Orbital tiles are never cached: a stale satellite frame presented as current
-  // is precisely the failure the satellite panel spends its caption warning about.
-  if (request.url.includes('gibs.earthdata.nasa.gov')) return;
-  event.respondWith(
-    caches.match(request).then((hit) => hit ?? fetch(request).then((response) => {
-      if (response.ok && new URL(request.url).origin === self.location.origin) {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(request, copy));
-      }
-      return response;
-    }).catch(() => caches.match('index.html'))),
-  );
+  const url = new URL(request.url);
+  // Only this site's own files. Model weights (Hugging Face), Sentinel-2,
+  // your Zenoh router and your Ollama are never touched by this worker — and
+  // orbital imagery in particular must never be served stale as if current.
+  if (url.origin !== self.location.origin) return;
+  if (request.headers.has('range')) return;
+  const store = (response) => {
+    if (response.ok) {
+      const copy = response.clone();
+      caches.open(CACHE).then((cache) => cache.put(request, copy));
+    }
+    return response;
+  };
+  const fresh = url.pathname.endsWith('/') || FRESH.test(url.pathname);
+  event.respondWith(fresh
+    // Network first for code, so a deploy reaches the console on the next load.
+    ? fetch(request).then(store).catch(() => caches.match(request).then((hit) => hit ?? caches.match('index.html')))
+    // Cache first for the big binaries (WASM, the YAMNet model): fetched once, kept.
+    : caches.match(request).then((hit) => hit ?? fetch(request).then(store)));
 });
