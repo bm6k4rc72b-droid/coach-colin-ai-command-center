@@ -169,10 +169,11 @@ async function main() {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => {
-      // A camera that does not answer logs a network error from the browser
-      // itself; that is the probe working, not the console failing.
+      // A camera that does not answer (or answers without CORS headers) logs a
+      // network error from the browser itself; that is the probe working, not
+      // the console failing.
       if (message.type() === 'error'
-        && !/gibs\.earthdata|net::ERR|Failed to load resource/.test(message.text())) {
+        && !/gibs\.earthdata|net::ERR|Failed to load resource|blocked by CORS policy/.test(message.text())) {
         errors.push(message.text());
       }
     });
@@ -188,7 +189,19 @@ async function main() {
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 14, `the console builds all its decks (${decks})`);
+    check(decks === 18, `the console builds all its decks (${decks})`);
+
+    // ------------------------------------------------------------- AI stack
+    await page.waitForSelector('#ai-install-panel', { timeout: 20000 });
+    const aiPanels = await page.$$eval('[id^="ai-"][id$="-panel"]', (nodes) => nodes.map((n) => `${n.id}@${n.closest('.deck')?.id}`));
+    check(aiPanels.length === 15, `the AI stack mounts its panels into the decks (${aiPanels.length})`);
+    check(aiPanels.includes('ai-depth-panel@deck-optics') && aiPanels.includes('ai-lock-panel@deck-watch')
+      && aiPanels.includes('ai-mav-panel@deck-aerial') && aiPanels.includes('ai-chain-panel@deck-vault'),
+      'depth sits under calibration, type-to-lock under target lock, MAVLink under aircraft, BLAKE3 in the vault');
+    const installRows = await page.$$eval('#ai-install-list li', (nodes) => nodes.length);
+    check(installRows >= 20, `every requested repo has a ledger row (${installRows})`);
+    const serialBadge = await page.$eval('#ai-mav-prov', (node) => node.textContent);
+    check(/Not linked|No Web Serial/.test(serialBadge), `the aircraft link says it is not linked until it is (${serialBadge})`);
 
     const title = await page.title();
     check(/Black Optic 6/.test(title), `the console is named Black Optic 6 ("${title}")`);

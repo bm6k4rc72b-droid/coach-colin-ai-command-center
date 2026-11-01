@@ -65,6 +65,9 @@ import { VisionOps } from './vision-ops.js';
 /** Twin, flock, depth and speed-lab decks; created before the first deck opens. */
 let visionOps = null;
 
+/** The AI stack's panels (ai/ai-ui.js), loaded lazily so a failure there cannot stop the console. */
+let aiStack = null;
+
 const $ = (id) => document.getElementById(id);
 const STORE = 'black-optic-6:state:v1';
 
@@ -599,6 +602,7 @@ function loop() {
   ctx.putImageData(out, 0, 0);
 
   stepLock(frame);
+  aiStack?.onFrame(frame);
 
   drawHud(result);
   renderContacts(result);
@@ -2715,6 +2719,16 @@ renderAerial();
 buildArgus();
 syncMusic();
 $('site').textContent = state.boundary.length ? `${state.boundary.length} corners` : 'not set';
+
+import('./ai/ai-ui.js')
+  .then(({ mountAiStack }) => {
+    aiStack = mountAiStack({
+      state, readout, setBadge, logEvent, applyCalibration, renderAerial, ranchPlace,
+      video: () => $('video'),
+      feedName: () => state.cameras.find((camera) => camera.deviceId === state.cameraId)?.label || 'device camera',
+    });
+  })
+  .catch((error) => console.warn('Black Optic 6: AI stack not mounted', error));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));

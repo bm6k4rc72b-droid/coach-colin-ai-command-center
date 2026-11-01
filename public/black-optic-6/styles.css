@@ -641,3 +641,20 @@ input[type='range'] { width: 100%; accent-color: var(--primary); }
   .twin-view { aspect-ratio: 4 / 3; min-height: 260px; }
   .depth-view { aspect-ratio: 4 / 3; }
 }
+
+/* Phones: the console column may never be wider than the screen. Before this,
+   the header's unwrapped contents set the column's minimum width and every
+   deck scrolled sideways on a 390 px phone. */
+@media (max-width: 860px) {
+  .console { grid-template-columns: minmax(0, 1fr); }
+  .grid.wide { grid-template-columns: minmax(0, 1fr); }
+  .grid { grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr)); }
+  .bar { overflow: hidden; min-width: 0; }
+}
+@media (max-width: 480px) {
+  .wordmark b, .wordmark span { font-size: 14px; letter-spacing: 0.12em; }
+  .bar { gap: 8px; }
+}
+@media (max-width: 860px) {
+  table.ladder { display: block; max-width: 100%; overflow-x: auto; }
+}
