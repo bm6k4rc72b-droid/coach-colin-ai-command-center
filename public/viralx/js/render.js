@@ -12,7 +12,7 @@
  *
  * Output is MP4 where the browser can record it (Safari, recent Chrome), WebM otherwise.
  *
- * @module viralforge/render
+ * @module viralx/render
  */
 import { cropRect, SmoothCam, captionAt } from './core.js';
 import { faceDetector, poseLandmarker, POSE_EDGES } from './ai.js';

@@ -12,7 +12,7 @@
  *
  * Nothing is uploaded: frames, audio and comments stay in the tab.
  *
- * @module viralforge/ai
+ * @module viralx/ai
  */
 
 const HERE = new URL('../', import.meta.url).href;

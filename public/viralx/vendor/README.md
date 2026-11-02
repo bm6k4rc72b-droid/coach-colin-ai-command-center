@@ -1,4 +1,4 @@
-# VIRALFORGE: vendored libraries and models
+# ViralX: vendored libraries and models
 
 These are served from this site, so the app works without a CDN. The files are unmodified,
 except that source-map comments were stripped.

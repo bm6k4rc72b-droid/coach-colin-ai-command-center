@@ -1,5 +1,5 @@
 /**
- * VIRALFORGE core: the scoring maths, with no DOM and no models, so Node can test it.
+ * ViralX core: the scoring maths, with no DOM and no models, so Node can test it.
  *
  * Everything the browser measures (frames, faces, OCR text, loudness, transcript) is reduced
  * to plain numbers here and turned into scores a creator can act on. Every score is a
@@ -10,7 +10,7 @@
  * early, on-screen text, captions, 9:16, 7–35 s for Reels). They rank your own drafts against
  * each other. They do not predict view counts, and nothing can.
  *
- * @module viralforge/core
+ * @module viralx/core
  */
 
 export const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
@@ -446,14 +446,14 @@ export function postingPlan(start, days = 7, slots = DEFAULT_SLOTS) {
 }
 
 /** An .ics calendar (floating local times) so the plan lands in the phone's calendar. */
-export function toICS(items, prodId = 'VIRALFORGE') {
+export function toICS(items, prodId = 'ViralX') {
   const pad = (n) => String(n).padStart(2, '0');
   const fmt = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
   const esc = (s) => String(s).replace(/[\\,;]/g, (c) => '\\' + c).replace(/\n/g, '\\n');
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', `PRODID:-//${prodId}//EN`, 'CALSCALE:GREGORIAN'];
   items.forEach((it, i) => {
     const end = new Date(it.at.getTime() + 15 * 60000);
-    lines.push('BEGIN:VEVENT', `UID:${fmt(it.at)}-${i}@viralforge`, `DTSTAMP:${fmt(it.at)}`, `DTSTART:${fmt(it.at)}`, `DTEND:${fmt(end)}`,
+    lines.push('BEGIN:VEVENT', `UID:${fmt(it.at)}-${i}@viralx`, `DTSTAMP:${fmt(it.at)}`, `DTSTART:${fmt(it.at)}`, `DTEND:${fmt(end)}`,
       `SUMMARY:${esc(it.title)}`, `DESCRIPTION:${esc(it.note || '')}`, 'BEGIN:VALARM', 'TRIGGER:-PT10M', 'ACTION:DISPLAY', `DESCRIPTION:${esc(it.title)}`, 'END:VALARM', 'END:VEVENT');
   });
   lines.push('END:VCALENDAR');
@@ -479,4 +479,121 @@ export function titlePatterns(titles) {
   };
   return Object.entries(rx).map(([k, r]) => ({ pattern: k, share: titles.length ? titles.filter((t) => r.test(t)).length / titles.length : 0 }))
     .sort((a, b) => b.share - a.share);
+}
+
+/* ───────────────────────────── shot DNA ───────────────────────────── */
+
+/** Shot size from the largest face's height as a share of frame height. */
+export const SHOT_SIZES = [
+  { code: 'ECU', label: 'Extreme close-up', min: 0.45 },
+  { code: 'CU', label: 'Close-up', min: 0.28 },
+  { code: 'MCU', label: 'Medium close-up', min: 0.16 },
+  { code: 'MS', label: 'Medium shot', min: 0.08 },
+  { code: 'WS', label: 'Wide shot', min: 0 },
+];
+export function shotSize(faceH) {
+  if (!faceH || faceH <= 0) return { code: 'WS', label: 'Wide / no face' };
+  return SHOT_SIZES.find((s) => faceH >= s.min);
+}
+
+/**
+ * Dominant horizon tilt of a frame, in degrees (−45…45), from a magnitude-weighted histogram
+ * of Sobel edge directions folded to 90°. Upright footage (horizontal and vertical edges)
+ * reads ~0°; a dutch angle reads as the roll. `confidence` is the peak's share of edge energy.
+ */
+export function dominantTilt(data, w, h) {
+  const L = new Float32Array(w * h);
+  for (let i = 0, p = 0; i < L.length; i++, p += 4) L[i] = 0.299 * data[p] + 0.587 * data[p + 1] + 0.114 * data[p + 2];
+  const bins = new Float64Array(90);
+  let total = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    const gx = L[i - w + 1] + 2 * L[i + 1] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - 1] - L[i + w - 1];
+    const gy = L[i + w - 1] + 2 * L[i + w] + L[i + w + 1] - L[i - w - 1] - 2 * L[i - w] - L[i - w + 1];
+    const m = Math.hypot(gx, gy);
+    if (m < 40) continue;
+    let a = (Math.atan2(gy, gx) * 180) / Math.PI; // gradient direction; edges run at a+90, same mod 90
+    a = ((a % 90) + 90) % 90;
+    bins[Math.floor(a) % 90] += m; total += m;
+  }
+  if (!total) return { tilt: 0, confidence: 0 };
+  let best = 0, bv = -1;
+  for (let i = 0; i < 90; i++) { const v = bins[(i + 89) % 90] + 2 * bins[i] + bins[(i + 1) % 90]; if (v > bv) { bv = v; best = i; } }
+  // Sub-bin peak from the weighted mean of the 3 bins around it.
+  const wsum = bins[(best + 89) % 90] + bins[best] + bins[(best + 1) % 90];
+  const off = wsum ? (bins[(best + 1) % 90] - bins[(best + 89) % 90]) / wsum : 0;
+  let tilt = best + 0.5 + off;
+  if (tilt >= 45) tilt -= 90;
+  return { tilt: round(tilt, 1), confidence: round(bv / 4 / total, 3) };
+}
+
+/** Dutch angle when the dominant edges are rolled 7–38° and the frame has clear structure. */
+export const isDutch = (t) => Math.abs(t.tilt) >= 7 && Math.abs(t.tilt) <= 38 && t.confidence >= 0.06;
+
+/* ───────────────────────────── signal timeline ───────────────────────────── */
+
+export const SIGNALS = [
+  { key: 'attention', label: 'Attention', explain: 'Movement, cuts, a face on screen and the sound getting louder. These are the cues that make people stop scrolling.' },
+  { key: 'emotion', label: 'Emotion', explain: 'How close the camera is to a face (close-ups carry feeling), how much the sound rises and falls, and colour saturation.' },
+  { key: 'energy', label: 'Energy', explain: 'Loudness and motion together: how much is happening, frame by frame.' },
+  { key: 'clarity', label: 'Clarity', explain: 'Sharp focus, good exposure and contrast. If the frame reads instantly on a phone, it scores high.' },
+  { key: 'pacing', label: 'Pacing', explain: 'How often the shot changes. Short-form usually needs a new shot, zoom or text pop every 3–4 s.' },
+];
+
+/**
+ * Per-moment signal estimates from what the analyser measured (pixels, faces, cuts, audio).
+ * These are estimates from the footage, not brain data: each one is a stated formula.
+ * @param {{t:number,diff:number,faceH?:number,stats:object}[]} frames
+ * @param {number[]} curve loudness dBFS every `win` s
+ * @returns {{times:number[], rows:Record<string,number[]>, totals:Record<string,number>, trend:Record<string,number>}}
+ */
+export function signalTimeline(frames, curve, { win = 0.1, duration, cuts = [], bins = 48 } = {}) {
+  const dur = duration || (frames.length ? frames[frames.length - 1].t : 0) || 1;
+  const loudAt = (t) => (curve.length ? lerp01(curve[Math.min(curve.length - 1, Math.max(0, Math.round(t / win)))], -45, -12) : 0);
+  const louds = curve.map((d) => lerp01(d, -45, -12));
+  const med = louds.length ? [...louds].sort((a, b) => a - b)[Math.floor(louds.length / 2)] : 0;
+  const per = frames.map((f) => {
+    const loud = loudAt(f.t), rise = lerp01(loud - loudAt(f.t - 0.5), 0, 0.3);
+    const motion = lerp01(f.diff, 0.005, 0.08);
+    const cutNear = cuts.some((c) => Math.abs(c - f.t) <= 0.6) ? 1 : 0;
+    const face = f.faceH > 0 ? 1 : 0, close = lerp01(f.faceH || 0, 0.08, 0.5);
+    const s = f.stats;
+    const nCuts = cuts.filter((c) => Math.abs(c - f.t) <= 2).length;
+    return {
+      attention: 0.3 * motion + 0.25 * cutNear + 0.2 * face + 0.25 * Math.max(rise, loud * 0.5),
+      emotion: 0.55 * close + 0.25 * clamp(Math.abs(loud - med) * 2.5) + 0.2 * lerp01(s.saturation, 0.15, 0.6),
+      energy: 0.5 * loud + 0.5 * motion,
+      clarity: 0.45 * lerp01(s.sharpness, 20, 300) + 0.35 * (1 - Math.min(1, Math.abs(s.luma - 0.5) / 0.35)) + 0.2 * lerp01(s.contrast, 0.1, 0.45),
+      pacing: lerp01(nCuts, 0, 1.5),
+    };
+  });
+  const keys = SIGNALS.map((s) => s.key);
+  const rows = Object.fromEntries(keys.map((k) => [k, new Array(bins).fill(0)]));
+  const times = Array.from({ length: bins }, (_, i) => ((i + 0.5) * dur) / bins);
+  for (const k of keys) {
+    let carry = per.length ? per[0][k] : 0;
+    for (let b = 0; b < bins; b++) {
+      const lo = (b * dur) / bins, hi = ((b + 1) * dur) / bins;
+      const inBin = frames.map((f, i) => (f.t >= lo && f.t < hi ? per[i][k] : null)).filter((v) => v != null);
+      rows[k][b] = inBin.length ? inBin.reduce((a, v) => a + v, 0) / inBin.length : carry;
+      carry = rows[k][b];
+    }
+  }
+  const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
+  const third = Math.max(1, Math.floor(bins / 3));
+  const totals = Object.fromEntries(keys.map((k) => [k, Math.round(100 * mean(per.map((p) => p[k])))]));
+  const trend = Object.fromEntries(keys.map((k) => [k, Math.round(100 * (mean(rows[k].slice(-third)) - mean(rows[k].slice(0, third))))]));
+  return { times, rows, totals, trend };
+}
+
+/** Stretches where attention sags (below `floor` for at least `min` bins): where a cut or punch-in pays most. */
+export function attentionDips(times, att, { floor = 0.3, min = 2 } = {}) {
+  const out = [];
+  let start = -1;
+  for (let i = 0; i <= att.length; i++) {
+    const low = i < att.length && att[i] < floor;
+    if (low && start < 0) start = i;
+    if (!low && start >= 0) { if (i - start >= min) out.push({ from: times[start], to: times[i - 1] }); start = -1; }
+  }
+  return out;
 }

@@ -5,12 +5,12 @@
  * The request carries what the analysis measured (scores, transcript, on-screen text), so
  * the hooks are written for this exact clip rather than generically.
  *
- * @module viralforge/claude
+ * @module viralx/claude
  */
 import Anthropic from '../vendor/anthropic/sdk.mjs';
 
 export const MODEL = 'claude-opus-5-5';
-const KEY = 'viralforge.anthropicKey';
+const KEY = 'viralx.anthropicKey';
 
 export const getKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } };
 export const setKey = (k) => { try { k ? localStorage.setItem(KEY, k.trim()) : localStorage.removeItem(KEY); } catch { /* private mode */ } };

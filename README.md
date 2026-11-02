@@ -1031,23 +1031,21 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
-## Also in here: VIRALFORGE · short-form studio
+## Also in here: ViralX · by Coach Colin
 
-A phone-first studio at [`public/viralforge/`](public/viralforge), by Colin Cook, for making Reels, TikToks and
-Shorts that hold attention. It is built for the ElderGuardian / VIGIL care-tech lane, and it has fitness and AI presets too.
+A neuro-cinematic studio for short-form video at [`public/viralx/`](public/viralx), in black glass, neon pink and chrome,
+with a 3D animated hero (a neural brain inside a chrome film ring, with crystal shards).
 
-**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/viralforge/>** (locally `/viralforge/`).
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/viralx/>** (locally `/viralx/`).
 
-- **Studio** scores the first 3 seconds: motion, cuts, the first face (MediaPipe), on-screen text (Tesseract.js),
-  sound onset and loudness, exposure, colour and sharpness. Every score comes with the fix that would raise it.
-- **Export** renders 9:16 with a subject-following virtual camera, Whisper captions word by word, a hook title,
-  face pixelation or skeleton-only privacy, and a progress bar.
-- **Hooks** calls Claude (`claude-opus-5-5`, your own key) with the clip's measured scores and transcript.
-- **Trends** (YouTube Data API), **Comments** (RoBERTa sentiment), **Schedule** (.ics, 3 posts a day) and
-  [`tools/autopost.py`](public/viralforge/tools/autopost.py) (official Instagram and TikTok publishing APIs).
-- **Stack** lists every repo from the original brief. Four of them do not exist on GitHub, and `instagrapi`
-  breaks Instagram's terms, so each one is marked with what does its job instead.
-- `npm run test:viralforge`.
+- **Signals** is the dashboard: a player, six signal cards (Attention, Emotion, Energy, Clarity, Pacing, Hook) that
+  each explain their formula, a heatmap of every signal over time (tap to seek), where attention dips, and Shot DNA
+  (shot size per moment and dutch-angle detection).
+- **Camera Lab** performs 15 camera and angle techniques on a 3D set with real lens maths, including Colin's Tip 2
+  (The Impex) and Tip 3 (The Invisible Master). The main view is what the lens sees; the inset shows the rig from above.
+- Also: **Cover** (CLIP), **Export** (9:16 reframe, Whisper captions, privacy modes), **Hooks** (Claude, your key),
+  **Comments**, **Trends**, **Schedule**, and [`tools/autopost.py`](public/viralx/tools/autopost.py) (official APIs).
+- Signals are estimates computed from the footage, not brain data. `npm run test:viralx`.
 
 ---
 

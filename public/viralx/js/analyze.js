@@ -3,9 +3,9 @@
  * second), the rest more loosely, plus the soundtrack. Produces the measured features that
  * core.js scores.
  *
- * @module viralforge/analyze
+ * @module viralx/analyze
  */
-import { frameStats, frameDiff, detectCuts, loudnessCurve, soundOnset, rmsDb, kmeansPalette, thumbHeuristic, hookScore } from './core.js';
+import { frameStats, frameDiff, detectCuts, loudnessCurve, soundOnset, rmsDb, kmeansPalette, thumbHeuristic, hookScore, shotSize, dominantTilt, isDutch, signalTimeline, attentionDips } from './core.js';
 import { faceDetector, readText } from './ai.js';
 
 export function loadVideo(file) {
@@ -82,7 +82,9 @@ export async function analyze(file, onStatus = () => {}, opts = { ocr: true, fac
     sctx.drawImage(v, 0, 0, sw, sh);
     const px = sctx.getImageData(0, 0, sw, sh).data;
     mctx.drawImage(v, 0, 0, mw, mh);
-    const stats = frameStats(mctx.getImageData(0, 0, mw, mh).data, mw, mh);
+    const midPx = mctx.getImageData(0, 0, mw, mh).data;
+    const stats = frameStats(midPx, mw, mh);
+    const tilt = dominantTilt(midPx, mw, mh);
     let faces = [];
     if (fd) {
       try {
@@ -92,7 +94,11 @@ export async function analyze(file, onStatus = () => {}, opts = { ocr: true, fac
       } catch (e) { console.warn(e); }
     }
     const faceArea = faces.reduce((a, f) => Math.max(a, f.w * f.h), 0);
-    const f = { t: times[i], stats, diff: prev ? frameDiff(prev, px) : 0, faces, faceArea, thumb: thumbHeuristic(stats, { faces: faces.length, faceArea }) };
+    const faceH = faces.reduce((a, f) => Math.max(a, f.h), 0);
+    const f = {
+      t: times[i], stats, diff: prev ? frameDiff(prev, px) : 0, faces, faceArea, faceH, tilt, dutch: isDutch(tilt),
+      shot: shotSize(faceH), thumb: thumbHeuristic(stats, { faces: faces.length, faceArea }),
+    };
     if (i % 4 === 0 || times[i] < 3) f.image = mid.toDataURL('image/jpeg', 0.82);
     frames.push(f);
     prev = px;
@@ -140,7 +146,10 @@ export async function analyze(file, onStatus = () => {}, opts = { ocr: true, fac
   const palette = kmeansPalette(mctx.getImageData(0, 0, mw, mh).data, 5, { stride: 16 });
 
   onStatus('Scoring…', 0.95);
+  const timeline = signalTimeline(frames, curve, { win: 0.1, duration: dur, cuts, bins: 48 });
+  const dips = attentionDips(timeline.times, timeline.rows.attention);
   return {
+    timeline, dips,
     file, video: v, width: W, height: H, duration: dur, aspect: W / H,
     frames, cuts, cutsPerMin: dur > 0 ? (cuts.length / dur) * 60 : 0,
     features, hook: hookScore(features), hookText, palette,

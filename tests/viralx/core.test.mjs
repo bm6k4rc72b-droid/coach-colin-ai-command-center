@@ -1,6 +1,6 @@
 /**
  * VIRALFORGE scoring maths, checked without a browser.
- * @module tests/viralforge/core
+ * @module tests/viralx/core
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ import {
   frameStats, frameDiff, detectCuts, kmeansPalette, rmsDb, loudnessCurve, soundOnset, hookScore, postScore,
   captionQuality, thumbHeuristic, chunkCaptions, captionAt, cropRect, SmoothCam, fillHooks, hashtags, lexSentiment,
   postingPlan, toICS, velocity, titlePatterns, HOOK_TEMPLATES,
-} from '../../public/viralforge/js/core.js';
+} from '../../public/viralx/js/core.js';
 
 const solid = (w, h, [r, g, b]) => { const d = new Uint8ClampedArray(w * h * 4); for (let i = 0; i < d.length; i += 4) { d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255; } return d; };
 const checker = (w, h) => { const d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = (x + y) % 2 ? 255 : 0; const i = (y * w + x) * 4; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; } return d; };
@@ -146,7 +146,7 @@ test('trend helpers', () => {
 });
 
 test('stack.json accounts for every repo from the original list', async () => {
-  const s = JSON.parse(await readFile(new URL('../../public/viralforge/data/stack.json', import.meta.url), 'utf8'));
+  const s = JSON.parse(await readFile(new URL('../../public/viralx/data/stack.json', import.meta.url), 'utf8'));
   const asked = ['facebookresearch/llm-transparency-tool', 'openai/CLIP', 'harrywang0330/viral-clip-prediction', 'dylanhogg/tiktok-analytics',
     'charlesincharge/instagram-scraper', 'kornia/kornia', 'cardiffnlp/twitter-roberta-base-sentiment', 'PaddlePaddle/PaddleOCR', 'google/mediapipe',
     'instagrapi/instagrapi', 'SocialOomph API', 'sunniekapar/viral-tiktok-sounds'];

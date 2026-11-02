@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""VIRALFORGE autopost: hands-free posting through the platforms' official APIs.
+"""ViralX autopost: hands-free posting through the platforms' official APIs.
 
 Why not instagrapi: it logs in through Instagram's private mobile API, which breaks Meta's
 terms; accounts using it get checkpoint challenges and bans. This script uses the official
@@ -40,7 +40,7 @@ from pathlib import Path
 
 GRAPH = f"https://graph.facebook.com/{os.environ.get('GRAPH_VERSION', 'v23.0')}"
 TIKTOK = "https://open.tiktokapis.com/v2"
-QUEUE = Path(os.environ.get("VIRALFORGE_QUEUE", "queue.json"))
+QUEUE = Path(os.environ.get("VIRALX_QUEUE", "queue.json"))
 
 
 def http(method: str, url: str, data: dict | None = None, headers: dict | None = None, as_json: bool = False) -> dict:

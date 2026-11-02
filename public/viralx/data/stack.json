@@ -1,6 +1,6 @@
 {
   "checked": "2026-11-02",
-  "note": "Every repo from the original list was checked against GitHub on this date. 'installed' means it runs inside VIRALFORGE. 'replaced' means the repo does not exist, or it cannot run in a browser, or it breaks platform rules, so a working alternative does its job.",
+  "note": "Every repo from the original list was checked against GitHub on this date. 'installed' means it runs inside ViralX. 'replaced' means the repo does not exist, or it cannot run in a browser, or it breaks platform rules, so a working alternative does its job.",
   "requested": [
     { "role": "Viral prediction", "repo": "facebookresearch/llm-transparency-tool", "exists": true, "status": "replaced",
       "why": "Real repo, but it inspects the internals of language models. It cannot score thumbnails.",
@@ -10,7 +10,7 @@
       "with": "Thumbnail lab → CLIP rerank" },
     { "role": "Hook finder", "repo": "harrywang0330/viral-clip-prediction", "exists": false, "status": "replaced",
       "why": "No such repository on GitHub.",
-      "with": "VIRALFORGE hook scorer: motion, cuts, first face, on-screen text, sound onset, loudness, exposure, colour and sharpness in the first 3 s, each with a fix" },
+      "with": "ViralX hook scorer: motion, cuts, first face, on-screen text, sound onset, loudness, exposure, colour and sharpness in the first 3 s, each with a fix" },
     { "role": "Trend scraper", "repo": "dylanhogg/tiktok-analytics", "exists": false, "status": "replaced",
       "why": "No such repository on GitHub. Scraping TikTok also breaks its terms and gets IPs blocked.",
       "with": "Trends tab: YouTube Data API v3 Shorts scan (official, free key) with views/day and title-pattern breakdown" },
