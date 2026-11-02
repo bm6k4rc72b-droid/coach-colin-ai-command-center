@@ -1,11 +1,19 @@
 // Light-theme charts for NEUROLENS (canvas 2D, crisp on HiDPI).
 
 function fit(cv) {
+  themeInk();
   const r = cv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1);
   if (cv.width !== Math.round(r.width * d) || cv.height !== Math.round(r.height * d)) { cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); }
   const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height); return { g, W: r.width, H: r.height };
 }
-const INK = '#4a3550', MUTED = 'rgba(74,53,80,.45)', GRID = 'rgba(180,120,170,.16)';
+// Ink, muted and grid colours follow the edition (CSS custom properties), so charts read on pearl and on noir.
+let INK = '#4a3550', MUTED = 'rgba(74,53,80,.45)', GRID = 'rgba(180,120,170,.16)';
+function themeInk() {
+  const cs = getComputedStyle(document.documentElement);
+  INK = cs.getPropertyValue('--chart-ink').trim() || '#4a3550';
+  MUTED = cs.getPropertyValue('--chart-muted').trim() || 'rgba(74,53,80,.45)';
+  GRID = cs.getPropertyValue('--chart-grid').trim() || 'rgba(180,120,170,.16)';
+}
 
 export function lineChart(cv, { series, x0, x1, y0, y1, xTicks = [], yTicks = null, xFmt = (v) => v, yFmt = (v) => v, title = '', marks = [], bands = [], spans = [], now = null }) {
   if (!cv) return;

@@ -3,6 +3,7 @@
 const STR = {
   en: {
     'app.title': 'NEUROLENS', 'app.by': 'by Coach Colin',
+    'lux.toPearl': '◐ Pearl', 'lux.toNoir': '◑ Noir Luxe', 'lux.badge': 'Noir Luxe edition',
     'app.sub': 'Neural photography and videography: see how a brain decides what is attractive, why dopamine rewards surprise, when attention is lost — and how to cut, frame and colour for one specific viewer.',
     'app.disclaimer.h': 'Education & simulation',
     'app.disclaimer': 'NEUROLENS is an educational model built on published neuroscience (reward prediction error, adaptive gain, saliency maps). It does not read anyone’s brain. Personality sliders are tendencies, not diagnoses; genetics only shifts probabilities. Uploaded images and video stay in your browser.',
@@ -97,6 +98,7 @@ const STR = {
   },
   ja: {
     'app.title': 'ニューロレンズ', 'app.by': 'by Coach Colin',
+    'lux.toPearl': '◐ パール', 'lux.toNoir': '◑ ノワール・リュクス', 'lux.badge': 'ノワール・リュクス エディション',
     'app.sub': 'ニューラル写真・映像:脳が何を魅力的と判断するか、ドーパミンがなぜ驚きに報いるか、注意がいつ失われるか——そして特定の視聴者のためにどうカット・構図・色を作るか。',
     'app.disclaimer.h': '教育用シミュレーション',
     'app.disclaimer': 'ニューロレンズは公開された神経科学(報酬予測誤差、適応的ゲイン、サリエンシーマップ)に基づく教育モデルです。誰かの脳を読むものではありません。性格スライダーは傾向であり診断ではありません。遺伝は確率を変えるだけです。アップロードした画像・動画はブラウザ内にとどまります。',
