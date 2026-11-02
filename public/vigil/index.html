@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>VIGIL · Elder Care Intelligence</title>
+    <meta name="description" content="VIGIL by Colin Cook: AI fall detection and private, dignified monitoring for care communities and the home. Skeleton-only vision, radar for bathrooms, a 24/7 response ladder and the full enterprise build sheet." />
+    <meta name="theme-color" content="#09090b" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23c9a96e' stroke-width='2'/%3E%3Cpath d='M9 11l7 12 7-12' fill='none' stroke='%23c9a96e' stroke-width='2.4'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-view="overview">
+    <!-- ───────────────────────────────────────── intro -->
+    <section id="intro" class="intro">
+      <div class="intro-bg" id="intro-bg"></div>
+      <div class="intro-veil"></div>
+      <div class="intro-card">
+        <div class="crest">◈</div>
+        <h1 class="wordmark">VIGIL</h1>
+        <p class="kicker">Elder Care Intelligence</p>
+        <p class="lede">Always watching over. <em>Never watching you.</em></p>
+        <button class="btn gold" id="enter">Enter the residence</button>
+        <p class="fine">by Colin Cook · demonstration console · simulated residents</p>
+      </div>
+    </section>
+
+    <!-- ───────────────────────────────────────── shell -->
+    <div class="shell" id="shell" hidden>
+      <aside class="rail">
+        <div class="brand"><span class="crest sm">◈</span><b>VIGIL</b></div>
+        <nav id="nav">
+          <button data-view="overview"><i>I</i>Overview</button>
+          <button data-view="watch"><i>II</i>Live Watch</button>
+          <button data-view="residents"><i>III</i>Residents</button>
+          <button data-view="response"><i>IV</i>Response</button>
+          <button data-view="concierge"><i>V</i>AI Concierge</button>
+          <button data-view="enterprise"><i>VI</i>Enterprise Build</button>
+          <button data-view="business"><i>VII</i>The Business</button>
+        </nav>
+        <div class="rail-foot">
+          <div class="status"><span class="pip"></span><span id="status">All residents accounted for</span></div>
+          <div class="clock mono" id="clock">--:--</div>
+        </div>
+      </aside>
+
+      <main class="stage">
+        <!-- I · overview -->
+        <section class="view" id="view-overview">
+          <header class="hero" id="hero">
+            <div class="hero-copy">
+              <p class="eyebrow">Portfolio · 6 communities · 250 private homes</p>
+              <h2>Good evening.<br /><em>Everyone is safe.</em></h2>
+              <p class="muted">VIGIL is watching 790 residents through skeleton-only vision, radar and wearables. No faces. No recordings by default.</p>
+            </div>
+          </header>
+          <div class="kpis" id="kpis"></div>
+          <div class="cols">
+            <div class="card">
+              <div class="card-head"><h3>Communities &amp; homes</h3><span class="tag">live</span></div>
+              <div id="sites" class="sites"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h3>Tonight's ledger</h3><span class="tag" id="feed-count">0</span></div>
+              <ol id="feed" class="feed"></ol>
+            </div>
+          </div>
+          <div class="card film-card">
+            <div class="film-media" id="film"></div>
+            <div class="film-copy">
+              <p class="eyebrow">The campaign</p>
+              <h3>When every second matters, VIGIL is already there.</h3>
+              <p class="muted">The launch film and print ad, generated for this proposal. Download the proposal for the full build sheet.</p>
+              <div class="row"><a class="btn gold" href="VIGIL-Proposal-Colin-Cook.pdf" download>Download proposal (PDF)</a><button class="btn ghost" data-go="enterprise">See the build</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- II · live watch -->
+        <section class="view" id="view-watch" hidden>
+          <div class="view-head">
+            <div><p class="eyebrow">Live Watch · Willow Crest, Memory Care Wing</p><h2>Four suites, <em>zero faces.</em></h2></div>
+            <div class="seg" id="privacy">
+              <button data-p="skeleton" class="on">Skeleton</button>
+              <button data-p="silhouette">Silhouette</button>
+              <button data-p="radar">Radar only</button>
+            </div>
+          </div>
+          <div class="rooms" id="rooms"></div>
+          <div class="row wrap">
+            <button class="btn gold" id="drill">Run a fall drill</button>
+            <button class="btn ghost" id="camera-btn">Use my camera (on-device)</button>
+            <span class="muted small" id="watch-note">Simulated residents. The drill walks the full ladder: detect → verify → page → voice check → acknowledge.</span>
+          </div>
+          <div class="card cam-card" id="cam-card" hidden>
+            <div class="card-head"><h3>Your camera · COCO-SSD → ByteTrack → FallWatch</h3><span class="tag" id="cam-state">loading</span></div>
+            <div class="cam-wrap"><video id="cam" playsinline muted></video><canvas id="cam-canvas"></canvas></div>
+            <p class="muted small">Runs entirely in this tab. Frames are analysed and discarded; nothing is uploaded. Lie down sideways in view for 1.5 s to trigger a fall event.</p>
+          </div>
+        </section>
+
+        <!-- III · residents -->
+        <section class="view" id="view-residents" hidden>
+          <div class="view-head"><div><p class="eyebrow">Residents</p><h2>Known by their <em>rhythms.</em></h2></div></div>
+          <div class="res-layout">
+            <ul class="res-list" id="res-list"></ul>
+            <article class="card res-detail" id="res-detail"></article>
+          </div>
+        </section>
+
+        <!-- IV · response -->
+        <section class="view" id="view-response" hidden>
+          <div class="view-head"><div><p class="eyebrow">Response ladder</p><h2>Seconds, <em>not minutes.</em></h2></div>
+            <button class="btn gold" id="ack" disabled>Acknowledge · I'm on my way</button></div>
+          <div class="cols">
+            <div class="card"><div class="card-head"><h3 id="inc-title">No open incident</h3><span class="tag mono" id="inc-timer">00:00</span></div><ol class="ladder" id="ladder"></ol></div>
+            <div class="card"><div class="card-head"><h3>Response times · last 30 days</h3></div><div id="resp-chart" class="bars"></div>
+              <p class="muted small">Median time from fall to caregiver at bedside, by community. Industry baseline for unwitnessed falls is often measured in hours; the goal here is under 4 minutes.</p></div>
+          </div>
+        </section>
+
+        <!-- V · concierge -->
+        <section class="view" id="view-concierge" hidden>
+          <div class="view-head"><div><p class="eyebrow">AI Concierge</p><h2>A calm voice, <em>day and night.</em></h2></div>
+            <button class="btn gold" id="call">Play a check-in call</button></div>
+          <div class="cols">
+            <div class="card"><div class="card-head"><h3>Voice check-in · Suite 214</h3><span class="tag" id="call-state">idle</span></div><div class="chat" id="chat"></div></div>
+            <div class="card"><div class="card-head"><h3>Incident report · AI draft</h3><span class="tag">needs nurse signature</span></div><pre class="report" id="report">Run a fall drill in Live Watch and the report drafts itself here.</pre></div>
+          </div>
+        </section>
+
+        <!-- VI · enterprise -->
+        <section class="view" id="view-enterprise" hidden>
+          <div class="view-head"><div><p class="eyebrow">Enterprise build sheet</p><h2>Every feature, <em>priced and sourced.</em></h2></div>
+            <a class="btn gold" href="VIGIL-Proposal-Colin-Cook.pdf" download>Proposal PDF</a></div>
+          <p class="muted" id="cat-sub"></p>
+          <div class="quote" id="quote"></div>
+        </section>
+
+        <!-- VII · business -->
+        <section class="view" id="view-business" hidden>
+          <div class="view-head"><div><p class="eyebrow">Running VIGIL as a company</p><h2>The model, <em>in numbers.</em></h2></div></div>
+          <div class="cols">
+            <div class="card calc" id="calc"></div>
+            <div class="card"><div class="card-head"><h3>Unit economics</h3></div><div id="econ" class="econ"></div></div>
+          </div>
+          <div class="card prose" id="playbook"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

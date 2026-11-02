@@ -1031,6 +1031,27 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: VIGIL · Elder Care Intelligence
+
+A high-ticket elder-safety console at [`public/vigil/`](public/vigil), by Colin Cook: AI fall
+detection and private monitoring for care communities and at-home care, in onyx and champagne gold.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/vigil/>** — locally it is `/vigil/`.
+
+- **Live Watch** shows a memory-care wing as skeletons, silhouettes or radar blobs (never faces). A fall
+  drill walks the whole response ladder: edge AI → AI verifier → caregiver page → voice check-in → acknowledge.
+  *Use my camera* runs the shared vision-kit pipeline (COCO-SSD → ByteTrack → FallWatch) in the tab.
+- **Enterprise Build** is the priced build sheet ($619,140 for 12 months): every line names the tech, the AI
+  and the GitHub repos behind it. The same [`data/catalog.json`](public/vigil/data/catalog.json) builds the
+  proposal PDF (`npm run proposal:vigil`).
+- **The Business** is a live revenue model (per-bed and at-home pricing, margins) plus the compliance and
+  120-day launch playbook.
+- `npm run test:vigil` checks that the quote adds up to the cent and that the simulated fall trips FallWatch
+  while walking and sitting do not. Stills are GPT Image renders and the film is Seedance 2.5, made on
+  Higgsfield; `npm run media:vigil` self-hosts them.
+
+---
+
 ## Also in here: Neon Keys · Miami
 
 A scroll-driven exotic-car rental site at [`public/miami-keys/`](public/miami-keys):
