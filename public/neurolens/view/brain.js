@@ -44,17 +44,17 @@ function hemisphere(side, mat) {
 // (additive light disappears on a white background).
 export function pearlMaterial({ rim = '#ff4fa3', base = 0.32, tint = '#ff2f8e', opacity = 1 } = {}) {
   return new THREE.ShaderMaterial({
-    uniforms: { uRim: { value: new THREE.Color(rim) }, uTint: { value: new THREE.Color(tint) }, uBase: { value: base }, uTime: { value: 0 }, uOpacity: { value: opacity } },
+    uniforms: { uRim: { value: new THREE.Color(rim) }, uTint: { value: new THREE.Color(tint) }, uBody: { value: new THREE.Color(1.0, 0.965, 0.985) }, uBase: { value: base }, uTime: { value: 0 }, uOpacity: { value: opacity } },
     vertexShader: `attribute vec3 color; varying vec3 vN; varying vec3 vV; varying vec3 vC; varying vec3 vW;
       void main(){ vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix)*normal); vV = normalize(cameraPosition - w.xyz); vC = color; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: `uniform vec3 uRim, uTint; uniform float uBase, uTime, uOpacity; varying vec3 vN; varying vec3 vV; varying vec3 vC; varying vec3 vW;
+    fragmentShader: `uniform vec3 uRim, uTint, uBody; uniform float uBase, uTime, uOpacity; varying vec3 vN; varying vec3 vV; varying vec3 vC; varying vec3 vW;
       void main(){
         float f = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.0);
         float act = clamp(vC.r, 0.0, 1.0);
         float scan = 0.5 + 0.5 * sin(vW.y * 70.0 - uTime * 2.0);
         // Soft key light from the upper left reveals the gyri; the body stays pearl-white.
         float lit = 0.72 + 0.28 * max(0.0, dot(normalize(vN), normalize(vec3(-0.4, 0.8, 0.5))));
-        vec3 pearl = vec3(1.0, 0.965, 0.985) * lit;
+        vec3 pearl = uBody * lit;
         vec3 c = mix(pearl, uRim, f * 0.8);
         c = mix(c, uTint, act * 0.85);
         c += vec3(0.05, 0.0, 0.04) * scan * f;
@@ -144,7 +144,7 @@ export function buildBrain() {
   const dust = new THREE.Points(dustG, new THREE.PointsMaterial({ color: '#ff8cc6', size: 0.018, transparent: true, opacity: 0.55, depthWrite: false })); g.add(dust);
 
   const B = {
-    group: g, nodes, focus: null,
+    group: g, nodes, focus: null, mats: [matL, matR, deepMat], dust,
     // act: { region: 0..1 }; t seconds.
     update(dt, t, act, { dim = 1 } = {}) {
       for (const m of [matL, matR, deepMat]) { m.uniforms.uTime.value = t; m.uniforms.uOpacity.value = dim; }
