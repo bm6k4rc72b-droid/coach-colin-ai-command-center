@@ -139,6 +139,7 @@ const DECKS = [
   ['optics', 'Optics', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z M12 9a3 3 0 100 6 3 3 0 000-6z'],
   ['watch', 'Watch', 'M3 20V8l9-5 9 5v12 M9 20v-6h6v6'],
   ['twin', 'Twin', 'M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7'],
+  ['site', 'Site', 'M3 21h18 M5 21V9l5-3v15 M10 21V4l9 4v13 M13 10h3 M13 14h3 M13 18h3'],
   ['flock', 'Flock', 'M4 14a4 3 0 108 0 4 3 0 00-8 0z M12 13a4 3 0 108 0 4 3 0 00-8 0z M8 9V6 M16 8V5 M3 20h18'],
   ['acoustic', 'Acoustic', 'M4 10v4 M8 6v12 M12 3v18 M16 7v10 M20 10v4'],
   ['perimeter', 'Fence', 'M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7z M12 6v6'],
@@ -2729,6 +2730,10 @@ import('./ai/ai-ui.js')
     });
   })
   .catch((error) => console.warn('Black Optic 6: AI stack not mounted', error));
+
+import('./site/site-ui.js')
+  .then(({ mountSiteScanner }) => mountSiteScanner({ state, readout, setBadge, logEvent, ranchPlace }))
+  .catch((error) => console.warn('Black Optic 6: site scanner not mounted', error));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
