@@ -528,15 +528,20 @@ export class CameraLab {
       g.strokeRect(this.tapMark.u * W - 22, this.tapMark.v * H - 22, 44, 44);
     }
     // Monitor status line, like a real camera's.
-    g.font = '600 11px "JetBrains Mono", monospace'; g.textBaseline = 'top';
-    const line = `${o.body.name.toUpperCase()}  ${o.f.toFixed(0)}mm  T${o.T.toFixed(1)}  ${fmtShutter(o.t)} (${this.s.angle}°)  ${this.s.fps}fps  ISO ${this.s.iso}  ND${this.s.nd}  ${this.s.wbK}K`;
+    const narrow = W < 560;
+    g.font = `600 ${narrow ? 9 : 11}px "JetBrains Mono", monospace`; g.textBaseline = 'top';
+    const line = narrow
+      ? `${o.f.toFixed(0)}mm T${o.T.toFixed(1)} ${fmtShutter(o.t)} ${this.s.fps}p ISO${this.s.iso} ${this.s.wbK}K`
+      : `${o.body.name.toUpperCase()}  ${o.f.toFixed(0)}mm  T${o.T.toFixed(1)}  ${fmtShutter(o.t)} (${this.s.angle}°)  ${this.s.fps}fps  ISO ${this.s.iso}  ND${this.s.nd}  ${this.s.wbK}K`;
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 0, W, 20);
     g.fillStyle = '#f6dfb2'; g.fillText(line, 8, 4);
     g.textAlign = 'right'; g.fillStyle = this.recorder ? '#ff3b4e' : '#9b8f86';
     g.fillText(this.recorder ? '● REC' : 'STBY', W - 8, 4); g.textAlign = 'left';
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, H - 20, W, 20);
     g.fillStyle = '#f6dfb2';
-    g.fillText(`FOCUS ${fmtDistance(o.sMm)}   DOF ${fmtDistance(o.dof.nearMm)} – ${fmtDistance(o.dof.farMm)}   EXP ${o.offset >= 0 ? '+' : ''}${o.offset.toFixed(1)}`, 8, H - 16);
+    g.fillText(narrow
+      ? `F ${fmtDistance(o.sMm)}  ${fmtDistance(o.dof.nearMm)}–${fmtDistance(o.dof.farMm)}`
+      : `FOCUS ${fmtDistance(o.sMm)}   DOF ${fmtDistance(o.dof.nearMm)} – ${fmtDistance(o.dof.farMm)}   EXP ${o.offset >= 0 ? '+' : ''}${o.offset.toFixed(1)}`, 8, H - 16);
     // Exposure meter bar.
     const mx = W - 128; const my = H - 14; g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(mx, my + 3, 120, 2);
     for (let k = -3; k <= 3; k++) g.fillRect(mx + 60 + k * 20, my, 1, 8);
