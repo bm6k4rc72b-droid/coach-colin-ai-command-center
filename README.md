@@ -1031,6 +1031,26 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: VIRALFORGE · short-form studio
+
+A phone-first studio at [`public/viralforge/`](public/viralforge), by Colin Cook, for making Reels, TikToks and
+Shorts that hold attention. It is built for the ElderGuardian / VIGIL care-tech lane, and it has fitness and AI presets too.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/viralforge/>** (locally `/viralforge/`).
+
+- **Studio** scores the first 3 seconds: motion, cuts, the first face (MediaPipe), on-screen text (Tesseract.js),
+  sound onset and loudness, exposure, colour and sharpness. Every score comes with the fix that would raise it.
+- **Export** renders 9:16 with a subject-following virtual camera, Whisper captions word by word, a hook title,
+  face pixelation or skeleton-only privacy, and a progress bar.
+- **Hooks** calls Claude (`claude-opus-5-5`, your own key) with the clip's measured scores and transcript.
+- **Trends** (YouTube Data API), **Comments** (RoBERTa sentiment), **Schedule** (.ics, 3 posts a day) and
+  [`tools/autopost.py`](public/viralforge/tools/autopost.py) (official Instagram and TikTok publishing APIs).
+- **Stack** lists every repo from the original brief. Four of them do not exist on GitHub, and `instagrapi`
+  breaks Instagram's terms, so each one is marked with what does its job instead.
+- `npm run test:viralforge`.
+
+---
+
 ## Also in here: VIGIL · Elder Care Intelligence
 
 A high-ticket elder-safety console at [`public/vigil/`](public/vigil), by Colin Cook: AI fall
