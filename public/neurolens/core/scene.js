@@ -9,10 +9,10 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 // whole frame is bright), an iridescent pearl sheen toward the edges, a soft
 // lilac vignette and fine grain.
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 }, uStreak: { value: 0.9 }, uFlash: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, uRes: { value: new THREE.Vector2(1, 1) }, uTime: { value: 0 }, uStreak: { value: 0.9 }, uFlash: { value: 0 }, uNoir: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform vec2 uRes; uniform float uTime, uStreak, uFlash; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform vec2 uRes; uniform float uTime, uStreak, uFlash, uNoir; varying vec2 vUv;
     float pinkness(vec3 c){ return max(0.0, c.r - c.g) * (0.6 + 0.4 * c.b); }
     void main(){
       vec2 d = vUv - 0.5; float r = length(d * vec2(uRes.x/uRes.y, 1.0));
@@ -23,8 +23,12 @@ const GradeShader = {
       // Iridescent pearl sheen at the edges.
       vec3 irid = 0.5 + 0.5 * cos(6.2831 * (vec3(0.0, 0.33, 0.67) + r * 1.4 + uTime * 0.02));
       col = mix(col, col * (0.92 + 0.12 * irid), smoothstep(0.35, 0.95, r) * 0.6);
-      col = mix(col, col * vec3(0.93, 0.88, 0.97), smoothstep(0.55, 1.05, r));
-      col = mix(col, vec3(1.0, 0.94, 0.97), uFlash * 0.7);
+      // Pearl: a soft lilac vignette. Noir: a deep vignette and a warm champagne lift in the highlights.
+      col = mix(col, col * vec3(0.93, 0.88, 0.97), smoothstep(0.55, 1.05, r) * (1.0 - uNoir));
+      col = mix(col, col * vec3(0.18, 0.15, 0.13), smoothstep(0.45, 1.15, r) * uNoir);
+      float lum = dot(col, vec3(0.299, 0.587, 0.114));
+      col = mix(col, col * vec3(1.06, 1.0, 0.9), smoothstep(0.35, 0.9, lum) * 0.5 * uNoir);
+      col = mix(col, mix(vec3(1.0, 0.94, 0.97), vec3(1.0, 0.9, 0.7), uNoir), uFlash * 0.7);
       float g = fract(sin(dot(vUv * uRes + uTime * 61.0, vec2(12.9898, 78.233))) * 43758.5453);
       col += (g - 0.5) * 0.018;
       gl_FragColor = vec4(col, 1.0);
@@ -52,6 +56,13 @@ export function createStage(canvas) {
     renderer, composer, bloom, grade,
     use(scene, cam) { renderPass.scene = scene; renderPass.camera = cam; camera = cam; resize(); },
     flash() { grade.uniforms.uFlash.value = 0.8; },
+    /** 'noir' or 'pearl': background, grade and bloom for the two editions. */
+    setTheme(theme) {
+      const noir = theme === 'noir';
+      renderer.setClearColor(noir ? '#07060a' : '#f7f2f7');
+      grade.uniforms.uNoir.value = noir ? 1 : 0;
+      bloom.strength = noir ? 0.55 : 0.18; bloom.threshold = noir ? 0.62 : 0.97; bloom.radius = noir ? 0.6 : 0.5;
+    },
     render(t, dt) { grade.uniforms.uTime.value = t; const f = grade.uniforms.uFlash; f.value = Math.max(0, f.value - dt * 1.8); composer.render(); },
   };
 }

@@ -6,6 +6,8 @@ import { SHOT_TYPES, MOVES, ICON, REELS, drawShot, reelDuration, shotAt } from '
 import { lineChart, radar } from './view/charts.js';
 import { i18n } from './core/i18n.js';
 import { sfx } from './core/audio.js';
+import { CameraLab } from './camlab/lab.js';
+import { bindCamera, cameraLive, cameraPanel, cameraSide } from './camlab/panel.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NEUROLENS · the app: brain atlas, viewer profile, screening room, photo lab.
@@ -15,6 +17,7 @@ const $ = (s) => document.querySelector(s);
 const t = (k, v) => i18n.t(k, v);
 const f0 = (x) => Math.round(x).toString(), f1 = (x) => x.toFixed(1), f2 = (x) => x.toFixed(2), pct = (x) => `${Math.round(x * 100)}%`;
 const clone = (o) => JSON.parse(JSON.stringify(o));
+const cssVar = (name, fallback) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 const SAMPLE = 0.1;                                       // analysis rate: 10 Hz
 const FW = 640, FH = 360;                                 // film resolution
 const SYSTEMS = ['reward', 'salience', 'control', 'memory', 'visual', 'dmn'];
@@ -39,9 +42,10 @@ export class NeuroLens {
     this.photo = { src: 'portrait', img: null, stats: null, comp: null, path: [] };
     this.schultz = 'expected';
     this.atlasSeen = new Set(); this.edits = 0;
-    this.score = { atlas: false, schultz: false, profile: false, screened: false, heat: false, improved: false, edited: false, photo: false };
+    this.score = { atlas: false, schultz: false, profile: false, screened: false, heat: false, improved: false, edited: false, photo: false, camera: false };
     this.tab = 'brain'; this.entered = false; this.uiT = 0; this.uiSlow = 0;
     app.stage.use(this.scene, this.cam);
+    this.lab = new CameraLab();
     this.idle = 0;
     this.predict();
     this.draftPred = this.pred;
@@ -58,11 +62,34 @@ export class NeuroLens {
     }
     const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
     gr.addColorStop(0, 'rgba(255,120,190,.55)'); gr.addColorStop(0.5, 'rgba(255,170,215,.18)'); gr.addColorStop(1, 'rgba(255,200,230,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); floor.rotation.x = -Math.PI / 2; floor.position.y = -2.3; g.add(floor);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); floor.rotation.x = -Math.PI / 2; floor.position.y = -2.3; g.add(floor); this.floor = floor;
     const mg = new THREE.BufferGeometry(), mp = []; for (let i = 0; i < 260; i++) mp.push((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 9);
     mg.setAttribute('position', new THREE.Float32BufferAttribute(mp, 3));
     this.motes = new THREE.Points(mg, new THREE.PointsMaterial({ color: '#ff8cc6', size: 0.035, transparent: true, opacity: 0.6, depthWrite: false })); g.add(this.motes);
     this.decorG = g;
+  }
+
+  /**
+   * Re-dress the 3D scene for an edition. Only decor changes: the system colours on
+   * regions and pathways carry meaning and stay as they are in both editions.
+   */
+  applyTheme(theme) {
+    const noir = theme === 'noir';
+    this.scene.fog.color.set(noir ? '#07060a' : '#f7f2f7');
+    const ringCols = noir ? ['#e9c27a', '#c9a2ff', '#f6dfb2'] : ['#ff4fa3', '#c58bff', '#ffb3d6'];
+    this.rings.forEach((ring, i) => { ring.material.color.set(ringCols[i]); ring.children.forEach((tk) => tk.material.color.set(ringCols[i])); });
+    this.motes.material.color.set(noir ? '#f3d38f' : '#ff8cc6'); this.motes.material.opacity = noir ? 0.8 : 0.6;
+    const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    if (noir) { gr.addColorStop(0, 'rgba(233,194,122,.45)'); gr.addColorStop(0.5, 'rgba(255,79,163,.10)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); }
+    else { gr.addColorStop(0, 'rgba(255,120,190,.55)'); gr.addColorStop(0.5, 'rgba(255,170,215,.18)'); gr.addColorStop(1, 'rgba(255,200,230,0)'); }
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    this.floor.material.map?.dispose(); this.floor.material.map = new THREE.CanvasTexture(c); this.floor.material.needsUpdate = true;
+    const [mL, mR, mD] = this.B.mats;
+    mL.uniforms.uRim.value.set(noir ? '#f0c987' : '#ff6fb5'); mR.uniforms.uRim.value.set(noir ? '#d9b2ff' : '#c58bff'); mD.uniforms.uRim.value.set(noir ? '#ffe2b0' : '#e7b8ff');
+    for (const m of this.B.mats) m.uniforms.uBody.value.set(noir ? '#3a2f2a' : '#fff6fb');
+    this.B.dust.material.color.set(noir ? '#f3d38f' : '#ff8cc6');
+    this.app.stage.setTheme?.(theme);
+    if (this.entered) this.render();
   }
 
   // ── Tabs ───────────────────────────────────────────
@@ -71,12 +98,28 @@ export class NeuroLens {
     document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     document.body.dataset.tab = tab;
     if (tab !== 'screen') this.pause();
+    // The camera lab has its own set: the main view shows it from the operator's side.
+    if (tab === 'camera') {
+      this.lab.build($('#vf'));
+      this.lab.active = true; this.lab.onNote = (k) => this.app.feed.push(k, 'ok');
+      this.app.stage.use(this.lab.scene, this.lab.opCam);
+    } else if (this.lab.active) {
+      this.lab.active = false; this.lab.stopRecording(); this.app.stage.use(this.scene, this.cam);
+    }
     if (tab === 'photo') this.analysePhoto();
     if (tab === 'screen') this.drawFrame();
     this.render(); this.caption('cap.' + tab);
   }
   caption(key, vars) { const c = $('#caption'); if (!c) return; c.textContent = t(key, vars); c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); }
   render() {
+    if (this.tab === 'camera') {
+      const keep = [$('#panel').scrollTop, $('#side').scrollTop];
+      $('#panel').innerHTML = cameraPanel(this.lab); $('#side').innerHTML = cameraSide();
+      [$('#panel').scrollTop, $('#side').scrollTop] = keep;
+      bindCamera(this.lab, () => this.render()); cameraLive(this.lab); this.score.camera = true;
+      const o = this.lab.optics(); $('#vf-frame').style.aspectRatio = `${(o.sensor.w * o.sq) / o.sensor.h}`;
+      return;
+    }
     const P = { brain: ['brainPanel', 'brainSide', 'bindBrain'], viewer: ['viewerPanel', 'viewerSide', 'bindViewer'], screen: ['screenPanel', 'screenSide', 'bindScreen'], photo: ['photoPanel', 'photoSide', 'bindPhoto'] }[this.tab];
     $('#panel').innerHTML = this[P[0]](); $('#side').innerHTML = this[P[1]](); this[P[2]]();
     this.refresh(true);
@@ -113,7 +156,7 @@ export class NeuroLens {
     const s = schultzTD({ test: this.schultz });
     lineChart($('#cv-schultz'), { x0: 0, x1: 2, y0: -1.1, y1: 1.1, xTicks: [0, 0.5, 1, 1.5, 2], xFmt: (v) => v + ' s', yFmt: (v) => v.toFixed(1), title: t('s.chart'),
       series: [{ pts: s.naive, color: 'rgba(176,92,255,.6)', label: t('s.naive'), width: 1.4 }, { pts: s.trained, color: '#ff2f8e', label: t('s.trained'), width: 2.2 }],
-      marks: [{ x: s.cueT, color: '#b05cff', label: t('s.cue') }, { x: s.rewT, color: '#ff8a3d', label: this.schultz === 'omitted' ? t('s.noRew') : t('s.rew') }, { y: 0, color: 'rgba(74,53,80,.25)', dash: [] }] });
+      marks: [{ x: s.cueT, color: '#b05cff', label: t('s.cue') }, { x: s.rewT, color: '#ff8a3d', label: this.schultz === 'omitted' ? t('s.noRew') : t('s.rew') }, { y: 0, color: cssVar('--chart-muted', 'rgba(74,53,80,.25)'), dash: [] }] });
   }
 
   // ═══ VIEWER ═════════════════════════════════════════
@@ -263,7 +306,7 @@ export class NeuroLens {
       marks: [{ y: THETA, color: 'rgba(125,107,255,.6)', label: 'θ' }], now: src ? this.play.t : null });
     const P = this.pred;
     lineChart($('#cv-ret'), { x0: 0, x1: T, y0: 0, y1: 1, xTicks: [], yFmt: (y) => pct(y), title: t('sc.retChart'),
-      series: [...(this.draftPred && this.draftPred !== P && this.mode === 'reel' ? [{ pts: this.draftPred.trace.map((p) => [p.t * (T / this.draftPred.T), p.S]), color: 'rgba(176,92,255,.5)', label: t('reel.launch'), width: 1.2 }] : []), ...(P && this.mode === 'reel' ? [{ pts: P.trace.map((p) => [p.t, p.S]), color: '#ff2f8e', label: t('sc.thisCut'), fill: 'rgba(255,47,142,.07)' }] : []), ...(src ? [{ pts: tr.map((p) => [p.t, p.S]), color: '#4a3550', label: t('sc.now'), width: 1.2 }] : [])] });
+      series: [...(this.draftPred && this.draftPred !== P && this.mode === 'reel' ? [{ pts: this.draftPred.trace.map((p) => [p.t * (T / this.draftPred.T), p.S]), color: 'rgba(176,92,255,.5)', label: t('reel.launch'), width: 1.2 }] : []), ...(P && this.mode === 'reel' ? [{ pts: P.trace.map((p) => [p.t, p.S]), color: '#ff2f8e', label: t('sc.thisCut'), fill: 'rgba(255,47,142,.07)' }] : []), ...(src ? [{ pts: tr.map((p) => [p.t, p.S]), color: cssVar('--chart-ink', '#4a3550'), label: t('sc.now'), width: 1.2 }] : [])] });
     const ev = (src ? v.events : P?.events || []).filter((e) => e.k !== 'peak' || (src ? true : false)).slice(-9).reverse();
     const ul = $('#sc-events'); if (ul) ul.innerHTML = ev.map((e) => `<li class="${e.k}"><b class="mono">${f1(e.t)}s</b><span>${t('ev.' + e.k, { why: e.k === 'peak' && e.why === 'cut' && e.type && e.type !== 'upload' ? t('why.cutTo', { ty: t('ty.' + e.type), d: f2(e.d) }) : t('why.' + e.why) })}${e.k === 'lost' ? `<em>${t('fix.' + e.why)}</em>` : ''}</span></li>`).join('') || `<li class="empty">${t('sc.noEvents')}</li>`;
     const f = this.play.feat, m = $('#sc-math');
@@ -341,13 +384,18 @@ export class NeuroLens {
   }
 
   // ── Input / frame ──────────────────────────────────
-  pointerDown(e) { this.view.drag = { x: e.clientX, y: e.clientY }; this.view.last = performance.now(); }
-  pointerMove(e) { const v = this.view; if (!v.drag) return; v.yaw -= (e.clientX - v.drag.x) * 0.006; v.pitch = Math.max(-0.6, Math.min(0.9, v.pitch + (e.clientY - v.drag.y) * 0.004)); v.drag.x = e.clientX; v.drag.y = e.clientY; v.last = performance.now(); }
-  pointerUp() { this.view.drag = null; }
-  wheel(e) { this.view.r = Math.max(3.5, Math.min(11, this.view.r * Math.exp(e.deltaY * 0.001))); this.view.last = performance.now(); }
+  pointerDown(e) { if (this.tab === 'camera') { this.lab.pointerDown(e); return; } this.view.drag = { x: e.clientX, y: e.clientY }; this.view.last = performance.now(); }
+  pointerMove(e) { if (this.tab === 'camera') { this.lab.pointerMove(e); return; } const v = this.view; if (!v.drag) return; v.yaw -= (e.clientX - v.drag.x) * 0.006; v.pitch = Math.max(-0.6, Math.min(0.9, v.pitch + (e.clientY - v.drag.y) * 0.004)); v.drag.x = e.clientX; v.drag.y = e.clientY; v.last = performance.now(); }
+  pointerUp() { if (this.tab === 'camera') this.lab.pointerUp(); this.view.drag = null; }
+  wheel(e) { if (this.tab === 'camera') { this.lab.wheel(e); return; } this.view.r = Math.max(3.5, Math.min(11, this.view.r * Math.exp(e.deltaY * 0.001))); this.view.last = performance.now(); }
   key(k) { if (k === ' ' && this.tab === 'screen') this.play.on ? this.pause() : this.start(); }
 
   update(dt, time) {
+    if (this.tab === 'camera') {
+      this.lab.update(dt);
+      this.uiT += dt; if (this.uiT > 0.25) { this.uiT = 0; cameraLive(this.lab); }
+      return;
+    }
     // Playback (fixed 10 Hz analysis so the model is deterministic).
     if (this.tab === 'screen' && this.play.on) {
       this.play.t += dt; this.play.acc += dt; const T = this.duration();
@@ -399,7 +447,7 @@ export class NeuroLens {
 
   showReport() {
     const S = this.score, P = this.pred?.sum;
-    const rows = [[t('rep.atlas', { n: this.atlasSeen.size }), S.atlas], [t('rep.schultz'), S.schultz], [t('rep.profile'), S.profile], [t('rep.screened'), S.screened], [t('rep.heat'), S.heat], [t('rep.edited'), S.edited], [t('rep.improved'), S.improved], [t('rep.photo'), S.photo]];
+    const rows = [[t('rep.atlas', { n: this.atlasSeen.size }), S.atlas], [t('rep.schultz'), S.schultz], [t('rep.profile'), S.profile], [t('rep.screened'), S.screened], [t('rep.heat'), S.heat], [t('rep.edited'), S.edited], [t('rep.improved'), S.improved], [t('rep.photo'), S.photo], [t('rep.camera'), S.camera]];
     const list = $('#rep-list'); list.innerHTML = '';
     for (const [txt, ok] of rows) { const li = document.createElement('li'); li.className = ok ? 'ok' : 'todo'; li.textContent = txt; list.appendChild(li); }
     const nx = $('#rep-next'); nx.innerHTML = ''; for (const k of ['n1', 'n2', 'n3', 'n4']) { const li = document.createElement('li'); li.textContent = t('rep.' + k, { span: P ? f1(P.span) : '—', ret: P ? pct(P.retention) : '—' }); nx.appendChild(li); }

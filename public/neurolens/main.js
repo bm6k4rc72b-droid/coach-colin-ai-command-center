@@ -6,12 +6,13 @@ import { createStage } from './core/scene.js';
 import { Feed } from './core/feed.js';
 import { initAudio, sfx, ambience } from './core/audio.js';
 import { NeuroLens } from './app.js';
+import { mountLux } from './lux/lux.js';
 
 const $ = (s) => document.querySelector(s);
 const boot = $('#boot');
 // Key art generated for this project with Higgsfield; the page works without it.
 const KEYART = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20261001_041255_37779acb-3af8-4e85-99e1-76c9f4a0b071.png';
-const TABS = ['brain', 'viewer', 'screen', 'photo'];
+const TABS = ['brain', 'viewer', 'screen', 'photo', 'camera'];
 
 try {
   i18n.apply();
@@ -19,6 +20,9 @@ try {
   const app = { stage: createStage($('#scene')), feed: new Feed($('#feed')), state: { time: 0 } };
   const N = new NeuroLens(app);
   N.setTab('brain');
+  // Noir Luxe / Pearl editions and the tactile layer. Decoration only: the lab runs without it.
+  let lux = null;
+  try { lux = mountLux({ app, N, i18n }); } catch (e) { console.warn('NeuroLens: luxury layer unavailable', e); }
 
   // ── Tour ─────────────────────────────────────────
   const pick = (k) => $(`[data-rg="${k}"]`)?.click();
@@ -70,7 +74,7 @@ try {
   addEventListener('keydown', (e) => {
     if (!N.entered || e.target.matches?.('input, select, textarea')) return;
     if (e.key === 'Escape') { $('#report').classList.add('hidden'); return; }
-    if (/^[1-4]$/.test(e.key)) N.setTab(TABS[+e.key - 1]);
+    if (/^[1-5]$/.test(e.key)) N.setTab(TABS[+e.key - 1]);
     if (e.key === ' ') e.preventDefault();
     N.key(e.key);
   });
@@ -86,7 +90,7 @@ try {
   }
   function loop(now) { const dt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now; if (!debug.manual) frame(dt); requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
-  window.__neuro = Object.assign(debug, { app, N, launch, startTour, step(n = 1, dt = 1 / 30) { for (let i = 0; i < n; i++) frame(dt); } });
+  window.__neuro = Object.assign(debug, { app, N, lux, launch, startTour, step(n = 1, dt = 1 / 30) { for (let i = 0; i < n; i++) frame(dt); } });
   void sfx;
   boot.classList.add('done');
 } catch (err) {
