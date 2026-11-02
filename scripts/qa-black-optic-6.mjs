@@ -189,7 +189,7 @@ async function main() {
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 18, `the console builds all its decks (${decks})`);
+    check(decks === 19, `the console builds all its decks (${decks})`);
 
     // ------------------------------------------------------------- AI stack
     await page.waitForSelector('#ai-install-panel', { timeout: 20000 });
@@ -200,6 +200,14 @@ async function main() {
       'depth sits under calibration, type-to-lock under target lock, MAVLink under aircraft, BLAKE3 in the vault');
     const installRows = await page.$$eval('#ai-install-list li', (nodes) => nodes.length);
     check(installRows >= 20, `every requested repo has a ledger row (${installRows})`);
+    // Site scan: opening the deck rebuilds the twin's buildings and analyses them.
+    await page.click('#rail button[data-deck="site"]');
+    await page.waitForFunction(() => document.querySelectorAll('#site-evac li.row').length > 0, { timeout: 20000 });
+    const siteNote = await page.$eval('#site-note', (node) => node.textContent);
+    check(/buildings? rebuilt/.test(siteNote), `the site deck rebuilds the ranch in 3D (${siteNote.slice(0, 40)}…)`);
+    const sunTiles = await page.$$eval('#site-sun .readout', (nodes) => nodes.length);
+    check(sunTiles === 4, 'the sun panel reports position, shadows, daylight and noon sun');
+    await page.click('#rail button[data-deck="optics"]');
     const serialBadge = await page.$eval('#ai-mav-prov', (node) => node.textContent);
     check(/Not linked|No Web Serial/.test(serialBadge), `the aircraft link says it is not linked until it is (${serialBadge})`);
 

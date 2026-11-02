@@ -14,7 +14,7 @@
  * @module black-optic-6/sw
  */
 
-const CACHE = 'black-optic-6-v3';
+const CACHE = 'black-optic-6-v4';
 const SHELL = [
   './',
   'index.html',
@@ -64,6 +64,13 @@ const SHELL = [
   'js/ai/runtime.js',
   'js/ai/vlm.js',
   'js/ai/zenoh.js',
+  'js/site/buildings.js',
+  'js/site/egress.js',
+  'js/site/energy.js',
+  'js/site/flow.js',
+  'js/site/site-ui.js',
+  'js/site/sun.js',
+  'vendor/suncalc/suncalc.js',
   'vendor/noble/blake3.js',
   'vendor/noble/_md.js',
   'vendor/noble/_u64.js',

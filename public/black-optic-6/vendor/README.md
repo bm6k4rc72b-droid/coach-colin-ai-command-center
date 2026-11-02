@@ -10,6 +10,7 @@ Nothing here is modified except where noted.
 | `mediapipe/audio_bundle.mjs`, `audio_wasm_internal.{js,wasm}` | `@mediapipe/tasks-audio` | 0.10.35 | Apache-2.0 |
 | `models/yamnet.tflite` | YAMNet (float32), from `storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/` — sha256 `4d8b4a53282dc83ef04e3e7dbc4fbc98082e34e44ed798e16c3a0cdd4c584faf` | 1 | Apache-2.0 |
 | `noble/*.js` | `@noble/hashes` (BLAKE3 and its dependencies; `utils.js` import of `@noble/hashes/crypto` rewritten to `./crypto.js`) | 1.8.0 | MIT (`LICENSE`) |
+| `suncalc/suncalc.js` | `suncalc` (mourner/suncalc), UMD export block replaced by an ES-module default export | 1.9.0 | BSD-2-Clause (`LICENSE`) |
 | `geotiff/geotiff.js` | `geotiff` (browser UMD build) | 2.1.3 | MIT (`LICENSE`) |
 
 Source-map comments were stripped (the maps are not shipped).
