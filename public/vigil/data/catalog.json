@@ -1,0 +1,223 @@
+{
+  "title": "One AI-powered elder-safety platform for every residence and every home.",
+  "client": "Enterprise deployment · 6 care communities (≈ 540 beds) + 250 at-home residents",
+  "author": "Colin Cook",
+  "sections": [
+    {
+      "id": "platform",
+      "name": "Your new platform",
+      "items": [
+        {
+          "name": "Resident, family and care-plan engine",
+          "price": 64850,
+          "what": "One record per resident: care plan, fall-risk score, consent forms, emergency contacts, family access, room/home assignment and device inventory.",
+          "tech": "Next.js + TypeScript, PostgreSQL (Supabase or AWS RDS), FHIR R4 data model, row-level security per facility.",
+          "ai": "Claude summarises care notes into a 3-line daily brief per resident; fall-risk score from history + gait trend.",
+          "repos": ["medplum/medplum", "supabase/supabase", "hapifhir/hapi-fhir"]
+        },
+        {
+          "name": "Camera and sensor ingestion (edge NVR)",
+          "price": 38420,
+          "what": "Connects PoE/Wi-Fi cameras, mmWave radars and wearables at every site into one secure edge box per building or home.",
+          "tech": "NVIDIA Jetson Orin Nano / Orin NX edge box, RTSP/ONVIF, go2rtc restreaming, MQTT bus, WireGuard tunnel to cloud.",
+          "ai": "Edge inference with TensorRT; only events and skeletons leave the building, never raw video by default.",
+          "repos": ["blakeblackshear/frigate", "AlexxIT/go2rtc", "bluenviron/mediamtx", "eclipse/mosquitto"]
+        },
+        {
+          "name": "24/7 monitoring command center",
+          "price": 31275,
+          "what": "Live wall for nurses and the central response desk: rooms, residents, alerts, escalation timers and acknowledgements.",
+          "tech": "React + WebRTC (sub-second video on demand), WebSockets, role-based access, audit log on every view.",
+          "ai": "Priority ranking of open alerts; VLM second-look caption on each event (\"resident seated on floor beside bed\").",
+          "repos": ["livekit/livekit", "AlexxIT/go2rtc", "grafana/grafana"]
+        },
+        {
+          "name": "Caregiver mobile app (iOS and Android)",
+          "price": 35725,
+          "what": "Staff get the alert, see the skeleton clip, tap Accept, and log the outcome. Hands-free voice acknowledge.",
+          "tech": "React Native (Expo), APNs/FCM critical alerts, offline queue, SSO (SAML/OIDC).",
+          "ai": "Voice acknowledge and dictated incident notes (Whisper), auto-filled into the report.",
+          "repos": ["expo/expo", "novuhq/novu", "ggerganov/whisper.cpp"]
+        },
+        {
+          "name": "Family portal and app",
+          "price": 18640,
+          "what": "Families see wellbeing (sleep, activity, check-ins), receive alerts they opt into and can video-call their loved one.",
+          "tech": "Same Expo codebase, separate role; consent-gated data views; Stripe billing for at-home plans.",
+          "ai": "Weekly AI wellbeing letter in plain language, written from activity data, never from video.",
+          "repos": ["expo/expo", "stripe/stripe-node"]
+        },
+        {
+          "name": "EHR and nurse-call integration",
+          "price": 24310,
+          "what": "Pushes incidents and vitals into PointClickCare / MatrixCare and triggers existing nurse-call systems.",
+          "tech": "HL7 v2 + FHIR interface engine, vendor APIs, dry-contact relay for legacy nurse call.",
+          "ai": "Maps free-text notes to coded fields (fall type, injury, location) for the EHR.",
+          "repos": ["nextgenhealthcare/connect", "medplum/medplum"]
+        },
+        {
+          "name": "Moving your data over",
+          "price": 19980,
+          "what": "Imports residents, rooms, contacts and incident history from spreadsheets or the current EHR.",
+          "tech": "ETL scripts, validation reports, rollback plan.",
+          "ai": "Claude-assisted field mapping and de-duplication with human sign-off.",
+          "repos": ["dbt-labs/dbt-core"]
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI that does the watching",
+      "items": [
+        {
+          "name": "Vision fall detection (privacy skeleton mode)",
+          "price": 46480,
+          "what": "Detects falls, slides from bed/chair and residents on the floor in under 3 seconds, from pose keypoints instead of faces.",
+          "tech": "YOLO11-pose or RTMPose on the edge box, ByteTrack IDs, temporal classifier (ST-GCN) on 2-second keypoint windows.",
+          "ai": "Train/validate on UR Fall, Le2i and CAUCAFall + your own consented, labelled clips; target ≥ 95% recall, < 1 false alarm per room per week.",
+          "repos": ["ultralytics/ultralytics", "open-mmlab/mmpose", "ifzhang/ByteTrack", "yysijie/st-gcn", "GajuuzZ/Human-Falling-Detect-Tracks"]
+        },
+        {
+          "name": "Bathroom and bedroom radar (no camera)",
+          "price": 22740,
+          "what": "Fall, presence, breathing-rate and in-bathroom-too-long detection where cameras are never allowed.",
+          "tech": "60 GHz mmWave fall-detection radars (e.g. Seeed MR60FDA2, Aqara FP2, TI IWR6843) over Wi-Fi/Zigbee → MQTT.",
+          "ai": "Fusion rule engine: radar fall + no motion for 30 s + no wearable step = confirmed alert.",
+          "repos": ["Seeed-Studio/Seeed_Arduino_mmWave", "home-assistant/core", "Koenkk/zigbee2mqtt"]
+        },
+        {
+          "name": "Wander, exit and bed-exit alerts",
+          "price": 17560,
+          "what": "Virtual zones: memory-care doors, stairwells, bed edge at night, kitchen stove left on.",
+          "tech": "Polygon zones per camera, time-of-day schedules, door contacts and smart locks.",
+          "ai": "Tracker-based zone crossing with direction; night-time bed-exit predicted from restlessness 2-5 min early.",
+          "repos": ["roboflow/supervision", "ifzhang/ByteTrack", "home-assistant/core"]
+        },
+        {
+          "name": "AI false-alarm verifier (second look)",
+          "price": 21390,
+          "what": "Before anyone is paged, a vision-language model checks the clip: real fall, or a resident doing yoga on the rug?",
+          "tech": "Small VLM on the edge box (Moondream / Florence-2 / Qwen2.5-VL 3B), escalates to a cloud model when unsure.",
+          "ai": "Cuts false alarms 60-80% in pilots of this design; every suppressed alert is still logged for audit.",
+          "repos": ["vikhyat/moondream", "QwenLM/Qwen2.5-VL", "microsoft/Florence-2-large (HF)"]
+        },
+        {
+          "name": "Acoustic distress detection",
+          "price": 12870,
+          "what": "Hears 'help', crying out, a thud or breaking glass and links it to the room's camera/radar.",
+          "tech": "On-device audio classification; keyword spotting; no audio recorded or stored.",
+          "ai": "YAMNet sound classes + Whisper-tiny keyword spotting in English and Spanish.",
+          "repos": ["google-ai-edge/mediapipe", "ggerganov/whisper.cpp"]
+        },
+        {
+          "name": "Daily-living baseline and decline alerts",
+          "price": 19950,
+          "what": "Learns each resident's normal: sleep, bathroom visits, meals, steps, gait speed. Flags changes days before a crisis (UTI, dehydration, depression, rising fall risk).",
+          "tech": "Time-series store (TimescaleDB), nightly jobs, wearable data (Apple HealthKit, Health Connect).",
+          "ai": "Per-resident anomaly models (Isolation Forest / seasonal baselines) + Claude-written explanation for the nurse.",
+          "repos": ["yzhao062/pyod", "timescale/timescaledb", "facebook/prophet"]
+        },
+        {
+          "name": "24/7 AI voice check-in concierge",
+          "price": 26820,
+          "what": "Calls or speaks to the resident after an alert or on schedule: 'Are you alright, Margaret?' Escalates if no answer or distress.",
+          "tech": "Telephony (Twilio) + smart speaker in room, real-time voice agent pipeline.",
+          "ai": "Claude as the conversational brain, streaming STT/TTS; strict script guardrails, never gives medical advice.",
+          "repos": ["pipecat-ai/pipecat", "livekit/agents", "twilio/twilio-node"]
+        },
+        {
+          "name": "AI incident reports and shift handover",
+          "price": 14660,
+          "what": "Drafts the state-compliant incident report, family notification and end-of-shift summary from the event timeline.",
+          "tech": "Templating per state, e-signature, PDF export, stored in EHR.",
+          "ai": "Claude drafts from structured events + caregiver voice note; nurse reviews and signs.",
+          "repos": ["anthropics/anthropic-sdk-typescript", "diegomura/react-pdf"]
+        }
+      ]
+    },
+    {
+      "id": "response",
+      "name": "Response, security and compliance",
+      "items": [
+        {
+          "name": "Alert escalation engine",
+          "price": 16980,
+          "what": "Nearest caregiver → charge nurse → on-call manager → family → 911, with timers and acknowledgements at every step.",
+          "tech": "Durable workflows, SMS/voice/push, on-call rotas, geolocated staff badges (optional BLE).",
+          "ai": "Picks the closest free caregiver from badge location and current workload.",
+          "repos": ["temporalio/temporal", "novuhq/novu"]
+        },
+        {
+          "name": "Privacy, consent and HIPAA security",
+          "price": 22480,
+          "what": "Consent per resident and roommate, camera privacy schedules, skeleton-only mode, encryption, full audit trail, BAA-ready hosting.",
+          "tech": "AWS (HIPAA-eligible services + BAA), KMS encryption, SSO/MFA, immutable audit log, SOC 2 readiness (Vanta/Drata).",
+          "ai": "On-device face blurring for any clip that is ever shared; no facial recognition anywhere.",
+          "repos": ["open-policy-agent/opa", "ory/kratos"]
+        },
+        {
+          "name": "Operations and compliance analytics",
+          "price": 13240,
+          "what": "Falls per 1,000 resident-days, response times, repeat fallers, staffing vs incidents, state-survey-ready exports.",
+          "tech": "Metabase / Superset dashboards on a read replica.",
+          "ai": "Ask-in-English analytics: 'Which wing had the slowest night responses last month?'",
+          "repos": ["metabase/metabase", "apache/superset"]
+        },
+        {
+          "name": "Website, online enrollment and at-home ordering",
+          "price": 15360,
+          "what": "Brand site, facility demo booking, family self-enrollment for at-home plans, hardware checkout.",
+          "tech": "Next.js, Stripe, Calendly/Cal.com, CMS.",
+          "ai": "AI chat on the site that answers plan, privacy and pricing questions and books demos.",
+          "repos": ["calcom/cal.com", "vercel/next.js"]
+        }
+      ]
+    },
+    {
+      "id": "ongoing",
+      "name": "Ongoing support, hosting and usage (12 months)",
+      "items": [
+        {
+          "name": "Cloud hosting, security and backups ($2,140/mo)",
+          "price": 25680,
+          "what": "HIPAA-eligible AWS, video-on-demand relay, encrypted backups, uptime monitoring.",
+          "tech": "AWS, Cloudflare, Grafana/Prometheus.",
+          "ai": "—",
+          "repos": ["prometheus/prometheus"]
+        },
+        {
+          "name": "AI usage, voice and messaging ($1,960/mo)",
+          "price": 23520,
+          "what": "LLM calls, voice minutes, SMS and push volume across all sites.",
+          "tech": "Anthropic API, Twilio, FCM/APNs.",
+          "ai": "Claude (Haiku for routine, Sonnet/Opus for reports) with prompt caching.",
+          "repos": []
+        },
+        {
+          "name": "Edge hardware lease (34 edge boxes, 210 radars, 260 cameras)",
+          "price": 41760,
+          "what": "Leased, insured and replaced on failure. At-home kits ship pre-paired.",
+          "tech": "Jetson Orin, PoE cameras, mmWave radars, SOS wearables.",
+          "ai": "—",
+          "repos": []
+        },
+        {
+          "name": "Staff training and rollout",
+          "price": 12800,
+          "what": "On-site go-live at each community, train-the-trainer, family onboarding webinars.",
+          "tech": "LMS videos, printed quick cards.",
+          "ai": "AI training assistant inside the caregiver app.",
+          "repos": []
+        },
+        {
+          "name": "Dedicated engineering, model tuning and support",
+          "price": 31650,
+          "what": "Named engineer, 24/7 P1 support, quarterly fall-model retraining on your labelled events.",
+          "tech": "SLA 99.9%, 15-minute P1 response.",
+          "ai": "Continuous evaluation: recall, false alarms per room-week, time-to-alert.",
+          "repos": []
+        }
+      ]
+    }
+  ]
+}
