@@ -172,6 +172,8 @@ export function mountLux({ app, N, i18n }) {
     marker.style.width = `${on.offsetWidth}px`;
   };
   new MutationObserver(placeMarker).observe(tabs, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  // The HUD is hidden until the visitor enters, so measure again whenever the tab bar is laid out.
+  if ('ResizeObserver' in window) new ResizeObserver(placeMarker).observe(tabs);
   addEventListener('resize', placeMarker);
   i18n.onChange(() => requestAnimationFrame(placeMarker));
   requestAnimationFrame(placeMarker);
@@ -182,7 +184,7 @@ export function mountLux({ app, N, i18n }) {
   const reveal = (host) => {
     const fresh = document.body.dataset.tab !== lastTab;
     [...host.children].forEach((c, i) => {
-      if (!reduced) { c.classList.remove('lux-in'); c.style.setProperty('--d', `${Math.min(i, 12) * 45}ms`); void c.offsetWidth; c.classList.add('lux-in'); }
+      if (!reduced && fresh) { c.classList.remove('lux-in'); c.style.setProperty('--d', `${Math.min(i, 12) * 45}ms`); void c.offsetWidth; c.classList.add('lux-in'); }
     });
     if (fresh) host.querySelectorAll('.bigstats b, .db-ring b').forEach((b) => countUp(b));
   };

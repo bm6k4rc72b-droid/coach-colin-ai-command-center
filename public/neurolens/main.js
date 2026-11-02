@@ -12,7 +12,7 @@ const $ = (s) => document.querySelector(s);
 const boot = $('#boot');
 // Key art generated for this project with Higgsfield; the page works without it.
 const KEYART = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/hf_20261001_041255_37779acb-3af8-4e85-99e1-76c9f4a0b071.png';
-const TABS = ['brain', 'viewer', 'screen', 'photo'];
+const TABS = ['brain', 'viewer', 'screen', 'photo', 'camera'];
 
 try {
   i18n.apply();
@@ -74,7 +74,7 @@ try {
   addEventListener('keydown', (e) => {
     if (!N.entered || e.target.matches?.('input, select, textarea')) return;
     if (e.key === 'Escape') { $('#report').classList.add('hidden'); return; }
-    if (/^[1-4]$/.test(e.key)) N.setTab(TABS[+e.key - 1]);
+    if (/^[1-5]$/.test(e.key)) N.setTab(TABS[+e.key - 1]);
     if (e.key === ' ') e.preventDefault();
     N.key(e.key);
   });

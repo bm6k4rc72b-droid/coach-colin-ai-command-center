@@ -27,6 +27,7 @@
         <button data-tab="viewer"><kbd>2</kbd> <span data-i18n="tab.viewer"></span></button>
         <button data-tab="screen"><kbd>3</kbd> <span data-i18n="tab.screen"></span></button>
         <button data-tab="photo"><kbd>4</kbd> <span data-i18n="tab.photo"></span></button>
+        <button data-tab="camera"><kbd>5</kbd> <span data-i18n="tab.camera"></span></button>
       </nav>
       <div class="actions">
         <button class="btn panel" id="btn-report"><span data-i18n="app.report"></span></button>
@@ -46,6 +47,10 @@
         <span id="film-state" class="state mono"></span><span id="film-tc" class="tc mono"></span>
       </div>
       <div class="strip-wrap"><div id="strip"></div><div id="marks"></div><i id="playhead"></i></div>
+    </section>
+    <section id="vf-wrap">
+      <div class="frame" id="vf-frame"><canvas id="vf"></canvas><canvas id="vf-ov"></canvas></div>
+      <p class="vf-hint mono" data-i18n="cam.hint"></p>
     </section>
     <div id="caption"></div>
     <div id="feed"></div>

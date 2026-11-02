@@ -146,3 +146,19 @@
   .lux-in { animation: none; }
 }
 @media print { #lux-hero, #lux-spot { display: none !important; } }
+
+/* ── Camera lab monitor (both editions) ───────────────── */
+#vf-wrap { position: absolute; left: 392px; right: 392px; top: 70px; display: none; z-index: 1; pointer-events: none; }
+body[data-tab="camera"] #vf-wrap { display: block; }
+#vf-wrap .frame { position: relative; width: 100%; max-height: 62vh; margin: 0 auto; border-radius: 14px; overflow: hidden; pointer-events: auto; background: #000; box-shadow: 0 30px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(233,194,122,.45), 0 0 50px rgba(233,194,122,.12); }
+#vf, #vf-ov { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#vf { touch-action: none; cursor: crosshair; }
+#vf-ov { pointer-events: none; }
+.vf-hint { margin: 8px 0 0; text-align: center; font-size: 10px; letter-spacing: .14em; color: var(--muted); }
+body[data-tab="camera"] #caption { display: none; }
+@media (max-width: 1280px) { #vf-wrap { left: 352px; right: 352px; } }
+@media (max-width: 1000px) { #vf-wrap { left: calc(50vw + 8px); right: 16px; top: 70px; } }
+@media (max-width: 700px) {
+  #vf-wrap { left: 16px; right: 16px; top: 110px; }
+  body[data-tab="camera"] #panel { top: calc(110px + 56vw * .5625 + 24px); }
+}

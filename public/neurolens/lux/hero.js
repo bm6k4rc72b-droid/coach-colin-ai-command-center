@@ -59,15 +59,16 @@ function glow() {
 }
 
 export function createHero(canvas, { reduced = false } = {}) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.setClearColor(0x000000, 0);
+  renderer.setClearColor(0x07060a, 1);
   const scene = new THREE.Scene();
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.55;
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
   camera.position.set(0, 0.2, 8.4);
 
@@ -112,9 +113,10 @@ export function createHero(canvas, { reduced = false } = {}) {
   // Gold core and iridescent glass shell.
   const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 1), new THREE.MeshPhysicalMaterial({ color: '#d9a85a', metalness: 1, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08, flatShading: true }));
   orb.add(core);
+  // Iridescent glass shell. No transmission pass: on a transparent canvas it renders as a grey veil.
   const shell = new THREE.Mesh(new THREE.SphereGeometry(1.08, 64, 48), new THREE.MeshPhysicalMaterial({
-    color: '#ffffff', metalness: 0, roughness: 0.05, transmission: 1, thickness: 0.6, ior: 1.45,
-    iridescence: 1, iridescenceIOR: 1.3, iridescenceThicknessRange: [180, 620], transparent: true, opacity: 0.55,
+    color: '#1a1216', metalness: 0.2, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.03,
+    iridescence: 1, iridescenceIOR: 1.3, iridescenceThicknessRange: [180, 620], transparent: true, opacity: 0.35, depthWrite: false,
   }));
   orb.add(shell);
 
@@ -138,7 +140,7 @@ export function createHero(canvas, { reduced = false } = {}) {
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.55, 0.18);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.7, 0.45, 0.55);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
@@ -194,7 +196,7 @@ export function createHero(canvas, { reduced = false } = {}) {
     // Pulses.
     st.burst = Math.max(0, st.burst - dt * 0.8);
     axons.material.opacity = 0.14 + st.burst * 0.25;
-    bloom.strength = 0.85 + st.burst * 0.6;
+    bloom.strength = 0.7 + st.burst * 0.5;
     for (let i = 0; i < P; i++) {
       const p = pulses[i];
       p.u += dt * p.v;

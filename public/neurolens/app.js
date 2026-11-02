@@ -6,6 +6,8 @@ import { SHOT_TYPES, MOVES, ICON, REELS, drawShot, reelDuration, shotAt } from '
 import { lineChart, radar } from './view/charts.js';
 import { i18n } from './core/i18n.js';
 import { sfx } from './core/audio.js';
+import { CameraLab } from './camlab/lab.js';
+import { bindCamera, cameraLive, cameraPanel, cameraSide } from './camlab/panel.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NEUROLENS · the app: brain atlas, viewer profile, screening room, photo lab.
@@ -40,9 +42,10 @@ export class NeuroLens {
     this.photo = { src: 'portrait', img: null, stats: null, comp: null, path: [] };
     this.schultz = 'expected';
     this.atlasSeen = new Set(); this.edits = 0;
-    this.score = { atlas: false, schultz: false, profile: false, screened: false, heat: false, improved: false, edited: false, photo: false };
+    this.score = { atlas: false, schultz: false, profile: false, screened: false, heat: false, improved: false, edited: false, photo: false, camera: false };
     this.tab = 'brain'; this.entered = false; this.uiT = 0; this.uiSlow = 0;
     app.stage.use(this.scene, this.cam);
+    this.lab = new CameraLab();
     this.idle = 0;
     this.predict();
     this.draftPred = this.pred;
@@ -95,12 +98,28 @@ export class NeuroLens {
     document.querySelectorAll('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     document.body.dataset.tab = tab;
     if (tab !== 'screen') this.pause();
+    // The camera lab has its own set: the main view shows it from the operator's side.
+    if (tab === 'camera') {
+      this.lab.build($('#vf'));
+      this.lab.active = true; this.lab.onNote = (k) => this.app.feed.push(k, 'ok');
+      this.app.stage.use(this.lab.scene, this.lab.opCam);
+    } else if (this.lab.active) {
+      this.lab.active = false; this.lab.stopRecording(); this.app.stage.use(this.scene, this.cam);
+    }
     if (tab === 'photo') this.analysePhoto();
     if (tab === 'screen') this.drawFrame();
     this.render(); this.caption('cap.' + tab);
   }
   caption(key, vars) { const c = $('#caption'); if (!c) return; c.textContent = t(key, vars); c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); }
   render() {
+    if (this.tab === 'camera') {
+      const keep = [$('#panel').scrollTop, $('#side').scrollTop];
+      $('#panel').innerHTML = cameraPanel(this.lab); $('#side').innerHTML = cameraSide();
+      [$('#panel').scrollTop, $('#side').scrollTop] = keep;
+      bindCamera(this.lab, () => this.render()); cameraLive(this.lab); this.score.camera = true;
+      const o = this.lab.optics(); $('#vf-frame').style.aspectRatio = `${(o.sensor.w * o.sq) / o.sensor.h}`;
+      return;
+    }
     const P = { brain: ['brainPanel', 'brainSide', 'bindBrain'], viewer: ['viewerPanel', 'viewerSide', 'bindViewer'], screen: ['screenPanel', 'screenSide', 'bindScreen'], photo: ['photoPanel', 'photoSide', 'bindPhoto'] }[this.tab];
     $('#panel').innerHTML = this[P[0]](); $('#side').innerHTML = this[P[1]](); this[P[2]]();
     this.refresh(true);
@@ -365,13 +384,18 @@ export class NeuroLens {
   }
 
   // ── Input / frame ──────────────────────────────────
-  pointerDown(e) { this.view.drag = { x: e.clientX, y: e.clientY }; this.view.last = performance.now(); }
-  pointerMove(e) { const v = this.view; if (!v.drag) return; v.yaw -= (e.clientX - v.drag.x) * 0.006; v.pitch = Math.max(-0.6, Math.min(0.9, v.pitch + (e.clientY - v.drag.y) * 0.004)); v.drag.x = e.clientX; v.drag.y = e.clientY; v.last = performance.now(); }
-  pointerUp() { this.view.drag = null; }
-  wheel(e) { this.view.r = Math.max(3.5, Math.min(11, this.view.r * Math.exp(e.deltaY * 0.001))); this.view.last = performance.now(); }
+  pointerDown(e) { if (this.tab === 'camera') { this.lab.pointerDown(e); return; } this.view.drag = { x: e.clientX, y: e.clientY }; this.view.last = performance.now(); }
+  pointerMove(e) { if (this.tab === 'camera') { this.lab.pointerMove(e); return; } const v = this.view; if (!v.drag) return; v.yaw -= (e.clientX - v.drag.x) * 0.006; v.pitch = Math.max(-0.6, Math.min(0.9, v.pitch + (e.clientY - v.drag.y) * 0.004)); v.drag.x = e.clientX; v.drag.y = e.clientY; v.last = performance.now(); }
+  pointerUp() { if (this.tab === 'camera') this.lab.pointerUp(); this.view.drag = null; }
+  wheel(e) { if (this.tab === 'camera') { this.lab.wheel(e); return; } this.view.r = Math.max(3.5, Math.min(11, this.view.r * Math.exp(e.deltaY * 0.001))); this.view.last = performance.now(); }
   key(k) { if (k === ' ' && this.tab === 'screen') this.play.on ? this.pause() : this.start(); }
 
   update(dt, time) {
+    if (this.tab === 'camera') {
+      this.lab.update(dt);
+      this.uiT += dt; if (this.uiT > 0.25) { this.uiT = 0; cameraLive(this.lab); }
+      return;
+    }
     // Playback (fixed 10 Hz analysis so the model is deterministic).
     if (this.tab === 'screen' && this.play.on) {
       this.play.t += dt; this.play.acc += dt; const T = this.duration();
@@ -423,7 +447,7 @@ export class NeuroLens {
 
   showReport() {
     const S = this.score, P = this.pred?.sum;
-    const rows = [[t('rep.atlas', { n: this.atlasSeen.size }), S.atlas], [t('rep.schultz'), S.schultz], [t('rep.profile'), S.profile], [t('rep.screened'), S.screened], [t('rep.heat'), S.heat], [t('rep.edited'), S.edited], [t('rep.improved'), S.improved], [t('rep.photo'), S.photo]];
+    const rows = [[t('rep.atlas', { n: this.atlasSeen.size }), S.atlas], [t('rep.schultz'), S.schultz], [t('rep.profile'), S.profile], [t('rep.screened'), S.screened], [t('rep.heat'), S.heat], [t('rep.edited'), S.edited], [t('rep.improved'), S.improved], [t('rep.photo'), S.photo], [t('rep.camera'), S.camera]];
     const list = $('#rep-list'); list.innerHTML = '';
     for (const [txt, ok] of rows) { const li = document.createElement('li'); li.className = ok ? 'ok' : 'todo'; li.textContent = txt; list.appendChild(li); }
     const nx = $('#rep-next'); nx.innerHTML = ''; for (const k of ['n1', 'n2', 'n3', 'n4']) { const li = document.createElement('li'); li.textContent = t('rep.' + k, { span: P ? f1(P.span) : '—', ret: P ? pct(P.retention) : '—' }); nx.appendChild(li); }
