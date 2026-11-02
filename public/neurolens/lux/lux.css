@@ -162,3 +162,12 @@ body[data-tab="camera"] #caption { display: none; }
   #vf-wrap { left: 16px; right: 16px; top: 110px; }
   body[data-tab="camera"] #panel { top: calc(110px + 56vw * .5625 + 24px); }
 }
+
+/* ── Phones: titles that fit, panels below a wrapping top bar ── */
+@media (max-width: 700px) {
+  :root[data-theme="noir"] #start h1 { font-size: clamp(30px, 10.5vw, 46px); letter-spacing: .12em; white-space: nowrap; }
+  .actions { flex-wrap: wrap; gap: 6px; }
+  .actions .btn { padding: 7px 9px; font-size: 11px; }
+  #panel, #stage, #vf-wrap { top: calc(var(--tb, 96px) + 20px) !important; }
+  body[data-tab="screen"] #panel, body[data-tab="photo"] #panel, body[data-tab="camera"] #panel { top: calc(var(--tb, 96px) + 20px + 56vw * .5625 + 26px) !important; }
+}

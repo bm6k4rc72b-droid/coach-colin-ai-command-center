@@ -13,8 +13,20 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+// Before bloom: replace non-finite pixels and cap HDR peaks. Overlapping additive
+// sprites can overflow half-float buffers on some GPUs, and bloom would spread the
+// overflow across the whole frame (the same guard the VOLTFORGE stunt needed).
+const SafeHdr = {
+  uniforms: { tDiffuse: { value: null }, uCap: { value: 1.6 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uCap; varying vec2 vUv;
+    void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 v = c.rgb;
+      if (!(v.r == v.r) || !(v.g == v.g) || !(v.b == v.b) || any(greaterThan(abs(v), vec3(1e4)))) v = vec3(0.0);
+      gl_FragColor = vec4(min(v, vec3(uCap)), 1.0); }`,
+};
 
 const GOLD = new THREE.Color('#e9c27a');
 const ROSE = new THREE.Color('#ff4fa3');
@@ -90,14 +102,14 @@ export function createHero(canvas, { reduced = false } = {}) {
   const ng = new THREE.BufferGeometry();
   ng.setAttribute('position', new THREE.BufferAttribute(npos, 3));
   ng.setAttribute('color', new THREE.BufferAttribute(ncol, 3));
-  const neurons = new THREE.Points(ng, new THREE.PointsMaterial({ size: 0.07, map: tex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const neurons = new THREE.Points(ng, new THREE.PointsMaterial({ size: 0.13, map: tex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   orb.add(neurons);
 
   // Axons.
   const lpos = new Float32Array(edges.length * 6);
   edges.forEach(([a, b], e) => { lpos.set([base[a].x, base[a].y, base[a].z, base[b].x, base[b].y, base[b].z], e * 6); });
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lpos, 3));
-  const axons = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const axons = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending, depthWrite: false }));
   orb.add(axons);
 
   // Synaptic pulses: sprites that run along random axons.
@@ -140,8 +152,9 @@ export function createHero(canvas, { reduced = false } = {}) {
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.7, 0.45, 0.55);
-  composer.addPass(bloom);
+  composer.addPass(new ShaderPass(SafeHdr));
+  // No bloom pass here: on the polished core it washed the whole entrance to white on some
+  // GPUs. The glow comes from the additive sprites themselves.
   composer.addPass(new OutputPass());
 
   // Interaction state.
@@ -165,7 +178,7 @@ export function createHero(canvas, { reduced = false } = {}) {
 
   const resize = () => {
     const w = innerWidth; const h = innerHeight;
-    renderer.setSize(w, h, false); composer.setSize(w, h); bloom.resolution.set(w, h);
+    renderer.setSize(w, h, false); composer.setSize(w, h);
     camera.aspect = w / h;
     // Keep the whole orb in frame on a tall phone.
     camera.position.z = w / h < 0.8 ? 11.5 : 8.4;
@@ -195,8 +208,7 @@ export function createHero(canvas, { reduced = false } = {}) {
     dust.rotation.y += dt * 0.01;
     // Pulses.
     st.burst = Math.max(0, st.burst - dt * 0.8);
-    axons.material.opacity = 0.14 + st.burst * 0.25;
-    bloom.strength = 0.7 + st.burst * 0.5;
+    axons.material.opacity = 0.08 + st.burst * 0.22;
     for (let i = 0; i < P; i++) {
       const p = pulses[i];
       p.u += dt * p.v;
@@ -221,6 +233,7 @@ export function createHero(canvas, { reduced = false } = {}) {
   requestAnimationFrame(frame);
 
   return {
+    scene, composer, renderer,
     stop() {
       st.running = false;
       removeEventListener('pointermove', onMove); removeEventListener('pointerdown', onDown); removeEventListener('pointerup', onUp); removeEventListener('resize', resize);

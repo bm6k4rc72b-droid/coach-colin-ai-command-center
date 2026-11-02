@@ -178,6 +178,14 @@ export function mountLux({ app, N, i18n }) {
   i18n.onChange(() => requestAnimationFrame(placeMarker));
   requestAnimationFrame(placeMarker);
 
+  /* --------------------- keep panels clear of a wrapping top bar */
+
+  // On a phone the top bar wraps onto several rows; publish its height so panels sit below it.
+  const bar = $('.topbar');
+  const publishBar = () => root.style.setProperty('--tb', `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+  if ('ResizeObserver' in window) new ResizeObserver(publishBar).observe(bar);
+  publishBar();
+
   /* --------------------------------- staggered reveal and count-up */
 
   let lastTab = document.body.dataset.tab;
