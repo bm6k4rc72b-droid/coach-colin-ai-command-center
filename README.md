@@ -1031,6 +1031,24 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: ViralX · by Coach Colin
+
+A neuro-cinematic studio for short-form video at [`public/viralx/`](public/viralx), in black glass, neon pink and chrome,
+with a 3D animated hero (a neural brain inside a chrome film ring, with crystal shards).
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/viralx/>** (locally `/viralx/`).
+
+- **Signals** is the dashboard: a player, six signal cards (Attention, Emotion, Energy, Clarity, Pacing, Hook) that
+  each explain their formula, a heatmap of every signal over time (tap to seek), where attention dips, and Shot DNA
+  (shot size per moment and dutch-angle detection).
+- **Camera Lab** performs 15 camera and angle techniques on a 3D set with real lens maths, including Colin's Tip 2
+  (The Impex) and Tip 3 (The Invisible Master). The main view is what the lens sees; the inset shows the rig from above.
+- Also: **Cover** (CLIP), **Export** (9:16 reframe, Whisper captions, privacy modes), **Hooks** (Claude, your key),
+  **Comments**, **Trends**, **Schedule**, and [`tools/autopost.py`](public/viralx/tools/autopost.py) (official APIs).
+- Signals are estimates computed from the footage, not brain data. `npm run test:viralx`.
+
+---
+
 ## Also in here: VIGIL · Elder Care Intelligence
 
 A high-ticket elder-safety console at [`public/vigil/`](public/vigil), by Colin Cook: AI fall
