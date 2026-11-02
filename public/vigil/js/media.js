@@ -11,5 +11,5 @@ export const MEDIA = {
   residence: `${CDN}hf_20261101_235204_67c2eee5-7e7b-4f79-8cff-a174720b0d85.png`,
   suite: `${CDN}hf_20261101_235204_94f8a963-5612-46d0-a7c2-2e4cf2afa938.png`,
   sensor: `${CDN}hf_20261101_235204_32513dc2-574a-4cfc-ae5c-e5042f2d543d.png`,
-  film: null,
+  film: `${CDN}hf_20261101_235330_03ec1a54-2142-41db-89b7-62b400ea182f.mp4`,
 };
