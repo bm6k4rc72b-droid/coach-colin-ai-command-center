@@ -297,7 +297,8 @@ export class CameraLab {
   pose() {
     const s = this.s; const a = s.orbit * Math.PI / 180;
     const pos = new THREE.Vector3(SUBJECT.x + Math.sin(a) * s.dist, s.height, SUBJECT.z + Math.cos(a) * s.dist);
-    const target = new THREE.Vector3(SUBJECT.x, HEAD_Y - 0.08, SUBJECT.z);
+    // Aim a little below the eyes so the head sits on the upper third, as an operator frames a single.
+    const target = new THREE.Vector3(SUBJECT.x, HEAD_Y - 0.3, SUBJECT.z);
     const m = new THREE.Matrix4().lookAt(pos, target, new THREE.Vector3(0, 1, 0));
     const q = new THREE.Quaternion().setFromRotationMatrix(m);
     q.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(s.tilt * Math.PI / 180, -s.pan * Math.PI / 180, -s.roll * Math.PI / 180, 'YXZ')));
@@ -512,7 +513,7 @@ export class CameraLab {
   drawOverlay(o) {
     const ov = $('#vf-ov'); if (!ov) return;
     const r = ov.getBoundingClientRect(); const d = Math.min(2, devicePixelRatio || 1);
-    if (ov.width !== Math.round(r.width * d)) { ov.width = Math.round(r.width * d); ov.height = Math.round(r.height * d); }
+    if (ov.width !== Math.round(r.width * d) || ov.height !== Math.round(r.height * d)) { ov.width = Math.round(r.width * d); ov.height = Math.round(r.height * d); }
     const g = ov.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height);
     const W = r.width; const H = r.height;
     if (this.s.thirds) {
