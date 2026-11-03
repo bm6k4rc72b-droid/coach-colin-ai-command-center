@@ -570,7 +570,7 @@ test('ask once: one request, a schema with one answer per question, robust parsi
 
 test('the install ledger covers every requested repo with a real status', () => {
   const repos = INSTALLS.map((i) => i.repo).join(' | ');
-  for (const name of ['Depth-Anything-V2', 'Depth-Anything-3', 'GroundingDINO', 'nanoowl', 'sam2', 'ultralytics', 'zenoh', 'foxglove', 'PX4', 'LIO-SAM', 'YAMNet', 'BirdNET', 'meshtastic', 'torchgeo', 'purethermal', 'noble-hashes', 'js-ipfs', 'ollama', 'langchain', 'glance-speedlab']) {
+  for (const name of ['Depth-Anything-V2', 'Depth-Anything-3', 'GroundingDINO', 'nanoowl', 'nanosam', 'sam2', 'ultralytics', 'zenoh', 'foxglove', 'PX4', 'LIO-SAM', 'YAMNet', 'BirdNET', 'meshtastic', 'torchgeo', 'purethermal', 'noble-hashes', 'js-ipfs', 'ollama', 'langchain', 'glance-speedlab']) {
     assert.ok(repos.toLowerCase().includes(name.toLowerCase()), name);
   }
   for (const i of INSTALLS) {
