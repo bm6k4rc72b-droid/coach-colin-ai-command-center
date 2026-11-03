@@ -29,7 +29,8 @@ import { detectPaths, fromCrop, nanosamPoints, nanosamResize, nanosamTensor, nan
 import { blake3Hex, clipManifest, EvidenceChain } from './evidence.js';
 import { chatRequest, DEFAULT_QUESTIONS, parseQuestions, parseReply, ruleEvents, speedup, timings } from './vlm.js';
 import { INSTALLS, installTally, STATUS } from './installs.js';
-import { depthMapOf, getAudioClassifier, getPipeline, getSam, loadGeoTiff, MODELS, preferredDevice, rawImage } from './runtime.js';
+import { applyRelation, FLORENCE_TASKS, florenceDets, florencePrompt, parseCommand, resampleTo16k, treePromptFor } from './voice.js';
+import { depthMapOf, getAudioClassifier, getFlorence, getPipeline, getSam, loadGeoTiff, MODELS, preferredDevice, rawImage } from './runtime.js';
 import { ByteTracker } from '../../../vision-kit/bytetrack.js';
 import { turbo } from '../../../vision-kit/pointcloud.js';
 import { groundPoint, horizonRow } from '../../../sentry/js/ground.js';
@@ -112,6 +113,8 @@ export function mountAiStack(bridge) {
     hookedRecorder: null,
     seenClips: new Set(),
     manifests: [],
+    voice: null, // { boxes: [{box, label, anchor}], until }
+    florence: null, // same, for Florence-2 boxes
   };
 
   /* ------------------------------------------------------------ overlay */
@@ -187,6 +190,22 @@ export function mountAiStack(bridge) {
       if (locked) {
         const cx = X(x + w / 2); const cy = Y(y + h / 2);
         ctx.beginPath(); ctx.arc(cx, cy, Math.max(10, (Math.min(w, h) * m.s) / 2), 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    for (const layer of [ai.voice, ai.florence]) {
+      if (!layer || layer.until < now) continue;
+      for (const b of layer.boxes) {
+        const [x, y, w, h] = b.box;
+        ctx.strokeStyle = b.anchor ? '#ffd166' : '#5dffa0';
+        ctx.setLineDash(b.anchor ? [6, 4] : []);
+        ctx.lineWidth = b.anchor ? 1.5 : 2.5;
+        ctx.strokeRect(X(x), Y(y), w * m.s, h * m.s);
+        ctx.setLineDash([]); ctx.lineWidth = 1.5;
+        const label = b.label;
+        ctx.fillStyle = 'rgba(4,6,10,0.75)';
+        ctx.fillRect(X(x), Y(y + h) + 1, ctx.measureText(label).width + 8, 14);
+        ctx.fillStyle = b.anchor ? '#ffd166' : '#5dffa0';
+        ctx.fillText(label, X(x) + 4, Y(y + h) + 12);
       }
     }
     for (const mk of ai.marks) {
@@ -556,9 +575,17 @@ export function mountAiStack(bridge) {
 
   /** NanoOWL's tree pipeline: OWL-ViT finds, CLIP classifies, nested prompts look inside each find. */
   async function detectTree(frame, canvas) {
-    const tree = treeFromPrompt($('ai-lock-q').value);
-    const { pipe: owl, device } = await getPipeline('zero-shot-object-detection', MODELS.openVocab[0].id, (t) => { $('ai-lock-note').textContent = t; });
+    const { found, paths, device } = await treeSearch(frame, canvas, $('ai-lock-q').value, (t) => { $('ai-lock-note').textContent = t; });
     ai.det.device = device;
+    ai.det.treeOut = found;
+    ai.det.treePaths = paths;
+    return found.map((f) => ({ box: f.box, score: f.score, cls: f.path, classes: f.classes }));
+  }
+
+  /** Run one NanoOWL tree prompt over a frame. */
+  async function treeSearch(frame, canvas, prompt, onStatus) {
+    const tree = treeFromPrompt(prompt);
+    const { pipe: owl, device } = await getPipeline('zero-shot-object-detection', MODELS.openVocab[0].id, onStatus);
     let clip = null;
     const crop = (box) => {
       const x = Math.max(0, Math.floor(box[0])); const y = Math.max(0, Math.floor(box[1]));
@@ -572,16 +599,14 @@ export function mountAiStack(bridge) {
       return fromTransformers(res).map((r) => ({ box: fromCrop(r.box, rect), score: r.score, label: Math.max(0, labels.indexOf(r.cls)) }));
     };
     const classify = async (box, labels) => {
-      if (!clip) clip = (await getPipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32', (t) => { $('ai-lock-note').textContent = t; })).pipe;
+      if (!clip) clip = (await getPipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32', onStatus)).pipe;
       const { c } = crop(box);
       const res = await clip(await rawImage(c), labels);
       const top = Array.isArray(res) ? res[0] : res;
       return { label: Math.max(0, labels.indexOf(top.label)), score: top.score };
     };
     const found = await runTree(tree, [0, 0, frame.width, frame.height], detect, classify);
-    ai.det.treeOut = found;
-    ai.det.treePaths = detectPaths(tree);
-    return found.map((f) => ({ box: f.box, score: f.score, cls: f.path, classes: f.classes }));
+    return { found, paths: detectPaths(tree), device };
   }
 
   async function stepDetector() {
@@ -1359,6 +1384,232 @@ export function mountAiStack(bridge) {
   });
   $('ai-chain-export').addEventListener('click', () => download('bo6-evidence-chain.json', JSON.stringify({ format: 'black-optic-6/evidence-chain@1', entries: ai.chain.entries }, null, 2)));
   setInterval(() => { hookRecorder(); watchClips(); }, 1500);
+
+  /* ===================================================== VOICE + SCENE */
+
+  const ASR = [
+    { id: 'onnx-community/moonshine-tiny-ONNX', label: 'Moonshine tiny · fastest for short commands' },
+    { id: 'Xenova/whisper-base.en', label: 'Whisper base.en · OpenAI Whisper' },
+    { id: 'Xenova/whisper-tiny.en', label: 'Whisper tiny.en · smallest Whisper' },
+  ];
+  const voicePanel = panel(`
+    <div class="panel" id="ai-voice-panel">
+      <div class="panel-head"><h2>Say it · voice command</h2><span class="spacer"></span><span class="prov" id="ai-voice-prov" data-tone="muted">Off</span></div>
+      <p class="note">Hold the button and talk: "Show me all horses near the north gate", "How many sheep", "Lock on the white truck", "What do you see?", "Stop". Speech is turned into text on this device (Moonshine or OpenAI's Whisper, through transformers.js). The words become a NanoOWL tree prompt, OWL-ViT finds both things, and only the finds that really sit near (or left of, behind…) the anchor are kept. Nothing is sent anywhere.</p>
+      <div class="controls" style="margin-top:11px">
+        <label class="field" style="flex:1 1 220px"><span>Speech model</span><select id="ai-voice-model">${ASR.map((m) => `<option value="${m.id}">${esc(m.label)}</option>`).join('')}</select></label>
+        <label class="field" style="flex:0 1 120px"><span>"Near" (m)</span><input id="ai-voice-near" type="number" min="1" step="1" value="10" /></label>
+      </div>
+      <div class="controls" style="margin-top:9px">
+        <button class="act" id="ai-voice-talk" type="button" style="touch-action:none;user-select:none">Hold to talk</button>
+        <label class="field" style="flex:1 1 220px"><span>…or type it</span><input id="ai-voice-text" type="text" placeholder="show me all horses near the north gate" /></label>
+        <button class="ghost" id="ai-voice-run" type="button">Run</button>
+        <label class="field" style="flex:0 0 auto;flex-direction:row;align-items:center;gap:6px"><input id="ai-voice-speak" type="checkbox" checked /><span>Speak answers</span></label>
+      </div>
+      <div class="readouts" id="ai-voice-readouts" style="margin-top:11px"></div>
+      <ul class="rows" id="ai-voice-log" style="margin-top:11px"><li class="empty">No commands yet.</li></ul>
+      <p class="note" id="ai-voice-note" style="margin-top:10px">"Near" is a gate-width in the picture, or metres on the ground once the optics deck is calibrated. A compass word ("north gate") is a name: one camera cannot tell north from its picture, so the console says so instead of guessing.</p>
+    </div>`);
+  const florencePanel = panel(`
+    <div class="panel" id="ai-florence-panel">
+      <div class="panel-head"><h2>Describe the scene · Florence-2</h2><span class="spacer"></span><span class="prov" id="ai-florence-prov" data-tone="muted">Off</span></div>
+      <p class="note">Microsoft's Florence-2 (MIT licence) on this device: it puts the frame into plain words, lists and boxes what is in it, or finds the thing a phrase names. No server, no account. Its words are Modelled — read them as a fast second opinion; Florence-2 gives no confidence score. Each description is hashed into the evidence chain with the frame.</p>
+      <div class="controls" style="margin-top:11px">
+        <label class="field" style="flex:1 1 200px"><span>Task</span><select id="ai-florence-task">
+          <option value="more">Describe in detail</option>
+          <option value="detailed">Describe briefly</option>
+          <option value="caption">One-line caption</option>
+          <option value="objects">List and box objects</option>
+          <option value="ground">Find what a phrase names</option>
+        </select></label>
+        <label class="field" style="flex:1 1 200px" id="ai-florence-phrase-wrap" hidden><span>Phrase</span><input id="ai-florence-phrase" type="text" value="a horse near a gate" /></label>
+      </div>
+      <div class="controls" style="margin-top:9px"><button class="act" id="ai-florence-go" type="button">Describe this frame</button></div>
+      <blockquote id="ai-florence-text" style="margin:11px 0 0;padding:10px 12px;border-left:2px solid var(--primary, #4fe8ff);min-height:2.4em;white-space:pre-wrap"></blockquote>
+      <div class="readouts" id="ai-florence-readouts" style="margin-top:11px"></div>
+      <p class="note" id="ai-florence-note" style="margin-top:10px">First use downloads about 230 MB from huggingface.co (use Wi-Fi); the browser keeps it after that.</p>
+    </div>`);
+  $('ai-lock-panel').closest('.grid').after(grid(voicePanel, florencePanel));
+  $('ai-voice-model').value = store.get('bo6.ai.voice.model', ASR[0].id);
+  $('ai-florence-task').addEventListener('change', () => { $('ai-florence-phrase-wrap').hidden = $('ai-florence-task').value !== 'ground'; });
+
+  const say = (text) => {
+    if (!$('ai-voice-speak').checked || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  };
+  const frameHash = (frame) => blake3Hex(new Uint8Array(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength));
+
+  /** Florence-2 on the current frame. */
+  async function describeFrame(task = $('ai-florence-task').value, phrase = $('ai-florence-phrase').value) {
+    const frame = state.lastFrame;
+    const note = $('ai-florence-note');
+    if (!frame) { note.textContent = 'Open the camera on the optics deck first.'; return null; }
+    try {
+      setBadge('ai-florence-prov', 'MODEL', 'Loading');
+      const f = await getFlorence('onnx-community/Florence-2-base-ft', (t) => { note.textContent = t; });
+      setBadge('ai-florence-prov', 'MODEL', 'Looking');
+      const t0 = performance.now();
+      const image = await rawImage(canvasOf(frame));
+      const prompt = florencePrompt(task, phrase);
+      const visionInputs = await f.processor(image);
+      const textInputs = f.tokenizer(f.processor.construct_prompts(prompt));
+      const ids = await f.model.generate({ ...textInputs, ...visionInputs, max_new_tokens: 256 });
+      const raw = f.tokenizer.batch_decode(ids, { skip_special_tokens: false })[0];
+      const token = FLORENCE_TASKS[task];
+      const result = f.processor.post_process_generation(raw, token, image.size)[token];
+      const ms = performance.now() - t0;
+      const dets = florenceDets(result);
+      const text = typeof result === 'string' ? result.trim()
+        : dets.length ? `${dets.length} found: ${[...new Set(dets.map((d) => d.cls))].join(', ')}.` : 'Nothing found.';
+      $('ai-florence-text').textContent = text;
+      ai.florence = dets.length ? { boxes: dets.map((d) => ({ box: d.box, label: d.cls })), until: performance.now() + 10000 } : null;
+      const entry = ai.chain.append('florence', { atMs: Date.now(), model: 'Florence-2-base-ft', task: token, phrase: task === 'ground' ? phrase : null, frame: frameHash(frame), text: blake3Hex(text), boxes: dets.map((d) => d.box.map((v) => Math.round(v))) });
+      renderChain();
+      $('ai-florence-readouts').replaceChildren(
+        readout('Took', `${ms.toFixed(0)} ms`, { note: `${f.device} · ${frame.width}×${frame.height}` }),
+        readout('Boxes', String(dets.length), { note: dets.length ? 'Drawn on the optics view for 10 s.' : 'Captions carry no boxes.' }),
+        readout('Chained', `#${entry.index}`, { note: `${entry.link.slice(0, 16)}…` }),
+      );
+      setBadge('ai-florence-prov', 'MODEL', `Described · ${f.device}`);
+      note.textContent = `Frame BLAKE3 ${entry.frame.slice(0, 16)}… recorded with the description's hash.`;
+      logEvent('Scene described', text.slice(0, 220), 'primary');
+      return text;
+    } catch (error) {
+      setBadge('ai-florence-prov', 'BLOCKED', 'Failed');
+      note.textContent = `${error.message}. Florence-2 downloads from huggingface.co on first use; WebGPU (Chrome, Edge, Safari 26) makes it several times faster.`;
+      return null;
+    }
+  }
+  $('ai-florence-go').addEventListener('click', () => describeFrame());
+
+  /** Carry out one parsed command. */
+  async function runCommand(text) {
+    const cmd = parseCommand(text);
+    const note = $('ai-voice-note');
+    const log = (title, body, tone = 'primary') => pushRow($('ai-voice-log'), row(title, body, tone, new Date().toLocaleTimeString()));
+    if (cmd.action === 'unknown') { log(`"${text}"`, 'Not a command I know. Try "show me horses near the gate", "how many sheep", "lock on the truck", "what do you see", or "stop".', 'caution'); say('Sorry, try again.'); return; }
+    if (cmd.action === 'stop') {
+      ai.voice = null; ai.florence = null;
+      if (ai.det.running) { stopDetector(); setBadge('ai-lock-prov', 'BLOCKED', 'Off'); }
+      log('Stopped', 'Highlights cleared and the search stopped.', 'muted'); say('Stopped.');
+      return;
+    }
+    if (cmd.action === 'describe') {
+      log('Describe', 'Florence-2 is looking at this frame…');
+      const words = await describeFrame('more');
+      if (words) { log('Florence-2', words, 'primary'); say(words); }
+      return;
+    }
+    if (cmd.action === 'lock') {
+      const mode = $('ai-lock-mode');
+      if (mode.value === 'nanoowl' || mode.value === 'coco' || mode.value === 'yolo') { mode.value = `open:${MODELS.openVocab[0].id}`; mode.dispatchEvent(new Event('change')); }
+      $('ai-lock-q').value = cmd.target;
+      if (!ai.det.running) $('ai-lock-start').click();
+      ai.det.lockId = null;
+      log(`Lock: ${cmd.target}`, 'Searching every frame; the best match is locked and tracked on the optics view.', 'alert'); say(`Looking for the ${cmd.target}.`);
+      return;
+    }
+    // show / count
+    const frame = state.lastFrame;
+    if (!frame) { note.textContent = 'Open the camera on the optics deck first.'; return; }
+    const prompt = treePromptFor(cmd);
+    try {
+      setBadge('ai-voice-prov', 'MODEL', 'Searching');
+      const t0 = performance.now();
+      const { found } = await treeSearch(frame, canvasOf(frame), prompt, (t) => { note.textContent = t; });
+      const dets = found.map((f) => ({ box: f.box, score: f.score, cls: f.path }));
+      const ground = state.pose ? (box) => { const g = groundPoint(state.pose, box[0] + box[2] / 2, box[1] + box[3]); return g ? [g.x, g.y] : null; } : null;
+      const nearMetres = Math.max(1, Number($('ai-voice-near').value) || 10);
+      const r = applyRelation(dets, cmd, { ground, nearMetres });
+      const ms = performance.now() - t0;
+      ai.voice = {
+        boxes: [
+          ...r.anchors.map((d) => ({ box: d.box, label: `${cmd.qualifier ? `${cmd.qualifier} ` : ''}${cmd.anchor} ${(d.score * 100).toFixed(0)}%`, anchor: true })),
+          ...r.kept.map((d) => { const m = footRange(d.box); return { box: d.box, label: `${cmd.target} ${(d.score * 100).toFixed(0)}%${m ? ` · ${m.toFixed(1)} m` : ''}` }; }),
+        ],
+        until: performance.now() + 12000,
+      };
+      const nearHow = cmd.relation === 'near' ? (ground ? ` "Near" = within ${nearMetres} m on the ground.` : ' "Near" = within one anchor-width in the picture (calibrate for metres).') : '';
+      log(`${cmd.action === 'count' ? 'Count' : 'Show'}: ${cmd.target}${cmd.anchor ? ` ${cmd.relation} ${cmd.anchor}` : ''}`, `${r.note}${nearHow}`, r.kept.length ? 'alert' : 'confirm');
+      $('ai-voice-readouts').replaceChildren(
+        readout('Heard', `"${cmd.text}"`, { note: `Tree prompt ${prompt}` }),
+        readout('Kept', String(r.kept.length), { tone: r.kept.length ? 'alert' : 'confirm', note: `of ${dets.filter((d) => d.cls.replace(/^an? /, '') === cmd.target).length} ${cmd.target} finds` }),
+        readout('Search', `${ms.toFixed(0)} ms`, { note: 'OWL-ViT, this device' }),
+      );
+      setBadge('ai-voice-prov', 'MODEL', `${r.kept.length} ${cmd.target}`);
+      logEvent(`Voice: ${cmd.action} ${cmd.target}`, r.note, r.kept.length ? 'alert' : 'confirm');
+      say(r.note.replace(/"[^"]*": /, ''));
+      note.textContent = '';
+    } catch (error) {
+      setBadge('ai-voice-prov', 'BLOCKED', 'Search failed');
+      note.textContent = `${error.message}. OWL-ViT downloads from huggingface.co on first use.`;
+    }
+  }
+
+  /* Push-to-talk: record while held, transcribe on release. */
+  const talk = { rec: null, stream: null, chunks: [], held: false };
+  async function startTalk(e) {
+    e.preventDefault();
+    talk.held = true;
+    if (talk.rec) return;
+    const note = $('ai-voice-note');
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { note.textContent = 'This browser cannot record the microphone here. Type the command instead.'; return; }
+    try {
+      talk.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+      talk.chunks = [];
+      talk.rec = new MediaRecorder(talk.stream);
+      talk.rec.ondataavailable = (ev) => { if (ev.data.size) talk.chunks.push(ev.data); };
+      talk.rec.onstop = () => transcribe(new Blob(talk.chunks, { type: talk.rec?.mimeType || 'audio/webm' }));
+      talk.rec.start();
+      if (!talk.held) { stopTalk(); return; } // released while the permission prompt was up
+      $('ai-voice-talk').textContent = 'Listening… release to send';
+      setBadge('ai-voice-prov', 'LIVE', 'Listening');
+      // Warm the speech model while the rancher talks.
+      getPipeline('automatic-speech-recognition', $('ai-voice-model').value, (t) => { note.textContent = t; }).catch(() => {});
+    } catch (error) {
+      note.textContent = `Microphone: ${error.message}.`;
+      setBadge('ai-voice-prov', 'BLOCKED', 'No microphone');
+    }
+  }
+  function stopTalk() {
+    talk.held = false;
+    if (!talk.rec || talk.rec.state === 'inactive') return;
+    talk.rec.stop();
+    talk.stream.getTracks().forEach((t) => t.stop());
+    $('ai-voice-talk').textContent = 'Hold to talk';
+  }
+  async function transcribe(blob) {
+    const note = $('ai-voice-note');
+    talk.rec = null;
+    try {
+      setBadge('ai-voice-prov', 'MODEL', 'Transcribing');
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      ctx.close();
+      const audio = resampleTo16k(buf.getChannelData(0), buf.sampleRate);
+      if (audio.length < 16000 * 0.3) { note.textContent = 'Too short — hold the button while you speak.'; setBadge('ai-voice-prov', 'MODEL', 'Ready'); return; }
+      const model = $('ai-voice-model').value;
+      store.set('bo6.ai.voice.model', model);
+      const t0 = performance.now();
+      const { pipe, device } = await getPipeline('automatic-speech-recognition', model, (t) => { note.textContent = t; });
+      const out = await pipe(audio);
+      const text = String(out?.text ?? '').trim();
+      note.textContent = `Heard in ${(performance.now() - t0).toFixed(0)} ms on ${device} (${(audio.length / 16000).toFixed(1)} s of audio).`;
+      $('ai-voice-text').value = text;
+      if (text) await runCommand(text);
+      else setBadge('ai-voice-prov', 'MODEL', 'Heard nothing');
+    } catch (error) {
+      setBadge('ai-voice-prov', 'BLOCKED', 'Transcription failed');
+      note.textContent = `${error.message}. The speech model downloads from huggingface.co on first use.`;
+    }
+  }
+  const talkBtn = $('ai-voice-talk');
+  talkBtn.addEventListener('pointerdown', startTalk);
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) talkBtn.addEventListener(ev, stopTalk);
+  talkBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+  $('ai-voice-run').addEventListener('click', () => { const v = $('ai-voice-text').value.trim(); if (v) runCommand(v); });
+  $('ai-voice-text').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const v = e.target.value.trim(); if (v) runCommand(v); } });
 
   /* ======================================================== SPEEDLAB */
 
