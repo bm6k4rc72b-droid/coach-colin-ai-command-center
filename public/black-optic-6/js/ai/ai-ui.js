@@ -13,7 +13,7 @@ import {
   calibrateMetric, calibrateTiltRelative, distanceAt, groundSamples, heightFromAnchor, horizonRowFor,
   resample, sampleAt, scaleDisparity, tiltFromOrientation,
 } from './depth-calib.js';
-import { chooseLock, decodeYolo, fromTransformers, letterbox, parseQueries, promptFor } from './detect.js';
+import { chooseLock, decodeYolo, fromTransformers, iou as boxIou, letterbox, parseQueries, promptFor } from './detect.js';
 import { bestMask, IdRegistry, maskStats, signature } from './reid.js';
 import { EventGate, eventFor, ranchScores } from './audio-classes.js';
 import { analyse, highPass, staLta } from './geophone.js';
@@ -25,6 +25,7 @@ import {
   assetOf, boxAround, cellStats, coarseWindow, dryness, epsgOf, indices, pixelWindow, scaling, STAC_URL, stacSearch, utmBox,
 } from './ndvi.js';
 import { autoIsotherm, hotspots } from './isotherm.js';
+import { detectPaths, fromCrop, nanosamPoints, nanosamResize, nanosamTensor, nanosamUpscale, runTree, treeFromPrompt, NANOSAM_SIZE } from './nvidia.js';
 import { blake3Hex, clipManifest, EvidenceChain } from './evidence.js';
 import { chatRequest, DEFAULT_QUESTIONS, parseQuestions, parseReply, ruleEvents, speedup, timings } from './vlm.js';
 import { INSTALLS, installTally, STATUS } from './installs.js';
@@ -178,7 +179,7 @@ export function mountAiStack(bridge) {
       ctx.strokeRect(X(x), Y(y), w * m.s, h * m.s);
       ctx.setLineDash([]);
       const range = footRange(t.box);
-      const label = `${locked ? 'LOCK ' : ''}${t.cls} #${t.id}${t.pid ? ` · ${t.pid}` : ''}${range ? ` · ${range.toFixed(1)} m` : ''}`;
+      const label = `${locked ? 'LOCK ' : ''}${t.cls}${t.tag ? ` (${t.tag})` : ''} #${t.id}${t.pid ? ` · ${t.pid}` : ''}${range ? ` · ${range.toFixed(1)} m` : ''}`;
       ctx.fillStyle = 'rgba(4,6,10,0.75)';
       ctx.fillRect(X(x), Y(y) - 15, ctx.measureText(label).width + 8, 14);
       ctx.fillStyle = locked ? '#ff3b4e' : '#4fe8ff';
@@ -451,9 +452,11 @@ export function mountAiStack(bridge) {
       <div class="controls" style="margin-top:9px">
         <label class="field" style="flex:1 1 200px"><span>Detector</span><select id="ai-lock-mode">
           ${MODELS.openVocab.map((m) => `<option value="open:${m.id}">${esc(m.label)}</option>`).join('')}
+          <option value="nanoowl">NanoOWL tree prompt · OWL-ViT + CLIP</option>
           <option value="coco">COCO-SSD · 80 fixed classes, fast</option>
           <option value="yolo">Your YOLOv8 .onnx export</option>
         </select></label>
+        <p class="note" id="ai-tree-help" hidden style="flex:1 1 100%">NanoOWL tree prompt: <b>[ ]</b> finds things, <b>( )</b> sorts each one into a class, nesting looks inside. Try <code>[a person [a face (smiling, frowning)], a truck (white, dark)]</code> or <code>[a sheep (standing, lying down)]</code>.</p>
         <label class="field" style="flex:1 1 200px" id="ai-yolo-wrap" hidden><span>YOLOv8 ONNX URL</span><input id="ai-yolo-url" type="text" placeholder="https://…/yolov8n.onnx" /></label>
         <label class="field" style="flex:0 1 120px"><span>Every (ms)</span><input id="ai-lock-every" type="number" min="100" step="50" value="700" /></label>
       </div>
@@ -473,6 +476,14 @@ export function mountAiStack(bridge) {
       <p class="note">Tap a sheep, a man, a truck: a segment-anything model cuts it out of the frame, and its colour signature becomes an ID that follows it — including onto another camera when you switch feeds. Colour is weak evidence (two white ewes look alike), so every handover shows its similarity. Nothing here can recognise a face.</p>
       <div class="controls" style="margin-top:11px">
         <label class="field" style="flex:1 1 160px"><span>Name it</span><input id="ai-tag-name" type="text" value="subject" /></label>
+        <label class="field" style="flex:1 1 200px"><span>Segmenter</span><select id="ai-tag-seg"><option value="slimsam">SlimSAM · downloads itself</option><option value="nanosam">NanoSAM · NVIDIA ResNet18 + MobileSAM</option></select></label>
+      </div>
+      <div class="controls" id="ai-nanosam-wrap" hidden style="margin-top:9px">
+        <label class="ghost file-btn">Encoder .onnx<input id="ai-nanosam-enc" type="file" accept=".onnx" hidden /></label>
+        <label class="ghost file-btn">Decoder .onnx<input id="ai-nanosam-dec" type="file" accept=".onnx" hidden /></label>
+        <p class="note" style="flex:1 1 100%">NanoSAM's two files from NVIDIA-AI-IOT/nanosam: <code>resnet18_image_encoder.onnx</code> and <code>mobile_sam_mask_decoder.onnx</code> (links in its README). Pick them once from this device; they stay in the browser.</p>
+      </div>
+      <div class="controls" style="margin-top:9px">
         <button class="act" id="ai-tag-arm" type="button" style="align-self:flex-end">Tap the frame to tag</button>
       </div>
       <ul class="rows" id="ai-tag-list" style="margin-top:11px"><li class="empty">No IDs yet.</li></ul>
@@ -483,7 +494,10 @@ export function mountAiStack(bridge) {
   $('ai-lock-mode').addEventListener('change', () => {
     const v = $('ai-lock-mode').value;
     $('ai-yolo-wrap').hidden = v !== 'yolo';
-    $('ai-lock-every').value = v === 'coco' || v === 'yolo' ? '250' : '700';
+    $('ai-tree-help').hidden = v !== 'nanoowl';
+    if (v === 'nanoowl' && !/[[(]/.test($('ai-lock-q').value)) $('ai-lock-q').value = '[a person [a face (smiling, frowning)], a truck (white, dark), a sheep (standing, lying down)]';
+    if (v !== 'nanoowl' && /[[(]/.test($('ai-lock-q').value)) $('ai-lock-q').value = 'person, white truck, coyote, bolt cutters, sheep';
+    $('ai-lock-every').value = v === 'coco' || v === 'yolo' ? '250' : v === 'nanoowl' ? '1200' : '700';
   });
 
   async function loadYolo(url) {
@@ -505,6 +519,7 @@ export function mountAiStack(bridge) {
     const mode = $('ai-lock-mode').value;
     const queries = parseQueries($('ai-lock-q').value);
     const canvas = canvasOf(frame);
+    if (mode === 'nanoowl') return detectTree(frame, canvas);
     if (mode.startsWith('open:')) {
       const model = mode.slice(5);
       const owl = /owl/i.test(model);
@@ -539,6 +554,36 @@ export function mountAiStack(bridge) {
     return decodeYolo(out.data, out.dims, lb, { scoreThreshold: 0.25 });
   }
 
+  /** NanoOWL's tree pipeline: OWL-ViT finds, CLIP classifies, nested prompts look inside each find. */
+  async function detectTree(frame, canvas) {
+    const tree = treeFromPrompt($('ai-lock-q').value);
+    const { pipe: owl, device } = await getPipeline('zero-shot-object-detection', MODELS.openVocab[0].id, (t) => { $('ai-lock-note').textContent = t; });
+    ai.det.device = device;
+    let clip = null;
+    const crop = (box) => {
+      const x = Math.max(0, Math.floor(box[0])); const y = Math.max(0, Math.floor(box[1]));
+      const w = Math.max(8, Math.min(frame.width - x, Math.ceil(box[2]))); const h = Math.max(8, Math.min(frame.height - y, Math.ceil(box[3])));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(canvas, x, y, w, h, 0, 0, w, h);
+      return { c, rect: [x, y, w, h] };
+    };
+    const detect = async (box, labels) => {
+      const { c, rect } = crop(box);
+      const res = await owl(await rawImage(c), labels, { threshold: 0.1, percentage: false });
+      return fromTransformers(res).map((r) => ({ box: fromCrop(r.box, rect), score: r.score, label: Math.max(0, labels.indexOf(r.cls)) }));
+    };
+    const classify = async (box, labels) => {
+      if (!clip) clip = (await getPipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32', (t) => { $('ai-lock-note').textContent = t; })).pipe;
+      const { c } = crop(box);
+      const res = await clip(await rawImage(c), labels);
+      const top = Array.isArray(res) ? res[0] : res;
+      return { label: Math.max(0, labels.indexOf(top.label)), score: top.score };
+    };
+    const found = await runTree(tree, [0, 0, frame.width, frame.height], detect, classify);
+    ai.det.treeOut = found;
+    ai.det.treePaths = detectPaths(tree);
+    return found.map((f) => ({ box: f.box, score: f.score, cls: f.path, classes: f.classes }));
+  }
+
   async function stepDetector() {
     const d = ai.det;
     if (!d.running || d.busy || !state.lastFrame) return;
@@ -551,7 +596,15 @@ export function mountAiStack(bridge) {
       const dets = await detectOnce(frame);
       d.ms = performance.now() - t0;
       d.tracks = d.tracker.update(dets);
-      const queries = parseQueries($('ai-lock-q').value);
+      if (d.mode === 'nanoowl') {
+        // NanoOWL's classify nodes label each find; carry the label onto the track that matches it.
+        for (const t of d.tracks) {
+          let best = null; let bestIou = 0.3;
+          for (const det of dets) { const v = boxIou(t.box, det.box); if (det.cls === t.cls && v > bestIou) { best = det; bestIou = v; } }
+          t.tag = best?.classes?.length ? best.classes.map((c) => c.label).join(', ') : t.tag;
+        }
+      }
+      const queries = d.mode === 'nanoowl' ? (d.treePaths ?? []) : parseQueries($('ai-lock-q').value);
       // Persistent IDs: compare each track's colour against enrolled subjects about once a second.
       if (ai.ids.ids.length && performance.now() - d.sigAt > 1000) {
         d.sigAt = performance.now();
@@ -582,7 +635,7 @@ export function mountAiStack(bridge) {
     } catch (error) {
       setBadge('ai-lock-prov', 'BLOCKED', 'Detector failed');
       $('ai-lock-note').className = 'note bad';
-      $('ai-lock-note').textContent = $('ai-lock-mode').value.startsWith('open:')
+      $('ai-lock-note').textContent = /^(open:|nanoowl)/.test($('ai-lock-mode').value)
         ? `${error.message}. The open-vocabulary model is a large download from huggingface.co on first use (use Wi-Fi), then the browser keeps it.`
         : `${error.message}.`;
       stopDetector();
@@ -596,8 +649,11 @@ export function mountAiStack(bridge) {
   $('ai-lock-start').addEventListener('click', () => {
     if (!state.lastFrame) { $('ai-lock-note').textContent = 'Open the camera on the optics deck first.'; return; }
     const mode = $('ai-lock-mode').value;
-    ai.det.mode = mode === 'coco' ? 'coco' : mode === 'yolo' ? 'yolo' : 'open';
-    ai.det.tracker = new ByteTracker(ai.det.mode === 'open'
+    ai.det.mode = mode === 'coco' ? 'coco' : mode === 'yolo' ? 'yolo' : mode === 'nanoowl' ? 'nanoowl' : 'open';
+    if (mode === 'nanoowl') {
+      try { treeFromPrompt($('ai-lock-q').value); } catch (error) { $('ai-lock-note').className = 'note bad'; $('ai-lock-note').textContent = `Tree prompt: ${error.message}`; return; }
+    }
+    ai.det.tracker = new ByteTracker(ai.det.mode === 'open' || ai.det.mode === 'nanoowl'
       ? { minHits: 2, maxLost: 8, highThresh: 0.2, lowThresh: 0.05 }
       : { minHits: 2, maxLost: 15, highThresh: 0.5, lowThresh: 0.1 });
     ai.det.running = true;
@@ -622,6 +678,7 @@ export function mountAiStack(bridge) {
     const frame = state.lastFrame;
     const note = $('ai-tag-note');
     try {
+      if ($('ai-tag-seg').value === 'nanosam') { await tagNanoSam(frame, u, v); return; }
       const { model, processor } = await getSam(MODELS.segment[0].id, (t) => { note.textContent = t; });
       const image = await rawImage(canvasOf(frame));
       const inputs = await processor(image, { input_points: [[[u, v]]], input_labels: [[1]] });
@@ -645,6 +702,49 @@ export function mountAiStack(bridge) {
       note.textContent = `Tagging failed: ${error.message}.`;
     }
   }
+  /* NanoSAM, from NVIDIA's predictor.py: encode once per frame, decode per tap. */
+  const nano = { enc: null, dec: null, ort: null, device: null };
+  $('ai-tag-seg').addEventListener('change', () => { $('ai-nanosam-wrap').hidden = $('ai-tag-seg').value !== 'nanosam'; });
+  async function nanoSession(file) {
+    if (!nano.ort) { nano.ort = await import(`${VENDOR}transformers/ort.webgpu.min.mjs`); nano.ort.env.wasm.wasmPaths = `${VENDOR}transformers/`; }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    try { if (preferredDevice() !== 'webgpu') throw new Error('no WebGPU'); nano.device = 'webgpu'; return await nano.ort.InferenceSession.create(bytes, { executionProviders: ['webgpu'] }); }
+    catch { nano.device = 'wasm'; return nano.ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] }); }
+  }
+  $('ai-nanosam-enc').addEventListener('change', async (e) => { const f = e.target.files?.[0]; if (f) { $('ai-tag-note').textContent = 'Loading the NanoSAM encoder…'; nano.enc = await nanoSession(f); $('ai-tag-note').textContent = `Encoder ready (${nano.device}).`; } });
+  $('ai-nanosam-dec').addEventListener('change', async (e) => { const f = e.target.files?.[0]; if (f) { $('ai-tag-note').textContent = 'Loading the NanoSAM decoder…'; nano.dec = await nanoSession(f); $('ai-tag-note').textContent = `Decoder ready (${nano.device}).`; } });
+
+  async function tagNanoSam(frame, u, v) {
+    const note = $('ai-tag-note');
+    if (!nano.enc || !nano.dec) throw new Error('pick NanoSAM\u2019s two .onnx files first');
+    const { ort } = nano; const W = frame.width; const H = frame.height;
+    const t0 = performance.now();
+    const { w: rw, h: rh } = nanosamResize(W, H);
+    const c = document.createElement('canvas'); c.width = rw; c.height = rh;
+    const cx = c.getContext('2d'); cx.imageSmoothingQuality = 'high'; cx.drawImage(canvasOf(frame), 0, 0, rw, rh);
+    const img = new ort.Tensor('float32', nanosamTensor(cx.getImageData(0, 0, rw, rh).data, rw, rh), [1, 3, NANOSAM_SIZE, NANOSAM_SIZE]);
+    const emb = (await nano.enc.run({ [nano.enc.inputNames[0]]: img }))[nano.enc.outputNames[0]];
+    const [[px, py]] = nanosamPoints([[u, v]], W, H);
+    const feeds = {
+      image_embeddings: emb,
+      point_coords: new ort.Tensor('float32', Float32Array.from([px, py]), [1, 1, 2]),
+      point_labels: new ort.Tensor('float32', Float32Array.from([1]), [1, 1]),
+      mask_input: new ort.Tensor('float32', new Float32Array(256 * 256), [1, 1, 256, 256]),
+      has_mask_input: new ort.Tensor('float32', Float32Array.from([0]), [1]),
+    };
+    const out = await nano.dec.run(feeds);
+    const iou = Array.from(out.iou_predictions.data); const masks = out.low_res_masks;
+    const k = bestMask(iou); const n = masks.dims[masks.dims.length - 1];
+    const data = nanosamUpscale(masks.data.subarray(k * n * n, (k + 1) * n * n), W, H, n);
+    const stats = maskStats(data, W, H);
+    if (!stats.area) throw new Error('NanoSAM found nothing at that point');
+    const entry = ai.ids.enrol(signature(frame, data), bridge.feedName(), $('ai-tag-name').value.trim() || 'subject');
+    ai.mask = { data, width: W, height: H, until: performance.now() + 3500 };
+    renderTags();
+    note.textContent = `${entry.id} enrolled by NanoSAM (${nano.device}) in ${(performance.now() - t0).toFixed(0)} ms: ${stats.area} px mask, predicted IoU ${(iou[k] * 100).toFixed(0)}%.`;
+    logEvent('Tagged', `${entry.id} (${entry.label}) on ${bridge.feedName()} · NanoSAM.`, 'confirm');
+  }
+
   $('ai-tag-arm').addEventListener('click', () => {
     if (!state.lastFrame) { $('ai-tag-note').textContent = 'Open the camera first.'; return; }
     setTapMode('tag');
