@@ -84,6 +84,17 @@ export const INSTALLS = Object.freeze([
     what: 'Occupant load per building and time to get out (pre-movement, travel, queueing at doors or stairs), then Dijkstra people-flow around the buildings to the assembly point.' },
   { repo: 'Cadastre / land parcels', section: 'Site scan', status: 'not-wired', licence: '—',
     what: 'There is no worldwide open parcel layer; boundaries are not drawn rather than guessed. Your fence on the perimeter deck is the boundary this console knows.' },
+  // ---- Space · Intel
+  { repo: 'NASA/JPL CNEOS Sentry · Earth Impact Monitoring', section: 'Space', status: 'wired', licence: 'US Government work (public domain)',
+    what: 'Sentry’s impact-risk list read live from JPL’s API: every object with a computed chance of hitting Earth, with Palermo and Torino values, and the arithmetic behind them (size from brightness, ½mv² energy, Palermo = log10(P / (0.03·E^−0.8·ΔT))) written out. JPL’s close-approach data and Small-Body Database orbits come with it; NASA NeoWs is the fallback.' },
+  { repo: 'Open-eye solar system + SpaceX tracker', section: 'Space', status: 'wired', licence: 'original; data public',
+    what: 'An original, open take on a NASA-style "eyes on the solar system" view: planets from JPL’s published elements, asteroids on their real orbits, any date from a year back to ten ahead; Earth orbit with Starlink, the ISS and more by SGP4 (satellite.js, MIT) from CelesTrak; SpaceX launches from Launch Library 2 with the distance from the ranch to Vandenberg. Not affiliated with NASA or SpaceX.' },
+  { repo: 'OSIRIS-style OSINT (flights · CCTV · open data)', section: 'Intel', status: 'wired', licence: 'data: ODbL / public',
+    what: 'Live aircraft from ADS-B (OpenSky, adsb.lol, airplanes.live) on a ranch-centred map with range, look angle, emergency squawks and low-and-close alerts. Public traffic cameras were already on the World deck — agency-published road cameras only, never unsecured private ones.' },
+  { repo: 'OpenGridWorks-style grid map', section: 'Intel', status: 'wired', licence: 'OpenStreetMap ODbL',
+    what: 'Power lines by voltage class, substations and plants with mapped capacity, from OpenStreetMap through Overpass; nearest line, nearest 69 kV+ line and nearest substation to the pin.' },
+  { repo: 'VistaView-style real-estate intelligence', section: 'Intel', status: 'wired', licence: 'US Government data (public domain)',
+    what: 'For any US point: Census ACS tract and county medians (home value, rent, income, year built, tenure, vacancy), price-to-rent, value-to-income and a mortgage payment on your rate; FEMA flood zone; USGS ground elevation. No open data gives one house’s value, parcel or owner, so those are not invented.' },
   // ---- Voice · Scene description
   { repo: 'openai/whisper', section: 'Say it · voice command', status: 'wired', licence: 'MIT (code and weights)',
     what: 'Whisper base.en and tiny.en run on this device through transformers.js: hold the button, speak, and the command is carried out. Useful Sensors’ Moonshine tiny (MIT) is the default because it is several times faster than Whisper on a few-second command; switch to Whisper in the panel. The Python repo itself needs PyTorch, so its ONNX export is what runs here.' },
