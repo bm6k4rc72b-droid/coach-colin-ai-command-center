@@ -189,7 +189,7 @@ async function main() {
 
     // ------------------------------------------------------------ structure
     const decks = await page.$$eval('#rail button', (nodes) => nodes.length);
-    check(decks === 19, `the console builds all its decks (${decks})`);
+    check(decks === 21, `the console builds all its decks (${decks})`);
 
     // ------------------------------------------------------------- AI stack
     await page.waitForSelector('#ai-install-panel', { timeout: 20000 });
@@ -211,6 +211,18 @@ async function main() {
     check(voiceRows[0] === 'Stopped' && voiceRows[1] === '"banana"', `typed voice commands are parsed and answered (${voiceRows.join(' / ')})`);
     const installRows = await page.$$eval('#ai-install-list li', (nodes) => nodes.length);
     check(installRows >= 20, `every requested repo has a ledger row (${installRows})`);
+    // Space: the deck mounts, draws the solar system, and every data source reports its state
+    // (linked, or refused with a reason — never a blank panel).
+    await page.click('#rail button[data-deck="orbit"]');
+    await page.waitForFunction(() => document.querySelector('#orb-sentry li.row') && document.querySelector('#orb-cad li.row') && document.querySelector('#orb-launches li.row'), { timeout: 60000 });
+    const spaceRows = await page.$$eval('#orb-sources li.row', (nodes) => nodes.length);
+    check(spaceRows === 8, `the space deck lists its eight data sources (${spaceRows})`);
+    const planetsDrawn = await page.$eval('#orb-canvas', (c) => c.width > 0);
+    check(planetsDrawn, 'the solar-system view renders');
+    // Intel: the deck mounts with its map and the three layers' controls.
+    await page.click('#rail button[data-deck="intel"]');
+    const intelOk = await page.$$eval('#int-map, #int-live, #int-grid, #int-prop', (nodes) => nodes.length);
+    check(intelOk === 4, `the intel deck mounts its map and layers (${intelOk})`);
     // Site scan: opening the deck rebuilds the twin's buildings and analyses them.
     await page.click('#rail button[data-deck="site"]');
     await page.waitForFunction(() => document.querySelectorAll('#site-evac li.row').length > 0, { timeout: 20000 });

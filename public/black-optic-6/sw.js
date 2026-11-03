@@ -14,7 +14,7 @@
  * @module black-optic-6/sw
  */
 
-const CACHE = 'black-optic-6-v6';
+const CACHE = 'black-optic-6-v7';
 const SHELL = [
   './',
   'index.html',
@@ -72,6 +72,19 @@ const SHELL = [
   'js/site/flow.js',
   'js/site/site-ui.js',
   'js/site/sun.js',
+  'js/space/kepler.js',
+  'js/space/neo.js',
+  'js/space/sats.js',
+  'js/space/launches.js',
+  'js/space/orbit-ui.js',
+  'js/intel/geo.js',
+  'js/intel/fetch.js',
+  'js/intel/adsb.js',
+  'js/intel/grid.js',
+  'js/intel/property.js',
+  'js/intel/intel-ui.js',
+  'vendor/satellite/satellite.es.js',
+  'vendor/world/land-110m.json',
   'vendor/suncalc/suncalc.js',
   'vendor/noble/blake3.js',
   'vendor/noble/_md.js',

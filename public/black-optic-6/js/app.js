@@ -153,6 +153,8 @@ const DECKS = [
   ['depth', 'Depth', 'M4 17l8 4 8-4 M4 12l8 4 8-4 M12 3l8 4-8 4-8-4z'],
   ['speedlab', 'Speed', 'M4 17a8 8 0 1116 0 M12 17l4-6 M8 21h8'],
   ['world', 'World', 'M12 3a9 9 0 100 18 9 9 0 000-18z M3.6 9h16.8 M3.6 15h16.8 M12 3c2.5 3 2.5 15 0 18 M12 3c-2.5 3-2.5 15 0 18'],
+  ['orbit', 'Space', 'M12 9a3 3 0 100 6 3 3 0 000-6z M2.5 15.5c2 3 18-6 19-9 M5 5l1.5 1.5 M18 18l1.5 1.5 M19 4l-1 1'],
+  ['intel', 'Intel', 'M3 12a9 9 0 1018 0 9 9 0 00-18 0z M12 12l6-6 M12 3v3 M21 12h-3 M12 21v-3 M3 12h3'],
   ['links', 'Links', 'M9 15l6-6 M8 8a4 4 0 015.6 0l1 1 M16 16a4 4 0 01-5.6 0l-1-1'],
   ['ledger', 'Ledger', 'M5 4h14v16H5z M9 9h6 M9 13h6 M9 17h3'],
 ];
@@ -2734,6 +2736,14 @@ import('./ai/ai-ui.js')
 import('./site/site-ui.js')
   .then(({ mountSiteScanner }) => mountSiteScanner({ state, readout, setBadge, logEvent, ranchPlace }))
   .catch((error) => console.warn('Black Optic 6: site scanner not mounted', error));
+
+import('./space/orbit-ui.js')
+  .then(({ mountOrbitDeck }) => mountOrbitDeck({ state, readout, setBadge, logEvent, ranchPlace }))
+  .catch((error) => console.warn('Black Optic 6: space deck not mounted', error));
+
+import('./intel/intel-ui.js')
+  .then(({ mountIntelDeck }) => mountIntelDeck({ state, readout, setBadge, logEvent, ranchPlace }))
+  .catch((error) => console.warn('Black Optic 6: intel deck not mounted', error));
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
