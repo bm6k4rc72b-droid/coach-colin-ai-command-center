@@ -84,8 +84,13 @@ export const INSTALLS = Object.freeze([
     what: 'Occupant load per building and time to get out (pre-movement, travel, queueing at doors or stairs), then Dijkstra people-flow around the buildings to the assembly point.' },
   { repo: 'Cadastre / land parcels', section: 'Site scan', status: 'not-wired', licence: '—',
     what: 'There is no worldwide open parcel layer; boundaries are not drawn rather than guessed. Your fence on the perimeter deck is the boundary this console knows.' },
-  { repo: 'glance-speedlab + PrivateAIModels', section: 'Ask once, answer many', status: 'not-wired', licence: '—',
-    what: 'Your repositories are not attached to this session, so nothing was copied from them. Attach them and their measured numbers can replace the batching model.' },
+  // ---- Voice · Scene description
+  { repo: 'openai/whisper', section: 'Say it · voice command', status: 'wired', licence: 'MIT (code and weights)',
+    what: 'Whisper base.en and tiny.en run on this device through transformers.js: hold the button, speak, and the command is carried out. Useful Sensors’ Moonshine tiny (MIT) is the default because it is several times faster than Whisper on a few-second command; switch to Whisper in the panel. The Python repo itself needs PyTorch, so its ONNX export is what runs here.' },
+  { repo: 'microsoft/Florence-2', section: 'Describe the scene', status: 'wired', licence: 'MIT',
+    what: 'Florence-2 base (fine-tuned) in the browser: describes the frame in plain words, lists and boxes objects, finds what a phrase names. WebGPU runs fp16 vision with a 4-bit language model; WASM runs 8-bit. Replaces glance-speedlab for the rancher demo. "What do you see?" by voice asks it.' },
+  { repo: 'glance-speedlab + PrivateAIModels', section: 'Ask once, answer many', status: 'swapped', licence: '—',
+    what: 'Not attached to this session, so nothing was copied from them. Florence-2 on the Watch deck now does the scene description they were meant to demo, on the device; Ollama "Ask once" stays for a bigger local VLM.' },
 ]);
 
 /** Count of entries per status. */

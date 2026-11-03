@@ -14,7 +14,7 @@
  * @module black-optic-6/sw
  */
 
-const CACHE = 'black-optic-6-v5';
+const CACHE = 'black-optic-6-v6';
 const SHELL = [
   './',
   'index.html',
@@ -65,6 +65,7 @@ const SHELL = [
   'js/ai/vlm.js',
   'js/ai/zenoh.js',
   'js/ai/nvidia.js',
+  'js/ai/voice.js',
   'js/site/buildings.js',
   'js/site/egress.js',
   'js/site/energy.js',

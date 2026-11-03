@@ -194,10 +194,21 @@ async function main() {
     // ------------------------------------------------------------- AI stack
     await page.waitForSelector('#ai-install-panel', { timeout: 20000 });
     const aiPanels = await page.$$eval('[id^="ai-"][id$="-panel"]', (nodes) => nodes.map((n) => `${n.id}@${n.closest('.deck')?.id}`));
-    check(aiPanels.length === 15, `the AI stack mounts its panels into the decks (${aiPanels.length})`);
+    check(aiPanels.length === 17, `the AI stack mounts its panels into the decks (${aiPanels.length})`);
     check(aiPanels.includes('ai-depth-panel@deck-optics') && aiPanels.includes('ai-lock-panel@deck-watch')
       && aiPanels.includes('ai-mav-panel@deck-aerial') && aiPanels.includes('ai-chain-panel@deck-vault'),
       'depth sits under calibration, type-to-lock under target lock, MAVLink under aircraft, BLAKE3 in the vault');
+    check(aiPanels.includes('ai-voice-panel@deck-watch') && aiPanels.includes('ai-florence-panel@deck-watch'),
+      'voice command and Florence-2 scene description sit on the watch deck');
+    // Voice commands that need no model: an unknown phrase is refused politely, "stop" clears.
+    const voiceRows = await page.evaluate(() => {
+      document.getElementById('ai-voice-speak').checked = false;
+      const t = document.getElementById('ai-voice-text');
+      t.value = 'banana'; document.getElementById('ai-voice-run').click();
+      t.value = 'stop'; document.getElementById('ai-voice-run').click();
+      return [...document.querySelectorAll('#ai-voice-log li b')].map((n) => n.textContent);
+    });
+    check(voiceRows[0] === 'Stopped' && voiceRows[1] === '"banana"', `typed voice commands are parsed and answered (${voiceRows.join(' / ')})`);
     const installRows = await page.$$eval('#ai-install-list li', (nodes) => nodes.length);
     check(installRows >= 20, `every requested repo has a ledger row (${installRows})`);
     // Site scan: opening the deck rebuilds the twin's buildings and analyses them.

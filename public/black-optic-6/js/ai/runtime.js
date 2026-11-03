@@ -98,6 +98,36 @@ export async function getSam(model, onStatus = () => {}) {
   return sam;
 }
 
+/**
+ * Florence-2 (microsoft/Florence-2, MIT) needs the model, processor and
+ * tokenizer directly. On WebGPU it runs the mix the transformers.js authors
+ * publish for it (fp16 vision, 4-bit language); on WASM, 8-bit throughout.
+ */
+let florence = null;
+export async function getFlorence(model, onStatus = () => {}) {
+  if (florence?.id === model) return florence;
+  onStatus('Loading the runtime…');
+  const { Florence2ForConditionalGeneration, AutoProcessor, AutoTokenizer } = await loadTransformers();
+  const progress = (p) => {
+    if (p.status === 'progress' && p.total) onStatus(`Downloading ${p.file ?? 'weights'} ${Math.round((p.loaded / p.total) * 100)}%`);
+  };
+  let m; let device = preferredDevice();
+  try {
+    if (device !== 'webgpu') throw new Error('no WebGPU');
+    m = await Florence2ForConditionalGeneration.from_pretrained(model, {
+      device, dtype: { embed_tokens: 'fp16', vision_encoder: 'fp16', encoder_model: 'q4', decoder_model_merged: 'q4' }, progress_callback: progress,
+    });
+  } catch {
+    device = 'wasm';
+    m = await Florence2ForConditionalGeneration.from_pretrained(model, { device, dtype: 'q8', progress_callback: progress });
+  }
+  const processor = await AutoProcessor.from_pretrained(model);
+  const tokenizer = await AutoTokenizer.from_pretrained(model);
+  florence = { id: model, model: m, processor, tokenizer, device };
+  onStatus(`Florence-2 ready · ${device}`);
+  return florence;
+}
+
 /** Wrap a canvas as a transformers.js RawImage. */
 export async function rawImage(canvas) {
   const { RawImage } = await loadTransformers();
