@@ -48,6 +48,7 @@ PINK = "&H00D84FFF"  # ASS is &HAABBGGRR: #ff4fd8
 
 PROBLEM = re.compile(r"\b(never|nobody|no one|alone|lost|fail\w*|afraid|scared|fear|pain|hurt|struggl\w*|problem|hard(est)?|worst|broke|cry\w*|why|what if|stop|mistake|wrong|dying|died|death|sick|stress\w*|anxi\w*|panic|terrif\w*|danger\w*|risk|gone|miss(ed|ing)?|can't|cannot|couldn't|didn't|almost)\b", re.I)
 SOLUTION = re.compile(r"\b(here'?s how|the (answer|key|secret|trick|fix)|solution|solve[ds]?|fix(ed)?|so you can|you can|just|simple|step|start|try|instead|finally|works?|changed|change your|the way to|that'?s why|now you|help(s|ed)?|save[ds]?|protect\w*|safe(ly|ty)?)\b", re.I)
+FILLER = re.compile(r"\b(welcome (back|to)|subscribe|like and|thanks for watching|see you (soon|next)|link in (the )?(bio|description)|sponsor\w*|today we|on (this|my) channel|the weather|hey (guys|everyone)|what'?s up)\b", re.I)
 STAKES = re.compile(r"(\?|\byou\b|\byour\b|\d+)", re.I)
 
 
@@ -236,6 +237,7 @@ def candidates(sig, sents, dur):
         k["problem"] = len(PROBLEM.findall(k["text"]))
         k["solution"] = len(SOLUTION.findall(k["text"]))
         k["stakes"] = len(STAKES.findall(k["text"]))
+        k["filler"] = len(FILLER.findall(k["text"]))
         k["pos"] = a / max(dur, 1)
     return c
 
@@ -256,18 +258,28 @@ def trim(k, lo, hi):
 
 
 def story(cands, length, dur):
+    """Hook (emotion + stakes) → up to 4 peaks in source order → solution (answer + payoff)."""
+    usable = [k for k in cands if not k["filler"]] or cands
     picks = []
-    hook_pool = [k for k in cands if k["pos"] < 0.9] or cands
+    hook_pool = [k for k in usable if k["pos"] < 0.9] or usable
     hook = max(hook_pool, key=lambda k: 1.2 * k["emo"] + 0.6 * k["att"] + 0.25 * min(k["problem"], 3) + 0.08 * min(k["stakes"], 3))
     hook = trim(hook, 2.5, 4.5); hook["role"] = "hook"; picks.append(hook)
-    sol_pool = [k for k in cands if not overlaps(k, picks) and k["pos"] > 0.25] or [k for k in cands if not overlaps(k, picks)]
-    sol = max(sol_pool, key=lambda k: 0.35 * min(k["solution"], 3) + 0.5 * k["clar"] + 0.4 * k["att"] + 0.3 * k["pos"]) if sol_pool else None
-    if sol:
-        sol = trim(sol, 3.5, 6.0); sol["role"] = "solution"; picks.append(sol)
-    budget = length - sum(p["end"] - p["start"] for p in picks) + XF * 4
+
+    sol_pool = [k for k in usable if not overlaps(k, picks) and k["pos"] > 0.25] or [k for k in usable if not overlaps(k, picks)]
+    sol = None
+    if sol_pool:
+        sol = dict(max(sol_pool, key=lambda k: 0.45 * min(k["solution"], 3) + 0.4 * k["clar"] + 0.35 * k["att"] + 0.2 * k["pos"]))
+        # The payoff: if the very next line also resolves the problem, end on both.
+        nxt = [k for k in usable if 0 <= k["start"] - sol["end"] < 2.5 and k["solution"] and not overlaps(k, picks)]
+        if nxt and nxt[0]["end"] - sol["start"] <= 7.0:
+            sol["end"] = nxt[0]["end"]; sol["text"] += " " + nxt[0]["text"]
+        sol = trim(sol, 3.5, 7.0); sol["role"] = "solution"; picks.append(sol)
+
+    budget = length - sum(p["end"] - p["start"] for p in picks) + XF * 2
     peaks = []
-    for k in sorted(cands, key=lambda k: k["att"] + 0.5 * k["emo"], reverse=True):
-        if budget < 1.8:
+    score = lambda k: k["att"] + 0.5 * k["emo"] + 0.15 * min(k["problem"], 3) + 0.1 * min(k["solution"], 2)
+    for k in sorted(usable, key=score, reverse=True):
+        if budget < 1.8 or len(peaks) >= 4:
             break
         if overlaps(k, picks + peaks, pad=1.0):
             continue
@@ -275,6 +287,28 @@ def story(cands, length, dur):
         peaks.append(k); budget -= k["end"] - k["start"] - XF
     peaks.sort(key=lambda k: k["start"])
     order = [picks[0]] + peaks + ([sol] if sol else [])
+    reel_len = lambda o: sum(p["end"] - p["start"] for p in o) - XF * (len(o) - 1)
+    # Too short: let each beat breathe (up to +2 s of its own moment, never into another beat).
+    if reel_len(order) < length:
+        spans = sorted(order, key=lambda p: p["start"])
+        for _ in range(8):
+            short = length - reel_len(order)
+            if short <= 0.05:
+                break
+            for p in order:
+                room_after = min([q["start"] for q in spans if q["start"] > p["start"]] + [dur]) - p["end"] - 0.3
+                room_before = p["start"] - max([q["end"] for q in spans if q["end"] < p["end"] and q is not p] + [0]) - 0.3
+                give = min(short / len(order), 2.0 - p.get("grown", 0))
+                add_a = max(0, min(give * 0.7, room_after)); add_b = max(0, min(give - add_a, room_before))
+                p["end"] += add_a; p["start"] -= add_b; p["grown"] = p.get("grown", 0) + add_a + add_b
+    # Still short: more peaks.
+    for k in sorted(usable, key=score, reverse=True):
+        if reel_len(order) >= length - 1.5:
+            break
+        if not overlaps(k, order, pad=1.0):
+            k = trim(k, 1.8, min(4.0, length - reel_len(order) + XF)); k["role"] = "peak"
+            order.insert(-1 if sol else len(order), k)
+            order[1:-1 if sol else None] = sorted(order[1:-1 if sol else None], key=lambda p: p["start"])
     # Fit the total to the target length (cross-fades overlap the joins).
     total = sum(p["end"] - p["start"] for p in order) - XF * (len(order) - 1)
     if total > length and len(order) > 1:
