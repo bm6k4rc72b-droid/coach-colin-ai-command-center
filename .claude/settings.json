@@ -1,0 +1,36 @@
+{
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+      }
+    },
+    "lemolab": {
+      "source": {
+        "source": "github",
+        "repo": "lemomo-ai/lemo-opuscar",
+        "ref": "bc0992ae25f63c1780dd9cfe39a020e2deda79ec"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true,
+    "lemo-opuscar@lemolab": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/install-ai-tools.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}
