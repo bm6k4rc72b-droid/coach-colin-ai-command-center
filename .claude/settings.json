@@ -18,5 +18,19 @@
   "enabledPlugins": {
     "ponytail@ponytail": true,
     "lemo-opuscar@lemolab": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/install-ai-tools.sh",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
   }
 }
