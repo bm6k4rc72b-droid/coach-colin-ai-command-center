@@ -13,11 +13,27 @@
         "repo": "lemomo-ai/lemo-opuscar",
         "ref": "bc0992ae25f63c1780dd9cfe39a020e2deda79ec"
       }
+    },
+    "remotion": {
+      "source": {
+        "source": "github",
+        "repo": "remotion-dev/claude-code-plugin",
+        "ref": "3bece0db581f2835bd3ac7b5777399a104bcf4ff"
+      }
+    },
+    "hyperframes": {
+      "source": {
+        "source": "github",
+        "repo": "heygen-com/hyperframes",
+        "ref": "7b1d9ccebf9c7e2c2bd22b7e9d9487ce975d6425"
+      }
     }
   },
   "enabledPlugins": {
     "ponytail@ponytail": true,
-    "lemo-opuscar@lemolab": true
+    "lemo-opuscar@lemolab": true,
+    "remotion@remotion": true,
+    "hyperframes@hyperframes": true
   },
   "hooks": {
     "SessionStart": [
