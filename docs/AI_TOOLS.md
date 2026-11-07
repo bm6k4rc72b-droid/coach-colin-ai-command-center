@@ -11,6 +11,26 @@ before being added. Pinned commits are the ones that were scanned.
 | Lemo-Opuscar | [lemomo-ai/lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar) @ `bc0992a` | 66 film styles made in code; Claude directs, draws and scores a short film | CAUTION (24/100), one false positive: `rm -rf .venv` on its own broken venv in `setup.sh` | Claude Code plugin (needs settings below) |
 | FreeLLMAPI | [tashfeenahmed/freellmapi](https://github.com/tashfeenahmed/freellmapi) @ `73e3f05` | One OpenAI-compatible endpoint routing across free LLM providers | n/a (a server, not a skill) | Run it yourself, see below |
 
+## Video stack
+
+Scanned the same way. All four skill sets below scored "Do Not Install" (77–100) on the
+static scan, but on review every HIGH finding was a false positive or expected behaviour: scripts
+read their own API key from `.env` and send it only to that service (HeyGen, Kie.ai, Mapbox),
+docs mention AWS credentials for cloud rendering, and style tips like "don't apologize" or
+HTML comments were flagged as anti-refusal or hidden instructions. Most of each score is hundreds
+of MEDIUM "unpinned `npx`" warnings, which is how these CLIs are meant to run.
+
+| Tool | Repo | What it does | How it's connected |
+|---|---|---|---|
+| Remotion | [remotion-dev/claude-code-plugin](https://github.com/remotion-dev/claude-code-plugin) @ `3bece0d` | Official skills for programmatic video in React | Claude Code plugin `remotion@remotion` in `.claude/settings.json` |
+| HyperFrames | [heygen-com/hyperframes](https://github.com/heygen-com/hyperframes) @ `7b1d9cc` | Official HeyGen skills: write HTML, render video (captions, overlays, motion) | Claude Code plugin `hyperframes@hyperframes` in `.claude/settings.json` |
+| Herk Edit Kit | [nateherkai/herk-edit-kit](https://github.com/nateherkai/herk-edit-kit) @ `10511e5` | 15 editing skills (`/edit-video`, `/short-form-edit`, cut silences, beat sync), built on HyperFrames | Workspace: its skills call its own `scripts/` and `style-library/`, so open Claude Code inside a clone of it |
+| OpenMontage | [calesthio/OpenMontage](https://github.com/calesthio/OpenMontage) @ `d21f5d4` | Agentic video production: 12 pipelines (podcast repurpose, explainers, dubbing…) | Workspace: open Claude Code inside a clone of it (`make setup` first) |
+| ViralMint | [openclaw-easy/ViralMint](https://github.com/openclaw-easy/ViralMint) @ `8f6511e` | Local clipper app: trend scouting, clipping, captions; MCP server with 69 tools | Run it on your computer (`python run.py`), open **MCP** in its sidebar, paste the `claude mcp add` line it shows (token-gated, `http://127.0.0.1:16888/mcp/`) |
+| AutoShorts | [JayWebtech/autoshorts](https://github.com/JayWebtech/autoshorts) @ `5ae8dd3` | Desktop app: long video → vertical shorts with captions | Desktop app from its Releases page; no Claude Code integration |
+
+ClipCast was not added: no credible repo by that name was found.
+
 ## Installing the CLIs
 
 ```bash
