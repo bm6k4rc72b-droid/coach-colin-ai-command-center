@@ -31,6 +31,25 @@ of MEDIUM "unpinned `npx`" warnings, which is how these CLIs are meant to run.
 
 ClipCast was not added: no credible repo by that name was found.
 
+## Upscaling and face restoration
+
+Connected through the project skill `.claude/skills/upscale`. Its `scripts/setup.sh` installs
+all three on Linux (pinned versions, into `~/.local/share/upscalers`, wrappers in `~/.local/bin`).
+It runs on demand, not at session start, because GFPGAN's PyTorch is several GB.
+
+| Tool | Version | Command | Use it for |
+|---|---|---|---|
+| [Video2X](https://github.com/k4yt3x/video2x) | 6.4.0 AppImage | `video2x` | Video upscaling (Real-ESRGAN, Real-CUGAN, Anime4K) and RIFE frame interpolation |
+| [Upscayl](https://github.com/upscayl/upscayl) engine | upscayl-bin 20251207-174704 + Upscayl models | `upscayl-bin` | Stills: thumbnails, posters, frames |
+| [GFPGAN](https://github.com/TencentARC/GFPGAN) | v1.4 weights @ `7552a77` | `gfpgan` | Face restoration in stills (and video via frames) |
+
+- GFPGAN is not bundled with Video2X; it's a separate install.
+- The Upscayl desktop app (Mac/Windows/Linux) uses the same engine and models, if you'd rather click.
+- Cloud sessions have no GPU, so setup adds Mesa's CPU Vulkan driver. Everything works, but video
+  runs at under 1 frame per second there. Run full-length jobs on a GPU machine with the same commands.
+- GFPGAN fix applied at install: basicsr 1.4.2 imports `torchvision.transforms.functional_tensor`,
+  which newer torchvision removed; setup repoints it to `torchvision.transforms.functional`.
+
 ## Installing the CLIs
 
 ```bash
