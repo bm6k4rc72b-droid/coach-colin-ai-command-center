@@ -37,7 +37,7 @@ export const SLIDES = [
     id: 'command',
     kicker: 'Concept architecture · live',
     title: 'Ranch Command // Intelligence Network',
-    lede: 'Every camera, drone, radio and model on the property in one command surface. Swipe, wave your hand at the camera, or ask Rafa.',
+    lede: 'Every camera, drone, radio and model on the property in one command surface. Swipe, wave your hand at the camera, or ask Coach Colin.',
     render(ctx) {
       const open = ctx.alerts.list({ open: true });
       const loud = open.filter((a) => ['critical', 'high'].includes(a.routing.priority)).length;
@@ -72,7 +72,7 @@ export const SLIDES = [
           ]),
         ]),
         el('div.row', {}, [
-          el('button.btn.gold', { type: 'button', onclick: () => ctx.tour() }, ['▶ Tour with Rafa']),
+          el('button.btn.gold', { type: 'button', onclick: () => ctx.tour() }, ['▶ Tour with Coach Colin']),
           el('button.btn.green', { type: 'button', onclick: () => ctx.addDevice('environment') }, ['📱 Add this iPhone\'s camera']),
           el('button.btn', { type: 'button', onclick: () => ctx.toggleSwipe() }, ['✋ Air Swipe']),
         ]),
@@ -400,7 +400,7 @@ export const SLIDES = [
     id: 'stack',
     kicker: 'Under the hood',
     title: 'The stack, and where each piece runs',
-    lede: 'Every project from the research, labelled with where it actually runs and how this dashboard reaches it. Live status comes from the edge box when one is connected. Licences matter if you sell this as a service — they are listed, not hidden.',
+    lede: 'Every project in the build, labelled with where it runs, how this dashboard reaches it, and its licence. Live status comes from the edge box when one is connected. Educate yourself with the list below — every name opens its own source.',
     render(ctx) {
       const status = statusOf(ctx.health);
       const groups = Object.keys(WHERE).map((where) => [where, STACK.filter((s) => s.where === where)]).filter(([, items]) => items.length);
@@ -433,7 +433,7 @@ export const SLIDES = [
     id: 'setup',
     kicker: 'Connect · calibrate',
     title: 'Plug in the ranch',
-    lede: 'Point the dashboard at the edge box, teach Air Swipe your hand, and choose how Rafa sounds. Everything here is stored on this device only.',
+    lede: 'Point the dashboard at the edge box, teach Air Swipe your hand, and choose how Coach Colin sounds. Everything here is stored on this device only.',
     render(ctx) {
       const st = ctx.settings;
       const input = (key, placeholder, type = 'url') => el('input', { type, value: st[key] || '', placeholder, onchange: (e) => { st[key] = e.target.value.trim(); ctx.saveSettings(); } });
@@ -475,7 +475,7 @@ export const SLIDES = [
             el('button.btn.gold.sm', { type: 'button', onclick: () => ctx.calibrate() }, ['Calibrate to my hand']),
           ]),
           el('div.card.foil', {}, [
-            el('h4', { text: 'Rafa' }),
+            el('h4', { text: 'Coach Colin' }),
             el('div.row', {}, [
               el('select', { style: { width: 'auto' }, onchange: (e) => { st.voice.mode = e.target.value; ctx.rafa.mode = e.target.value; ctx.saveSettings(); ctx.rafa.quip('next'); } }, [
                 el('option', { value: 'bilingual', text: 'Bilingüe — English + Spanish', selected: st.voice.mode === 'bilingual' || null }),
