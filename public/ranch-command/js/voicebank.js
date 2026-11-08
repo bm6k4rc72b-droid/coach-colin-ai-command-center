@@ -1,7 +1,7 @@
 /**
  * RANCH COMMAND — the studio voice.
  *
- * Every scripted English line Rafa has, recorded in the owner's custom
+ * Every scripted English line Coach Colin has, recorded in the owner's custom
  * Coach-Colin voice (Higgsfield, Seed Audio, MP3) — the same voice as the
  * peptide showcase — and served from the Higgsfield CDN, which allows
  * cross-origin playback. A line that changes in rafa.js simply falls back
@@ -14,7 +14,6 @@ const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E
 
 /** [line, recording] pairs, as captioned (Spanish markup removed). */
 export const LINES = [
-  ["¡Bienvenidos! I'm Rafa, your ranch foreman. Well, the AI kind. I don't sleep, I don't take lunch, and I never borrow the good truck. Swipe sideways, or wave your hand at the camera, and I'll show you around.", 'hf_20261108_183923_c001121d-7753-4b49-93d1-d590fb6bc736'],
   ["Atmospheric intelligence. Your own weather station, fused with the national forecast models, so you see the wind shift before the cattle do. And the cattle are annoyingly good at that.", 'hf_20261108_183923_7e72119b-89f3-4878-aa1d-a295a13ca6d1'],
   ["The Pyro-Sentinel grid. Ridge cameras look for smoke, air sensors smell it, and satellites confirm the heat. Three witnesses before I wake you up. I'm thorough, not dramatic.", 'hf_20261108_183923_5ec1ff34-9383-4e4e-b6bd-7cbc13b10da0'],
   ["Fuel-moisture intelligence. Sensors measure how dry the grass and brush really are, which tells us how ready this land is to burn. The short version: crunchy is bad.", 'hf_20261108_183923_d043bf9e-48b6-4733-83ec-255fdf7521ff'],
@@ -28,7 +27,6 @@ export const LINES = [
   ["Drone ops. I watch every drone's battery, GPS and altitude. But I don't fly anything myself. A human approves every flight. I'm a foreman, not a pilot. My license is from the internet.", 'hf_20261108_183924_282ed839-8587-4837-ab36-045aa18f1a28'],
   ["Your whole ranch in 3D. Fly the drone, feed the photos to OpenDroneMap, and it builds the land for you. Prettier than a postcard and way more accurate.", 'hf_20261108_184724_a8f7c501-f0d6-40f6-8b1d-be34d2b5d076'],
   ["Out past the last bar of signal, Meshtastic radios keep talking. Tiny, solar powered, and stubborn. Like my abuela.", 'hf_20261108_184724_4b65c112-1902-46af-8e6c-60d6738f860f'],
-  ["Every piece under the hood, and where it runs. Some of it is free software with real licenses, so read those before you sell this, ¿eh?", 'hf_20261108_184724_7ff363ab-8513-4257-9a15-07725a83e763'],
   ["Connect your edge box, then teach me your swipe. Three swipes left, three right, and hold still. Easier than teaching my tío to text.", 'hf_20261108_184724_ef8b96e8-eaf7-4996-9541-e5c75f190efe'],
   ["Evening. This facility is restricted to principals, owners, and anyone who brought snacks. Place your finger on the scanner, please.", 'hf_20261108_184148_df9e1251-27e3-4bc9-963c-6b025734794f'],
   ["Fingerprint confirmed. Lovely ridges. Now look into the facial sensor, and try to look expensive.", 'hf_20261108_184148_47118e4f-1200-480a-919c-aaee188adaac'],
@@ -68,7 +66,6 @@ export const LINES = [
   ["Meshtastic radios and solar sensor stations talk over MQTT. Where there's no cell signal, the mesh still gets through.", 'hf_20261108_183959_eb2bbf0d-cbb2-47a2-93a2-1fcf0e5387f5'],
   ["The 3D map shows cameras, drones and radios on the land. Drop an OpenDroneMap orthophoto on it and it's your actual ranch.", 'hf_20261108_183959_bc31a015-7f1f-4fce-acff-f060c3695307'],
   ["Whatever runs on this phone stays on this phone. Your video goes from your cameras to your edge box. No cloud of mine is involved. I don't even have a cloud. I have a phone.", 'hf_20261108_183959_0a0ea945-3ee3-419f-b155-3ba2b129ff40'],
-  ["Before you sell it: Frigate and the NVIDIA pieces are permissive, but Ultralytics, OpenDroneMap and anything AGPL need care in a paid service. It's all listed on the stack slide.", 'hf_20261108_183959_5487a4e2-5eb3-4f38-b5a4-2647a5dc1a1d'],
   ["¡De nada, jefe! That's what foremen are for.", 'hf_20261108_183959_6b56de93-b7f9-4cc9-bd66-745d4d6e13f9'],
   ["Híjole, that one's beyond me. Try cameras, drones, alerts, NanoOWL, or say tour.", 'hf_20261108_183959_b947f62b-57ae-4518-90d8-0d7f2bf1af20'],
   ["¡Listo! Your camera is on the wall.", 'hf_20261108_183959_cc6e5fac-2707-48f5-af69-f1d01bbf45cb'],

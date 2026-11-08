@@ -29,8 +29,8 @@ import { studioClip } from './voicebank.js';
 /** One entry per slide: what Rafa says on arrival, in both languages. */
 export const INTROS = {
   command: {
-    en: "[es:¡Bienvenidos!] I'm Rafa, your ranch foreman. Well, the AI kind. I don't sleep, I don't take lunch, and I never borrow the good truck. Swipe sideways, or wave your hand at the camera, and I'll show you around.",
-    es: '¡Bienvenidos! Soy Rafa, el capataz del rancho. Bueno, el capataz de inteligencia artificial. No duermo, no almuerzo y nunca me llevo la camioneta buena. Desliza de lado, o mueve la mano frente a la cámara, y te enseño todo.',
+    en: "[es:¡Bienvenidos!] I'm Coach Colin, your ranch foreman. Well, the AI kind. I don't sleep, I don't take lunch, and I never borrow the good truck. Swipe sideways, or wave your hand at the camera, and I'll show you around.",
+    es: '¡Bienvenidos! Soy Coach Colin, el capataz del rancho. Bueno, el capataz de inteligencia artificial. No duermo, no almuerzo y nunca me llevo la camioneta buena. Desliza de lado, o mueve la mano frente a la cámara, y te enseño todo.',
   },
   weather: {
     en: "Atmospheric intelligence. Your own weather station, fused with the national forecast models, so you see the wind shift before the cattle do. And the cattle are annoyingly good at that.",
@@ -85,8 +85,8 @@ export const INTROS = {
     es: 'Más allá de la última rayita de señal, los radios Meshtastic siguen hablando. Chiquitos, solares y tercos. Como mi abuela.',
   },
   stack: {
-    en: "Every piece under the hood, and where it runs. Some of it is free software with real licenses, so read those before you sell this, [es:¿eh?]",
-    es: 'Cada pieza del motor y dónde corre. Parte es software libre con licencias de verdad, así que léelas antes de venderlo, ¿eh?',
+    en: "Every piece under the hood, where it runs, and its licence. Take your time with this list and get to know each one. Every name opens its own source, [es:¿eh?]",
+    es: 'Cada pieza del motor, dónde corre y su licencia. Tómate tu tiempo con esta lista y conoce cada una. Cada nombre abre su propia fuente, ¿eh?',
   },
   setup: {
     en: "Connect your edge box, then teach me your swipe. Three swipes left, three right, and hold still. Easier than teaching my [es:tío] to text.",
@@ -150,7 +150,7 @@ export const ANSWERS = [
   { re: /\b(mesh|meshtastic|lora|signal|señal|sensor|sparrow)\b/i, go: 'mesh', en: 'Meshtastic radios and solar sensor stations talk over MQTT. Where there\'s no cell signal, the mesh still gets through.', es: 'Los radios Meshtastic y las estaciones solares hablan por MQTT. Donde no hay señal, la malla sí llega.' },
   { re: /\b(map|3d|opendronemap|odm|mapa)\b/i, go: 'map', en: 'The 3D map shows cameras, drones and radios on the land. Drop an OpenDroneMap orthophoto on it and it\'s your actual ranch.', es: 'El mapa 3D muestra cámaras, drones y radios en el terreno. Ponle un ortomosaico de OpenDroneMap y es tu rancho de verdad.' },
   { re: /\b(privacy|private|cloud|upload|privacidad)\b/i, en: 'Whatever runs on this phone stays on this phone. Your video goes from your cameras to your edge box. No cloud of mine is involved. I don\'t even have a cloud. I have a phone.', es: 'Lo que corre en este teléfono se queda aquí. El video va de tus cámaras a tu equipo. Ninguna nube mía. Ni tengo nube. Tengo un teléfono.' },
-  { re: /\b(license|licence|sell|price|business|licencia|vender)\b/i, go: 'stack', en: 'Before you sell it: Frigate and the NVIDIA pieces are permissive, but Ultralytics, OpenDroneMap and anything AGPL need care in a paid service. It\'s all listed on the stack slide.', es: 'Antes de venderlo: Frigate y lo de NVIDIA son permisivos, pero Ultralytics, OpenDroneMap y lo AGPL requieren cuidado en un servicio pagado. Todo está en la lámina del motor.' },
+  { re: /\b(license|licence|licencia|stack|repos?)\b/i, go: 'stack', en: 'Every project in the build, and its licence, is on the stack slide. Have a read through the list and get to know each one.', es: 'Cada proyecto y su licencia están en la lámina del motor. Léela con calma y conoce cada uno.' },
   { re: /\b(thank|thanks|gracias)\b/i, en: '[es:¡De nada, jefe!] That\'s what foremen are for.', es: '¡De nada, jefe! Para eso está el capataz.' },
 ];
 
