@@ -95,3 +95,17 @@ an ephemeral cloud session, since the keys live in its local database.
 - Agent Reach is read-only. Login-backed channels (X, Instagram, Xiaohongshu, LinkedIn) use your
   own cookies and may break those sites' terms; use a spare account if you enable them.
 - Re-scan before updating a pin: `skillspector scan <repo-or-folder> --no-llm`.
+
+## Image → 3D
+
+| Tool | Repo | What it does | How it's connected |
+|---|---|---|---|
+| img2threejs | [img2threejs/img2threejs](https://github.com/img2threejs/img2threejs) @ `0c0c49b` | Rebuilds the object in a reference image as a procedural Three.js model, in code (no mesh files, no API keys) | Project skill `.claude/skills/img2threejs` (SKILL.md, forge, grimoire, docs, scripts; Python stdlib only). Its tests, CI files, logos and the optional GLB character pipeline were left out. Its npm installer was not used because it edits `~/.claude/settings.json`. |
+| image-blaster | [neilsonnn/image-blaster](https://github.com/neilsonnn/image-blaster) @ `4acb43b` | One image → Gaussian-splat world (World Labs Marble), 3D props (Hunyuan 3D via FAL) and SFX | Workspace: clone it, open Claude Code inside it, and give it a World Labs key and a FAL key (both paid services). Its 8 skills live in its own `.claude/skills` and use its `app/` viewer. |
+
+Scans: image-blaster's skills scored SAFE (8/100). img2threejs scored "Do Not Install" (100/100),
+almost all from its own test suite (environment copies for subprocesses, a `../../etc/passwd`
+path-traversal refusal test, a test that snapshots and restores `~/.claude/settings.json`) and from
+its installer docs; its build code makes no network calls.
+
+`SkylarKitchen/skills` was not added: the repo isn't public (GitHub asks for a login).
