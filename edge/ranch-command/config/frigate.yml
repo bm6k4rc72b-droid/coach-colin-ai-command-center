@@ -1,0 +1,55 @@
+# Frigate for RANCH COMMAND — a starting point. Replace the example camera
+# with yours; Frigate's docs cover every option: https://docs.frigate.video
+#
+# Zone names matter: the dashboard and the edge service route alerts by
+# keywords in them (gate, perimeter, road, barn, shop, fuel, pen, pasture,
+# corral, fence). Name zones so the rules can read them, e.g. north_gate,
+# calving_pen, county_road.
+
+mqtt:
+  enabled: true
+  host: mosquitto
+  user: frigate
+  password: "{FRIGATE_MQTT_PASSWORD}"
+
+go2rtc:
+  streams:
+    north_gate:
+      - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.1.50:554/Streaming/Channels/101
+    # Thermal cameras are added the same way:
+    # thermal_pasture:
+    #   - rtsp://admin:{FRIGATE_RTSP_PASSWORD}@192.168.1.51:554/stream1
+
+# Pick the detector for your hardware (see the Frigate docs):
+#   x86 + NVIDIA GPU → onnx with a YOLO model on TensorRT
+#   Jetson           → tensorrt (stable-tensorrt-jp6 image)
+# Without this section Frigate falls back to a CPU detector: it works, slowly.
+# detectors:
+#   onnx:
+#     type: onnx
+
+objects:
+  track: [person, car, truck, motorcycle, bicycle, dog, cat, bird, horse, sheep, cow, bear]
+
+snapshots:
+  enabled: true
+  retain: { default: 14 }
+
+record:
+  enabled: true
+  retain: { days: 7, mode: motion }
+
+cameras:
+  north_gate:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/north_gate
+          input_args: preset-rtsp-restream
+          roles: [detect, record]
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+    zones:
+      north_gate:
+        coordinates: 0.0,0.55,1.0,0.55,1.0,1.0,0.0,1.0

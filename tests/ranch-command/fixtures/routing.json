@@ -1,0 +1,20 @@
+{
+  "_comment": "Shared routing cases. Run by tests/ranch-command/ranch.test.mjs against js/events.js and by edge/ranch-command/tests/test_routing.py against ranch_edge/routing.py, so the browser and the edge box cannot drift apart.",
+  "cases": [
+    { "name": "a cow at the north gate is a livestock job, not an intruder", "event": { "label": "cow", "score": 0.82, "zones": ["north_gate"] }, "hour": 23, "expect": { "rule": "stock-at-gate", "workflow": "livestock", "priority": "high" } },
+    { "name": "a person at the gate at night is a security alert", "event": { "label": "person", "score": 0.9, "zones": ["main_gate"] }, "hour": 2, "expect": { "rule": "intruder-night", "workflow": "security", "priority": "high" } },
+    { "name": "a truck at the gate at noon is a visitor", "event": { "label": "truck", "score": 0.77, "zones": ["main_gate"] }, "hour": 12, "expect": { "rule": "visitor-day", "workflow": "security", "priority": "medium" } },
+    { "name": "a person by the hay barn in daylight is probably the crew", "event": { "label": "person", "score": 0.88, "zones": ["hay_yard"] }, "hour": 10, "expect": { "rule": "crew", "workflow": "security", "priority": "low" } },
+    { "name": "a person in the shop zone after dark is high", "event": { "label": "person", "score": 0.7, "zones": ["machine_shop"] }, "hour": 21, "expect": { "rule": "intruder-night", "workflow": "security", "priority": "high" } },
+    { "name": "a coyote by the calving pen is high", "event": { "label": "coyote", "score": 0.66, "zones": ["calving_pen"] }, "hour": 4, "expect": { "rule": "predator-near-stock", "workflow": "wildlife", "priority": "high" } },
+    { "name": "a coyote on the back road is medium", "event": { "label": "coyote", "score": 0.66, "zones": ["county_road"] }, "hour": 4, "expect": { "rule": "predator", "workflow": "wildlife", "priority": "medium" } },
+    { "name": "calving outranks everything", "event": { "label": "calving", "score": 0.6, "zones": [] }, "hour": 3, "expect": { "rule": "calving", "workflow": "livestock", "priority": "critical" } },
+    { "name": "horses in the pasture are not news", "event": { "label": "horse", "score": 0.9, "zones": ["east_pasture"] }, "hour": 14, "expect": { "rule": "stock-grazing", "workflow": "livestock", "priority": "info" } },
+    { "name": "a deer is wildlife passing through", "event": { "label": "deer", "score": 0.8, "zones": [] }, "hour": 6, "expect": { "rule": "wildlife", "workflow": "wildlife", "priority": "info" } },
+    { "name": "a weak detection is ignored", "event": { "label": "person", "score": 0.3, "zones": ["main_gate"] }, "hour": 2, "expect": { "rule": "below-threshold", "workflow": "ignore", "priority": "info" } },
+    { "name": "an unknown label goes to a human", "event": { "label": "umbrella", "score": 0.9, "zones": [] }, "hour": 12, "expect": { "rule": "unknown", "workflow": "review", "priority": "low" } },
+    { "name": "labels are normalised: 'Mountain Lion' is a predator", "event": { "label": "Mountain Lion", "score": 0.7, "zones": ["corral"] }, "hour": 1, "expect": { "rule": "predator-near-stock", "workflow": "wildlife", "priority": "high" } },
+    { "name": "the night window wraps midnight: 5am is still night", "event": { "label": "car", "score": 0.8, "zones": ["perimeter"] }, "hour": 5, "expect": { "rule": "intruder-night", "workflow": "security", "priority": "high" } },
+    { "name": "6am is day", "event": { "label": "car", "score": 0.8, "zones": ["perimeter"] }, "hour": 6, "expect": { "rule": "visitor-day", "workflow": "security", "priority": "medium" } }
+  ]
+}

@@ -1,0 +1,14 @@
+# The API and the worker. The models below are optional: each one that is
+# missing is reported as down by /v1/health and nothing breaks.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2
+paho-mqtt>=2.0
+pillow>=10
+numpy>=1.24
+
+# Optional models (x86 + NVIDIA GPU). On a Jetson, NanoOWL and NanoSAM come
+# from jetson-containers instead — see install.sh.
+# PytorchWildlife      # MegaDetector V6
+# rfdetr               # RF-DETR
+# ultralytics          # Cowcatcher / Calvingcatcher (AGPL-3.0)

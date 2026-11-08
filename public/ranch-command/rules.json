@@ -1,0 +1,39 @@
+{
+  "_comment": "Alert routing for RANCH COMMAND. Read by the dashboard (js/events.js) and by the edge service (edge/ranch-command/ranch_edge/routing.py) so a detection is routed the same way wherever it was made. Rules are checked in order; the first match wins. A zone matches when the camera zone's name contains the keyword, so 'north_gate' matches 'gate'.",
+  "version": 1,
+  "minScore": 0.45,
+  "night": { "start": 20, "end": 6 },
+  "classes": {
+    "person": "person",
+    "car": "vehicle", "truck": "vehicle", "motorcycle": "vehicle", "bus": "vehicle", "bicycle": "vehicle", "vehicle": "vehicle", "atv": "vehicle", "tractor": "equipment",
+    "cow": "livestock", "cattle": "livestock", "horse": "livestock", "sheep": "livestock", "goat": "livestock", "pig": "livestock",
+    "calving": "calving", "calf_birth": "calving",
+    "bear": "predator", "coyote": "predator", "wolf": "predator", "mountain_lion": "predator", "cougar": "predator", "bobcat": "predator", "feral_dog": "predator",
+    "deer": "wildlife", "elk": "wildlife", "pronghorn": "wildlife", "turkey": "wildlife", "rabbit": "wildlife",
+    "dog": "animal", "cat": "animal", "bird": "animal", "animal": "animal"
+  },
+  "rules": [
+    { "id": "calving", "when": { "kind": ["calving"] }, "workflow": "livestock", "priority": "critical",
+      "reason": "Calving activity detected. Check the cow." },
+    { "id": "predator-near-stock", "when": { "kind": ["predator"], "zones": ["pen", "pasture", "barn", "corral"] }, "workflow": "wildlife", "priority": "high",
+      "reason": "A predator near livestock." },
+    { "id": "predator", "when": { "kind": ["predator"] }, "workflow": "wildlife", "priority": "medium",
+      "reason": "A predator on the property, away from the stock." },
+    { "id": "stock-at-gate", "when": { "kind": ["livestock"], "zones": ["gate", "road", "fence"] }, "workflow": "livestock", "priority": "high",
+      "reason": "Livestock at a gate, fence line or road: most likely a gate left open, not an intruder." },
+    { "id": "intruder-night", "when": { "kind": ["person", "vehicle"], "zones": ["gate", "perimeter", "road", "barn", "fuel", "shop"], "night": true }, "workflow": "security", "priority": "high",
+      "reason": "A person or vehicle at an entry point after dark." },
+    { "id": "visitor-day", "when": { "kind": ["person", "vehicle"], "zones": ["gate", "perimeter"], "night": false }, "workflow": "security", "priority": "medium",
+      "reason": "Someone at the gate in daylight: a visitor, a delivery, or worth a look." },
+    { "id": "after-hours", "when": { "kind": ["person", "vehicle"], "night": true }, "workflow": "security", "priority": "medium",
+      "reason": "Activity after dark away from entry points." },
+    { "id": "crew", "when": { "kind": ["person", "vehicle", "equipment"] }, "workflow": "security", "priority": "low",
+      "reason": "Daytime activity in a work area: probably your crew." },
+    { "id": "stock-grazing", "when": { "kind": ["livestock"] }, "workflow": "livestock", "priority": "info",
+      "reason": "Livestock where livestock should be." },
+    { "id": "wildlife", "when": { "kind": ["wildlife", "animal"] }, "workflow": "wildlife", "priority": "info",
+      "reason": "Wildlife passing through." },
+    { "id": "unknown", "when": {}, "workflow": "review", "priority": "low",
+      "reason": "Not a class the rules know. Needs a human look." }
+  ]
+}
