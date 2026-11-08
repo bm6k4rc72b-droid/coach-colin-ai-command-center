@@ -45,6 +45,7 @@
     "test:sentry": "node --test tests/sentry/*.test.mjs",
     "test:nexus": "node --test tests/nexus/*.test.mjs",
     "test:astra": "node --test tests/astra/*.test.mjs",
+    "test:ranch-command": "node --test tests/ranch-command/*.test.mjs",
     "test:carrier": "node --test tests/carrier/*.test.mjs",
     "test:black-optic-6": "node --test tests/black-optic-6/*.test.mjs",
     "test:vision-kit": "node --test tests/vision-kit/*.test.mjs",

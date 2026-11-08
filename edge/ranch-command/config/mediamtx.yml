@@ -1,0 +1,18 @@
+# MediaMTX: receives DJI live streams over RTMP and re-serves them.
+#
+# In DJI Fly or DJI Pilot 2: Live Streaming → RTMP → rtmp://<edge-box>:1935/dji
+# Then add one of these to the dashboard's Cameras slide:
+#   WebRTC (WHEP): https://<edge>.ts.net/dji/whep     (low latency)
+#   HLS:           https://<edge>.ts.net/hls/dji/index.m3u8  (iPhone native)
+rtmp: yes
+rtmpAddress: :1935
+hls: yes
+hlsAddress: :8888
+hlsVariant: lowLatency
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+hlsAllowOrigin: '*'
+paths:
+  dji: {}
+  all_others: {}

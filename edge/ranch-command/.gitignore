@@ -1,0 +1,6 @@
+.env
+data/
+jetson-containers/
+config/mosquitto.passwd
+__pycache__/
+*.pyc
