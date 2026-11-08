@@ -19,6 +19,8 @@ import { listDevices, openDevice, playHLS, playMJPEG, playWebRTC, urlProblem } f
 import { createDetector, createHandTracker, detections, edge, findByText, grabFrame, segmentAt } from './ai.js';
 import { MotionCentroid, SwipeDetector, calibrate as calibrateFrom, measureRest, measureStroke } from './gesture.js';
 import { INTROS, Rafa, answer, recogniser } from './rafa.js';
+import { runGate } from './gate.js';
+import { ART } from './intel.js';
 
 const $ = (id) => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -180,6 +182,8 @@ let settle = 0;
 function onScroll() {
   const track = $('track');
   const p = track.scrollLeft / Math.max(1, track.clientWidth);
+  // Pan the lab: the whole tour travels once along its wall of screens.
+  document.documentElement.style.setProperty('--lab', (p / Math.max(1, SLIDES.length - 1)).toFixed(4));
   const nearest = Math.max(0, Math.min(SLIDES.length - 1, Math.round(p)));
   if (performance.now() > steering) target = nearest;
   if (nearest !== current) {
@@ -206,6 +210,12 @@ function activate(was) {
   const id = SLIDES[current].id;
   if (location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
   renderSlide(current);
+  // The intelligence screens carry large imagery and are stateless, so any
+  // that are out of view are emptied: iPhone Safari never holds more than
+  // two decoded plates at once.
+  SLIDES.forEach((s, i) => {
+    if (s.stateless && Math.abs(i - current) > 1) document.querySelector(`#slide-${s.id} .slide-body`)?.replaceChildren();
+  });
   // Slides off-screen stop costing battery.
   if (SLIDES[was]?.id === 'map' && id !== 'map') map?.stop();
   if (id === 'map') map?.start();
@@ -930,9 +940,10 @@ function closeModal() {
 
 async function enter(withSound) {
   $('gate').classList.add('gone');
+  document.body.classList.add('inside');
   setVoice(withSound && settings.voice.enabled !== false);
-  // Speaking inside the tap is what unlocks speech on iOS.
-  rafa.say(INTROS[SLIDES[current].id]);
+  // The gate's first tap already unlocked audio and speech on iOS.
+  setTimeout(() => rafa.say(INTROS[SLIDES[current].id]), 1400);
   lastArrival = current;
   if (settings.gesture.enabled) startSwipe();
 }
@@ -995,8 +1006,12 @@ async function boot() {
     r.start();
   });
   $('modal').addEventListener('click', (e) => { if (e.target === $('modal')) closeModal(); });
-  $('enter').addEventListener('click', () => enter(true));
-  $('enter-quiet').addEventListener('click', () => enter(false));
+  runGate({ root: $('gate'), rafa, onGranted: (withSound) => enter(withSound) });
+  // The lab behind the slides: one image, loaded once, panned with the scroll.
+  const lab = new Image();
+  lab.decoding = 'async';
+  lab.onload = () => { $('lab').style.backgroundImage = `url("${ART.lab}")`; $('lab').classList.add('ready'); };
+  lab.src = ART.lab;
   setVoice(settings.voice.enabled);
 
   // Network cameras come back on their own; device cameras need a new tap.

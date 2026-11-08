@@ -1,5 +1,6 @@
 /**
- * RANCH COMMAND — the twelve slides.
+ * RANCH COMMAND — the slides (twelve operations slides plus the four
+ * environmental-intelligence slides from intel.js, placed after Command).
  *
  * Each slide is a heading plus a `render(ctx)` that returns its body. The app
  * owns every live thing — camera elements, connections, the alert queue — and
@@ -13,6 +14,7 @@ import { SOURCE_KINDS, urlProblem } from './streams.js';
 import { STACK, WHERE, statusOf } from './stack.js';
 import { PRIORITIES } from './events.js';
 import { inspectionPlan, distance } from './mavlink.js';
+import { INTEL_SLIDES } from './intel.js';
 
 const PRIORITY_TAG = { critical: 'red', high: 'red', medium: 'amber', low: 'gold', info: 'green' };
 const WORKFLOWS = [['all', 'All'], ['security', 'Security'], ['livestock', 'Livestock'], ['wildlife', 'Wildlife'], ['review', 'Review']];
@@ -78,6 +80,8 @@ export const SLIDES = [
       ]);
     },
   },
+
+  ...INTEL_SLIDES,
 
   /* ---------------------------------------------------------- 02 cameras */
   {
