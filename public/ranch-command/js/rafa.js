@@ -17,14 +17,36 @@
  *
  * Spanish fragments inside English lines are marked `[es:…]`.
  *
+ * His English lines are recorded in the owner's studio voice (the same
+ * Coach-Colin voice as the peptide showcase, via Higgsfield); see
+ * voicebank.js. A line without a recording falls back to the device voice.
+ *
  * @module ranch-command/rafa
  */
+
+import { studioClip } from './voicebank.js';
 
 /** One entry per slide: what Rafa says on arrival, in both languages. */
 export const INTROS = {
   command: {
     en: "[es:¡Bienvenidos!] I'm Rafa, your ranch foreman. Well, the AI kind. I don't sleep, I don't take lunch, and I never borrow the good truck. Swipe sideways, or wave your hand at the camera, and I'll show you around.",
     es: '¡Bienvenidos! Soy Rafa, el capataz del rancho. Bueno, el capataz de inteligencia artificial. No duermo, no almuerzo y nunca me llevo la camioneta buena. Desliza de lado, o mueve la mano frente a la cámara, y te enseño todo.',
+  },
+  weather: {
+    en: "Atmospheric intelligence. Your own weather station, fused with the national forecast models, so you see the wind shift before the cattle do. And the cattle are annoyingly good at that.",
+    es: 'Inteligencia atmosférica. Tu propia estación meteorológica, fusionada con los modelos nacionales, para que veas el cambio de viento antes que las vacas. Y las vacas son buenísimas para eso.',
+  },
+  fire: {
+    en: "The Pyro-Sentinel grid. Ridge cameras look for smoke, air sensors smell it, and satellites confirm the heat. Three witnesses before I wake you up. I'm thorough, not dramatic.",
+    es: 'La red Pyro-Sentinel. Las cámaras en la loma buscan humo, los sensores de aire lo huelen y los satélites confirman el calor. Tres testigos antes de despertarte. Soy minucioso, no dramático.',
+  },
+  moisture: {
+    en: "Fuel-moisture intelligence. Sensors measure how dry the grass and brush really are, which tells us how ready this land is to burn. The short version: crunchy is bad.",
+    es: 'Inteligencia de humedad del combustible. Los sensores miden qué tan seco está el pasto y el monte, y eso nos dice qué tan listo está el terreno para arder. En corto: si cruje, mal.',
+  },
+  lightning: {
+    en: "Strike intelligence. Every lightning strike within forty kilometres, logged and mapped. Some strikes smoulder for days, so I keep watching those spots. Lightning doesn't forget, and neither do I.",
+    es: 'Inteligencia de rayos. Cada rayo a cuarenta kilómetros, registrado y mapeado. Algunos rayos se quedan ardiendo por días, así que vigilo esos puntos. El rayo no olvida, y yo tampoco.',
   },
   cameras: {
     en: "Every camera on the ranch, in one place. Your iPhone, the gate cams, even the drone. Back in the day we had one camera, and it was my [es:tío] on the porch with binoculars.",
@@ -72,6 +94,15 @@ export const INTROS = {
   },
 };
 
+/** The clearance ceremony at the door. */
+export const GATE = {
+  begin: { en: 'Evening. This facility is restricted to principals, owners, and anyone who brought snacks. Place your finger on the scanner, please.', es: 'Buenas noches. Esta instalación es solo para dueños, socios y quien traiga botana. Pon tu dedo en el escáner, por favor.' },
+  finger: { en: 'Fingerprint confirmed. Lovely ridges. Now look into the facial sensor, and try to look expensive.', es: 'Huella confirmada. Bonitas crestas. Ahora mira al sensor facial, y pon cara de millonario.' },
+  face: { en: "Facial geometry verified. Last step: sign in. Your real signature, not the one you use for parking tickets.", es: 'Geometría facial verificada. Último paso: firma. Tu firma de verdad, no la de las multas.' },
+  doodle: { en: "That's more of a doodle. Give me a proper signature.", es: 'Eso es un garabato. Dame una firma de verdad.' },
+  granted: { en: 'Clearance granted. Executive level. Welcome to Ranch Command. Mind the doors, they are heavier than they look.', es: 'Acceso concedido. Nivel ejecutivo. Bienvenido a Ranch Command. Cuidado con las puertas, pesan más de lo que parecen.' },
+};
+
 /** Short reactions, so he is not silent between bigger lines. */
 export const QUIPS = {
   next: { en: ['[es:¡Vámonos!]', 'Next stop.', '[es:Ándale.]', 'Follow me.'], es: ['¡Vámonos!', 'Siguiente.', 'Ándale.', 'Sígueme.'] },
@@ -102,6 +133,10 @@ export const ANSWERS = [
   { re: /\b(tour|show me around|recorrido|enséñame)\b/i, tour: true, en: "[es:¡Claro!] Follow me. I'll walk you through every station.", es: '¡Claro! Sígueme, te enseño cada estación.' },
   { re: /\b(joke|funny|chiste|broma)\b/i, joke: true },
   { re: /\b(hola|hello|hi|hey|buenas)\b/i, en: '[es:¡Hola, jefe!] Ask me about cameras, drones, alerts, or say "tour".', es: '¡Hola, jefe! Pregúntame de cámaras, drones o alertas, o di "recorrido".' },
+  { re: /\b(weather|wind|forecast|humidity|clima|viento|pronóstico|red flag)\b/i, go: 'weather', en: 'Your station reports every few seconds. I blend it with the National Weather Service and high-resolution forecast models, then compute fire-weather indices like the Hot-Dry-Windy Index. When a red flag is coming, you know first.', es: 'Tu estación reporta cada pocos segundos. La combino con el Servicio Meteorológico Nacional y modelos de alta resolución, y calculo índices de clima de incendio. Si viene bandera roja, tú te enteras primero.' },
+  { re: /\b(fire|smoke|wildfire|firms|pyronear|incendio|humo|fuego)\b/i, go: 'fire', en: 'Smoke cameras, particulate sensors and NASA satellite hotspots each cast a vote. When they agree, the confidence climbs and you get a verified alert. Always call nine one one first. I am a foreman, not a fire department.', es: 'Cámaras de humo, sensores de partículas y puntos de calor de la NASA votan. Cuando coinciden, sube la confianza y te llega una alerta verificada. Siempre llama primero al nueve uno uno.' },
+  { re: /\b(moisture|fuel|dry|drought|humedad|seco|sequía)\b/i, go: 'moisture', en: 'Ten-hour fuel sticks and soil probes measure dryness in each zone. Below about eight percent, ignition gets very easy, so the zone turns red on the board.', es: 'Varillas de combustible de diez horas y sondas de suelo miden la sequedad por zona. Debajo de ocho por ciento, se prende muy fácil, y la zona se pone roja.' },
+  { re: /\b(lightning|strike|thunder|rayo|relámpago|trueno)\b/i, go: 'lightning', en: 'A local strike sensor estimates storm distance, and a licensed lightning network gives exact strike locations. I cross them with fuel moisture to flag holdover fires, the ones that wake up days later.', es: 'Un sensor local estima la distancia de la tormenta y una red licenciada da la ubicación exacta de cada rayo. Lo cruzo con la humedad para marcar incendios latentes.' },
   { re: /\b(iphone|phone camera|teléfono|celular)\b/i, go: 'cameras', en: 'Tap "Add this device" on the cameras slide. Your iPhone becomes a camera on the ranch, and the AI runs right on it.', es: 'Toca "Agregar este dispositivo" en cámaras. Tu iPhone se vuelve una cámara del rancho y la inteligencia corre ahí mismo.' },
   { re: /\b(dji|mavic|matrice|mini \d|air \d)\b/i, go: 'drones', en: 'Two ways for DJI. Live stream RTMP from DJI Fly or Pilot 2 into MediaMTX on the edge box, then add its HLS or WebRTC URL. Or plug the remote\'s HDMI into a capture card and add it as a device camera.', es: 'Con DJI hay dos maneras. Transmite RTMP desde DJI Fly o Pilot 2 a MediaMTX en el equipo de borde y agrega su URL. O conecta el HDMI del control a una capturadora y agrégala como cámara.' },
   { re: /\b(drone|dron|ardupilot|px4|mavlink|fly|volar)\b/i, go: 'drones', en: 'Any ArduPilot or PX4 drone shows up through mavlink2rest on the edge box, or straight from a USB telemetry radio on a laptop. I read telemetry and draft missions. A human uploads and flies them. Always.', es: 'Cualquier dron ArduPilot o PX4 aparece por mavlink2rest, o directo de un radio de telemetría USB en una laptop. Yo leo la telemetría y preparo misiones. Una persona las sube y las vuela. Siempre.' },
@@ -193,6 +228,43 @@ export class Rafa {
     this.voices = { en: [], es: [] };
     this.refresh();
     this.synth?.addEventListener?.('voiceschanged', () => this.refresh());
+    // One reused element: iOS lets it play again once a tap has started it.
+    this.audio = typeof Audio === 'function' ? new Audio() : null;
+    if (this.audio) {
+      this.audio.preload = 'auto';
+      this.audio.addEventListener('playing', () => this.onSpeaking(true));
+      this.audio.addEventListener('ended', () => this.onSpeaking(false));
+      this.audio.addEventListener('pause', () => this.onSpeaking(false));
+    }
+  }
+
+  /**
+   * Prime the audio element inside a tap, so later lines may play on iOS.
+   */
+  unlock() {
+    if (!this.audio || this.unlocked) return;
+    this.unlocked = true;
+    // A silent WAV: plays instantly inside the gesture.
+    this.audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+    this.audio.play().catch(() => {});
+    // And speech synthesis, for lines that have no recording.
+    try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; this.synth?.speak(u); } catch { /* none */ }
+  }
+
+  /**
+   * Play the studio recording of an English line, if there is one.
+   *
+   * @param {string} text The caption text.
+   * @returns {boolean} Whether a recording is playing.
+   */
+  playStudio(text) {
+    const url = this.mode === 'espanol' ? null : studioClip(text);
+    if (!url || !this.audio) return false;
+    this.synth?.cancel();
+    this.audio.pause();
+    this.audio.src = url;
+    this.audio.play().catch(() => this.speakDevice(text));
+    return true;
   }
 
   /** Re-read the device's voices. */
@@ -214,7 +286,19 @@ export class Rafa {
   say(line) {
     const text = typeof line === 'string' ? line : (line[this.lang] || line.en);
     this.onCaption(plain(text));
-    if (!this.enabled || !this.synth) return;
+    if (!this.enabled) return;
+    if (this.playStudio(plain(text))) return;
+    this.speakDevice(text);
+  }
+
+  /**
+   * Speak with the device's own voices.
+   *
+   * @param {string} text The line, with `[es:…]` markup.
+   */
+  speakDevice(text) {
+    if (!this.synth) return;
+    this.audio?.pause();
     this.synth.cancel();
     const parts = this.mode === 'bilingual' ? runs(text)
       : [{ lang: this.mode === 'espanol' ? 'es' : 'es', text: plain(text) }];
@@ -247,6 +331,7 @@ export class Rafa {
   /** Stop talking. */
   hush() {
     this.synth?.cancel();
+    this.audio?.pause();
     this.onSpeaking(false);
   }
 

@@ -14,25 +14,18 @@
 <link rel="apple-touch-icon" href="./icon.svg">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="stylesheet" href="./styles.css">
+<link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" crossorigin>
 <script type="importmap">
   { "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
 </script>
 </head>
 <body>
-<div id="bg" aria-hidden="true"><div class="bg-grid"></div><div class="bg-glow glow-a"></div><div class="bg-glow glow-b"></div><div class="bg-glow glow-c"></div></div>
-<div id="scan" aria-hidden="true"></div>
+<div id="bg" aria-hidden="true"><div id="lab"></div><div class="lab-shade"></div><div class="bg-grid"></div></div>
 
-<!-- The gate. One tap unlocks speech and the camera prompts, which iOS only allows from a gesture. -->
-<section id="gate" aria-label="Enter">
-  <div class="gate-inner">
-    <div class="gate-mark" aria-hidden="true"><span></span><span></span><span></span></div>
-    <p class="kicker">Concept architecture · live build</p>
-    <h1 class="holo">RANCH COMMAND</h1>
-    <p class="gate-sub">Intelligence Network</p>
-    <button id="enter" class="btn gold xl" type="button">Enter Command</button>
-    <button id="enter-quiet" class="btn ghost" type="button">Enter without sound</button>
-    <p class="gate-note">Edge AI built for NVIDIA<sup>®</sup> Jetson<sup>™</sup></p>
-  </div>
+<!-- The gate: a three-factor clearance ceremony (gate.js). Its first tap
+     also unlocks audio and speech, which iOS only allows from a gesture. -->
+<section id="gate" aria-label="Clearance">
+  <div class="cg-boot"><p class="kicker">Establishing secure channel…</p></div>
 </section>
 
 <header id="top">
