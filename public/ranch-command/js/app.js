@@ -19,6 +19,7 @@ import { listDevices, openDevice, playHLS, playMJPEG, playWebRTC, urlProblem } f
 import { createDetector, createHandTracker, detections, edge, findByText, grabFrame, segmentAt } from './ai.js';
 import { MotionCentroid, SwipeDetector, calibrate as calibrateFrom, measureRest, measureStroke } from './gesture.js';
 import { INTROS, Rafa, answer, recogniser } from './rafa.js';
+import { Tracker, command } from './track.js';
 import { runGate } from './gate.js';
 import { ART } from './intel.js';
 
@@ -40,7 +41,7 @@ const ctx = {
   links: { edge: 'off', mqtt: 'off', mavlink: 'off' },
   ui: {},
   state: {
-    vision: { camera: null, running: false, raise: false, status: '', counts: {}, perCamera: {} },
+    vision: { camera: null, running: false, raise: true, status: '', counts: {}, perCamera: {}, tracks: [], draw: null, geoName: '', lastCross: '' },
     search: { camera: null, prompt: 'open gate, cattle, truck', busy: false, status: '', results: [] },
     segment: { camera: null, frozen: null, status: '', coverage: null },
     events: { filter: 'all' },
@@ -63,8 +64,8 @@ function toast(message) {
   toast.t = setTimeout(() => node.classList.remove('shown'), 4200);
 }
 
-function download(name, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function download(name, text, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
   const a = el('a', { href: url, download: name });
   document.body.append(a);
   a.click();
@@ -112,6 +113,24 @@ ctx.tour = async () => {
 };
 
 function ask(question) {
+  // "Next", "go to drones", "start sentry": things to do, not things to answer.
+  const cmd = command(question, SLIDES);
+  if (cmd) {
+    touring = false;
+    if (cmd.action === 'next') { go(target + 1); rafa.quip('next'); }
+    else if (cmd.action === 'prev') { go(target - 1); rafa.quip('prev'); }
+    else if (cmd.action === 'go') { ctx.goTo(cmd.slide); rafa.quip('next'); }
+    else if (cmd.action === 'mute') setVoice(false);
+    else if (cmd.action === 'sentry-on') {
+      ctx.goTo('vision');
+      if (!ctx.state.vision.running) ctx.toggleVision();
+      rafa.say({ en: "Sentry's on. I'm watching, [es:jefe].", es: 'Vigilancia activada. Yo vigilo, jefe.' });
+    } else if (cmd.action === 'sentry-off') {
+      if (ctx.state.vision.running) ctx.toggleVision();
+      rafa.say({ en: 'Sentry off. Eyes closed.', es: 'Vigilancia apagada.' });
+    }
+    return;
+  }
   const entry = answer(question);
   if (!entry) {
     rafa.say({ en: "[es:Híjole,] that one's beyond me. Try cameras, drones, alerts, NanoOWL, or say tour.", es: 'Híjole, esa no me la sé. Pregúntame de cámaras, drones, alertas o NanoOWL, o di recorrido.' });
@@ -357,6 +376,7 @@ ctx.stage = (name) => {
     const node = el(`div.stage${name === 'segment' ? '.tap' : ''}`, {}, [frame, overlay, msg]);
     stages[name] = { node, frame, overlay, msg };
     if (name === 'segment') node.addEventListener('click', (e) => onSegmentTap(e));
+    if (name === 'vision') node.addEventListener('click', (e) => onVisionTap(e));
   }
   return stages[name].node;
 };
@@ -379,6 +399,8 @@ function stageLoop() {
       }
     }
   }
+  // With the watch stopped, the drawn tripwires and zones still show.
+  if (id === 'vision' && st && !ctx.state.vision.running && st.overlay.width) drawWatch(st, [], ctx.geometry());
   requestAnimationFrame(stageLoop);
 }
 
@@ -423,56 +445,287 @@ ctx.toggleVision = async () => {
     return;
   }
   s.running = true;
-  s.status = 'EfficientDet-Lite0 · running on this device';
+  s.status = 'EfficientDet-Lite0 + tracker · running on this device';
   ctx.render();
   visionLoop();
 };
 
-const seen = new Map();
+/* The watch: detect → track → tripwires and zones → alerts with evidence.
+   It runs on its own canvas, so it keeps watching whichever slide is open. */
+
+const tracker = new Tracker();
+ctx.tracker = tracker;
+const watch = el('canvas');
+const watchCtx = watch.getContext('2d');
+let trackedCamera = null;
+
+/** Drawn geometry is kept per camera; a phone's lens is known by its facing. */
+const camKey = (c) => (c.kind === 'device' ? `device:${c.deviceId || c.facing}` : c.id);
+function geometryOf(c) {
+  settings.analytics ??= {};
+  return (settings.analytics[camKey(c)] ??= { wires: [], zones: [] });
+}
+ctx.geometry = () => { const c = cams.get(ctx.state.vision.camera); return c ? geometryOf(c) : { wires: [], zones: [] }; };
+
 function visionLoop() {
   const s = ctx.state.vision;
   if (!s.running) return;
-  const src = ctx.sourceOf(s.camera);
-  const st = stages.vision;
-  const ready = src && (src.readyState >= 2 || src.complete) && (src.videoWidth || src.naturalWidth);
-  if (ready && SLIDES[current].id === 'vision' && st) {
+  const cam = cams.get(s.camera);
+  const src = cam?.media;
+  const onSlide = SLIDES[current].id === 'vision';
+  const w = src?.videoWidth || src?.naturalWidth || 0;
+  const h = src?.videoHeight || src?.naturalHeight || 0;
+  if (src && (src.readyState >= 2 || src.complete) && w && h) {
     try {
+      if (watch.width !== w || watch.height !== h) { watch.width = w; watch.height = h; }
+      watchCtx.drawImage(src, 0, 0, w, h);
       const t0 = performance.now();
-      const found = detections(detector.detectForVideo(st.frame, t0));
+      const found = detections(detector.detectForVideo(watch, t0));
+      for (const d of found) d.kind = kindOf(d.label, rules);
+      if (trackedCamera !== cam.id) { tracker.reset(); trackedCamera = cam.id; }
+      tracker.setGeometry(geometryOf(cam));
+      const { tracks, events } = tracker.update(found, t0 / 1000, { width: w, height: h });
       const counts = {};
-      for (const d of found) {
-        const kind = kindOf(d.label, rules);
-        counts[kind] = (counts[kind] || 0) + 1;
-        d.color = KIND_COLOR[kind];
-        if (s.raise) raiseFromDevice(d);
-      }
+      for (const tr of tracks) counts[tr.kind] = (counts[tr.kind] || 0) + 1;
       s.counts = counts;
       s.perCamera[s.camera] = counts;
-      s.status = `EfficientDet-Lite0 · this device · ${Math.round(performance.now() - t0)} ms/frame`;
-      drawBoxes(st, found);
-      if (ctx.ui.visionCounts?.isConnected) {
-        ctx.ui.visionCounts.querySelectorAll('.kpi b').forEach((b, i) => { b.textContent = String(counts[['person', 'vehicle', 'livestock', 'predator', 'animal'][i]] || 0); });
-        const via = ctx.ui.visionCounts.parentElement?.querySelector('.via');
-        if (via) via.textContent = s.status;
+      s.tracks = tracks;
+      s.status = `EfficientDet-Lite0 + tracker · this device · ${Math.round(performance.now() - t0)} ms/frame · ${tracks.length} tracked`;
+      for (const ev of events) onTrackEvent(ev, cam);
+      if (onSlide && stages.vision) {
+        drawWatch(stages.vision, tracks, geometryOf(cam));
+        if (ctx.ui.visionCounts?.isConnected) {
+          ctx.ui.visionCounts.querySelectorAll('.kpi b').forEach((b, i) => { b.textContent = String(counts[['person', 'vehicle', 'livestock', 'predator', 'animal'][i]] || 0); });
+          const via = document.querySelector('#slide-vision .via');
+          if (via) via.textContent = s.status;
+        }
       }
     } catch (error) {
       s.status = `Detector error: ${error.message}`;
     }
   }
-  setTimeout(() => requestAnimationFrame(visionLoop), 90);
+  // Full speed while it is being watched, a slower patrol in the background.
+  setTimeout(() => requestAnimationFrame(visionLoop), onSlide ? 90 : 450);
 }
 
-function raiseFromDevice(d) {
+function onTrackEvent(ev, cam) {
+  const tr = ev.track;
+  if (ev.type === 'new' || ev.type === 'enter') raiseTrack(tr, cam);
+  if (ev.type === 'dwell') {
+    raiseTrack(tr, cam, { note: `Loitering in ${ev.zone.name} for ${ev.seconds}s` });
+    toast(`${tr.label} loitering in ${ev.zone.name} · ${ev.seconds}s`);
+  }
+  if (ev.type === 'cross') {
+    ctx.state.vision.lastCross = `${tr.label} #${tr.id} went ${ev.direction} across ${ev.wire.name}`;
+    // Livestock through a gate is a count; a person, vehicle or predator
+    // across a line is an alert.
+    if (['person', 'vehicle', 'predator'].includes(tr.kind)) raiseTrack(tr, cam, { zones: [ev.wire.name], note: `Crossed ${ev.wire.name} (${ev.direction})` });
+    softRender();
+  }
+}
+
+/** A small evidence crop of what the tracker saw. */
+function thumb(box) {
+  const pad = 0.2;
+  const x = Math.max(0, box.x - box.w * pad);
+  const y = Math.max(0, box.y - box.h * pad);
+  const w = Math.min(watch.width - x, box.w * (1 + 2 * pad));
+  const h = Math.min(watch.height - y, box.h * (1 + 2 * pad));
+  const c = el('canvas', { width: 184, height: 128 });
+  const g = c.getContext('2d');
+  g.fillStyle = '#000';
+  g.fillRect(0, 0, 184, 128);
+  const scale = Math.min(184 / w, 128 / h);
+  try {
+    g.drawImage(watch, x, y, w, h, (184 - w * scale) / 2, (128 - h * scale) / 2, w * scale, h * scale);
+    return c.toDataURL('image/jpeg', 0.7);
+  } catch {
+    return null;
+  }
+}
+
+/** One alert per tracked object, updated as it enters zones or crosses lines. */
+function raiseTrack(tr, cam, { zones = [], note } = {}) {
+  if (!ctx.state.vision.raise) return;
+  const id = `device:${cam.id}:t${tr.id}`;
+  const existing = ctx.alerts.items.get(id);
+  const alert = ctx.alerts.add({
+    id, source: 'device', camera: cam.name, label: tr.label, baseLabel: tr.label, score: tr.score,
+    zones: [...new Set([...(cam.zone ? [cam.zone] : []), ...tracker.zonesOf(tr), ...zones, ...(existing?.zones || [])])],
+    start: existing?.start || Date.now() / 1000, snapshot: false,
+    snapshotUrl: existing?.snapshotUrl || thumb(tr.box), note: note || existing?.note || null, trackId: tr.id,
+  });
+  if (alert && !existing) onAlert(alert);
+  softRender();
+}
+
+/** Draw tracks, trails, tripwires and zones over the vision stage. */
+function drawWatch(st, tracks, geometry) {
+  const g = st.overlay.getContext('2d');
+  const W = st.overlay.width;
+  const H = st.overlay.height;
+  if (!W || !H) return;
+  g.clearRect(0, 0, W, H);
+  const u = W / 640;
+  g.font = `${Math.max(12, 16 * u)}px ui-monospace, Menlo, monospace`;
+  g.lineJoin = 'round';
+  for (const zone of geometry.zones) {
+    g.beginPath();
+    zone.points.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H) : g.moveTo(x * W, y * H)));
+    g.closePath();
+    g.fillStyle = 'rgba(255, 207, 74, 0.14)';
+    g.fill();
+    g.strokeStyle = '#ffcf4a';
+    g.lineWidth = Math.max(2, 2 * u);
+    g.setLineDash([10 * u, 6 * u]);
+    g.stroke();
+    g.setLineDash([]);
+    g.fillStyle = '#ffcf4a';
+    g.fillText(zone.name, zone.points[0][0] * W + 6 * u, zone.points[0][1] * H + 20 * u);
+  }
+  for (const wire of geometry.wires) {
+    const [ax, ay, bx, by] = [wire.a[0] * W, wire.a[1] * H, wire.b[0] * W, wire.b[1] * H];
+    g.strokeStyle = '#39ff14';
+    g.shadowColor = '#39ff14';
+    g.shadowBlur = 14;
+    g.lineWidth = Math.max(3, 4 * u);
+    g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+    g.shadowBlur = 0;
+    const tally = tracker.tally(wire.id);
+    g.fillStyle = '#39ff14';
+    g.fillText(`${wire.name}  in ${tally.in} · out ${tally.out}`, Math.min(ax, bx) + 6 * u, Math.min(ay, by) - 8 * u);
+  }
+  const draft = ctx.state.vision.draw;
+  if (draft?.points.length) {
+    g.strokeStyle = '#fff';
+    g.fillStyle = '#fff';
+    g.lineWidth = Math.max(2, 2 * u);
+    g.beginPath();
+    draft.points.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H) : g.moveTo(x * W, y * H)));
+    g.stroke();
+    for (const [x, y] of draft.points) { g.beginPath(); g.arc(x * W, y * H, 6 * u, 0, Math.PI * 2); g.fill(); }
+  }
+  for (const tr of tracks) {
+    const c = KIND_COLOR[tr.kind] || '#ffcf4a';
+    if (tr.trail.length > 1) {
+      g.strokeStyle = c;
+      g.globalAlpha = 0.7;
+      g.lineWidth = Math.max(2, 2 * u);
+      g.beginPath();
+      tr.trail.forEach(([x, y], i) => (i ? g.lineTo(x * W, y * H) : g.moveTo(x * W, y * H)));
+      g.stroke();
+      g.globalAlpha = 1;
+    }
+    g.strokeStyle = c;
+    g.shadowColor = c;
+    g.shadowBlur = 12;
+    g.lineWidth = Math.max(2, 3 * u);
+    g.strokeRect(tr.box.x, tr.box.y, tr.box.w, tr.box.h);
+    g.shadowBlur = 0;
+    const label = `#${tr.id} ${tr.label} ${Math.round(tr.score * 100)}%`;
+    g.fillStyle = c;
+    g.fillRect(tr.box.x, Math.max(0, tr.box.y - 22 * u), g.measureText(label).width + 10, 22 * u);
+    g.fillStyle = '#000';
+    g.fillText(label, tr.box.x + 5, Math.max(15 * u, tr.box.y - 6 * u));
+  }
+}
+
+/** Where a tap on a letterboxed stage lands, in fractions of the frame. */
+function stagePoint(st, e) {
+  const rect = st.frame.getBoundingClientRect();
+  if (!st.frame.width) return null;
+  const scale = Math.min(rect.width / st.frame.width, rect.height / st.frame.height);
+  const x = (e.clientX - rect.left - (rect.width - st.frame.width * scale) / 2) / (st.frame.width * scale);
+  const y = (e.clientY - rect.top - (rect.height - st.frame.height * scale) / 2) / (st.frame.height * scale);
+  return x < 0 || y < 0 || x > 1 || y > 1 ? null : [x, y];
+}
+
+const geoId = () => `g${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+const geoName = (fallback) => (ctx.state.vision.geoName || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || fallback;
+
+ctx.startDraw = (mode) => {
+  const s = ctx.state.vision;
+  if (!cams.get(s.camera)) { toast('Add a camera first.'); return; }
+  s.draw = s.draw?.mode === mode ? null : { mode, points: [] };
+  toast(s.draw ? (mode === 'wire' ? 'Tap the two ends of the tripwire on the picture.' : 'Tap the corners of the zone, then Finish zone.') : 'Drawing cancelled.');
+  ctx.render();
+};
+
+function onVisionTap(e) {
+  const s = ctx.state.vision;
+  const cam = cams.get(s.camera);
+  if (!s.draw || !cam) return;
+  const p = stagePoint(stages.vision, e);
+  if (!p) return;
+  s.draw.points.push(p);
+  if (s.draw.mode === 'wire' && s.draw.points.length === 2) {
+    geometryOf(cam).wires.push({ id: geoId(), name: geoName('gate'), a: s.draw.points[0], b: s.draw.points[1] });
+    s.draw = null;
+    saveSettings(settings);
+    toast('Tripwire set. Anything crossing it is counted, with its direction.');
+    ctx.render();
+  }
+}
+
+ctx.finishZone = () => {
+  const s = ctx.state.vision;
+  const cam = cams.get(s.camera);
+  if (!cam || s.draw?.mode !== 'zone') return;
+  if (s.draw.points.length < 3) { toast('A zone needs at least three corners.'); return; }
+  geometryOf(cam).zones.push({ id: geoId(), name: geoName('perimeter'), points: s.draw.points, dwell: 20 });
+  s.draw = null;
+  saveSettings(settings);
+  toast('Zone set. Alerts from inside it carry its name; 20 seconds inside counts as loitering.');
+  ctx.render();
+};
+
+ctx.clearGeometry = () => {
   const cam = cams.get(ctx.state.vision.camera);
   if (!cam) return;
-  const bucket = Math.floor(Date.now() / 30000);
-  const id = `device:${cam.id}:${d.label}:${bucket}`;
-  if (seen.has(id)) return;
-  seen.set(id, true);
-  if (seen.size > 500) seen.delete(seen.keys().next().value);
-  const alert = ctx.alerts.add({ id, source: 'device', camera: cam.name, label: d.label, baseLabel: d.label, score: d.score, zones: cam.zone ? [cam.zone] : [], start: Date.now() / 1000, snapshot: false });
-  if (alert && ['critical', 'high'].includes(alert.routing.priority)) { rafa.quip('alert'); toast(`${alert.routing.priority.toUpperCase()}: ${alert.label} at ${alert.camera}`); }
+  settings.analytics[camKey(cam)] = { wires: [], zones: [] };
+  tracker.counts = {};
+  ctx.state.vision.draw = null;
+  saveSettings(settings);
+  ctx.render();
+};
+
+/* --------------------------------------------------------- notifications */
+
+let chimeCtx = null;
+function chime(critical) {
+  if (!settings.voice.enabled) return;
+  try {
+    chimeCtx ??= new (window.AudioContext || window.webkitAudioContext)();
+    const now = chimeCtx.currentTime;
+    (critical ? [880, 660, 880] : [660, 880]).forEach((f, i) => {
+      const o = chimeCtx.createOscillator();
+      const g = chimeCtx.createGain();
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now + i * 0.16);
+      g.gain.exponentialRampToValueAtTime(0.18, now + i * 0.16 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.16 + 0.15);
+      o.connect(g).connect(chimeCtx.destination);
+      o.start(now + i * 0.16);
+      o.stop(now + i * 0.16 + 0.16);
+    });
+  } catch { /* no audio on this device */ }
 }
+
+ctx.enableNotifications = async () => {
+  if (!('Notification' in window)) { toast('This browser has no notifications. On iPhone, add the dashboard to the Home Screen first.'); return; }
+  const answerGiven = await Notification.requestPermission();
+  settings.notify = answerGiven === 'granted';
+  saveSettings(settings);
+  toast(settings.notify ? 'Urgent alerts will notify this device.' : 'Notifications were not allowed.');
+  ctx.render();
+};
+
+ctx.exportLog = () => {
+  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = [['time', 'priority', 'workflow', 'rule', 'label', 'camera', 'zones', 'confidence', 'source', 'verdict', 'note']];
+  for (const a of ctx.alerts.list()) rows.push([new Date(a.start * 1000).toISOString(), a.routing.priority, a.routing.workflow, a.routing.rule, a.label, a.camera, (a.zones || []).join(' '), Math.round(a.score * 100) + '%', a.source, a.verdict || 'open', a.note || '']);
+  download(`ranch-incident-log-${new Date().toISOString().slice(0, 10)}.csv`, rows.map((r) => r.map(cell).join(',')).join('\n'), 'text/csv');
+};
 
 /* ---------------------------------------------------------------- search */
 
@@ -592,7 +845,12 @@ function onAlert(alert) {
   if (!alert) return;
   if (['critical', 'high'].includes(alert.routing.priority) && alert.updated === alert.created) {
     rafa.quip('alert');
+    chime(alert.routing.priority === 'critical');
     toast(`${alert.routing.priority.toUpperCase()}: ${alert.label} at ${alert.camera}`);
+    // With the dashboard in the background, say so where it will be seen.
+    if (settings.notify && document.hidden && globalThis.Notification?.permission === 'granted') {
+      try { new Notification(`${alert.routing.priority.toUpperCase()} · ${alert.label} at ${alert.camera}`, { body: alert.routing.reason, tag: alert.id, icon: './icon.svg' }); } catch { /* not allowed here */ }
+    }
   }
 }
 
@@ -603,7 +861,7 @@ function softRender() {
   softTimer = setTimeout(() => {
     softTimer = 0;
     const id = SLIDES[current].id;
-    if (['command', 'events', 'livestock', 'drones', 'mesh'].includes(id) && !document.activeElement?.matches('input, select, textarea')) renderSlide(current);
+    if (['command', 'events', 'livestock', 'drones', 'mesh', 'vision'].includes(id) && !document.activeElement?.matches('input, select, textarea')) renderSlide(current);
     if (map) updateMap();
   }, 500);
 }
@@ -1030,4 +1288,4 @@ async function boot() {
 boot();
 
 /** For the end-to-end harness. */
-globalThis.__ranch = { ctx, go, cams, get current() { return current; }, SLIDES, swipe: () => swipe, stages };
+globalThis.__ranch = { ctx, go, cams, get current() { return current; }, SLIDES, swipe: () => swipe, stages, enter, tracker, ask };

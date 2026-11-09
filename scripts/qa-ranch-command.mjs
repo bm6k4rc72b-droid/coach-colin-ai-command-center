@@ -117,13 +117,14 @@ async function main() {
   await wait(600);
   check('the gate shows on arrival', await R(() => !document.getElementById('gate').classList.contains('gone')));
   await shot('00-gate');
-  await page.click('#enter-quiet');
+  // The clearance ceremony is theatre; the harness walks straight in.
+  await R(() => globalThis.__ranch.enter(false));
   await wait(1300);
   check('entering hides the gate', await R(() => document.getElementById('gate').classList.contains('gone')));
 
   /* ---------------------------------------------------------- slides */
   const slideIds = await R(() => globalThis.__ranch.SLIDES.map((s) => s.id));
-  check('twelve slides are built', slideIds.length === 12, slideIds.join(' '));
+  check('sixteen slides are built', slideIds.length === 16, slideIds.join(' '));
   for (let i = 0; i < slideIds.length; i += 1) {
     await R((n) => globalThis.__ranch.go(n), i);
     await wait(1300);
@@ -134,29 +135,29 @@ async function main() {
     check(`slide ${String(i + 1).padStart(2, '0')} ${slideIds[i]} renders`, info.heading && info.body > 0 && !info.error && info.current === i && info.hash === `#${slideIds[i]}`, info.error || info.hash);
   }
 
-  await R(() => globalThis.__ranch.go(0));
+  await R(() => globalThis.__ranch.ctx.goTo('lightning'));
   await wait(1300);
   await page.keyboard.press('ArrowRight');
   await wait(1300);
-  check('the right arrow key moves to the next slide', await R(() => globalThis.__ranch.current) === 1);
+  check('the right arrow key moves to the next slide', (await R(() => globalThis.__ranch.SLIDES[globalThis.__ranch.current].id)) === 'cameras');
   await page.mouse.move(700, 450);
   // A tall slide scrolls first; at its end, one wheel gesture pages sideways.
   await R(() => { const s = document.getElementById('slide-cameras'); s.scrollTop = s.scrollHeight; });
   await wait(200);
   await page.mouse.wheel({ deltaY: 240 });
   await wait(1300);
-  check('a vertical wheel scrolls a tall slide, then pages sideways at its end', await R(() => globalThis.__ranch.current) === 2);
+  check('a vertical wheel scrolls a tall slide, then pages sideways at its end', (await R(() => globalThis.__ranch.SLIDES[globalThis.__ranch.current].id)) === 'vision');
   await page.click('#prev');
   await wait(1300);
-  check('the previous button goes back', await R(() => globalThis.__ranch.current) === 1);
+  check('the previous button goes back', (await R(() => globalThis.__ranch.SLIDES[globalThis.__ranch.current].id)) === 'cameras');
   await page.goto(`${base}#drones`, { waitUntil: 'networkidle0' });
   await wait(1300);
   check('a hash deep-links to its slide', await R(() => globalThis.__ranch.current) === slideIds.indexOf('drones'));
-  await page.click('#enter-quiet');
+  await R(() => globalThis.__ranch.enter(false));
   await wait(500);
 
   /* --------------------------------------------------------- cameras */
-  await R(() => globalThis.__ranch.go(1));
+  await R(() => globalThis.__ranch.ctx.goTo('cameras'));
   await wait(1300);
   await R(() => globalThis.__ranch.ctx.addDevice('environment'));
   await wait(1500);
@@ -177,20 +178,62 @@ async function main() {
   await shot('02-cameras');
 
   /* ---------------------------------------------------------- vision */
-  await R(() => { const r = globalThis.__ranch; r.ctx.state.vision.camera = [...r.cams.values()][1].id; r.ctx.state.vision.raise = true; r.go(2); });
+  await R(() => { const r = globalThis.__ranch; r.ctx.state.vision.camera = [...r.cams.values()][1].id; r.ctx.state.vision.raise = true; r.ctx.goTo('vision'); });
   await wait(1300);
   await R(() => globalThis.__ranch.ctx.toggleVision());
   let vision = {};
   for (let i = 0; i < 40; i += 1) {
     await wait(500);
-    vision = await R(() => ({ ...globalThis.__ranch.ctx.state.vision, perCamera: undefined }));
+    vision = await R(() => ({ status: globalThis.__ranch.ctx.state.vision.status, counts: globalThis.__ranch.ctx.state.vision.counts }));
     if (vision.counts?.person) break;
   }
-  check('the bundled detector runs on this device', /EfficientDet-Lite0 · this device · \d+ ms\/frame/.test(vision.status), vision.status);
+  check('the bundled detector runs on this device', /EfficientDet-Lite0 \+ tracker · this device · \d+ ms\/frame/.test(vision.status), vision.status);
   check('it finds the person in a real photograph', (vision.counts?.person || 0) >= 1, JSON.stringify(vision.counts));
   const raised = await R(() => globalThis.__ranch.ctx.alerts.list().filter((a) => a.source === 'device').map((a) => `${a.label}:${a.routing.rule}`));
   check('an on-device detection raises a routed alert', raised.some((r) => r.startsWith('person:')), raised.join(', '));
+  const tracked = await R(() => {
+    const a = globalThis.__ranch.ctx.alerts.list().find((x) => x.source === 'device' && x.label === 'person');
+    return a ? { id: a.id, thumb: (a.snapshotUrl || '').slice(0, 23), bytes: (a.snapshotUrl || '').length } : null;
+  });
+  check('the alert is tied to one tracked object and carries an evidence snapshot', /:t\d+$/.test(tracked?.id || '') && tracked.thumb === 'data:image/jpeg;base64,' && tracked.bytes > 1500, JSON.stringify(tracked));
+  const dupes = await R(() => globalThis.__ranch.ctx.alerts.list().filter((x) => x.source === 'device' && x.label === 'person').length);
+  check('a person standing still raises one alert, not one per frame', dupes === 1, `${dupes} alerts`);
+
+  // Draw a zone by tapping its corners on the picture, as a user would.
+  await R(() => { document.querySelector('#slide-vision input[placeholder="north_gate"]').value = 'Fuel Tank'; document.querySelector('#slide-vision input[placeholder="north_gate"]').dispatchEvent(new Event('input')); globalThis.__ranch.ctx.startDraw('zone'); });
+  await wait(300);
+  const pictureBox = () => R(() => {
+    const f = globalThis.__ranch.stages.vision.frame; const r = f.getBoundingClientRect();
+    const k = Math.min(r.width / f.width, r.height / f.height); const w = f.width * k; const h = f.height * k;
+    return { x: r.left + (r.width - w) / 2, y: r.top + (r.height - h) / 2, w, h };
+  });
+  let box = await pictureBox();
+  for (const [fx, fy] of [[0.05, 0.05], [0.95, 0.05], [0.95, 0.98], [0.05, 0.98]]) { await page.mouse.click(box.x + box.w * fx, box.y + box.h * fy); await wait(150); }
+  await R(() => globalThis.__ranch.ctx.finishZone());
+  await wait(400);
+  const zone = await R(() => globalThis.__ranch.ctx.geometry().zones[0]);
+  check('a zone is drawn by tapping the picture and named for the rules', zone?.name === 'fuel_tank' && zone.points.length === 4 && Math.abs(zone.points[0][0] - 0.05) < 0.02, JSON.stringify(zone));
+  let zoned = [];
+  for (let i = 0; i < 20 && !zoned.includes('fuel_tank'); i += 1) { await wait(500); zoned = await R(() => globalThis.__ranch.ctx.alerts.list().find((x) => x.source === 'device' && x.label === 'person')?.zones || []); }
+  check('the tracked person, now inside the zone, has the zone on their alert', zoned.includes('fuel_tank') && zoned.includes('main_gate'), zoned.join(', '));
+  await R(() => globalThis.__ranch.ctx.startDraw('wire'));
+  await wait(300);
+  box = await pictureBox(); // the page re-laid out when the tools changed
+  await page.mouse.click(box.x + box.w * 0.1, box.y + box.h * 0.5); await wait(150);
+  await page.mouse.click(box.x + box.w * 0.9, box.y + box.h * 0.5); await wait(400);
+  const wire = await R(() => globalThis.__ranch.ctx.geometry().wires[0]);
+  check('a tripwire is drawn with two taps', wire && Math.abs(wire.a[0] - 0.1) < 0.02 && Math.abs(wire.b[0] - 0.9) < 0.02, JSON.stringify(wire));
+  check('drawn geometry is saved on the device', await R(() => Object.values(JSON.parse(localStorage.getItem('ranch-command.v1')).analytics)[0]?.wires.length === 1));
   await shot('03-vision');
+  // Sentry keeps watching from another slide.
+  await R(() => { globalThis.__ranch.ctx.goTo('map'); });
+  await wait(1500);
+  const s1 = await R(() => globalThis.__ranch.ctx.state.vision.status);
+  await wait(2500);
+  const s2 = await R(() => ({ status: globalThis.__ranch.ctx.state.vision.status, tracks: globalThis.__ranch.ctx.state.vision.tracks.length, slide: globalThis.__ranch.SLIDES[globalThis.__ranch.current].id }));
+  check('the sentry keeps tracking while another slide is open', s2.slide === 'map' && s2.tracks >= 1 && /tracked/.test(s2.status), `${s2.slide}: ${s2.status}`);
+  await R(() => globalThis.__ranch.ctx.goTo('vision'));
+  await wait(1300);
   await R(() => globalThis.__ranch.ctx.toggleVision());
 
   /* -------------------------------------------- search & segment, offline */
@@ -203,7 +246,7 @@ async function main() {
   await shot('04-search');
 
   /* ---------------------------------------------------------- alerts */
-  await R(() => globalThis.__ranch.go(5));
+  await R(() => globalThis.__ranch.ctx.goTo('events'));
   await wait(1300);
   await R(() => globalThis.__ranch.ctx.demoAlerts());
   await wait(400);
@@ -245,7 +288,7 @@ async function main() {
   }
 
   /* ---------------------------------------------------------- drones */
-  await R(() => globalThis.__ranch.go(7));
+  await R(() => globalThis.__ranch.ctx.goTo('drones'));
   await wait(1300);
   if (mav) {
     await R((url) => { globalThis.__ranch.ctx.settings.mavlinkUrl = url; globalThis.__ranch.ctx.connectMavlink(); }, `ws://127.0.0.1:${mavPort}`);
@@ -283,14 +326,14 @@ async function main() {
   await shot('08-drones');
 
   /* ------------------------------------------------------------- map */
-  await R(() => globalThis.__ranch.go(8));
+  await R(() => globalThis.__ranch.ctx.goTo('map'));
   await wait(3000);
   const labels = await R(() => [...document.querySelectorAll('.map-label')].map((n) => n.textContent));
   check('the 3D map draws markers for HQ and the cameras', labels.includes('HQ') && labels.includes('Gate cam'), labels.join(', '));
   await shot('09-map');
 
   /* ----------------------------------------------------------- stack */
-  await R(() => globalThis.__ranch.go(10));
+  await R(() => globalThis.__ranch.ctx.goTo('stack'));
   await wait(1300);
   const stack = await R(() => ({ items: document.querySelectorAll('#slide-stack .stack-item').length, nvidia: document.querySelectorAll('#slide-stack .tag.green').length, powered: document.querySelector('#slide-stack .powered')?.textContent || '' }));
   check('every component of the stack is listed', stack.items === 20, `${stack.items} items`);
@@ -302,13 +345,20 @@ async function main() {
   await R(() => { document.getElementById('rafa-input').value = 'how do I connect my DJI'; document.getElementById('rafa-ask').requestSubmit(); });
   await wait(1200);
   const rafa = await R(() => ({ caption: document.getElementById('rafa-caption').textContent, slide: globalThis.__ranch.SLIDES[globalThis.__ranch.current].id }));
-  check('Rafa answers a DJI question and takes you to Drone Ops', /RTMP/.test(rafa.caption) && rafa.slide === 'drones', `${rafa.slide}: ${rafa.caption.slice(0, 60)}`);
+  check('Coach Colin answers a DJI question and takes you to Drone Ops', /RTMP/.test(rafa.caption) && rafa.slide === 'drones', `${rafa.slide}: ${rafa.caption.slice(0, 60)}`);
   await R(() => { document.getElementById('rafa-input').value = 'tell me a joke'; document.getElementById('rafa-ask').requestSubmit(); });
   await wait(300);
-  check('Rafa tells a joke', (await R(() => document.getElementById('rafa-caption').textContent)).length > 30);
+  check('Coach Colin tells a joke', (await R(() => document.getElementById('rafa-caption').textContent)).length > 30);
+
+  const say = async (text) => { await R((t) => globalThis.__ranch.ask(t), text); await wait(1400); return R(() => globalThis.__ranch.SLIDES[globalThis.__ranch.current].id); };
+  check('"go to drones" is a command, not a question', (await say('go to drones')) === 'drones');
+  check('"next" moves on', (await say('next')) === 'map');
+  check('"show me the alerts" opens the alert queue', (await say('show me the alerts')) === 'events');
+  const exported = await R(() => { const real = URL.createObjectURL; let text = null; URL.createObjectURL = (b) => { globalThis.__csv = b; return real(b); }; globalThis.__ranch.ctx.exportLog(); URL.createObjectURL = real; return globalThis.__csv.text(); });
+  check('the incident log exports as CSV with a row per alert', /^"time","priority","workflow"/.test(exported) && exported.split('\n').length > 3 && /"person"/.test(exported), exported.split('\n')[0].slice(0, 60));
 
   /* ------------------------------------------------------- Air Swipe */
-  await R(() => globalThis.__ranch.go(11));
+  await R(() => globalThis.__ranch.ctx.goTo('setup'));
   await wait(1300);
   await R(() => globalThis.__ranch.ctx.toggleSwipe());
   let hud = '';
@@ -346,19 +396,19 @@ async function main() {
   /* ---------------------------------------------------------- mobile */
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   // Switching to mobile emulation reloads the page, so enter again.
-  await page.waitForSelector('#enter-quiet', { visible: true });
+  await page.waitForFunction(() => globalThis.__ranch?.enter);
   await shot('m-gate');
-  await page.click('#enter-quiet');
-  await R(() => globalThis.__ranch.go(0));
+  await R(() => globalThis.__ranch.enter(false));
+  await R(() => globalThis.__ranch.ctx.goTo('command'));
   await wait(1300);
   await shot('m-command');
   check('the gate is gone on the phone too', await R(() => document.getElementById('gate').classList.contains('gone')));
   const overflow = await R(() => [...document.querySelectorAll('#slide-command .card')].some((n) => n.getBoundingClientRect().right > innerWidth + 1));
   check('nothing on the command slide overflows an iPhone screen', !overflow);
-  await R(() => { globalThis.__ranch.ctx.demoAlerts(); globalThis.__ranch.go(5); });
+  await R(() => { globalThis.__ranch.ctx.demoAlerts(); globalThis.__ranch.ctx.goTo('events'); });
   await wait(1300);
   await shot('m-events');
-  await R(() => globalThis.__ranch.go(7));
+  await R(() => globalThis.__ranch.ctx.goTo('drones'));
   await wait(1300);
   await shot('m-drones');
 
