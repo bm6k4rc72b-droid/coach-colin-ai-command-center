@@ -15,6 +15,9 @@ export const DEFAULTS = {
   orthophotoUrl: '',
   home: { lat: 34.6391, lon: -120.4579 },
   cameras: [],
+  // Tripwires and zones drawn on each camera, in fractions of its frame.
+  analytics: {},
+  notify: false,
   gesture: { enabled: false, mode: 'hand', invert: false, thresholds: null, quality: null, camera: 'user' },
   voice: { enabled: true, mode: 'bilingual', narrate: true },
 };

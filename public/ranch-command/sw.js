@@ -10,11 +10,11 @@
  * cached here.
  */
 
-const CACHE = 'ranch-command-v2';
+const CACHE = 'ranch-command-v3';
 const SHELL = [
   './', './index.html', './styles.css', './rules.json', './icon.svg', './manifest.webmanifest',
   './js/app.js', './js/slides.js', './js/intel.js', './js/gate.js', './js/voicebank.js', './js/dom.js', './js/config.js', './js/events.js',
-  './js/mqtt.js', './js/mavlink.js', './js/mesh.js', './js/streams.js', './js/ai.js', './js/gesture.js', './js/rafa.js', './js/stack.js', './js/map3d.js',
+  './js/mqtt.js', './js/mavlink.js', './js/mesh.js', './js/streams.js', './js/ai.js', './js/gesture.js', './js/track.js', './js/rafa.js', './js/stack.js', './js/map3d.js',
 ];
 
 self.addEventListener('install', (event) => {

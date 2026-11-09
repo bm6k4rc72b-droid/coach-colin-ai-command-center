@@ -572,3 +572,9 @@ td.mono { font-family: var(--mono); }
 }
 .face-svg .face-outline { stroke: rgba(78, 227, 255, 0.35); stroke-width: 1; }
 .face-box.ok .face-outline { stroke: rgba(57, 255, 20, 0.5); }
+
+/* -------------------------------------------------- sentry: tracks & evidence */
+
+.alert .note { color: var(--amber); font-weight: 600; }
+.alert img { border: 1px solid var(--line); }
+#slide-vision .stage { touch-action: manipulation; }

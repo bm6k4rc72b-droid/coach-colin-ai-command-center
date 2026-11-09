@@ -138,9 +138,9 @@ export const SLIDES = [
   /* ----------------------------------------------------------- 03 vision */
   {
     id: 'vision',
-    kicker: 'AI vision · on this device',
+    kicker: 'AI sentry · on this device',
     title: 'It knows a cow from a pickup',
-    lede: 'An EfficientDet-Lite0 detector bundled with this page runs right here — on an iPhone, offline, nothing uploaded. On the edge box, MegaDetector V6 and RF-DETR take over with species and ranch-specific classes.',
+    lede: 'A detector and a tracker bundled with this page run right here — on an iPhone, offline, nothing uploaded. Every object gets an identity and a trail. Draw a tripwire across a gate to count what goes through, or a zone to catch loitering. The watch keeps running while you look at other slides.',
     render(ctx) {
       const s = ctx.state.vision;
       const counts = el('div.counts', {}, ['person', 'vehicle', 'livestock', 'predator', 'animal'].map((k) => el('div.card', {}, [kpi(String(s.counts[k] || 0), k, k === 'predator' || k === 'person' ? 'red' : k === 'livestock' ? 'green' : '')])));
@@ -152,12 +152,13 @@ export const SLIDES = [
             el('h4', { text: 'Feed & detector' }),
             cameraPicker(ctx, s.camera, (id) => { s.camera = id; ctx.render(); }),
             el('div.row', { style: { marginTop: '10px' } }, [
-              el('button.btn.gold.sm', { type: 'button', onclick: () => ctx.toggleVision() }, [s.running ? '■ Stop detector' : '▶ Start detector']),
+              el('button.btn.gold.sm', { type: 'button', onclick: () => ctx.toggleVision() }, [s.running ? '■ Stop sentry' : '▶ Start sentry']),
               el('label.row.faint', {}, [el('input', { type: 'checkbox', checked: s.raise || null, onchange: (e) => { s.raise = e.target.checked; } }), 'Raise alerts from this feed']),
             ]),
-            el('p.via', { text: s.status || 'Detector idle.' }),
+            el('p.via', { text: s.status || 'Sentry idle.' }),
           ]),
           counts,
+          geometryCard(ctx),
           el('p.faint', { text: 'This model knows the 80 everyday COCO classes, which cover people, vehicles, cattle, horses, sheep, dogs and bears — but not coyotes, deer or calving. Those come from MegaDetector, a species classifier and Cowcatcher on the edge box.' }),
         ]),
       ]);
@@ -228,7 +229,8 @@ export const SLIDES = [
       const s = ctx.state.events;
       const items = ctx.alerts.list(s.filter === 'all' ? {} : { workflow: s.filter });
       return el('div.grid', {}, [
-        el('div.filters', {}, WORKFLOWS.map(([id, label]) => el('button', { type: 'button', class: s.filter === id ? 'on' : '', onclick: () => { s.filter = id; ctx.render(); } }, [`${label} ${id === 'all' ? ctx.alerts.list().length : ctx.alerts.list({ workflow: id }).length}`]))),
+        el('div.filters', {}, [...WORKFLOWS.map(([id, label]) => el('button', { type: 'button', class: s.filter === id ? 'on' : '', onclick: () => { s.filter = id; ctx.render(); } }, [`${label} ${id === 'all' ? ctx.alerts.list().length : ctx.alerts.list({ workflow: id }).length}`])),
+          ctx.alerts.list().length ? el('button', { type: 'button', onclick: () => ctx.exportLog() }, ['⬇ Export incident log']) : null]),
         items.length ? el('div.alerts', {}, items.slice(0, 60).map((a) => alertCard(ctx, a))) : el('div.card', {}, [
           el('p', { text: 'No alerts yet.' }),
           el('p.muted', { text: ctx.links.mqtt === 'connected' ? 'Connected to the broker and listening on frigate/events and ranch/events.' : 'Connect the MQTT broker on the Setup slide to receive Frigate and edge alerts, or start the on-device detector with "Raise alerts" ticked.' }),
@@ -257,7 +259,9 @@ export const SLIDES = [
         ]),
         el('div.grid.g2', {}, [
           el('div.card', {}, [
-            el('h4', { text: 'Head in view, by camera' }),
+            el('h4', { text: 'Gate counts (tripwires)' }),
+            gateCounts(ctx),
+            el('h4', { text: 'Head in view, by camera', style: { marginTop: '14px' } }),
             byCam.size ? el('table', {}, [el('tbody', {}, [...byCam].map(([name, n]) => el('tr', {}, [el('td', { text: name }), el('td.mono', { text: String(n) })])))]) : el('p.muted', { text: 'Add a camera and start the detector on the Vision slide.' }),
           ]),
           el('div.card', {}, [
@@ -486,6 +490,10 @@ export const SLIDES = [
             ]),
             el('p.faint', { text: `Voices on this device — English: ${ctx.rafa.describe().en} · Spanish: ${ctx.rafa.describe().es}. On iPhone, Settings → Accessibility → Spoken Content → Voices adds better ones (try “Juan” or an Enhanced voice).` }),
             el('button.btn.sm', { type: 'button', onclick: () => ctx.rafa.quip('joke') }, ['Tell me a joke']),
+            el('h4', { text: 'Urgent alerts', style: { marginTop: '14px' } }),
+            el('p.faint', { text: 'A chime plays for high and critical alerts. Notifications reach you when the dashboard is in the background; on iPhone that needs the dashboard added to the Home Screen.' }),
+            el('button.btn.sm', { type: 'button', class: st.notify ? 'green' : '', onclick: () => ctx.enableNotifications() }, [st.notify ? 'Notifications on' : 'Enable notifications']),
+            el('p.faint', { text: 'Voice commands: “next”, “back”, “go to drones”, “show me the alerts”, “start sentry”, “stop sentry”, “quiet”.' }),
           ]),
         ]),
       ]);
@@ -514,6 +522,7 @@ export function alertCard(ctx, a) {
         el('h3', { text: `${a.label} · ${a.camera}` }),
       ]),
       el('p', { text: a.routing.reason }),
+      a.note ? el('p.note', { text: a.note }) : null,
       el('p.faint', { text: `${Math.round(a.score * 100)}% · ${a.zones.length ? a.zones.join(', ') : 'no zone'} · ${a.source}${a.models?.length ? ` + ${a.models.join(', ')}` : ''} · ${ago(a.start * 1000)}${a.verdict ? ` · ${a.verdict}` : ''}` }),
     ]),
     el('div.act', {}, a.verdict ? [] : [
@@ -552,6 +561,48 @@ function droneCard(ctx, v) {
       stat(v.lat != null ? `${v.lat.toFixed(5)}` : '—', 'lat'),
       stat(v.lon != null ? `${v.lon.toFixed(5)}` : '—', 'lon'),
     ]),
+  ]);
+}
+
+/**
+ * The tripwire and zone tools on the sentry slide.
+ *
+ * @param {object} ctx App context.
+ * @returns {HTMLElement} The card.
+ */
+function geometryCard(ctx) {
+  const s = ctx.state.vision;
+  const g = ctx.geometry();
+  const fmt = (n) => (n > 0 ? `+${n}` : String(n));
+  return el('div.card.foil', {}, [
+    el('h4', { text: 'Tripwires & zones' }),
+    el('label.field', {}, ['Name (gate, perimeter, pen, barn, fuel… the alert rules read it)', el('input', { type: 'text', value: s.geoName, placeholder: 'north_gate', maxlength: '32', oninput: (e) => { s.geoName = e.target.value; } })]),
+    el('div.row', { style: { margin: '10px 0' } }, [
+      el('button.btn.sm', { type: 'button', class: s.draw?.mode === 'wire' ? 'green' : '', onclick: () => ctx.startDraw('wire') }, ['＋ Tripwire']),
+      el('button.btn.sm', { type: 'button', class: s.draw?.mode === 'zone' ? 'green' : '', onclick: () => ctx.startDraw('zone') }, ['＋ Zone']),
+      s.draw?.mode === 'zone' ? el('button.btn.gold.sm', { type: 'button', onclick: () => ctx.finishZone() }, ['Finish zone']) : null,
+      g.wires.length || g.zones.length ? el('button.btn.ghost.sm', { type: 'button', onclick: () => ctx.clearGeometry() }, ['Clear all']) : null,
+    ]),
+    s.draw ? el('p.via', { text: s.draw.mode === 'wire' ? 'Tap the two ends of the wire on the picture.' : 'Tap each corner of the zone on the picture, then Finish zone.' }) : null,
+    ...g.wires.map((w) => { const t = ctx.tracker.tally(w.id); return el('p.muted', { style: { margin: '2px 0' } }, [el('b', { text: `⟋ ${w.name}` }), ` — in ${t.in} · out ${t.out} · net ${fmt(t.net)}`]); }),
+    ...g.zones.map((z) => el('p.muted', { style: { margin: '2px 0' } }, [el('b', { text: `▱ ${z.name}` }), ` — loitering after ${z.dwell}s`])),
+    s.lastCross ? el('p.faint', { text: `Last crossing: ${s.lastCross}` }) : null,
+    !g.wires.length && !g.zones.length && !s.draw ? el('p.faint', { text: 'Nothing drawn on this camera yet. A tripwire counts crossings in each direction; a zone names where an alert happened and times how long something stays.' }) : null,
+  ]);
+}
+
+/**
+ * Livestock counted through each tripwire on the watched camera.
+ *
+ * @param {object} ctx App context.
+ * @returns {HTMLElement} The table, or a hint.
+ */
+function gateCounts(ctx) {
+  const wires = ctx.geometry().wires;
+  if (!wires.length) return el('p.muted', { text: 'Draw a tripwire across a gate on the AI Sentry slide and the herd is counted through it, in and out.' });
+  return el('table', {}, [
+    el('thead', {}, [el('tr', {}, ['Wire', 'In', 'Out', 'Net'].map((h) => el('th', { text: h })))]),
+    el('tbody', {}, wires.map((w) => { const t = ctx.tracker.tally(w.id, 'livestock'); return el('tr', {}, [el('td', { text: w.name }), el('td.mono', { text: String(t.in) }), el('td.mono', { text: String(t.out) }), el('td.mono', { text: t.net > 0 ? `+${t.net}` : String(t.net) })]); })),
   ]);
 }
 
