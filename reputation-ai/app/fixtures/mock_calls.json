@@ -1,0 +1,78 @@
+{
+  "calls": [
+    {
+      "description": "Routine call: hours question and a reservation",
+      "tool_calls": [
+        {"tool": "create-reservation",
+         "body": {"guest_name": "Helen Park", "phone": "5125550142", "party_size": 4,
+                  "date": "+3d", "time": "19:30", "notes": "Birthday dinner",
+                  "conversation_id": "mock-conv-001", "caller_phone": "+15125550142"}}
+      ],
+      "post_call": {
+        "type": "post_call_transcription",
+        "data": {
+          "conversation_id": "mock-conv-001",
+          "status": "done",
+          "metadata": {"call_duration_secs": 74, "phone_call": {"external_number": "+15125550142"}},
+          "analysis": {"transcript_summary": "Caller asked about Friday hours and booked a table for four."},
+          "transcript": [
+            {"role": "agent", "message": "Thank you for calling Olive & Ember. How can I help you today?", "time_in_call_secs": 0},
+            {"role": "user", "message": "Hi, are you open this Friday night?", "time_in_call_secs": 4},
+            {"role": "agent", "message": "We are. On Fridays we're open from five until eleven.", "time_in_call_secs": 8},
+            {"role": "user", "message": "Great. Can I book a table for four at seven thirty? It's my husband's birthday.", "time_in_call_secs": 14},
+            {"role": "agent", "message": "Happy to. Can I get a name and a phone number for the reservation?", "time_in_call_secs": 20},
+            {"role": "user", "message": "Helen Park, 512 555 0142.", "time_in_call_secs": 26},
+            {"role": "agent", "message": "Thank you, Helen. I've sent that request to the team and they'll confirm shortly.", "time_in_call_secs": 40}
+          ]
+        }
+      }
+    },
+    {
+      "description": "Unhappy guest: cold food and a long wait last night",
+      "tool_calls": [
+        {"tool": "flag-unhappy-guest",
+         "body": {"issue_summary": "Waited over an hour for mains last night; steak arrived cold and nobody checked on the table.",
+                  "severity": "medium", "guest_name": "Robert Hale", "callback_number": "5125550199",
+                  "wants_callback": true,
+                  "conversation_id": "mock-conv-002", "caller_phone": "+15125550199"}}
+      ],
+      "post_call": {
+        "type": "post_call_transcription",
+        "data": {
+          "conversation_id": "mock-conv-002",
+          "status": "done",
+          "metadata": {"call_duration_secs": 131, "phone_call": {"external_number": "+15125550199"}},
+          "analysis": {"transcript_summary": "Caller complained about a long wait and cold food on the previous night."},
+          "transcript": [
+            {"role": "agent", "message": "Thank you for calling Olive & Ember. How can I help you today?", "time_in_call_secs": 0},
+            {"role": "user", "message": "I was in last night and honestly it was terrible. We waited over an hour for our food.", "time_in_call_secs": 5},
+            {"role": "agent", "message": "I'm so sorry. An hour is far too long to wait. Can you tell me what happened when the food came?", "time_in_call_secs": 13},
+            {"role": "user", "message": "My steak was cold and nobody came to check on us. It's unacceptable for what you charge.", "time_in_call_secs": 20},
+            {"role": "agent", "message": "You're right, and I apologize. I'd like our manager to call you personally today. May I have your name and the best number to reach you?", "time_in_call_secs": 31},
+            {"role": "user", "message": "Robert Hale. 512 555 0199.", "time_in_call_secs": 42},
+            {"role": "agent", "message": "Thank you, Robert. A manager will call you today at 512 555 0199. Thank you for telling us.", "time_in_call_secs": 50}
+          ]
+        }
+      }
+    },
+    {
+      "description": "Unhappy guest the live agent did NOT flag (post-call analysis must catch it)",
+      "tool_calls": [],
+      "post_call": {
+        "type": "post_call_transcription",
+        "data": {
+          "conversation_id": "mock-conv-003",
+          "status": "done",
+          "metadata": {"call_duration_secs": 38, "phone_call": {"external_number": "+15125550177"}},
+          "analysis": {"transcript_summary": "Caller was upset about a billing error and hung up."},
+          "transcript": [
+            {"role": "agent", "message": "Thank you for calling Olive & Ember. How can I help you today?", "time_in_call_secs": 0},
+            {"role": "user", "message": "You charged my card twice on Saturday and I want a refund.", "time_in_call_secs": 4},
+            {"role": "agent", "message": "I'm sorry about that. Could I take your name and number so", "time_in_call_secs": 10},
+            {"role": "user", "message": "Forget it. I'm never coming back.", "time_in_call_secs": 15}
+          ]
+        }
+      }
+    }
+  ]
+}

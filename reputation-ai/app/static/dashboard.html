@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reputation Dashboard</title>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1d2420; --muted:#667068; --line:#e3dfd5;
+          --brand:#1f3a2e; --warn:#a4420f; --warn-bg:#fdf0e6; --ok:#1f6b45; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141815; --card:#1d2320; --ink:#e9ece8; --muted:#9aa59d; --line:#2f3833;
+            --brand:#8fd0ab; --warn:#f0a36b; --warn-bg:#3a2717; --ok:#7fd3a4; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+           padding:16px; border-bottom:1px solid var(--line); }
+  h1 { font-size:18px; margin:0; }
+  h2 { font-size:15px; margin:0 0 10px; }
+  main { max-width:960px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  nav { display:flex; flex-wrap:wrap; gap:6px; }
+  nav button { background:none; color:var(--muted); border:1px solid transparent; }
+  nav button.on { color:var(--ink); border-color:var(--line); background:var(--card); }
+  button, select, input, textarea { font:inherit; color:inherit; }
+  button { cursor:pointer; padding:7px 12px; border-radius:7px; border:1px solid var(--line);
+           background:var(--card); }
+  button.primary { background:var(--brand); border-color:var(--brand); color:var(--bg); font-weight:600; }
+  button:disabled { opacity:.5; cursor:wait; }
+  select, input, textarea { width:100%; padding:7px 9px; border-radius:7px; border:1px solid var(--line);
+           background:var(--bg); }
+  textarea { min-height:96px; resize:vertical; }
+  label { display:block; font-size:12px; color:var(--muted); margin:10px 0 3px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0 14px; }
+  .review { border-top:1px solid var(--line); padding:14px 0; }
+  .review:first-of-type { border-top:0; padding-top:0; }
+  .meta { color:var(--muted); font-size:13px; }
+  .tag { display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; margin-right:4px;
+         background:var(--warn-bg); color:var(--warn); }
+  .quote { margin:8px 0; padding-left:12px; border-left:3px solid var(--line); white-space:pre-wrap; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; align-items:center; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; }
+  .stat { border:1px solid var(--line); border-radius:8px; padding:10px; }
+  .stat b { display:block; font-size:22px; font-variant-numeric:tabular-nums; }
+  pre { white-space:pre-wrap; margin:0; font:13px/1.5 ui-monospace,Menlo,monospace; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td, th { text-align:left; padding:6px 8px; border-top:1px solid var(--line); vertical-align:top; }
+  .wrap { overflow-x:auto; }
+  #toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); padding:9px 14px;
+           border-radius:8px; background:var(--ink); color:var(--bg); display:none; max-width:90vw; }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Reputation Dashboard</h1>
+  <div style="min-width:220px"><select id="restaurant" aria-label="Restaurant"></select></div>
+</header>
+<main>
+  <nav id="tabs">
+    <button data-tab="queue" class="on">Approval queue</button>
+    <button data-tab="growth">Review growth</button>
+    <button data-tab="calls">Calls</button>
+    <button data-tab="summary">Daily summary</button>
+    <button data-tab="settings">Brand settings</button>
+    <button data-tab="log">Activity log</button>
+  </nav>
+
+  <section data-panel="queue">
+    <div class="row" style="justify-content:space-between;margin:0 0 10px">
+      <h2 style="margin:0">Replies waiting for approval</h2>
+      <button id="poll">Check for new reviews</button>
+    </div>
+    <div id="queue"></div>
+  </section>
+
+  <section data-panel="growth" hidden>
+    <h2>Review invites (last 30 days)</h2>
+    <div class="stats" id="growth-stats"></div>
+    <h2 style="margin-top:18px">Printable QR codes</h2>
+    <div class="row" id="qr-links"></div>
+    <h2 style="margin-top:18px">Send a review invite</h2>
+    <div class="grid">
+      <div><label for="inv-phone">Guest mobile number</label><input id="inv-phone" inputmode="tel"></div>
+      <div><label for="inv-name">Guest first name (optional)</label><input id="inv-name"></div>
+    </div>
+    <div class="row">
+      <label style="margin:0;font-size:14px;color:inherit"><input type="checkbox" id="inv-consent" style="width:auto">
+        The guest agreed to receive this text</label>
+      <button class="primary" id="inv-send">Queue invite</button>
+    </div>
+  </section>
+
+  <section data-panel="calls" hidden>
+    <h2>Recent phone calls</h2><div class="wrap" id="calls"></div>
+    <h2 style="margin-top:18px">Reservation requests</h2><div class="wrap" id="reservations"></div>
+  </section>
+
+  <section data-panel="summary" hidden>
+    <div class="row" style="justify-content:space-between;margin:0 0 10px">
+      <h2 style="margin:0">Latest morning brief</h2>
+      <button id="run-summary">Generate and send now</button>
+    </div>
+    <pre id="summary">No summary yet.</pre>
+  </section>
+
+  <section data-panel="settings" hidden>
+    <h2>Brand settings</h2>
+    <p class="meta">Used in review replies, the phone agent and the daily summary. Only fields you change are saved.</p>
+    <form id="settings"></form>
+    <div class="row"><button class="primary" id="save-settings">Save</button>
+      <button id="provision">Update phone agent</button></div>
+  </section>
+
+  <section data-panel="log" hidden><h2>Activity log</h2><div class="wrap" id="log"></div></section>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+// All guest-written text is inserted with textContent, never innerHTML.
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => {
+  const node = Object.assign(document.createElement(tag), props);
+  kids.forEach((k) => node.append(k));
+  return node;
+};
+let rid = new URLSearchParams(location.search).get('restaurant');
+let loaded = {};
+
+function toast(message) {
+  $('toast').textContent = message; $('toast').style.display = 'block';
+  clearTimeout(toast.t); toast.t = setTimeout(() => $('toast').style.display = 'none', 4000);
+}
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: options.body ? { 'Content-Type': 'application/json' } : {},
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  if (!response.ok) {
+    let detail = response.statusText;
+    try { const j = await response.json(); detail = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail); } catch {}
+    throw new Error(detail);
+  }
+  return response.json();
+}
+async function act(button, work) {
+  button.disabled = true;
+  try { await work(); } catch (error) { toast(error.message); } finally { button.disabled = false; }
+}
+const when = (iso) => iso ? new Date(/[zZ]|[+-]\d\d:\d\d$/.test(iso) ? iso : iso + 'Z').toLocaleString() : '';
+
+async function loadQueue() {
+  const reviews = await api(`/api/restaurants/${rid}/reviews?status=pending_approval`);
+  const box = $('queue'); box.replaceChildren();
+  if (!reviews.length) box.append(el('p', { className: 'meta', textContent: 'Nothing is waiting. Positive reviews are answered automatically.' }));
+  for (const r of reviews) {
+    const reply = el('textarea', { value: r.draft_reply || '' });
+    reply.setAttribute('aria-label', 'Reply');
+    const guidance = el('input', { placeholder: 'Ask for a change, e.g. "shorter, mention the patio"' });
+    const approve = el('button', { className: 'primary', textContent: 'Approve & post' });
+    const redo = el('button', { textContent: 'Redraft' });
+    const reject = el('button', { textContent: "Don't reply" });
+    approve.onclick = () => act(approve, async () => {
+      const done = await api(`/api/reviews/${r.id}/approve`, { method: 'POST', body: { reply: reply.value } });
+      toast(done.status === 'posted' ? 'Reply posted.' : 'Approved. Posting will be retried shortly.'); loadQueue();
+    });
+    redo.onclick = () => act(redo, async () => {
+      await api(`/api/reviews/${r.id}/regenerate`, { method: 'POST', body: { guidance: guidance.value } }); loadQueue();
+    });
+    reject.onclick = () => act(reject, async () => {
+      await api(`/api/reviews/${r.id}/reject`, { method: 'POST', body: {} }); loadQueue();
+    });
+    const tags = el('div');
+    (r.flag_reasons || []).forEach((t) => tags.append(el('span', { className: 'tag', textContent: t.replaceAll('_', ' ') })));
+    box.append(el('div', { className: 'review' },
+      el('div', {}, el('strong', { textContent: `${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}  ${r.reviewer_name || 'Guest'}` }),
+        el('span', { className: 'meta', textContent: `  ·  ${r.platform}  ·  ${when(r.review_created_at)}` })),
+      tags,
+      el('div', { className: 'quote', textContent: r.text || '(no written comment)' }),
+      r.internal_note ? el('p', { className: 'meta', textContent: 'Note: ' + r.internal_note }) : '',
+      reply, el('div', { className: 'row' }, approve, reject),
+      el('div', { className: 'row' }, el('div', { style: 'flex:1;min-width:200px' }, guidance), redo)));
+  }
+}
+
+async function loadGrowth() {
+  const s = await api(`/api/restaurants/${rid}/invites/stats`);
+  const scans = Object.values(s.qr_scans_all_time).reduce((a, b) => a + b, 0);
+  const items = [['Texts sent', s.sms.sent], ['Clicked', s.sms.clicked],
+    ['Click rate', s.sms.click_rate == null ? '–' : Math.round(s.sms.click_rate * 100) + '%'],
+    ['Reviews attributed', s.sms.attributed_reviews], ['QR scans (all time)', scans]];
+  $('growth-stats').replaceChildren(...items.map(([k, v]) =>
+    el('div', { className: 'stat' }, el('b', { textContent: v }), el('span', { className: 'meta', textContent: k }))));
+  $('qr-links').replaceChildren(...[['table_tent', 'Table tent (4×6 in)'], ['receipt', 'Receipt strip'], ['plain', 'QR only']]
+    .map(([k, label]) => el('a', { href: `/api/restaurants/${rid}/qr/${k}.png`, target: '_blank', textContent: label })));
+}
+
+function table(target, columns, rows, empty) {
+  if (!rows.length) return $(target).replaceChildren(el('p', { className: 'meta', textContent: empty }));
+  const t = el('table', {}, el('tr', {}, ...columns.map(([h]) => el('th', { textContent: h }))));
+  rows.forEach((row) => t.append(el('tr', {}, ...columns.map(([, get]) => el('td', { textContent: get(row) ?? '' })))));
+  $(target).replaceChildren(t);
+}
+async function loadCalls() {
+  table('calls', [['When', (c) => when(c.created_at)], ['Caller', (c) => c.caller_phone],
+    ['Unhappy', (c) => c.unhappy ? 'YES' : ''], ['Summary', (c) => c.summary], ['Follow-up', (c) => c.follow_up]],
+    await api(`/api/restaurants/${rid}/calls`), 'No calls recorded yet.');
+  table('reservations', [['Date', (r) => `${r.reservation_date} ${r.reservation_time}`], ['Name', (r) => r.guest_name],
+    ['Party', (r) => r.party_size], ['Phone', (r) => r.phone], ['Notes', (r) => r.notes]],
+    await api(`/api/restaurants/${rid}/reservations`), 'No reservation requests yet.');
+}
+async function loadSummary() {
+  try { $('summary').textContent = (await api(`/api/restaurants/${rid}/summary/latest`)).content_markdown; }
+  catch { $('summary').textContent = 'No summary yet.'; }
+}
+async function loadLog() {
+  table('log', [['When', (a) => when(a.created_at)], ['Module', (a) => a.module], ['Action', (a) => a.action],
+    ['Detail', (a) => JSON.stringify(a.detail)]], await api(`/api/restaurants/${rid}/log`), 'Nothing logged yet.');
+}
+
+const FIELDS = [['name', 'Restaurant name'], ['phone', 'Public phone number'], ['address', 'Address'],
+  ['hours', 'Opening hours', 1], ['parking', 'Parking', 1], ['menu_highlights', 'Menu highlights', 1],
+  ['brand_voice', 'Brand voice (how replies should sound)', 1], ['extra_info', 'Other facts (dietary options, events...)', 1],
+  ['sign_off', 'Reply sign-off'], ['brand_color', 'Brand color (#RRGGBB)'], ['manager_name', 'Manager name'],
+  ['manager_phone', 'Manager mobile (urgent alerts)'], ['manager_email', 'Manager email'],
+  ['slack_webhook_url', 'Slack webhook URL (leave blank to keep)'], ['google_account_id', 'Google account ID'],
+  ['google_location_id', 'Google location ID'], ['google_place_id', 'Google place ID (review link)'],
+  ['timezone', 'Timezone (e.g. America/Chicago)'], ['summary_time', 'Daily summary time (HH:MM)']];
+async function loadSettings() {
+  loaded = await api(`/api/restaurants/${rid}`);
+  const grid = el('div', { className: 'grid' });
+  for (const [key, label, long] of FIELDS) {
+    const input = el(long ? 'textarea' : 'input', { id: 'f-' + key });
+    input.value = key === 'slack_webhook_url' ? '' : (loaded[key] ?? '');
+    grid.append(el('div', long ? { style: 'grid-column:1/-1' } : {}, el('label', { htmlFor: 'f-' + key, textContent: label }), input));
+  }
+  $('settings').replaceChildren(grid);
+}
+
+const LOADERS = { queue: loadQueue, growth: loadGrowth, calls: loadCalls, summary: loadSummary, settings: loadSettings, log: loadLog };
+function show(tab) {
+  document.querySelectorAll('[data-panel]').forEach((p) => p.hidden = p.dataset.panel !== tab);
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+  LOADERS[tab]().catch((error) => toast(error.message));
+}
+$('tabs').onclick = (event) => event.target.dataset.tab && show(event.target.dataset.tab);
+$('restaurant').onchange = (event) => { rid = event.target.value; show(document.querySelector('#tabs .on').dataset.tab); };
+$('poll').onclick = () => act($('poll'), async () => {
+  const s = await api(`/api/restaurants/${rid}/reviews/poll`, { method: 'POST' });
+  toast(`${s.imported} new, ${s.posted} posted, ${s.queued} need approval`); loadQueue();
+});
+$('inv-send').onclick = () => act($('inv-send'), async () => {
+  const r = await api(`/api/restaurants/${rid}/invites`, { method: 'POST', body: {
+    phone: $('inv-phone').value, guest_name: $('inv-name').value || null, delay_minutes: 0,
+    consent_given: $('inv-consent').checked, consent_source: 'dashboard' } });
+  toast(r.status === 'queued' ? 'Invite queued.' : 'Not sent: ' + r.reason.replaceAll('_', ' ')); loadGrowth();
+});
+$('run-summary').onclick = () => act($('run-summary'), async () => {
+  await api(`/api/restaurants/${rid}/summary/run`, { method: 'POST' }); loadSummary(); toast('Summary generated.');
+});
+$('save-settings').onclick = (event) => { event.preventDefault(); act($('save-settings'), async () => {
+  const changes = {};
+  for (const [key] of FIELDS) {
+    const value = $('f-' + key).value.trim();
+    if (key === 'slack_webhook_url' ? value : value !== (loaded[key] ?? '')) changes[key] = value;
+  }
+  await api(`/api/restaurants/${rid}`, { method: 'PUT', body: changes }); toast('Saved.'); loadSettings();
+}); };
+$('provision').onclick = (event) => { event.preventDefault(); act($('provision'), async () => {
+  const r = await api(`/api/restaurants/${rid}/voice/provision`, { method: 'POST' }); toast('Phone agent updated: ' + r.agent_id);
+}); };
+
+(async () => {
+  const restaurants = await api('/api/restaurants');
+  if (!restaurants.length) return toast('No restaurants yet. Create one with the CLI (see README).');
+  $('restaurant').replaceChildren(...restaurants.map((r) => el('option', { value: r.id, textContent: r.name })));
+  rid = restaurants.some((r) => r.id === rid) ? rid : restaurants[0].id;
+  $('restaurant').value = rid; show('queue');
+})().catch((error) => toast(error.message));
+</script>
+</body>
+</html>

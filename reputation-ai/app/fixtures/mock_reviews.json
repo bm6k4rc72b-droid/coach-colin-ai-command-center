@@ -1,0 +1,21 @@
+{
+  "average_rating": 4.4,
+  "total_reviews": 312,
+  "reviews": [
+    {"id": "mock-001", "reviewer_name": "Priya Raman", "rating": 5, "hours_ago": 3,
+     "text": "The wood-fired margherita was incredible and our server Jo was so friendly and attentive. Perfect anniversary dinner."},
+    {"id": "mock-002", "reviewer_name": "Marcus Lee", "rating": 4, "hours_ago": 9,
+     "text": "Delicious short rib and a great wine list. It got a little loud once the dining room filled up, but we'd come back."},
+    {"id": "mock-003", "reviewer_name": "Dana Whitfield", "rating": 2, "hours_ago": 14,
+     "text": "We waited 45 minutes for our mains and my pasta arrived cold. The staff were kind about it but nobody offered to fix it."},
+    {"id": "mock-004", "reviewer_name": "Tom Becker", "rating": 1, "hours_ago": 20,
+     "text": "My wife got sick after eating the chicken here. Pretty sure it was undercooked. We are calling the health department."},
+    {"id": "mock-005", "reviewer_name": "Alicia Gomez", "rating": 5, "hours_ago": 30,
+     "text": "Amazing tiramisu! One note for the kitchen: I mentioned I'm allergic to tree nuts and the dessert still came with pistachio crumble. I caught it in time, and everything else was perfect."},
+    {"id": "mock-006", "reviewer_name": "Sam", "rating": 5, "hours_ago": 40, "text": ""},
+    {"id": "mock-007", "reviewer_name": "Old Timer", "rating": 3, "hours_ago": 500,
+     "text": "Fine, nothing special. Service was slow."},
+    {"id": "mock-008", "reviewer_name": "Renee Okafor", "rating": 5, "hours_ago": 50,
+     "text": "Best brunch in town.", "already_replied": true}
+  ]
+}

@@ -1,0 +1,15 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+anthropic>=1.0
+httpx>=0.27
+twilio>=9.0
+qrcode[pil]>=8.0
+pillow>=10.1
+apscheduler>=3.10,<4
+sqlalchemy>=2.0
+psycopg[binary]>=3.2
+python-dotenv>=1.0
+python-multipart>=0.0.9
+pydantic>=2.7
+tzdata
+pytest>=8.0
