@@ -14,6 +14,15 @@ const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E
 
 /** [line, recording] pairs, as captioned (Spanish markup removed). */
 export const LINES = [
+  ["Sentry's on. I'm watching, jefe.", 'hf_20261110_224855_e8ce4f15-3c53-4815-b5b6-0d8e347bd770'],
+  ["Sentry off. Eyes closed.", 'hf_20261110_224855_8a4fbbcc-7687-46ef-a678-51eac15e144a'],
+  ["Mission drafted. Load it in QGroundControl, look it over, and fly safe, jefe.", 'hf_20261110_224855_f0e6debb-eb84-4d99-8a99-91867d4c7db2'],
+  ["Found it. Boxes are on the picture. ¡Ahí está!", 'hf_20261110_224856_e130ab7c-12b7-441d-ae8c-c417202d2e23'],
+  ["Nothing matching in this frame, jefe.", 'hf_20261110_224855_2ec040f4-8d75-484e-afde-6d2cefad7f68'],
+  ["¡Bienvenidos! I'm Coach Colin, your ranch foreman. Well, the AI kind. I don't sleep, I don't take lunch, and I never borrow the good truck. Swipe sideways, or wave your hand at the camera, and I'll show you around.", 'hf_20261110_224714_5ee2db09-fbcb-4d81-83f2-9bb581dea79d'],
+  ["Every piece under the hood, where it runs, and its licence. Take your time with this list and get to know each one. Every name opens its own source, ¿eh?", 'hf_20261110_224715_694afd78-1c97-4349-a6c0-1510cbbbae97'],
+  ["On the sentry slide, every object gets a number and a trail. Draw a tripwire across a gate and I count what goes through, in and out. Draw a zone and I time how long anything stays in it. I can count cows all night. It does not put me to sleep.", 'hf_20261110_224714_64b406fe-bacf-4ef5-9f51-7145b0e7c6c9'],
+  ["Every project in the build, and its licence, is on the stack slide. Have a read through the list and get to know each one.", 'hf_20261110_224714_3119f96e-c4c1-426f-8c89-aaca9569d245'],
   ["Atmospheric intelligence. Your own weather station, fused with the national forecast models, so you see the wind shift before the cattle do. And the cattle are annoyingly good at that.", 'hf_20261108_183923_7e72119b-89f3-4878-aa1d-a295a13ca6d1'],
   ["The Pyro-Sentinel grid. Ridge cameras look for smoke, air sensors smell it, and satellites confirm the heat. Three witnesses before I wake you up. I'm thorough, not dramatic.", 'hf_20261108_183923_5ec1ff34-9383-4e4e-b6bd-7cbc13b10da0'],
   ["Fuel-moisture intelligence. Sensors measure how dry the grass and brush really are, which tells us how ready this land is to burn. The short version: crunchy is bad.", 'hf_20261108_183923_d043bf9e-48b6-4733-83ec-255fdf7521ff'],

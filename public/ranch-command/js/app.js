@@ -745,7 +745,8 @@ ctx.runSearch = async () => {
     s.results = out.detections.map((d) => ({ ...d, box: { x: d.box.x * scale, y: d.box.y * scale, w: d.box.w * scale, h: d.box.h * scale }, color: '#ffcf4a' }));
     s.status = `${out.via} · ${s.results.length} match${s.results.length === 1 ? '' : 'es'}`;
     drawBoxes(st, s.results, '#ffcf4a');
-    rafa.say(s.results.length ? { en: `Found ${s.results.length}. [es:¡Ahí está!]`, es: `Encontré ${s.results.length}. ¡Ahí está!` } : { en: 'Nothing matching in this frame, [es:jefe].', es: 'Nada en esta imagen, jefe.' });
+    // A fixed line, so it can play in the studio recording; the count is on screen.
+    rafa.say(s.results.length ? { en: 'Found it. Boxes are on the picture. [es:¡Ahí está!]', es: 'Lo encontré. Las cajas están en la imagen. ¡Ahí está!' } : { en: 'Nothing matching in this frame, [es:jefe].', es: 'Nada en esta imagen, jefe.' });
   } catch (error) {
     s.status = settings.edgeUrl ? `The edge box could not run NanoOWL: ${error.message}` : `The in-browser model could not load (${error.message}). It needs internet on first use; an edge box avoids that.`;
   }
