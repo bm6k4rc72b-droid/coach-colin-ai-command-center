@@ -9,6 +9,7 @@
  */
 import Anthropic from '../../viralx/vendor/anthropic/sdk.mjs';
 import { PROFILE, LANES, checkCompliance, withDisclosure, affiliateLink, offlineDraft } from './core.js';
+import { ALL_AGENTS, BUSINESSES, routeGoal } from './team.js';
 
 export const MODEL = 'claude-opus-5-5';
 const KEY = 'colin-os.anthropicKey';
@@ -130,4 +131,67 @@ export function explain(e) {
   if (e instanceof Anthropic.APIConnectionError) return 'Could not reach api.anthropic.com. Check your connection.';
   if (e instanceof Anthropic.APIError) return `API error ${e.status}: ${e.message}`;
   return e?.message || String(e);
+}
+
+/* ── The 50-agent org chart and its CEO ─────────────────────────────── */
+
+const DELIVERABLE = obj({ summary: str, deliverable: str, decisions: strs, handoff: str });
+
+async function call(system, user, schema, maxTokens = 8000) {
+  const client = new Anthropic({ apiKey: getKey(), dangerouslyAllowBrowser: true });
+  const res = await client.beta.messages.create({
+    model: MODEL, max_tokens: maxTokens, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default',
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
+    system, messages: [{ role: 'user', content: user }],
+  });
+  if (res.stop_reason === 'refusal') throw new Error(`Claude declined (${res.stop_details?.explanation || 'policy'})`);
+  if (res.stop_reason === 'max_tokens') throw new Error('Response was cut off; try again.');
+  return JSON.parse(res.content.filter((x) => x.type === 'text').map((x) => x.text).join(''));
+}
+
+const teamContext = (business) => `${business === 'beauty' ? `Business: ${BUSINESSES.beauty}
+Guardrails: cosmetic claims only ("improves the look of"); no drug claims (regrows hair, boosts collagen, heals, SPF without testing); FTC disclosure on creator content; CAN-SPAM on email; no invented reviews or stats.` : context()}`;
+
+/**
+ * Runs one specialist from the org chart on a task.
+ * @param {string} agentId @param {string} task @param {'coach'|'beauty'} business @param {string} [prior] earlier teammates' output
+ */
+export async function runSpecialist(agentId, task, business = 'coach', prior = '') {
+  const a = ALL_AGENTS.find((x) => x.id === agentId);
+  if (!a) throw new Error(`Unknown agent ${agentId}`);
+  if (!getKey()) return { offline: true, summary: `${a.id} would: ${a.does.toLowerCase()}.`, deliverable: 'Add an Anthropic key in Settings to run this agent live, or run it in Claude Code: `claude --agent ' + a.id + '` (or ask the ceo agent).', decisions: [], handoff: '' };
+  return call(`${teamContext(business)}\n\nYou are ${a.id}, in the ${a.deptName} department of a 50-agent marketing team. Your job: ${a.does}. Methods you follow: ${a.skills.join(', ')}. If an input is missing, say MISSING rather than invent it. Deliver work that can be used as-is.`,
+    `Task: ${task}${prior ? `\n\nWork from teammates so far:\n${prior}` : ''}`, DELIVERABLE);
+}
+
+/**
+ * The CEO: plans which specialists to use, runs them in order, then writes the one-page plan.
+ * @param {string} goal @param {'coach'|'beauty'} business
+ * @param {(event: {type: string, [k: string]: any}) => void} onEvent
+ */
+export async function runCEO(goal, business = 'coach', onEvent = () => {}) {
+  if (!getKey()) {
+    const picks = routeGoal(goal, 5);
+    const plan = { outcome: goal, steps: picks.map((a) => ({ agent: a.id, brief: `${a.does} for: ${goal}` })), offline: true };
+    onEvent({ type: 'plan', plan });
+    return { plan, results: [], final: null };
+  }
+  const shortlist = routeGoal(goal, 12).map((a) => a.id);
+  const planSchema = obj({ outcome: str, steps: { type: 'array', items: obj({ agent: { type: 'string', enum: ALL_AGENTS.map((a) => a.id) }, brief: str }) } });
+  const plan = await call(`${teamContext(business)}\n\nYou are the CEO of a 50-agent marketing team. Roster: ${ALL_AGENTS.map((a) => `${a.id} (${a.does})`).join('; ')}.`,
+    `Goal: ${goal}\nPick 3-6 specialists in the order they should work (research → strategy → content → conversion → analytics). A keyword shortlist to consider: ${shortlist.join(', ')}. Give each a precise brief and a measurable outcome for the whole plan.`, planSchema, 4000);
+  onEvent({ type: 'plan', plan });
+  const results = [];
+  for (const step of plan.steps.slice(0, 6)) {
+    onEvent({ type: 'step', agent: step.agent, state: 'run' });
+    const prior = results.map((r) => `## ${r.agent}\n${r.out.summary}\n${r.out.deliverable}`).join('\n\n').slice(-12000);
+    const out = await runSpecialist(step.agent, step.brief, business, prior);
+    results.push({ agent: step.agent, out });
+    onEvent({ type: 'step', agent: step.agent, state: 'done', out });
+  }
+  const final = await call(`${teamContext(business)}\n\nYou are the CEO. Merge your team's work into one plan.`,
+    `Goal: ${goal}\nTeam output:\n${results.map((r) => `## ${r.agent}\n${JSON.stringify(r.out)}`).join('\n\n').slice(-30000)}`,
+    obj({ headline: str, thisWeek: strs, decisions: strs, metric: str }), 4000);
+  onEvent({ type: 'final', final });
+  return { plan, results, final };
 }

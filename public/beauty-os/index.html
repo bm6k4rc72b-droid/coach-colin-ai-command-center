@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>BEAUTY OS · Research, SEO + GEO, Leads</title>
+    <meta name="description" content="BEAUTY OS: product research, unit economics, SEO and GEO listing optimisation, and compliant lead finding and outreach for hair, skin and anti-aging brands on Shopify, TikTok Shop and Amazon." />
+    <meta name="theme-color" content="#140b0e" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23140b0e' stroke='%23f2b6a0' stroke-width='2'/%3E%3Cpath d='M16 7c4 5 4 13 0 18-4-5-4-13 0-18z' fill='%23f2b6a0'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <p class="kicker">Shopify · TikTok Shop · Amazon</p>
+      <h1>BEAUTY <em>OS</em></h1>
+      <p class="lede">Find the hair, skin and anti-aging products worth selling, list them so Google <i>and</i> AI answer engines recommend them, and fill the pipeline with creators, salons and suppliers.</p>
+      <ul class="facts">
+        <li><b>Research</b>score products on margin, momentum, competition and claim risk</li>
+        <li><b>SEO + GEO</b>channel-perfect listings, schema and llms.txt</li>
+        <li><b>Leads</b>import, de-dupe, score and write compliant outreach</li>
+      </ul>
+    </header>
+
+    <main>
+      <nav class="tabs" id="tabs">
+        <button data-tab="research" class="on">Research</button>
+        <button data-tab="economics">Economics</button>
+        <button data-tab="listing">Listing SEO</button>
+        <button data-tab="geo">GEO</button>
+        <button data-tab="leads">Leads</button>
+        <button data-tab="outreach">Outreach</button>
+        <button data-tab="settings">Settings</button>
+      </nav>
+      <p class="keynote" id="keynote"></p>
+
+      <section class="panel on" data-panel="research">
+        <h2>Product research</h2>
+        <p class="hint">Score a product idea. Interest = monthly Google Trends values (0–100), oldest first.</p>
+        <form id="prod" class="grid">
+          <label>Product <input name="name" value="Copper peptide serum" /></label>
+          <label>Category / type <input name="category" value="face serum" /></label>
+          <label>Sell price $ <input name="price" type="number" step="0.01" value="34" /></label>
+          <label>Unit cost $ <input name="cost" type="number" step="0.01" value="5.5" /></label>
+          <label>Shipping to customer $ <input name="shipping" type="number" step="0.01" value="3.8" /></label>
+          <label>Weight (oz) <input name="weightOz" type="number" step="0.1" value="2.5" /></label>
+          <label class="wide">Interest series <input name="interest" value="38, 44, 51, 60, 66, 74" /></label>
+          <label>Competing listings <input name="competitors" type="number" value="120" /></label>
+          <label>Avg reviews on top listings <input name="avgReviews" type="number" value="900" /></label>
+          <label class="wide">Main claim you'd make <input name="claims" value="Reduces the appearance of fine lines and firms the look of skin" /></label>
+          <div class="checks wide">
+            <label class="check"><input type="checkbox" name="liquid" checked /> Liquid</label>
+            <label class="check"><input type="checkbox" name="fragile" /> Fragile</label>
+            <label class="check"><input type="checkbox" name="repeatPurchase" checked /> Repeat purchase</label>
+            <label class="check"><input type="checkbox" name="demoable" checked /> Visual on video</label>
+          </div>
+          <button class="btn primary wide">Score it</button>
+        </form>
+        <div id="prod-out" class="out"></div>
+        <h3>Idea generator</h3>
+        <div class="row"><input id="niche" value="anti-aging skincare for women over 40" /><button class="btn ghost" id="ideas-go">Find 8 ideas</button></div>
+        <div id="ideas-out" class="out"></div>
+      </section>
+
+      <section class="panel" data-panel="economics">
+        <h2>Channel economics</h2>
+        <p class="hint">One product, three channels: profit per sale, break-even CPA and ROAS. Fees are editable estimates; confirm on each platform's fee page.</p>
+        <form id="eco" class="grid metrics">
+          <label>Price $ <input name="price" type="number" step="0.01" value="34" /></label>
+          <label>Unit cost $ <input name="cost" type="number" step="0.01" value="5.5" /></label>
+          <label>Shipping $ <input name="shipping" type="number" step="0.01" value="3.8" /></label>
+          <label>Amazon FBA fee $ <input name="fbaFee" type="number" step="0.01" value="4.2" /></label>
+          <label>Ad spend per sale $ <input name="adSpend" type="number" step="0.01" value="8" /></label>
+          <label>Creator commission % <input name="affiliatePct" type="number" step="1" value="15" /></label>
+          <label>Return rate % <input name="returnRate" type="number" step="1" value="4" /></label>
+          <label>TikTok fee % <input name="tiktokPct" type="number" step="0.1" value="6" /></label>
+        </form>
+        <div id="eco-out" class="eco"></div>
+      </section>
+
+      <section class="panel" data-panel="listing">
+        <h2>Listing SEO</h2>
+        <form id="lst" class="grid">
+          <label>Channel <select name="channel"><option value="amazon">Amazon</option><option value="shopify">Shopify</option><option value="tiktok">TikTok Shop</option></select></label>
+          <label>Keywords (one per line) <textarea name="keywords" rows="3">copper peptide serum
+peptide serum for mature skin
+best firming serum
+how to use copper peptides</textarea></label>
+          <label class="wide">Product facts (only true ones) <textarea name="facts" rows="4">Brand: Lumen. Copper peptide (GHK-Cu) serum, 1 fl oz. Also contains hyaluronic acid and squalane. Fragrance-free, vegan, cruelty-free. For dry and mature skin. Use AM/PM after cleansing.</textarea></label>
+          <div class="row wide"><button class="btn primary" value="write">Write listing with AI</button><button class="btn ghost" value="lint">Lint my own</button></div>
+        </form>
+        <div id="lst-own" class="grid hidden">
+          <label class="wide">Title <input id="own-title" /></label>
+          <label class="wide">Bullets / description (one bullet per line) <textarea id="own-bullets" rows="4"></textarea></label>
+          <label class="wide">Amazon search terms / Shopify meta description <input id="own-extra" /></label>
+        </div>
+        <div id="lst-out" class="out"></div>
+        <h3>Keyword clusters</h3>
+        <div id="kw-out" class="out"></div>
+      </section>
+
+      <section class="panel" data-panel="geo">
+        <h2>GEO · get recommended by AI answers</h2>
+        <p class="hint">Paste a product page. It is scored for how easily ChatGPT, Perplexity, Gemini and AI Overviews can quote it, then rewritten.</p>
+        <textarea id="geo-in" rows="7" placeholder="Paste your product page copy"></textarea>
+        <div class="row"><button class="btn primary" id="geo-score">Score</button><button class="btn ghost" id="geo-rewrite">Rewrite with AI</button></div>
+        <div id="geo-out" class="out"></div>
+        <h3>Structured data and llms.txt</h3>
+        <form id="ld" class="grid">
+          <label>Store name <input name="store" value="Lumen Skin" /></label>
+          <label>Store URL <input name="url" value="https://lumenskin.example" /></label>
+          <label>Product <input name="name" value="Lumen Copper Peptide Serum" /></label>
+          <label>Price $ <input name="price" type="number" step="0.01" value="34" /></label>
+          <label>SKU <input name="sku" value="LUM-CPS-30" /></label>
+          <label>GTIN / UPC <input name="gtin" /></label>
+          <label>Rating (only if real) <input name="rating" type="number" step="0.1" /></label>
+          <label>Review count <input name="reviewCount" type="number" /></label>
+          <button class="btn ghost wide">Generate JSON-LD + llms.txt</button>
+        </form>
+        <div id="ld-out" class="out"></div>
+      </section>
+
+      <section class="panel" data-panel="leads">
+        <h2>Leads finder</h2>
+        <p class="hint">BEAUTY OS uses licensed sources: platform creator marketplaces, Apollo, Google Places and wholesale marketplaces. It does not scrape. Pick a lead type to get the search plan, then import the export as CSV.</p>
+        <div class="grid">
+          <label>Lead type <select id="lead-type"></select></label>
+          <label>Niche / keyword <input id="lead-niche" value="skincare" /></label>
+          <label>City (optional) <input id="lead-city" placeholder="Miami" /></label>
+        </div>
+        <div id="plan-out" class="out"></div>
+        <label>Import CSV <input type="file" id="csv" accept=".csv,text/csv" /></label>
+        <label>…or paste CSV <textarea id="csv-text" rows="4">name,handle,followers,engagement_rate,niche,gmv,email
+Ana Glow,anaglow,48K,5.2%,skincare grwm,1200,ana@example.com
+Mia Curls,miacurls,120K,3.1%,curly hair care,0,
+Big Food,bigfood,2.1M,0.8%,cooking,0,food@example.com</textarea></label>
+        <button class="btn primary" id="leads-go">Score leads</button>
+        <div id="leads-out" class="out"></div>
+      </section>
+
+      <section class="panel" data-panel="outreach">
+        <h2>Outreach</h2>
+        <p class="hint">Pick a scored lead (or fill one in), write the sequence, and check it against CAN-SPAM and the claims rules. You send it from your own inbox or sequencer.</p>
+        <div class="grid">
+          <label>Lead <select id="o-lead"><option value="">Score leads first, or use the sample</option></select></label>
+          <label>Type <select id="o-type"></select></label>
+        </div>
+        <div class="row"><button class="btn primary" id="o-write">Write sequence</button></div>
+        <div id="o-out" class="out"></div>
+        <h3>Check any email</h3>
+        <label>Subject <input id="c-subj" /></label>
+        <label>Body <textarea id="c-body" rows="5"></textarea></label>
+        <button class="btn ghost" id="c-go">Check</button>
+        <div id="c-out" class="out"></div>
+      </section>
+
+      <section class="panel" data-panel="settings">
+        <h2>Settings</h2>
+        <label>Anthropic API key <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off" /></label>
+        <p class="hint">Shared with COLIN OS on this site. Stored in this browser only; sent only to api.anthropic.com. Scoring, linting, GEO checks, schema and lead scoring all work without it.</p>
+        <div class="row"><button class="btn primary" id="key-save">Save key</button><button class="btn ghost" id="key-clear">Remove</button></div>
+        <h3>Brand (used in outreach)</h3>
+        <form id="brand" class="grid">
+          <label>Brand name <input name="name" /></label>
+          <label>Sender name <input name="sender" /></label>
+          <label class="wide">Physical mailing address (CAN-SPAM) <input name="address" /></label>
+        </form>
+        <p class="hint">In Claude Code, the same work is available as agents and skills: ask the <code>ceo</code> agent, or use <code>ai-seo</code>, <code>schema</code>, <code>research-keywords</code>, <code>prospecting</code>, <code>cold-email</code>, <code>influencer-marketing</code>.</p>
+      </section>
+    </main>
+    <footer class="foot">BEAUTY OS drafts and scores. You approve every listing, email and spend. Not legal advice: check FDA cosmetic rules, MoCRA, and each platform's policies for your products.</footer>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

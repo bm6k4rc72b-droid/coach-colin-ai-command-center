@@ -19,9 +19,9 @@
       <div class="hero-copy">
         <p class="kicker">@coachcolinc · AI agent system</p>
         <h1>COLIN <span>OS</span></h1>
-        <p class="lede">Six AI agents. One brief in, a ready-to-post Reel, caption, DM replies and a week of content out.</p>
+        <p class="lede">A 50-agent AI marketing team with a CEO. One goal in: research, strategy, Reels, captions, DM replies and a week of content out.</p>
         <div class="ctas">
-          <a class="btn gold" href="#app" data-go="team">Run the team</a>
+          <a class="btn gold" href="#app" data-go="org">Brief the CEO</a>
           <a class="btn ghost" href="https://www.instagram.com/coachcolinc" target="_blank" rel="noopener">Instagram</a>
           <a class="btn ghost" href="https://www.optimumregenpeptides.com/a/colin-cook" target="_blank" rel="noopener sponsored">Optimum Regen <small>#ad</small></a>
         </div>
@@ -31,7 +31,9 @@
 
     <main id="app">
       <nav class="tabs" id="tabs" aria-label="COLIN OS">
-        <button data-tab="team" class="on">Team</button>
+        <button data-tab="org" class="on">Org · 50</button>
+        <button data-tab="team">Reel team</button>
+        <button data-tab="machine">Video Machine</button>
         <button data-tab="closer">Closer</button>
         <button data-tab="calendar">Calendar</button>
         <button data-tab="analyst">Analyst</button>
@@ -41,7 +43,24 @@
       <p class="keynote" id="keynote"></p>
 
       <!-- TEAM -->
-      <section class="panel on" data-panel="team">
+      <section class="panel on" data-panel="org">
+        <div class="ceo"><span class="pill gold">CEO</span><b>Claude</b> coordinates the entire marketing team and turns your goals into results.</div>
+        <form id="ceo" class="grid">
+          <label class="wide">Goal for the CEO <input name="goal" value="Get 10 new GLP lifestyle coaching clients from Instagram this month" /></label>
+          <label>Business <select name="business"><option value="coach">Coach Colin</option><option value="beauty">Beauty store (Shopify · TikTok Shop · Amazon)</option></select></label>
+          <button class="btn gold" type="submit">Hand it to the CEO</button>
+        </form>
+        <div id="ceo-out" class="out"></div>
+        <p class="hint">10 departments · 50 specialists. Tap an agent to give it a task directly. The same team lives in Claude Code as <code>.claude/agents/</code>: ask the <code>ceo</code> agent.</p>
+        <div class="org" id="org"></div>
+        <dialog id="agent-dlg"><form method="dialog" id="agent-form"><h3 id="agent-title"></h3><p id="agent-does" class="hint"></p>
+          <label>Task <textarea name="task" rows="3" required></textarea></label>
+          <label>Business <select name="business"><option value="coach">Coach Colin</option><option value="beauty">Beauty store</option></select></label>
+          <div class="row"><button class="btn gold" value="run">Run</button><button class="btn ghost" value="cancel" formnovalidate>Close</button></div>
+          <div id="agent-out" class="out"></div></form></dialog>
+      </section>
+
+      <section class="panel" data-panel="team">
         <h2>Brief the team</h2>
         <form id="brief" class="grid">
           <label>Topic <input name="topic" placeholder="e.g. Protecting muscle on a GLP-1" value="Protecting muscle on a GLP-1" /></label>
@@ -56,6 +75,29 @@
       </section>
 
       <!-- CLOSER -->
+      <section class="panel" data-panel="machine">
+        <h2>Video Machine · MoneyPrinterTurbo</h2>
+        <p class="hint">Topic in, finished vertical video out: stock footage, voice-over, gold subtitles and music, edited by <a href="https://github.com/harry0703/MoneyPrinterTurbo" target="_blank" rel="noopener">MoneyPrinterTurbo</a> running on your computer (<code>money-printer/</code>). Scripts pass the Guardian before anything renders.</p>
+        <form id="vm" class="grid">
+          <label class="wide">Topic <input name="topic" value="3 mistakes people make on a GLP-1 (and how to keep your muscle)" /></label>
+          <label>Lane <select name="lane" id="vm-lane"></select></label>
+          <label>Voice <select name="voice"><option value="en-US-AndrewNeural-Male">Andrew (deep male)</option><option value="en-US-ChristopherNeural-Male">Christopher (male)</option><option value="en-US-GuyNeural-Male">Guy (male)</option><option value="en-US-AriaNeural-Female">Aria (female)</option></select></label>
+          <label class="check wide"><input type="checkbox" name="promote" /> Mentions Optimum Regen (adds the paid-partnership line)</label>
+          <div class="row wide"><button class="btn gold" value="write">Write script</button><button class="btn ghost" value="last">Use the Reel team's script</button></div>
+        </form>
+        <div id="vm-out" class="out"></div>
+        <details class="card"><summary><b>Connection</b> · MoneyPrinterTurbo API on your computer</summary>
+          <label>API URL <input id="vm-url" value="http://127.0.0.1:8080" /></label>
+          <label>API key (only if you set app.api_key) <input id="vm-key" type="password" autocomplete="off" /></label>
+          <p class="hint">Start it with <code>./money-printer/run.sh</code> (see <code>money-printer/README.md</code>). If your browser blocks the page from reaching your computer, use <b>Download job</b> and run <code>node money-printer/make-video.mjs --script job.json</code>.</p>
+        </details>
+        <h3>Batch</h3>
+        <label>One topic per line <textarea id="vm-batch" rows="4">Why I make blood work mandatory before coaching GLP-1 clients
+The 10-minute reset for realtors between showings
+What D1 coaches look for in a recruit's first rep</textarea></label>
+        <button class="btn ghost" id="vm-batch-dl">Download topics.txt</button> <small class="hint">then <code>node money-printer/make-video.mjs --batch topics.txt --lane glp</code></small>
+      </section>
+
       <section class="panel" data-panel="closer">
         <h2>Closer · comments & DMs</h2>
         <p class="hint">Paste a comment or DM. The Closer routes it to a lane, scores intent, and writes the reply.</p>

@@ -219,11 +219,11 @@ export function offlineDraft(agent, brief = {}) {
       ], audience: lane };
     case 'script':
       return { hook: `Stop. If you're on a GLP-1, this is why you're losing muscle.`, beats: [
-        '0–2s: hook to camera, hat brim up, gold light',
-        '2–8s: the problem: low protein + no lifting = the scale lies',
-        '8–20s: the fix: 3 lifts, protein at every meal, blood work every 90 days',
-        '20–27s: proof: a client process (with consent), no before/after promises',
-        '27–30s: CTA: comment "LANE" and I will tell you if you qualify',
+        { t: '0–2s', say: "Stop. If you're on a GLP-1, this is why you're losing muscle.", shot: 'Hook to camera, hat brim up, gold light' },
+        { t: '2–8s', say: 'Low protein and no lifting means the scale is lying to you.', shot: 'Scale close-up, then gym' },
+        { t: '8–20s', say: 'Three lifts a week, protein at every meal, and blood work every ninety days.', shot: 'Strength training and meal prep' },
+        { t: '20–27s', say: 'That is the process my clients follow. No shortcuts, no guessing.', shot: 'Coaching a client (with consent)' },
+        { t: '27–30s', say: "Comment LANE and I'll tell you if you qualify.", shot: 'Back to camera, point down' },
       ], onScreen: 'GLP-1? Protect your muscle.' };
     case 'caption':
       return { caption: withDisclosure(`Losing weight is easy to start and hard to keep. Muscle is what keeps it.\n\nI only take clients who commit: blood work, training, protein, check-ins.\n\nComment "LANE" and I will tell you if you are a fit.\nPeptide supplier I use: ${link}`), hashtags: ['#glp1coach', '#peptidecoach', '#d1athlete', '#firstresponderfitness', '#realtorlife', '#coachcolin'] };
