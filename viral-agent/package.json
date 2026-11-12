@@ -1,0 +1,15 @@
+{
+  "name": "viral-agent",
+  "private": true,
+  "type": "module",
+  "description": "Researches what's going viral about a topic across platforms, scores it, and has Claude write a briefing, hooks and a posting plan. Includes an ffmpeg auto-clipper for your own gameplay.",
+  "scripts": {
+    "nightly": "node src/run.mjs",
+    "collect": "node src/run.mjs --no-ai",
+    "clip": "node src/clip.mjs",
+    "test": "node test/score.test.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
+  }
+}
