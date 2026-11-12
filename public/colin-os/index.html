@@ -19,9 +19,9 @@
       <div class="hero-copy">
         <p class="kicker">@coachcolinc · AI agent system</p>
         <h1>COLIN <span>OS</span></h1>
-        <p class="lede">Six AI agents. One brief in, a ready-to-post Reel, caption, DM replies and a week of content out.</p>
+        <p class="lede">A 50-agent AI marketing team with a CEO. One goal in: research, strategy, Reels, captions, DM replies and a week of content out.</p>
         <div class="ctas">
-          <a class="btn gold" href="#app" data-go="team">Run the team</a>
+          <a class="btn gold" href="#app" data-go="org">Brief the CEO</a>
           <a class="btn ghost" href="https://www.instagram.com/coachcolinc" target="_blank" rel="noopener">Instagram</a>
           <a class="btn ghost" href="https://www.optimumregenpeptides.com/a/colin-cook" target="_blank" rel="noopener sponsored">Optimum Regen <small>#ad</small></a>
         </div>
@@ -31,7 +31,8 @@
 
     <main id="app">
       <nav class="tabs" id="tabs" aria-label="COLIN OS">
-        <button data-tab="team" class="on">Team</button>
+        <button data-tab="org" class="on">Org · 50</button>
+        <button data-tab="team">Reel team</button>
         <button data-tab="closer">Closer</button>
         <button data-tab="calendar">Calendar</button>
         <button data-tab="analyst">Analyst</button>
@@ -41,7 +42,24 @@
       <p class="keynote" id="keynote"></p>
 
       <!-- TEAM -->
-      <section class="panel on" data-panel="team">
+      <section class="panel on" data-panel="org">
+        <div class="ceo"><span class="pill gold">CEO</span><b>Claude</b> coordinates the entire marketing team and turns your goals into results.</div>
+        <form id="ceo" class="grid">
+          <label class="wide">Goal for the CEO <input name="goal" value="Get 10 new GLP lifestyle coaching clients from Instagram this month" /></label>
+          <label>Business <select name="business"><option value="coach">Coach Colin</option><option value="beauty">Beauty store (Shopify · TikTok Shop · Amazon)</option></select></label>
+          <button class="btn gold" type="submit">Hand it to the CEO</button>
+        </form>
+        <div id="ceo-out" class="out"></div>
+        <p class="hint">10 departments · 50 specialists. Tap an agent to give it a task directly. The same team lives in Claude Code as <code>.claude/agents/</code>: ask the <code>ceo</code> agent.</p>
+        <div class="org" id="org"></div>
+        <dialog id="agent-dlg"><form method="dialog" id="agent-form"><h3 id="agent-title"></h3><p id="agent-does" class="hint"></p>
+          <label>Task <textarea name="task" rows="3" required></textarea></label>
+          <label>Business <select name="business"><option value="coach">Coach Colin</option><option value="beauty">Beauty store</option></select></label>
+          <div class="row"><button class="btn gold" value="run">Run</button><button class="btn ghost" value="cancel" formnovalidate>Close</button></div>
+          <div id="agent-out" class="out"></div></form></dialog>
+      </section>
+
+      <section class="panel" data-panel="team">
         <h2>Brief the team</h2>
         <form id="brief" class="grid">
           <label>Topic <input name="topic" placeholder="e.g. Protecting muscle on a GLP-1" value="Protecting muscle on a GLP-1" /></label>

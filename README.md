@@ -1031,24 +1031,58 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
-## Also in here: COLIN OS · AI agent team for @coachcolinc
+## Also in here: COLIN OS · 50-agent AI marketing team for @coachcolinc
 
-At [`public/colin-os/`](public/colin-os): Coach Colin's AI agent team, in black and gold. It is built around
-[@coachcolinc](https://www.instagram.com/coachcolinc), the three client lanes from the pinned post (D1-track athletes,
-GLP lifestyle with mandatory blood work, high-pressure professions) and the
-[Optimum Regen Peptides](https://www.optimumregenpeptides.com/a/colin-cook) affiliate link.
+At [`public/colin-os/`](public/colin-os): Coach Colin's AI marketing team in black and gold. It has a CEO agent and
+10 departments of 5 specialists each (market intelligence, strategy, SEO, content, social, demand generation, email,
+conversion, analytics, operations), and is built around [@coachcolinc](https://www.instagram.com/coachcolinc), the three
+client lanes and the [Optimum Regen Peptides](https://www.optimumregenpeptides.com/a/colin-cook) affiliate link.
 
 **Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/colin-os/>** (locally `/colin-os/`).
 
-- **Team**: one brief runs Scout (angles) → Scriptwriter (Reel script, hooks, shots) → Captioner (caption, tracked
-  link, hashtags) → Guardian (FTC and health-claim fix). Each agent is a Claude call with a strict JSON schema
-  (`claude-opus-5-5`, your key, stored only in the browser). Without a key it writes offline template drafts.
-- **Closer** routes a comment or DM to a lane, scores intent (hot, warm or cold) and writes the reply and follow-up.
-- **Calendar**: next week's 7-post rhythm across the lanes, downloadable as `.ics`. **Analyst** turns Insights numbers
-  into rates and next-week experiments. **Guardian** checks any caption on the device.
-- Guardrails: no dosing or injection talk, no cure, treatment or "FDA approved" claims, no guarantees, `#ad` plus a
-  commission line on every partner post, and blood work and a doctor first. It drafts only and never posts.
-  `npm run test:colin-os`.
+- **Org · 50**: give the CEO a goal; it picks the specialists, runs them in order, each building on the last, and
+  returns one plan. Tap any agent to give it a task directly. Works for Coach Colin or the beauty store.
+- **Reel team**: Scout → Scriptwriter → Captioner → Guardian, then **Export to Reel Studio** to render the video.
+- **Closer** (comments and DMs to clients), **Calendar** (`.ics`), **Analyst** (Insights to experiments), **Guardian**
+  (FTC disclosure and health-claim check).
+- **In Claude Code** the same team lives in [`.claude/agents/`](.claude/agents) (51 subagents, generated from
+  `public/colin-os/js/team.js` by `npm run agents:colin-os`). Ask the `ceo` agent. Shared brief:
+  [`docs/marketing-team/BRAND.md`](docs/marketing-team/BRAND.md).
+- **Skills**: 65 MIT-licensed marketing, SEO and GEO skills imported into `.claude/skills/` from
+  [marketingskills](https://github.com/coreyhaines31/marketingskills) and
+  [gtm-engineer-skills](https://github.com/onvoyage-ai/gtm-engineer-skills) (see
+  [`THIRD_PARTY_SKILLS.md`](.claude/skills/THIRD_PARTY_SKILLS.md); refresh with `npm run skills:marketing`).
+- Runs on Claude with your key (browser only). It drafts and never posts. `npm run test:colin-os`.
+
+---
+
+## Also in here: BEAUTY OS · research, SEO + GEO and leads for beauty commerce
+
+At [`public/beauty-os/`](public/beauty-os): product research and growth for a hair, skin and anti-aging brand on
+Shopify, TikTok Shop and Amazon (dropshipping or private label).
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/beauty-os/>** (locally `/beauty-os/`).
+
+- **Research**: scores a product 0–100 on margin, demand, momentum (Google Trends series), competition,
+  logistics, impulse price, repeat purchase, video appeal and claim risk; stops drug products (minoxidil, SPF,
+  prescription actives). AI idea generator with validation steps.
+- **Economics**: profit per sale, break-even CPA and ROAS on all three channels (Amazon beauty referral 8%/15%).
+- **Listing SEO**: AI-written Amazon, Shopify and TikTok Shop listings, linted against each channel's limits and the
+  FDA cosmetic-vs-drug claim rules; keyword clustering by intent.
+- **GEO**: scores how quotable a page is for ChatGPT, Perplexity, Gemini and AI Overviews, rewrites it, and
+  generates Product and FAQPage JSON-LD and `llms.txt`.
+- **Leads and outreach**: search plans on licensed sources (TikTok Shop Affiliate Center, Instagram Creator
+  Marketplace, Apollo, Google Places, Faire); CSV import, de-dupe and A/B/C scoring for creators, salons and med-spas,
+  retailers and suppliers; personalised sequences checked against CAN-SPAM. `npm run test:beauty-os`.
+
+---
+
+## Also in here: Reel Studio · Remotion + VoiceStudio
+
+At [`reel-studio/`](reel-studio): renders a COLIN OS script into a 1080×1920 MP4 with kinetic captions, the `#ad`
+disclosure and an optional voice-over in Colin's cloned voice from a local
+[VoiceStudio](https://github.com/debpalash/VoiceStudio) (AGPL, run as a separate app). Built on
+[Remotion](https://github.com/remotion-dev/remotion). See [`reel-studio/README.md`](reel-studio/README.md).
 
 ---
 

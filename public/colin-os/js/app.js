@@ -3,7 +3,8 @@
  * @module colin-os/app
  */
 import { PROFILE, LANES, checkCompliance, withDisclosure, classifyLead, affiliateLink, weekPlan, toICS, postMetrics } from './core.js';
-import { AGENTS, runAgent, runPipeline, getKey, setKey, explain } from './agents.js';
+import { AGENTS, runAgent, runPipeline, getKey, setKey, explain, runSpecialist, runCEO } from './agents.js';
+import { DEPARTMENTS, ALL_AGENTS } from './team.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -55,6 +56,7 @@ function renderTeam(o) {
     const hooks = s.hooks || (s.hook ? [s.hook] : []);
     parts.push(card('Scriptwriter · Reel', `${s.angle ? `<p><b>${esc(s.angle)}</b></p>` : ''}<p>Hooks:</p>${list(hooks)}<p>Script:</p><ol>${beats}</ol><p>On screen: <b>${esc(s.onScreen)}</b></p>${s.cta ? `<p>CTA: ${esc(s.cta)}</p>` : ''}`,
       [hooks[0], ...(s.beats || []).map((b) => typeof b === 'string' ? b : `${b.t} ${b.say}`)].join('\n')));
+    parts.push(`<p><button class="btn ghost" data-reel="${esc(JSON.stringify(s))}">Export to Reel Studio</button> <small class="hint">renders with <code>reel-studio/</code></small></p>`);
   }
   if (o.compliance) {
     const c = o.compliance;
@@ -151,3 +153,63 @@ const utm = () => { $('utm-out').textContent = affiliateLink(PROFILE.partner.url
 $('utm-content').addEventListener('input', utm); utm();
 
 keynote();
+
+/* ── Org chart: 10 departments x 5 agents, and the CEO ─────────────── */
+$('org').innerHTML = DEPARTMENTS.map((d) => `<div class="dept" style="--c:${d.color}"><h4>${esc(d.name)}</h4>${d.agents.map((a) => `<button class="agent" data-agent="${a.id}"><b>${esc(a.id)}</b><span>${esc(a.does)}</span></button>`).join('')}</div>`).join('');
+const dlg = $('agent-dlg');
+let current = null;
+$('org').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-agent]');
+  if (!b) return;
+  current = ALL_AGENTS.find((a) => a.id === b.dataset.agent);
+  $('agent-title').textContent = `${current.id} · ${current.deptName}`;
+  $('agent-does').textContent = `${current.does}. Skills: ${current.skills.join(', ')}`;
+  $('agent-out').innerHTML = '';
+  dlg.showModal();
+});
+$('agent-form').addEventListener('submit', async (e) => {
+  if (e.submitter?.value !== 'run') return;
+  e.preventDefault();
+  const f = new FormData(e.target);
+  $('agent-out').innerHTML = '<p class="hint">Working…</p>';
+  try {
+    const r = await runSpecialist(current.id, f.get('task'), f.get('business'));
+    $('agent-out').innerHTML = deliverableCard(current.id, r);
+  } catch (err) { $('agent-out').innerHTML = `<p class="err">${esc(explain(err))}</p>`; }
+});
+
+function deliverableCard(id, r) {
+  return card(id, `<p><b>${esc(r.summary)}</b></p><pre>${esc(r.deliverable)}</pre>${r.decisions?.length ? `<p>Your call:</p>${list(r.decisions)}` : ''}${r.handoff ? `<p>Next: <code>${esc(r.handoff)}</code></p>` : ''}`, r.deliverable);
+}
+
+$('ceo').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const btn = e.target.querySelector('button'); btn.disabled = true;
+  const out = $('ceo-out'); out.innerHTML = '<p class="hint">The CEO is planning…</p>';
+  document.querySelectorAll('.agent').forEach((x) => x.removeAttribute('data-state'));
+  const mark = (id, s) => document.querySelector(`.agent[data-agent="${id}"]`)?.setAttribute('data-state', s);
+  try {
+    await runCEO(f.get('goal'), f.get('business'), (ev) => {
+      if (ev.type === 'plan') {
+        out.innerHTML = card(ev.plan.offline ? 'CEO plan (offline routing)' : 'CEO plan', `<p><b>Outcome:</b> ${esc(ev.plan.outcome)}</p><ol>${ev.plan.steps.map((s) => `<li><code>${esc(s.agent)}</code>: ${esc(s.brief)}</li>`).join('')}</ol>${ev.plan.offline ? '<p class="hint">Add a key in Settings and the CEO runs these agents in order, or run the same team in Claude Code with the <code>ceo</code> agent.</p>' : ''}`);
+        ev.plan.steps.forEach((s) => mark(s.agent, 'queued'));
+      }
+      if (ev.type === 'step') { mark(ev.agent, ev.state); if (ev.out) out.insertAdjacentHTML('beforeend', deliverableCard(ev.agent, ev.out)); }
+      if (ev.type === 'final') out.insertAdjacentHTML('afterbegin', card('CEO · the plan', `<p><b>${esc(ev.final.headline)}</b></p><p>This week:</p>${list(ev.final.thisWeek, 'ol')}<p>Decisions for you:</p>${list(ev.final.decisions)}<p>Metric to watch: <b>${esc(ev.final.metric)}</b></p>`));
+    });
+  } catch (err) { out.insertAdjacentHTML('beforeend', `<p class="err">${esc(explain(err))}</p>`); } finally { btn.disabled = false; }
+});
+
+/* ── Reel Studio hand-off: the script as props for reel-studio/ (Remotion) ── */
+document.addEventListener('click', (e) => {
+  if (!e.target.matches('[data-reel]')) return;
+  const s = JSON.parse(e.target.dataset.reel);
+  const props = {
+    handle: `@${PROFILE.handle}`, hook: s.hooks?.[0] || s.hook || '', onScreen: s.onScreen || '', cta: s.cta || 'Comment "LANE" to see if you qualify',
+    beats: (s.beats || []).map((b) => (typeof b === 'string' ? b : b.say)).filter(Boolean).slice(0, 6), disclosure: '#ad · I earn a commission from Optimum Regen links',
+  };
+  const blob = new Blob([JSON.stringify(props, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'reel-props.json' });
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
