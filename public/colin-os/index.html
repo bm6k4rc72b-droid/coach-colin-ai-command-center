@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>COLIN OS · AI Agent Team</title>
+    <meta name="description" content="COLIN OS: Coach Colin's AI agent team for @coachcolinc. Scout, Scriptwriter, Captioner, Guardian, Closer and Analyst turn one brief into a compliant Reel, caption and DM replies, with tracked Optimum Regen affiliate links." />
+    <meta name="theme-color" content="#050507" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2l12 5v9c0 7-5 12-12 14C9 28 4 23 4 16V7z' fill='%23111' stroke='%23e8b84a' stroke-width='2'/%3E%3Ctext x='16' y='21' font-size='12' text-anchor='middle' fill='%23e8b84a' font-family='sans-serif' font-weight='800'%3ECC%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero" id="top">
+      <img class="hero-img" src="media/colin.webp" alt="Coach Colin in a black cowboy hat and leather vest, leaning on a wall under blue neon" />
+      <div class="hero-veil"></div>
+      <div class="hero-copy">
+        <p class="kicker">@coachcolinc · AI agent system</p>
+        <h1>COLIN <span>OS</span></h1>
+        <p class="lede">Six AI agents. One brief in, a ready-to-post Reel, caption, DM replies and a week of content out.</p>
+        <div class="ctas">
+          <a class="btn gold" href="#app" data-go="team">Run the team</a>
+          <a class="btn ghost" href="https://www.instagram.com/coachcolinc" target="_blank" rel="noopener">Instagram</a>
+          <a class="btn ghost" href="https://www.optimumregenpeptides.com/a/colin-cook" target="_blank" rel="noopener sponsored">Optimum Regen <small>#ad</small></a>
+        </div>
+        <ul class="roster" id="roster"></ul>
+      </div>
+    </header>
+
+    <main id="app">
+      <nav class="tabs" id="tabs" aria-label="COLIN OS">
+        <button data-tab="team" class="on">Team</button>
+        <button data-tab="closer">Closer</button>
+        <button data-tab="calendar">Calendar</button>
+        <button data-tab="analyst">Analyst</button>
+        <button data-tab="guardian">Guardian</button>
+        <button data-tab="settings">Settings</button>
+      </nav>
+      <p class="keynote" id="keynote"></p>
+
+      <!-- TEAM -->
+      <section class="panel on" data-panel="team">
+        <h2>Brief the team</h2>
+        <form id="brief" class="grid">
+          <label>Topic <input name="topic" placeholder="e.g. Protecting muscle on a GLP-1" value="Protecting muscle on a GLP-1" /></label>
+          <label>Lane <select name="lane" id="lane-select"></select></label>
+          <label>Campaign tag <input name="campaign" placeholder="weekly" value="weekly" /></label>
+          <label class="check"><input type="checkbox" name="promote" checked /> Promote Optimum Regen in this post</label>
+          <label class="wide">Notes for the team <textarea name="notes" rows="2" placeholder="What happened this week, client wins (with consent), what you want to push"></textarea></label>
+          <button class="btn gold wide" type="submit">Run Scout → Script → Caption → Guardian</button>
+        </form>
+        <ol class="pipeline" id="pipeline"></ol>
+        <div id="team-out" class="out"></div>
+      </section>
+
+      <!-- CLOSER -->
+      <section class="panel" data-panel="closer">
+        <h2>Closer · comments & DMs</h2>
+        <p class="hint">Paste a comment or DM. The Closer routes it to a lane, scores intent, and writes the reply.</p>
+        <textarea id="dm-in" rows="3" placeholder="e.g. I'm a realtor working 70 hour weeks and on tirzepatide, how much is coaching?"></textarea>
+        <button class="btn gold" id="dm-go">Route & reply</button>
+        <div id="dm-out" class="out"></div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="panel" data-panel="calendar">
+        <h2>Content calendar</h2>
+        <p class="hint">Next week's rhythm across all three lanes. Download it to your phone's calendar for posting reminders.</p>
+        <label class="inline">Post at <input type="number" id="cal-hour" min="5" max="23" value="18" /> :00</label>
+        <button class="btn ghost" id="cal-ics">Download .ics</button>
+        <div id="cal-out" class="cal"></div>
+      </section>
+
+      <!-- ANALYST -->
+      <section class="panel" data-panel="analyst">
+        <h2>Analyst · insights → next moves</h2>
+        <p class="hint">Copy the numbers from "View insights" on any post.</p>
+        <form id="metrics" class="grid metrics">
+          <label>Post topic <input name="topic" placeholder="Most certified coach post" /></label>
+          <label>Reach / plays <input type="number" name="reach" /></label>
+          <label>Likes <input type="number" name="likes" /></label>
+          <label>Comments <input type="number" name="comments" /></label>
+          <label>Shares <input type="number" name="shares" /></label>
+          <label>Saves <input type="number" name="saves" /></label>
+          <label>Follows <input type="number" name="follows" /></label>
+          <label>Link clicks <input type="number" name="linkClicks" /></label>
+          <label>Avg watch (s) <input type="number" step="0.1" name="avgWatch" /></label>
+          <label>Length (s) <input type="number" step="0.1" name="length" /></label>
+          <button class="btn gold wide" type="submit">Analyse</button>
+        </form>
+        <div id="an-out" class="out"></div>
+      </section>
+
+      <!-- GUARDIAN -->
+      <section class="panel" data-panel="guardian">
+        <h2>Guardian · check before you post</h2>
+        <p class="hint">FTC disclosure and health-claim check for anything that mentions peptides or GLP-1. Runs on your device.</p>
+        <textarea id="g-in" rows="6" placeholder="Paste a caption or script"></textarea>
+        <div class="row"><button class="btn gold" id="g-go">Check</button><button class="btn ghost" id="g-fix">Add disclosure</button></div>
+        <div id="g-out" class="out"></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="panel" data-panel="settings">
+        <h2>Settings</h2>
+        <label>Anthropic API key <input type="password" id="key" placeholder="sk-ant-…" autocomplete="off" /></label>
+        <p class="hint">Stored in this browser only and sent only to api.anthropic.com. Without a key the team writes offline drafts from templates.</p>
+        <div class="row"><button class="btn gold" id="key-save">Save key</button><button class="btn ghost" id="key-clear">Remove</button></div>
+        <h3>Profile the agents use</h3>
+        <dl class="profile" id="profile"></dl>
+        <label>Discount code (optional) <input id="code" placeholder="e.g. COLIN10" /></label>
+        <label>Tracked link builder <input id="utm-content" placeholder="post name, e.g. glp-muscle-reel" /></label>
+        <code class="link" id="utm-out"></code>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>#ad · Coach Colin earns a commission from Optimum Regen Peptides links. Coaching, not medical advice: talk to your doctor and get blood work before starting any GLP-1 or peptide protocol.</p>
+      <p>COLIN OS drafts content; you approve every post. Nothing is posted automatically.</p>
+    </footer>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

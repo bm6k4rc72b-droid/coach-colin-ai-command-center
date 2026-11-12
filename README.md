@@ -1031,6 +1031,27 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: COLIN OS · AI agent team for @coachcolinc
+
+At [`public/colin-os/`](public/colin-os): Coach Colin's AI agent team, in black and gold. It is built around
+[@coachcolinc](https://www.instagram.com/coachcolinc), the three client lanes from the pinned post (D1-track athletes,
+GLP lifestyle with mandatory blood work, high-pressure professions) and the
+[Optimum Regen Peptides](https://www.optimumregenpeptides.com/a/colin-cook) affiliate link.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/colin-os/>** (locally `/colin-os/`).
+
+- **Team**: one brief runs Scout (angles) → Scriptwriter (Reel script, hooks, shots) → Captioner (caption, tracked
+  link, hashtags) → Guardian (FTC and health-claim fix). Each agent is a Claude call with a strict JSON schema
+  (`claude-opus-5-5`, your key, stored only in the browser). Without a key it writes offline template drafts.
+- **Closer** routes a comment or DM to a lane, scores intent (hot, warm or cold) and writes the reply and follow-up.
+- **Calendar**: next week's 7-post rhythm across the lanes, downloadable as `.ics`. **Analyst** turns Insights numbers
+  into rates and next-week experiments. **Guardian** checks any caption on the device.
+- Guardrails: no dosing or injection talk, no cure, treatment or "FDA approved" claims, no guarantees, `#ad` plus a
+  commission line on every partner post, and blood work and a doctor first. It drafts only and never posts.
+  `npm run test:colin-os`.
+
+---
+
 ## Also in here: ViralX · by Coach Colin
 
 A neuro-cinematic studio for short-form video at [`public/viralx/`](public/viralx), in black glass, neon pink and chrome,
