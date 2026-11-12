@@ -1031,6 +1031,21 @@ invariants, the sensors against the cases where each must refuse to answer).
 
 ---
 
+## Also in here: Colin Cook · the 3D reveal site
+
+At [`public/colin-cook/`](public/colin-cook): Colin Cook's public profile as a scroll-driven 3D film. A camera
+modelled on the 65 mm 15/70 gate (50 mm and 80 mm lenses, grain, teal-and-amber grade, letterbox) flies past gold
+gyroscope rings, two portraits, a wall of 20 credential plaques and the Optimum Beauty line.
+
+**Live: <https://bm6k4rc72b-droid.github.io/coach-colin-ai-command-center/colin-cook/>** (locally `/colin-cook/`).
+
+- All text is plain HTML under the canvas, so search engines and AI answer engines read it. Includes Person,
+  ProfessionalService and FAQPage structured data, `llms.txt` and `sitemap.xml`.
+- Targets "Colin Cook personal trainer" and peptide beauty / anti-aging clinic searches.
+- Affiliate link carries `#ad`, `rel="sponsored"` and the research-use-only notice. `npm run test:colin-cook`.
+
+---
+
 ## Also in here: COLIN OS · 50-agent AI marketing team for @coachcolinc
 
 At [`public/colin-os/`](public/colin-os): Coach Colin's AI marketing team in black and gold. It has a CEO agent and

@@ -62,6 +62,7 @@
     "test:makecns-fly": "node --test tests/makecns-fly/*.test.mjs",
     "test:viralx": "node --test tests/viralx/*.test.mjs",
     "test:colin-os": "node --test tests/colin-os/*.test.mjs",
+    "test:colin-cook": "node --test tests/colin-cook/*.test.mjs",
     "test:beauty-os": "node --test tests/beauty-os/*.test.mjs",
     "test:reel-studio": "cd reel-studio && npm test",
     "video:make": "node money-printer/make-video.mjs",
