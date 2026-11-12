@@ -64,6 +64,8 @@
     "test:colin-os": "node --test tests/colin-os/*.test.mjs",
     "test:beauty-os": "node --test tests/beauty-os/*.test.mjs",
     "test:reel-studio": "cd reel-studio && npm test",
+    "video:make": "node money-printer/make-video.mjs",
+    "video:setup": "./money-printer/setup.sh",
     "agents:colin-os": "node scripts/colin-os-agents.mjs",
     "skills:marketing": "./scripts/import-marketing-skills.sh",
     "test:agents": "node --test src/agents/*.test.mjs",

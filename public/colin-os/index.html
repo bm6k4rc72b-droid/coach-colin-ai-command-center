@@ -33,6 +33,7 @@
       <nav class="tabs" id="tabs" aria-label="COLIN OS">
         <button data-tab="org" class="on">Org · 50</button>
         <button data-tab="team">Reel team</button>
+        <button data-tab="machine">Video Machine</button>
         <button data-tab="closer">Closer</button>
         <button data-tab="calendar">Calendar</button>
         <button data-tab="analyst">Analyst</button>
@@ -74,6 +75,29 @@
       </section>
 
       <!-- CLOSER -->
+      <section class="panel" data-panel="machine">
+        <h2>Video Machine · MoneyPrinterTurbo</h2>
+        <p class="hint">Topic in, finished vertical video out: stock footage, voice-over, gold subtitles and music, edited by <a href="https://github.com/harry0703/MoneyPrinterTurbo" target="_blank" rel="noopener">MoneyPrinterTurbo</a> running on your computer (<code>money-printer/</code>). Scripts pass the Guardian before anything renders.</p>
+        <form id="vm" class="grid">
+          <label class="wide">Topic <input name="topic" value="3 mistakes people make on a GLP-1 (and how to keep your muscle)" /></label>
+          <label>Lane <select name="lane" id="vm-lane"></select></label>
+          <label>Voice <select name="voice"><option value="en-US-AndrewNeural-Male">Andrew (deep male)</option><option value="en-US-ChristopherNeural-Male">Christopher (male)</option><option value="en-US-GuyNeural-Male">Guy (male)</option><option value="en-US-AriaNeural-Female">Aria (female)</option></select></label>
+          <label class="check wide"><input type="checkbox" name="promote" /> Mentions Optimum Regen (adds the paid-partnership line)</label>
+          <div class="row wide"><button class="btn gold" value="write">Write script</button><button class="btn ghost" value="last">Use the Reel team's script</button></div>
+        </form>
+        <div id="vm-out" class="out"></div>
+        <details class="card"><summary><b>Connection</b> · MoneyPrinterTurbo API on your computer</summary>
+          <label>API URL <input id="vm-url" value="http://127.0.0.1:8080" /></label>
+          <label>API key (only if you set app.api_key) <input id="vm-key" type="password" autocomplete="off" /></label>
+          <p class="hint">Start it with <code>./money-printer/run.sh</code> (see <code>money-printer/README.md</code>). If your browser blocks the page from reaching your computer, use <b>Download job</b> and run <code>node money-printer/make-video.mjs --script job.json</code>.</p>
+        </details>
+        <h3>Batch</h3>
+        <label>One topic per line <textarea id="vm-batch" rows="4">Why I make blood work mandatory before coaching GLP-1 clients
+The 10-minute reset for realtors between showings
+What D1 coaches look for in a recruit's first rep</textarea></label>
+        <button class="btn ghost" id="vm-batch-dl">Download topics.txt</button> <small class="hint">then <code>node money-printer/make-video.mjs --batch topics.txt --lane glp</code></small>
+      </section>
+
       <section class="panel" data-panel="closer">
         <h2>Closer · comments & DMs</h2>
         <p class="hint">Paste a comment or DM. The Closer routes it to a lane, scores intent, and writes the reply.</p>

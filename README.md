@@ -1043,6 +1043,7 @@ client lanes and the [Optimum Regen Peptides](https://www.optimumregenpeptides.c
 - **Org · 50**: give the CEO a goal; it picks the specialists, runs them in order, each building on the last, and
   returns one plan. Tap any agent to give it a task directly. Works for Coach Colin or the beauty store.
 - **Reel team**: Scout → Scriptwriter → Captioner → Guardian, then **Export to Reel Studio** to render the video.
+- **Video Machine**: topic or script → MoneyPrinterTurbo → finished stock-footage video, single or batch.
 - **Closer** (comments and DMs to clients), **Calendar** (`.ics`), **Analyst** (Insights to experiments), **Guardian**
   (FTC disclosure and health-claim check).
 - **In Claude Code** the same team lives in [`.claude/agents/`](.claude/agents) (51 subagents, generated from
@@ -1074,6 +1075,21 @@ Shopify, TikTok Shop and Amazon (dropshipping or private label).
 - **Leads and outreach**: search plans on licensed sources (TikTok Shop Affiliate Center, Instagram Creator
   Marketplace, Apollo, Google Places, Faire); CSV import, de-dupe and A/B/C scoring for creators, salons and med-spas,
   retailers and suppliers; personalised sequences checked against CAN-SPAM. `npm run test:beauty-os`.
+
+---
+
+## Also in here: Video Machine · MoneyPrinterTurbo
+
+At [`money-printer/`](money-printer): [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo) (MIT), the free
+AI short-form video machine, added as a git submodule pinned to `dd09658` with a Coach Colin setup. A topic or a COLIN OS
+script goes in; stock footage, voice-over, gold subtitles and music come out as a finished 9:16 video.
+
+- Scripts pass the COLIN OS Guardian before rendering; topic-only runs give its script writer the same rules.
+- Footage terms per client lane, with needles, pills and hospital shots always filtered out.
+- Run it from the COLIN OS **Video Machine** tab (talks to the API on your computer) or
+  `node money-printer/make-video.mjs --script job.json | --topic "..." | --batch topics.txt [--voicestudio]`.
+- Setup: `./money-printer/setup.sh` (needs a free Pexels key), then `./money-printer/run.sh`. See
+  [`money-printer/README.md`](money-printer/README.md).
 
 ---
 
