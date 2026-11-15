@@ -26,8 +26,8 @@ except Exception:
 
 import librosa
 
-FFMPEG = r"${FFMPEG:-ffmpeg}"
-FFPROBE = r"${FFPROBE:-ffprobe}"
+FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
+FFPROBE = os.environ.get("FFPROBE", "ffprobe")
 
 
 def probe_duration(path):

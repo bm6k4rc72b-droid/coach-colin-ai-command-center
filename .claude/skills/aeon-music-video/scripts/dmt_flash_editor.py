@@ -25,8 +25,8 @@ except Exception:
 
 import librosa
 
-FFMPEG = r"${FFMPEG:-ffmpeg}"
-FFPROBE = r"${FFPROBE:-ffprobe}"
+FFMPEG = os.environ.get("FFMPEG", "ffmpeg")
+FFPROBE = os.environ.get("FFPROBE", "ffprobe")
 
 
 def probe_duration(path):
@@ -165,6 +165,14 @@ def build_dmt_video(schedule, audio_path, out_path, *,
             f"[{i}:v]scale={width}:{height}:force_original_aspect_ratio=increase,"
             f"crop={width}:{height},setsar=1,fps={fps}[src{i}]"
         )
+    # a filter output label can only be consumed once: split sources used by several scenes
+    uses = {}
+    for s in schedule:
+        uses[clip_to_input[s["clip_path"]]] = uses.get(clip_to_input[s["clip_path"]], 0) + 1
+    for i, n in uses.items():
+        if n > 1:
+            filter_parts.append(f"[src{i}]split={n}" + "".join(f"[src{i}_{k}]" for k in range(n)))
+    taken = {}
 
     # Trim each scene from its assigned clip
     seg_labels = []
@@ -173,8 +181,10 @@ def build_dmt_video(schedule, audio_path, out_path, *,
         start = float(s["trim_start"])
         dur = float(s["duration"])
         lbl = f"seg{idx}"
+        k = taken.get(src, 0); taken[src] = k + 1
+        src_lbl = f"src{src}_{k}" if uses[src] > 1 else f"src{src}"
         filter_parts.append(
-            f"[src{src}]trim=start={start:.3f}:duration={dur:.3f},"
+            f"[{src_lbl}]trim=start={start:.3f}:duration={dur:.3f},"
             f"setpts=PTS-STARTPTS[{lbl}]"
         )
         seg_labels.append(lbl)
