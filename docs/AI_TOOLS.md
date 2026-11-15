@@ -152,3 +152,19 @@ Skills were scanned with SkillSpector on 2026-11-15.
 - [cindyxu1030/add-music-to-video](https://github.com/cindyxu1030/add-music-to-video): a cookbook for Sonilo's paid music API (needs `SONILO_API_KEY`, billed per second).
 - [xiaoyang111222/timeline-bgm](https://github.com/xiaoyang111222/timeline-bgm): free local BGM from a timeline, but the repo has no license, so its code can't be copied here. Clone it on your machine to use it.
 - Lists: [awesome-audiovisual](https://github.com/brandonhimpfen/awesome-audiovisual), [muses](https://github.com/fiehrfly/muses) (royalty-free music libraries).
+
+## Upscaling and cinematic color
+
+From a Grok list of upscaling and film-look tools. All 12 repos exist.
+
+| Repo | How it's connected |
+|---|---|
+| [k4yt3x/video2x](https://github.com/k4yt3x/video2x), [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | Already here: the `upscale` skill (Video2X with Real-ESRGAN, plus GFPGAN for faces) |
+| [isaacrowntree/color-grade-ai](https://github.com/isaacrowntree/color-grade-ai) @ `a6eef94` (MIT) | Plugin `color-grade-ai@coach-colin` through this repo's marketplace: measures a frame and writes a .cube LUT for Resolve/Premiere, matches shots. SkillSpector flagged "always answer" in its docs as anti-refusal; it's a sentence about the user answering a question, and its scripts make no network calls |
+| [louisedesadeleer/color-correct](https://github.com/louisedesadeleer/color-correct) @ `4c38e5c` | **Not copied: the repo has no license**, so its code can't be redistributed here. Scanned SAFE (20). To use it, clone it on your machine: `git clone https://github.com/louisedesadeleer/color-correct ~/.claude/skills/color-correct` |
+| [JanLohse/spectral_film_lut](https://github.com/JanLohse/spectral_film_lut) (MIT) | Desktop app that makes film-stock LUTs: `pip install spectral-film-lut`, then run `spectral_film_lut` on your computer |
+| [moeezalam/A24Colour](https://github.com/moeezalam/A24Colour) (MIT) | Local web app with six A24-style photo presets; run its `setup.sh` on your computer |
+| [sczhou/Upscale-A-Video](https://github.com/sczhou/Upscale-A-Video) | Research model, **non-commercial license** (S-Lab), needs a big NVIDIA GPU. Not added |
+| [Anishrkhadka/restore-lab](https://github.com/Anishrkhadka/restore-lab), [dtaddis/ai-remaster-pipeline](https://github.com/dtaddis/ai-remaster-pipeline), [wob25/AI-CineMaster](https://github.com/wob25/AI-CineMaster) | GPU restoration apps (Real-ESRGAN, BasicVSR++, ComfyUI). Run on a GPU machine or Colab; the `upscale` skill covers the same models here |
+| [SongZihui-sudo/digitalFilm](https://github.com/SongZihui-sudo/digitalFilm) | Neural film simulation (GPL-3.0, 105 MB of models). Not added |
+| [seunghyuns98/VideoColorGrading](https://github.com/seunghyuns98/VideoColorGrading) | ICCV 2025 research code, needs a GPU. Not added |
