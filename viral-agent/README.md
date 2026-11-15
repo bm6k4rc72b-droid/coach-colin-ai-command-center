@@ -1,6 +1,6 @@
 # viral-agent
 
-Finds what's going viral about a topic (default: GTA 6), scores it, and has Claude write a
+Finds what's going viral about a topic (`topics/*.json`: `gta6`, `ff7-revelation`, `ff-resonance`), scores it, and has Claude write a
 briefing, hooks and a 5-day posting plan. `clip.mjs` cuts vertical clips from your own gameplay.
 
 ```
@@ -14,13 +14,13 @@ your gameplay.mp4 → clip.mjs (loudest + busiest moments) → 1080×1920 clips 
 cd viral-agent && npm install
 cp config.example.env .env   # fill in what you have; every source is optional
 set -a; . ./.env; set +a
-npm run nightly              # writes out/<date>/briefing.md, plan.csv, posts.json, strategy.json
+npm run nightly -- --topic ff7-revelation   # writes out/<topic>/<date>/briefing.md, plan.csv, posts.json, strategy.json
 npm run clip -- ~/Videos/gta6_session.mp4 out/clips --count 6 --len 14 --hook "THIS JUST HAPPENED"
 ```
 
 Run it nightly with cron (`crontab -e`):
 ```
-15 1 * * * cd ~/coach-colin-ai-command-center/viral-agent && set -a && . ./.env && npm run nightly >> out/cron.log 2>&1
+15 1 * * * cd ~/coach-colin-ai-command-center/viral-agent && set -a && . ./.env && for t in gta6 ff7-revelation ff-resonance; do npm run nightly -- --topic $t; done >> cron.log 2>&1
 ```
 
 ## Sources
@@ -43,3 +43,9 @@ Set `CLAUDE_MODEL` to change the model.
 No leaked or pre-release footage, no spoilers, and no AI-generated images of GTA 6 characters
 or locations: Take-Two has sent cease-and-desists over AI GTA 6 images. Rockstar's policy allows
 non-commercial fan use of footage, so check it before you monetize clips.
+
+## Topics
+
+Each `topics/<slug>.json` sets the search term, subreddits (`top` = daily top posts, `search` = searched for the term),
+the X query, the Instagram hashtag, and the content rules Claude must follow for that franchise. Add a file to add a
+topic. TikTok CSV exports go in `data/<slug>/tiktok/`.

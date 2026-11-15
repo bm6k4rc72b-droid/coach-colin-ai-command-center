@@ -1,0 +1,12 @@
+{
+  "topic": "GTA 6",
+  "search": "GTA 6",
+  "subreddits": { "top": ["GTA6"], "search": ["GTA", "gaming", "PS5"] },
+  "x_query": "(\"GTA 6\" OR GTA6 OR \"GTA VI\") -is:retweet lang:en",
+  "instagram_hashtag": "gta6",
+  "rules": [
+    "No leaked or pre-release footage, no story spoilers in titles or thumbnails.",
+    "No AI-generated imagery of the game's characters or world: Take-Two has sent cease-and-desists over AI GTA 6 images.",
+    "Rockstar's policy covers non-commercial fan use of footage; flag monetization as a gray area."
+  ]
+}

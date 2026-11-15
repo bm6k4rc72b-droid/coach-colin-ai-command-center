@@ -1,0 +1,11 @@
+{
+  "topic": "Final Fantasy Resonance",
+  "search": "Final Fantasy Resonance",
+  "subreddits": { "top": [], "search": ["FinalFantasy", "JRPG", "NintendoSwitch2", "octopathtraveler"] },
+  "x_query": "(\"Final Fantasy Resonance\" OR \"FF Resonance\" OR #FFResonance) -is:retweet lang:en",
+  "instagram_hashtag": "finalfantasyresonance",
+  "rules": [
+    "No AI-generated images of Square Enix characters; use original graphics, commentary, or footage you recorded.",
+    "Mark story spoilers; credit footage with ©SQUARE ENIX and follow the game's video guidelines."
+  ]
+}
