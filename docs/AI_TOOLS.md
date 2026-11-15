@@ -109,3 +109,20 @@ path-traversal refusal test, a test that snapshots and restores `~/.claude/setti
 its installer docs; its build code makes no network calls.
 
 `SkylarKitchen/skills` was not added: the repo isn't public (GitHub asks for a login).
+
+## Motion graphics stack
+
+From the "10 GitHub repos for motion graphics in Claude Code" list. Scanned with SkillSpector
+(static) on 2026-11-15 and pinned to the scanned commits.
+
+| Repo | How it's connected | Scan |
+|---|---|---|
+| [lemomo-ai/lemo-opuscar](https://github.com/lemomo-ai/lemo-opuscar) | Plugin `lemo-opuscar@lemolab` (already enabled) | CAUTION 24, false positive |
+| [patch-gg/pixelfx](https://github.com/patch-gg/pixelfx) @ `5294518` | Plugin `pixelfx@pixelfx`, enabled: 244 pixel-art effects plus a skill | CAUTION 29: its skill mentions a `curl … \| sh` installer for patch.gg's CLI; read it before running |
+| [Vincentwei1021/video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) @ `6700db2` | Plugin `video-shotcraft@coach-colin`, enabled through this repo's own `.claude-plugin/marketplace.json` (the project ships no marketplace) | 100: findings are its optional social-publishing script (sends your own API key to the platform you post to) and CI files |
+| [JohnHeibel/ClaudeAnimationBase](https://github.com/JohnHeibel/ClaudeAnimationBase) @ `0ac8bf2` | Copied to `tools/claude-animation-base/` (MIT). Open Claude Code inside that folder and ask for a scene | SAFE-ish 12, low findings only |
+| [ahujasid/mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) @ `8f40787` | Marketplace added, plugin **off** (`mcp-for-blender@mcp-for-blender: false`). Turn it on only on a computer with Blender and its add-on running | 100: sends anonymous telemetry by default (set `DISABLE_TELEMETRY=true`), and its auto-updater downloads and runs code |
+| [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos) | **Not copied in.** Browse it on GitHub | 100: 703 crowd-submitted prompts, some with hidden zero-width characters and one pointing at `~/.claude/settings.json`; not safe to load as agent instructions |
+| [mrdoob/three.js](https://github.com/mrdoob/three.js) | Already a dependency of 10 labs here (fusion-lab, roadster-lab, human-atlas, …) | n/a (library) |
+| [pmndrs/react-three-rapier](https://github.com/pmndrs/react-three-rapier), [pmndrs/react-postprocessing](https://github.com/pmndrs/react-postprocessing) | Not installed: they need a React + react-three-fiber project and none here uses one. Add with `npm i @react-three/fiber @react-three/rapier @react-three/postprocessing` when you start one | n/a (libraries) |
+| [librosa/librosa](https://github.com/librosa/librosa) | Python audio analysis (beat detection for music-synced edits). Install where you render: `pip install librosa` | n/a (library) |

@@ -27,13 +27,36 @@
         "repo": "heygen-com/hyperframes",
         "ref": "7b1d9ccebf9c7e2c2bd22b7e9d9487ce975d6425"
       }
+    },
+    "pixelfx": {
+      "source": {
+        "source": "github",
+        "repo": "patch-gg/pixelfx",
+        "ref": "5294518ce7c72e48b6100a744596e0acf57f2826"
+      }
+    },
+    "mcp-for-blender": {
+      "source": {
+        "source": "github",
+        "repo": "ahujasid/mcp-for-blender",
+        "ref": "8f40787fbde8e6d8fe51c5a3553e5635fff40d2b"
+      }
+    },
+    "coach-colin": {
+      "source": {
+        "source": "github",
+        "repo": "bm6k4rc72b-droid/coach-colin-ai-command-center"
+      }
     }
   },
   "enabledPlugins": {
     "ponytail@ponytail": true,
     "lemo-opuscar@lemolab": true,
     "remotion@remotion": true,
-    "hyperframes@hyperframes": true
+    "hyperframes@hyperframes": true,
+    "pixelfx@pixelfx": true,
+    "video-shotcraft@coach-colin": true,
+    "mcp-for-blender@mcp-for-blender": false
   },
   "hooks": {
     "SessionStart": [
