@@ -1,13 +1,31 @@
 {
   "name": "coach-colin",
-  "owner": { "name": "Coach Colin" },
-  "metadata": { "description": "Third-party Claude Code plugins that ship without their own marketplace, pinned to reviewed commits." },
+  "owner": {
+    "name": "Coach Colin"
+  },
+  "metadata": {
+    "description": "Third-party Claude Code plugins that ship without their own marketplace, pinned to reviewed commits."
+  },
   "plugins": [
     {
       "name": "video-shotcraft",
-      "source": { "source": "github", "repo": "Vincentwei1021/video-shotcraft", "ref": "6700db2ba80572ebc777b99d72049679fed9840c" },
+      "source": {
+        "source": "github",
+        "repo": "Vincentwei1021/video-shotcraft",
+        "ref": "6700db2ba80572ebc777b99d72049679fed9840c"
+      },
       "description": "Cinematic product videos with Remotion: 124 shot recipes, motion previews, components, SFX and a template.",
       "license": "Apache-2.0"
+    },
+    {
+      "name": "color-grade-ai",
+      "source": {
+        "source": "github",
+        "repo": "isaacrowntree/color-grade-ai",
+        "ref": "a6eef94e0d773b1a9475cd9bac8bc15bc3944f46"
+      },
+      "description": "Measured color correction: analyzes frames and emits .cube LUTs for DaVinci Resolve / Premiere; shot matching and live preview.",
+      "license": "MIT"
     }
   ]
 }

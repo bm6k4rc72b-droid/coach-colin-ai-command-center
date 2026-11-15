@@ -56,7 +56,8 @@
     "hyperframes@hyperframes": true,
     "pixelfx@pixelfx": true,
     "video-shotcraft@coach-colin": true,
-    "mcp-for-blender@mcp-for-blender": false
+    "mcp-for-blender@mcp-for-blender": false,
+    "color-grade-ai@coach-colin": true
   },
   "hooks": {
     "SessionStart": [
