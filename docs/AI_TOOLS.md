@@ -126,3 +126,29 @@ From the "10 GitHub repos for motion graphics in Claude Code" list. Scanned with
 | [mrdoob/three.js](https://github.com/mrdoob/three.js) | Already a dependency of 10 labs here (fusion-lab, roadster-lab, human-atlas, …) | n/a (library) |
 | [pmndrs/react-three-rapier](https://github.com/pmndrs/react-three-rapier), [pmndrs/react-postprocessing](https://github.com/pmndrs/react-postprocessing) | Not installed: they need a React + react-three-fiber project and none here uses one. Add with `npm i @react-three/fiber @react-three/rapier @react-three/postprocessing` when you start one | n/a (libraries) |
 | [librosa/librosa](https://github.com/librosa/librosa) | Python audio analysis (beat detection for music-synced edits). Install where you render: `pip install librosa` | n/a (library) |
+
+## Audio, music and beat-sync stack
+
+From a Grok list of audio tools for video. All 18 repos exist; here's how each one landed.
+Skills were scanned with SkillSpector on 2026-11-15.
+
+**Connected to Claude Code in this repo**
+
+| Repo | How | Scan |
+|---|---|---|
+| [FFmpeg](https://github.com/FFmpeg/FFmpeg), [moviepy](https://github.com/Zulko/moviepy), [auto-editor](https://github.com/WyattBlue/auto-editor), [librosa](https://github.com/librosa/librosa) | New project skill `.claude/skills/audio-mix`: `scripts/setup.sh` installs moviepy + librosa (venv), auto-editor and beatscope (uv tools); tested recipes for voice-over ducking, loudness, music beds, silence cutting and a beat-grid script | n/a (written here) |
+| [chosuicide/beatscope](https://github.com/chosuicide/beatscope) @ `508d6a5` (MIT) | Skill copied to `.claude/skills/beatscope-visualizer`; CLI installed by audio-mix setup | SAFE 18 |
+| [AEON-7/aeon-music-video](https://github.com/AEON-7/aeon-music-video) @ `2db8454` (MIT) | Skill copied to `.claude/skills/aeon-music-video` (SKILL.md, scripts, requirements; its self-updating `sync.sh` left out) | 81, false positives: `.env` holds only ffmpeg paths and render defaults |
+
+**Apps to install on your computer** (not Claude add-ons): [Shotcut](https://github.com/mltframework/shotcut),
+[OpenShot](https://github.com/OpenShot/openshot-qt), [proj](https://github.com/jonesphillip/proj) (browser editor),
+[MediaNest](https://github.com/akash098p/MediaNest), [MixCut](https://github.com/LucaFagnoni/MixCut),
+[StemSyncVideoEditor](https://github.com/vrgamegirl19/StemSyncVideoEditor).
+
+**Covered by audio-mix instead** (small single-purpose scripts): [video-audio-tools](https://github.com/HeZhang1994/video-audio-tools),
+[automerge-video-audio](https://github.com/tngaspar/automerge-video-audio), [mykeels/add-music-to-video](https://github.com/mykeels/add-music-to-video).
+
+**Linked only**
+- [cindyxu1030/add-music-to-video](https://github.com/cindyxu1030/add-music-to-video): a cookbook for Sonilo's paid music API (needs `SONILO_API_KEY`, billed per second).
+- [xiaoyang111222/timeline-bgm](https://github.com/xiaoyang111222/timeline-bgm): free local BGM from a timeline, but the repo has no license, so its code can't be copied here. Clone it on your machine to use it.
+- Lists: [awesome-audiovisual](https://github.com/brandonhimpfen/awesome-audiovisual), [muses](https://github.com/fiehrfly/muses) (royalty-free music libraries).
