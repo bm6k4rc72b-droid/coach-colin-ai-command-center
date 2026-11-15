@@ -33,7 +33,8 @@ export async function youtube(query, { hours = 72, max = 50 } = {}) {
 }
 
 // Reddit: app-only OAuth (create a "script" app at reddit.com/prefs/apps).
-export async function reddit(subs = ["GTA6", "GTA", "gaming", "PS5"], { query = "GTA 6", limit = 50 } = {}) {
+export async function reddit({ top = [], search = [] } = {}, { query = "", limit = 50 } = {}) {
+  const subs = [...top.map((s) => [s, "top"]), ...search.map((s) => [s, "search"])];
   const id = process.env.REDDIT_CLIENT_ID, secret = process.env.REDDIT_CLIENT_SECRET;
   if (!id || !secret) return [];
   const tok = await getJSON("https://www.reddit.com/api/v1/access_token", {
@@ -41,8 +42,8 @@ export async function reddit(subs = ["GTA6", "GTA", "gaming", "PS5"], { query = 
     headers: { authorization: "Basic " + Buffer.from(`${id}:${secret}`).toString("base64"), "content-type": "application/x-www-form-urlencoded" },
   });
   const out = [];
-  for (const sub of subs) {
-    const path = sub === "GTA6" ? `r/${sub}/top?t=day&limit=${limit}` : `r/${sub}/search?q=${encodeURIComponent(query)}&restrict_sr=1&sort=top&t=day&limit=${limit}`;
+  for (const [sub, mode] of subs) {
+    const path = mode === "top" ? `r/${sub}/top?t=day&limit=${limit}` : `r/${sub}/search?q=${encodeURIComponent(query)}&restrict_sr=1&sort=top&t=day&limit=${limit}`;
     const j = await getJSON(`https://oauth.reddit.com/${path}`, { headers: { authorization: `Bearer ${tok.access_token}` } });
     for (const { data: p } of j.data.children) out.push({
       platform: "reddit", id: p.id, url: `https://reddit.com${p.permalink}`, title: p.title, author: p.subreddit_name_prefixed,
@@ -54,7 +55,7 @@ export async function reddit(subs = ["GTA6", "GTA", "gaming", "PS5"], { query = 
 }
 
 // X API v2 recent search (paid tier with search access).
-export async function x(query = '("GTA 6" OR GTA6 OR "GTA VI") -is:retweet lang:en', { max = 100 } = {}) {
+export async function x(query, { max = 100 } = {}) {
   const bearer = process.env.X_BEARER_TOKEN; if (!bearer) return [];
   const q = new URLSearchParams({ query, max_results: String(max), sort_order: "relevancy",
     "tweet.fields": "public_metrics,created_at,entities", expansions: "author_id", "user.fields": "username" });
@@ -69,7 +70,7 @@ export async function x(query = '("GTA 6" OR GTA6 OR "GTA VI") -is:retweet lang:
 }
 
 // Instagram Graph API hashtag search (needs a Business/Creator account linked to a Facebook app).
-export async function instagram(hashtag = "gta6") {
+export async function instagram(hashtag) {
   const token = process.env.IG_ACCESS_TOKEN, user = process.env.IG_USER_ID; if (!token || !user) return [];
   const h = await getJSON(`https://graph.facebook.com/v21.0/ig_hashtag_search?user_id=${user}&q=${hashtag}&access_token=${token}`);
   const hid = h.data?.[0]?.id; if (!hid) return [];
@@ -103,8 +104,8 @@ export async function tiktokCsv(dir) {
   return out;
 }
 
-export async function collectAll(topic, dataDir) {
-  const jobs = { youtube: youtube(topic), reddit: reddit(), x: x(), instagram: instagram(topic.replace(/\s+/g, "").toLowerCase()), tiktok: tiktokCsv(path.join(dataDir, "tiktok")) };
+export async function collectAll(cfg, dataDir) {
+  const jobs = { youtube: youtube(cfg.search), reddit: reddit(cfg.subreddits, { query: cfg.search }), x: x(cfg.x_query), instagram: instagram(cfg.instagram_hashtag), tiktok: tiktokCsv(path.join(dataDir, "tiktok")) };
   const items = [], status = {};
   for (const [name, p] of Object.entries(jobs)) {
     try { const r = await p; items.push(...r); status[name] = r.length ? `${r.length} items` : "skipped (no key or no data)"; }

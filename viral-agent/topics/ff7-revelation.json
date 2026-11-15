@@ -1,0 +1,12 @@
+{
+  "topic": "Final Fantasy VII Revelation (FF7 Remake Part 3)",
+  "search": "Final Fantasy 7 Revelation",
+  "subreddits": { "top": ["FFVIIRemake"], "search": ["FinalFantasy", "FinalFantasyVII", "JRPG"] },
+  "x_query": "(\"FF7 Revelation\" OR \"Final Fantasy VII Revelation\" OR \"FF7R Part 3\" OR #FF7Revelation) -is:retweet lang:en",
+  "instagram_hashtag": "ff7revelation",
+  "rules": [
+    "No leaks, datamines or spoilers for the Remake trilogy's ending in titles, thumbnails or the first seconds.",
+    "No AI-generated images of Square Enix characters; use original graphics, commentary, or footage you recorded.",
+    "Credit footage with ©SQUARE ENIX and follow the game's own video guidelines; monetization usually only through platform partner programs."
+  ]
+}

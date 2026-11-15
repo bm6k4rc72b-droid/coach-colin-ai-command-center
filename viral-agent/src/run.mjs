@@ -1,5 +1,5 @@
 // Nightly run: collect -> score -> Claude strategy -> briefing.md + plan.csv in out/<date>/
-// usage: node src/run.mjs [--topic "GTA 6"] [--days 5] [--start YYYY-MM-DD] [--no-ai]
+// usage: node src/run.mjs [--topic gta6|ff7-revelation|ff-resonance] [--days 5] [--start YYYY-MM-DD] [--no-ai]
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,13 +10,15 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : d; };
-const topic = opt("topic", process.env.TOPIC || "GTA 6");
+const slug = opt("topic", process.env.TOPIC || "gta6");
+const cfg = JSON.parse(fs.readFileSync(path.join(root, "topics", `${slug}.json`), "utf8"));
+const topic = cfg.topic;
 const days = +opt("days", 5);
 const tz = process.env.TIMEZONE || "America/Los_Angeles";
 const start = opt("start", new Date().toLocaleDateString("en-CA", { timeZone: tz }));
-const out = path.join(root, "out", start); fs.mkdirSync(out, { recursive: true });
+const out = path.join(root, "out", slug, start); fs.mkdirSync(out, { recursive: true });
 
-const { items, status } = await collectAll(topic, path.join(root, "data"));
+const { items, status } = await collectAll(cfg, path.join(root, "data", slug));
 const scored = score(items), tags = hashtagTable(scored);
 fs.writeFileSync(path.join(out, "posts.json"), JSON.stringify(scored, null, 1));
 console.log("sources:", status, `| ${scored.length} posts scored`);
@@ -24,7 +26,7 @@ console.log("sources:", status, `| ${scored.length} posts scored`);
 let strat = null;
 if (!args.includes("--no-ai")) {
   const { strategize } = await import("./agent.mjs");
-  strat = await strategize({ topic, scored, hashtags: tags, startDate: start, days, timezone: tz });
+  strat = await strategize({ topic, rules: cfg.rules, scored, hashtags: tags, startDate: start, days, timezone: tz });
   fs.writeFileSync(path.join(out, "strategy.json"), JSON.stringify(strat, null, 2));
 }
 
