@@ -168,3 +168,20 @@ From a Grok list of upscaling and film-look tools. All 12 repos exist.
 | [Anishrkhadka/restore-lab](https://github.com/Anishrkhadka/restore-lab), [dtaddis/ai-remaster-pipeline](https://github.com/dtaddis/ai-remaster-pipeline), [wob25/AI-CineMaster](https://github.com/wob25/AI-CineMaster) | GPU restoration apps (Real-ESRGAN, BasicVSR++, ComfyUI). Run on a GPU machine or Colab; the `upscale` skill covers the same models here |
 | [SongZihui-sudo/digitalFilm](https://github.com/SongZihui-sudo/digitalFilm) | Neural film simulation (GPL-3.0, 105 MB of models). Not added |
 | [seunghyuns98/VideoColorGrading](https://github.com/seunghyuns98/VideoColorGrading) | ICCV 2025 research code, needs a GPU. Not added |
+
+## SEO, GEO and ads: NotFair
+
+[nowork-studio/notfair-plugin](https://github.com/nowork-studio/notfair-plugin) @ `deed043` (MIT, v0.27.25) is installed as plugin
+`notfair@nowork-studio` (marketplace `nowork-studio`, pinned to the scanned commit). It adds 45 skills, run as `/notfair:<skill>`:
+
+- **SEO and GEO (work with no account):** `seo-analysis`, `seo-page`, `keyword-research`, `content-planner`, `content-writer`,
+  `meta-tags-optimizer`, `schema-markup-generator`, `geo-optimizer`, `local-seo`, `ecommerce-seo`, `image-seo`, `sitemap-audit`,
+  `broken-link-checker`, `backlink-audit`, `competitor-pages`, `programmatic-seo`, `hreflang-international`, `sxo`, `seo-drift`
+- **Live data and ads (need the NotFair MCP login):** `search-console`, `google-analytics`, `google-ads*`, `meta-ads*`,
+  `paid-ads*` (X, LinkedIn, Reddit, TikTok, Amazon, ChatGPT), `wordpress`, `gohighlevel`
+
+The plugin also registers the `NotFair` MCP server (`https://notfair.co/api/mcp/notfair`, sign-in through OAuth the first time a
+live-data skill runs). SkillSpector `--no-llm` scored it 100/CRITICAL on six HIGH pattern hits; each was read and is a false
+positive: two "don't judge results during the learning phase" ad rules, a skill finding its own reference file under
+`~/.claude/plugins`, an "approve the outline first" step, a "fabricated stats = hard fail" check, and a line telling the agent to
+*never* access credentials. No executable scripts, no hooks.
