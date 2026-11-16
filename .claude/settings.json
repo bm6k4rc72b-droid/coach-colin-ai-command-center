@@ -54,6 +54,13 @@
         "repo": "nowork-studio/notfair-plugin",
         "ref": "deed0436d0c68cbc20a78523fffc67edd12aa25c"
       }
+    },
+    "styfinity-marketing": {
+      "source": {
+        "source": "github",
+        "repo": "styfinity/claude-marketing-department",
+        "ref": "059afff7be8bf994275411e020805286deca671a"
+      }
     }
   },
   "enabledPlugins": {
@@ -63,9 +70,10 @@
     "hyperframes@hyperframes": true,
     "pixelfx@pixelfx": true,
     "video-shotcraft@coach-colin": true,
-    "mcp-for-blender@mcp-for-blender": false,
+    "mcp-for-blender@mcp-for-blender": true,
     "color-grade-ai@coach-colin": true,
-    "notfair@nowork-studio": true
+    "notfair@nowork-studio": true,
+    "marketing@styfinity-marketing": true
   },
   "hooks": {
     "SessionStart": [
@@ -80,5 +88,8 @@
         ]
       }
     ]
+  },
+  "env": {
+    "DISABLE_TELEMETRY": "true"
   }
 }

@@ -121,7 +121,7 @@ From the "10 GitHub repos for motion graphics in Claude Code" list. Scanned with
 | [patch-gg/pixelfx](https://github.com/patch-gg/pixelfx) @ `5294518` | Plugin `pixelfx@pixelfx`, enabled: 244 pixel-art effects plus a skill | CAUTION 29: its skill mentions a `curl … \| sh` installer for patch.gg's CLI; read it before running |
 | [Vincentwei1021/video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) @ `6700db2` | Plugin `video-shotcraft@coach-colin`, enabled through this repo's own `.claude-plugin/marketplace.json` (the project ships no marketplace) | 100: findings are its optional social-publishing script (sends your own API key to the platform you post to) and CI files |
 | [JohnHeibel/ClaudeAnimationBase](https://github.com/JohnHeibel/ClaudeAnimationBase) @ `0ac8bf2` | Copied to `tools/claude-animation-base/` (MIT). Open Claude Code inside that folder and ask for a scene | SAFE-ish 12, low findings only |
-| [ahujasid/mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) @ `8f40787` | Marketplace added, plugin **off** (`mcp-for-blender@mcp-for-blender: false`). Turn it on only on a computer with Blender and its add-on running | 100: sends anonymous telemetry by default (set `DISABLE_TELEMETRY=true`), and its auto-updater downloads and runs code |
+| [ahujasid/mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) @ `8f40787` | Plugin **on** (`mcp-for-blender@mcp-for-blender: true`). In cloud sessions the startup hook installs Blender 4.0 and runs it on a virtual display with the add-on's server on :9876 (`tools/blender/blender-headless.sh`); on your computer, install the add-on and click *Start MCP Server* in Blender | 100: sends anonymous telemetry by default, so `DISABLE_TELEMETRY=true` is set in `.claude/settings.json`; its auto-updater downloads and runs code, so only run `update` deliberately |
 | [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos) | **Not copied in.** Browse it on GitHub | 100: 703 crowd-submitted prompts, some with hidden zero-width characters and one pointing at `~/.claude/settings.json`; not safe to load as agent instructions |
 | [mrdoob/three.js](https://github.com/mrdoob/three.js) | Already a dependency of 10 labs here (fusion-lab, roadster-lab, human-atlas, …) | n/a (library) |
 | [pmndrs/react-three-rapier](https://github.com/pmndrs/react-three-rapier), [pmndrs/react-postprocessing](https://github.com/pmndrs/react-postprocessing) | Not installed: they need a React + react-three-fiber project and none here uses one. Add with `npm i @react-three/fiber @react-three/rapier @react-three/postprocessing` when you start one | n/a (libraries) |
@@ -185,3 +185,17 @@ live-data skill runs). SkillSpector `--no-llm` scored it 100/CRITICAL on six HIG
 positive: two "don't judge results during the learning phase" ad rules, a skill finding its own reference file under
 `~/.claude/plugins`, an "approve the outline first" step, a "fabricated stats = hard fail" check, and a line telling the agent to
 *never* access credentials. No executable scripts, no hooks.
+
+## Batch 8: full list check, Blender on
+
+Everything else on this list was already installed in earlier batches (see the sections above). New this time:
+
+| Repo | How it's connected |
+|---|---|
+| [styfinity/claude-marketing-department](https://github.com/styfinity/claude-marketing-department) @ `059afff` (MIT) | Plugin `marketing@styfinity-marketing`: 50 agents in 5 departments (market research, competitor intel, customer research, strategy, creative), 150 prompts, 30 skills. Run `/marketing:onboard` once to write `marketing-brief.md`; a SessionStart hook (`load-brief.js`, Node built-ins only, reads that one file) then loads it into every session. SkillSpector 58/HIGH: two "anti-refusal" hits that are a story-writing step and a "say no to the wrong customer" step, and the hook, which was read in full |
+| [xinntao/Real-ESRGAN-ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) (MIT) | `upscale` skill: `scripts/setup.sh realesrgan` installs the official v0.2.5.0 binary and models as `realesrgan-ncnn-vulkan` (tested: 4x on CPU Vulkan) |
+| [debpalash/VoiceStudio](https://github.com/debpalash/VoiceStudio) @ `6fe6f4d` | **AGPL-3.0 desktop/server app** (Python backend + Electron), so it isn't copied into this repo. Run it on your computer from its README; Reel Studio already expects it there for voice-overs |
+| [ahujasid/mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) | Turned on, with Blender running in cloud sessions (row above) |
+
+`tools/blender/`: the add-on (`mcp_for_blender_addon.py`, MIT, from `8f40787`), `start_server.py` (registers it and starts the server
+inside Blender) and `blender-headless.sh start|stop|status`.

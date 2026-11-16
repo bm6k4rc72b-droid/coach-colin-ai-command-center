@@ -2,10 +2,11 @@
 # Installs the upscaling stack used by the `upscale` skill (Linux x86_64):
 #   video2x      Video2X 6.4.0 AppImage (Real-ESRGAN / Real-CUGAN / RIFE / Anime4K, video)
 #   upscayl-bin  Upscayl's CLI engine + Upscayl's models (stills)
+#   realesrgan   xinntao's realesrgan-ncnn-vulkan v0.2.5.0 + its models (stills, original engine)
 #   gfpgan       GFPGAN v1.4 face restoration (Python venv, CPU or GPU PyTorch)
 # Everything goes in ~/.local/share/upscalers, wrappers in ~/.local/bin.
 # Idempotent: re-running skips what is already installed.
-# Usage: setup.sh [all|video2x|upscayl|gfpgan]   (default: all)
+# Usage: setup.sh [all|video2x|upscayl|realesrgan|gfpgan]   (default: all)
 set -euo pipefail
 
 ROOT="${UPSCALERS_HOME:-$HOME/.local/share/upscalers}"
@@ -82,6 +83,25 @@ EOF
   chmod +x "$BIN/upscayl-bin"
 }
 
+install_realesrgan() {
+  [ -x "$ROOT/realesrgan/realesrgan-ncnn-vulkan" ] && { say "realesrgan-ncnn-vulkan already installed"; return; }
+  say "downloading realesrgan-ncnn-vulkan (47 MB, includes models)"
+  local tmp; tmp=$(mktemp -d)
+  curl -fsSL -o "$tmp/r.zip" \
+    "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
+  python3 -I -m zipfile -e "$tmp/r.zip" "$tmp/r"
+  rm -rf -- "${ROOT:?}/realesrgan" && mkdir -p "$ROOT/realesrgan"
+  cp "$(find "$tmp/r" -name realesrgan-ncnn-vulkan -type f | head -1)" "$ROOT/realesrgan/" && chmod +x "$ROOT/realesrgan/realesrgan-ncnn-vulkan"
+  cp -r "$(find "$tmp/r" -name models -type d | head -1)" "$ROOT/realesrgan/models"
+  rm -rf "$tmp"
+  cat > "$BIN/realesrgan-ncnn-vulkan" <<EOF
+#!/bin/bash
+case " \$* " in *" -m "*) exec "$ROOT/realesrgan/realesrgan-ncnn-vulkan" "\$@";; esac
+exec "$ROOT/realesrgan/realesrgan-ncnn-vulkan" -m "$ROOT/realesrgan/models" "\$@"
+EOF
+  chmod +x "$BIN/realesrgan-ncnn-vulkan"
+}
+
 install_gfpgan() {
   [ -x "$BIN/gfpgan" ] && [ -x "$ROOT/gfpgan/venv/bin/python" ] && { say "gfpgan already installed"; return; }
   command -v uv >/dev/null || { say "gfpgan needs uv (https://docs.astral.sh/uv/)"; return 1; }
@@ -118,10 +138,11 @@ EOF
 }
 
 case "$WHAT" in
-  all) ensure_vulkan; install_video2x; install_upscayl; install_gfpgan ;;
+  all) ensure_vulkan; install_video2x; install_upscayl; install_realesrgan; install_gfpgan ;;
   video2x) ensure_vulkan; install_video2x ;;
   upscayl) ensure_vulkan; install_upscayl ;;
+  realesrgan) ensure_vulkan; install_realesrgan ;;
   gfpgan) install_gfpgan ;;
-  *) echo "usage: $0 [all|video2x|upscayl|gfpgan]"; exit 2 ;;
+  *) echo "usage: $0 [all|video2x|upscayl|realesrgan|gfpgan]"; exit 2 ;;
 esac
-say "done. Tools: $(for t in video2x upscayl-bin gfpgan; do [ -x "$BIN/$t" ] && printf '%s ' "$t"; done)"
+say "done. Tools: $(for t in video2x upscayl-bin realesrgan-ncnn-vulkan gfpgan; do [ -x "$BIN/$t" ] && printf '%s ' "$t"; done)"
