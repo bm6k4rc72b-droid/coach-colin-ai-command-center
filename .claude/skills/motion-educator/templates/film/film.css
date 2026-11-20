@@ -1,0 +1,11 @@
+/* This film's own pieces, on top of the kit's look. Set the accent to the subject's colour. */
+:root {
+  --accent: #ffb90e;
+  --accent-2: #4da3ff;
+}
+#title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 35%;
+}
