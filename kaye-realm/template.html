@@ -71,6 +71,53 @@ kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 
 #mapClose { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--gilt); color: var(--ink); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
 .crosshair { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); pointer-events: none; z-index: 4; }
 @media (max-width: 600px) { #help { display: none; } #minimap { width: 140px; height: 140px; } #compass, .compass-wrap, .info, .toggles { width: 140px; } .keys { grid-template-columns: 1fr; } }
+/* ---- phones and tablets ---- */
+.touch-keys { display: none; }
+body.touch-ready .title-card .keys { display: none; }
+body.touch-ready .touch-keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; text-align: left; margin: 0 auto 20px; max-width: 460px; font-size: 14px; color: var(--ink-dim); }
+.touch-keys b { color: var(--gilt); display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.title-card { max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; }
+#touchLayer { position: fixed; inset: 0; z-index: 3; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#joyBase { position: fixed; left: calc(90px + env(safe-area-inset-left, 0px)); top: calc(100% - 110px - env(safe-area-inset-bottom, 0px)); width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; border: 2px solid rgba(232, 206, 140, 0.45); background: rgba(22, 20, 16, 0.25); z-index: 4; pointer-events: none; opacity: 0.55; transition: opacity 0.2s; }
+#joyBase.active { opacity: 1; transition: none; }
+#joyKnob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(232, 206, 140, 0.85); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+#tbtns { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 74px 74px; gap: 8px; z-index: 6; }
+.tb { height: 40px; border-radius: 999px; border: 1px solid rgba(232, 206, 140, 0.55); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 13px; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); }
+.tb[aria-pressed="true"] { background: rgba(232, 206, 140, 0.9); color: #1b140a; }
+.tb.big { height: 74px; border-radius: 50%; font-size: 15px; }
+.tb.act { font-family: var(--f-display); font-size: 26px; }
+.tb.act.ready { background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; box-shadow: 0 0 0 3px rgba(232, 206, 140, 0.35), 0 0 18px rgba(232, 206, 140, 0.6); }
+.tb:active { filter: brightness(1.3); }
+body.touch #help, body.touch .crosshair { display: none; }
+body.touch #hudBL { top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; left: max(10px, env(safe-area-inset-left, 0px)); gap: 6px; }
+body.touch #minimap { width: 112px; height: 112px; }
+body.touch #compass, body.touch .compass-wrap, body.touch .info, body.touch .toggles { width: 112px; }
+body.touch #compass { height: 18px; }
+body.touch .info { padding: 4px 8px; gap: 6px; }
+body.touch #clock { font-size: 15px; }
+body.touch #wxText { display: none; }
+body.touch .toggles { grid-template-columns: 1fr; gap: 5px; }
+body.touch .seg button { padding: 5px 0; }
+body.touch #location { left: auto; right: max(12px, env(safe-area-inset-right, 0px)); transform: none; width: calc(100vw - 150px); text-align: right; top: calc(10px + env(safe-area-inset-top, 0px)); }
+body.touch #locName { font-size: 18px; }
+body.touch #location .rule { margin-right: 0; }
+body.touch #toast { left: auto; right: max(12px, env(safe-area-inset-right, 0px)); transform: none; top: calc(52px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 150px); font-size: 13px; }
+body.touch #prompt { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; cursor: pointer; font-size: 14px; max-width: calc(100vw - 340px); overflow: hidden; text-overflow: ellipsis; }
+body.touch #dialog { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100vw - 24px)); padding: 14px 14px 10px; }
+body.touch #dlgText { font-size: 15px; min-height: 40px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  body.touch #dialog { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 420px); min-width: 240px; }
+  body.touch #prompt { bottom: auto; top: calc(52px + env(safe-area-inset-top, 0px)); }
+  body.touch #hudBL { display: grid; grid-template-columns: 104px 112px; grid-template-areas: "compass compass" "map info" "map tog"; gap: 6px; align-items: start; }
+  body.touch .compass-wrap { grid-area: compass; width: auto; }
+  body.touch #compass { width: 100%; }
+  body.touch #minimap { grid-area: map; width: 104px; height: 104px; }
+  body.touch .info { grid-area: info; }
+  body.touch .toggles { grid-area: tog; }
+}
+@media (orientation: portrait) {
+  body.touch #prompt { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 40px); }
+}
 @media (prefers-reduced-motion: reduce) { #location, #toast { transition: none; } }
 </style>
 <div id="game"></div>
@@ -86,6 +133,10 @@ kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 
       <div><kbd>X</kbd> Lie down</div><div><kbd>Tab</kbd> Map</div>
       <div><kbd>N</kbd> Day / night</div><div><kbd>R</kbd> Rain on / off</div>
     </div>
+    <div class="touch-keys">
+      <div><b>Left thumb</b> Drag to walk, push far to run</div><div><b>Right thumb</b> Swipe to look, pinch to zoom</div>
+      <div><b>E button</b> Talk, pet, sit (glows when something is near)</div><div><b>Buttons</b> Jump, Run, Crouch, Lie down, Map</div>
+    </div>
     <div id="loading"><div id="loadText">Preparing the realm…</div><div class="bar"><div id="loadBar"></div></div></div>
     <button id="startBtn" hidden>Begin the journey</button>
   </div>
@@ -99,6 +150,15 @@ kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 
   <div id="help" class="panel"><h2>Controls</h2><div class="keys">
     <div><kbd>WASD</kbd> Move · <kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump · <kbd>E</kbd> Interact</div><div><kbd>C</kbd> Crouch · <kbd>X</kbd> Lie down</div><div><kbd>Tab</kbd> Map · <kbd>Wheel</kbd> Zoom</div><div><kbd>N</kbd> Day/night · <kbd>R</kbd> Rain</div><div><kbd>M</kbd> Sound · <kbd>H</kbd> Hide this</div>
   </div></div>
+  <div id="touchUI" hidden>
+    <div id="touchLayer"></div>
+    <div id="joyBase"><div id="joyKnob"></div></div>
+    <div id="tbtns">
+      <button id="tbMap" class="tb">Map</button><button id="tbLie" class="tb" aria-pressed="false">Lie</button>
+      <button id="tbRun" class="tb" aria-pressed="false">Run</button><button id="tbCrouch" class="tb" aria-pressed="false">Crouch</button>
+      <button id="tbAct" class="tb big act" aria-label="Interact">E</button><button id="tbJump" class="tb big" aria-label="Jump">Jump</button>
+    </div>
+  </div>
   <div id="hudBL">
     <div class="compass-wrap panel"><canvas id="compass" width="380" height="48"></canvas></div>
     <canvas id="minimap" width="380" height="380"></canvas>

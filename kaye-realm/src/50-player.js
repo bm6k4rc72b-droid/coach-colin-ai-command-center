@@ -1,5 +1,6 @@
 // ===== Input, Kaye's controller, third-person camera =====
 const KEYS = {};
+const TOUCHIN = { x: 0, y: 0, mag: 0, run: false };
 const player = { pos: new THREE.Vector3(7, 0, 24), vel: new THREE.Vector3(), vy: 0, yaw: Math.PI * 0.85, onGround: true, air: 0, mode: 'stand', seat: null, ch: null, visY: 0, inWater: false, lastStep: 0 };
 const cam = { yaw: Math.PI * 0.85 + Math.PI, pitch: 0.28, dist: 5.2, cur: 5.2, target: new THREE.Vector3(), locked: false, drag: false };
 const UI_STATE = { map: false, started: false, dialog: null };
@@ -41,7 +42,8 @@ canvasEl.addEventListener('wheel', (e) => { cam.dist = clamp(cam.dist + Math.sig
 
 function updatePlayer(dt) {
   const ch = player.ch, k = ch.k;
-  const f = (KEYS.KeyW || KEYS.ArrowUp ? 1 : 0) - (KEYS.KeyS || KEYS.ArrowDown ? 1 : 0), r = (KEYS.KeyD || KEYS.ArrowRight ? 1 : 0) - (KEYS.KeyA || KEYS.ArrowLeft ? 1 : 0);
+  let f = (KEYS.KeyW || KEYS.ArrowUp ? 1 : 0) - (KEYS.KeyS || KEYS.ArrowDown ? 1 : 0), r = (KEYS.KeyD || KEYS.ArrowRight ? 1 : 0) - (KEYS.KeyA || KEYS.ArrowLeft ? 1 : 0), stick = 1;
+  if (TOUCHIN.mag > 0.12) { f = -TOUCHIN.y; r = TOUCHIN.x; stick = TOUCHIN.mag; }
   const blocked = UI_STATE.map;
   let mx = 0, mz = 0;
   if ((f || r) && !blocked) {
@@ -54,8 +56,8 @@ function updatePlayer(dt) {
     const s = player.seat; player.pos.set(s.p.x, s.p.y - 0.5 * k, s.p.z); player.yaw = s.rot; player.vel.set(0, 0, 0); player.vy = 0; player.onGround = true;
     ch.sitH = 0.6; ch.setState(s.kind === 'throne' ? 'throne' : 'sit');
   } else {
-    const run = (KEYS.ShiftLeft || KEYS.ShiftRight) && player.mode === 'stand';
-    let speed = player.mode === 'crouch' ? 1.7 : run ? 7.4 : 3.1;
+    const run = (KEYS.ShiftLeft || KEYS.ShiftRight || TOUCHIN.run || stick > 0.92 && TOUCHIN.mag > 0) && player.mode === 'stand';
+    let speed = player.mode === 'crouch' ? 1.7 : run ? 7.4 : 3.1 * clamp(stick * 1.25, 0.4, 1);
     if (player.mode === 'lie') speed = 0;
     if (player.inWater) speed *= 0.55;
     const acc = player.onGround ? 11 : 2.5;

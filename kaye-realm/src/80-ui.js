@@ -103,6 +103,7 @@ function updateHud(dt) {
   if (player.mode === 'sit' && !UI_STATE.dialog) { pr.hidden = false; $('promptText').textContent = 'Stand up'; }
   else if (PROMPT_TARGET) { pr.hidden = false; $('promptText').textContent = PROMPT_TARGET.label; }
   else pr.hidden = true;
+  updateTouchHud();
 }
 for (const [id, fn] of [['btnSunny', () => setWeather('sunny')], ['btnRain', () => setWeather('rain')], ['btnDay', () => setTimeOfDay('day')], ['btnNight', () => setTimeOfDay('night')], ['mapClose', () => toggleMap()]]) $(id).addEventListener('click', (e) => { e.stopPropagation(); fn(); });
 
@@ -138,7 +139,7 @@ function tick() {
   updateCamera(dt); updateDialog(dt); updateLocation(dt); updateAudio(dt, TIME);
   hudT -= dt; HUD_EL += dt; if (hudT < 0) { hudT = 1 / 20; updateHud(Math.max(HUD_EL, performance.now() / 1000 - HUD_WALL)); HUD_EL = 0; HUD_WALL = performance.now() / 1000; drawMinimap(); if (UI_STATE.map) drawFullMap(); }
   renderer.render(scene, camera);
-  fpsAcc += dt; fpsN++; if (fpsAcc > 1.5) { const fps = (window.__game.fps = fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (UI_STATE.started && !LITE) { const pr = fps < 28 ? Math.max(0.6, PIXEL_RATIO - 0.2) : fps > 55 ? Math.min(Math.min(devicePixelRatio, 1.75), PIXEL_RATIO + 0.1) : PIXEL_RATIO; if (Math.abs(pr - PIXEL_RATIO) > 0.01) { PIXEL_RATIO = pr; renderer.setPixelRatio(pr); } } }
+  fpsAcc += dt; fpsN++; if (fpsAcc > 1.5) { const fps = (window.__game.fps = fpsN / fpsAcc); fpsAcc = 0; fpsN = 0; if (UI_STATE.started && !LITE) { const pr = fps < 28 ? Math.max(IS_TOUCH ? 0.5 : 0.6, PIXEL_RATIO - 0.2) : fps > 55 ? Math.min(MAX_PR, PIXEL_RATIO + 0.1) : PIXEL_RATIO; if (Math.abs(pr - PIXEL_RATIO) > 0.01) { PIXEL_RATIO = pr; renderer.setPixelRatio(pr); } } }
 }
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
@@ -155,7 +156,7 @@ function startGame() {
   if (UI_STATE.started) return;
   UI_STATE.started = true; $('title').hidden = true; $('hud').hidden = false;
   cam.yaw = player.yaw + Math.PI; initAudio(); try { AUD.ctx && AUD.ctx.resume(); } catch (e) { /* ignore */ }
-  try { const p = canvasEl.requestPointerLock && canvasEl.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* drag fallback */ }
+  if (IS_TOUCH) { document.body.classList.add('touch'); $('touchUI').hidden = false; } else try { const p = canvasEl.requestPointerLock && canvasEl.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* drag fallback */ }
   toast('Welcome to Willowmere, Kaye. Press H for controls.');
 }
 $('startBtn').addEventListener('click', startGame);

@@ -142,7 +142,7 @@ function initGrass() {
 }
 const FLOWER_COLS = [0xf2d24b, 0xf4f1ea, 0xd8414f, 0xa36bd8, 0x6fa8e8, 0xf29fc0].map((c) => new THREE.Color(c));
 function buildGrassTile(tx, tz) {
-  const S = GRASS.size, N = LITE ? 2500 : 4600, mats = [], fl = [], fe = [], m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  const S = GRASS.size, N = LITE ? 2500 : IS_TOUCH ? 3000 : 4600, mats = [], fl = [], fe = [], m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
   for (let i = 0; i < N; i++) {
     const x = tx * S + rand() * S, z = tz * S + rand() * S, h = terrainH(x, z);
     if (h < 0.7 || h > 44 || roadMask(x, z) > 0.35 || cobbleMask(x, z) > 0.3) continue;
@@ -167,7 +167,7 @@ function buildGrassTile(tx, tz) {
   return group;
 }
 function updateGrass(px, pz) {
-  const S = GRASS.size, R = LITE ? 70 : 95, ctx = Math.floor(px / S), ctz = Math.floor(pz / S), n = Math.ceil(R / S);
+  const S = GRASS.size, R = LITE || IS_TOUCH ? 70 : 95, ctx = Math.floor(px / S), ctz = Math.floor(pz / S), n = Math.ceil(R / S);
   let built = 0;
   for (let dz = -n; dz <= n; dz++) for (let dx = -n; dx <= n; dx++) {
     const tx = ctx + dx, tz = ctz + dz, key = tx + ',' + tz, d = Math.hypot((tx + 0.5) * S - px, (tz + 0.5) * S - pz);

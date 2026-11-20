@@ -22,6 +22,20 @@ A playable third-person open-world fantasy game in the browser, built with Three
 | Wheel | Camera zoom |
 | M / H | Sound / help panel |
 
+## On phones (iPhone and Android)
+
+The game detects a touchscreen and switches to touch controls, a compact HUD and lighter graphics (lower resolution, smaller shadow map, fewer lights and grass). It works in portrait and landscape; landscape gives the widest view.
+
+| Touch | Action |
+| --- | --- |
+| Left thumb | Floating joystick: drag to walk, push to the edge to run |
+| Right thumb | Swipe to look around; pinch with two fingers to zoom |
+| E button | Talk, pet, sit, next line (it glows when something is in reach) |
+| Jump / Run / Crouch / Lie / Map | On-screen buttons; Run and Crouch stay on until tapped again |
+| Prompt or dialogue box | Tap it to interact or continue |
+
+Add `?touch` to the URL to force touch mode on any device.
+
 ## The world
 
 | Place | What's there |

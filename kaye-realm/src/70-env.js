@@ -7,7 +7,7 @@ const overcast = new THREE.Mesh(new THREE.SphereGeometry(2500, 24, 12), new THRE
 scene.add(overcast);
 const hemi = new THREE.HemisphereLight(0xcfe3ff, 0x6b5a3a, 0.6); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1d6, 2.6);
-sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const SH = 75;
+sun.castShadow = true; sun.shadow.mapSize.set(IS_TOUCH ? 1024 : 2048, IS_TOUCH ? 1024 : 2048); const SH = 75;
 Object.assign(sun.shadow.camera, { left: -SH, right: SH, top: SH, bottom: -SH, near: 1, far: 400 });
 sun.shadow.camera.updateProjectionMatrix(); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun); scene.add(sun.target);
 // stars + moon
@@ -17,7 +17,7 @@ scene.add(stars);
 const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: 0xe8eeff, transparent: true, fog: false, depthWrite: false })); moon.scale.setScalar(260); scene.add(moon);
 const moonCore = new THREE.Mesh(new THREE.CircleGeometry(38, 32), new THREE.MeshBasicMaterial({ color: 0xf4f6ff, fog: false, transparent: true })); scene.add(moonCore);
 // torch light pool
-const LIGHTS = []; for (let i = 0; i < 10; i++) { const l = new THREE.PointLight(0xffa04a, 0, 15, 1.7); scene.add(l); LIGHTS.push(l); }
+const LIGHTS = []; for (let i = 0; i < (IS_TOUCH ? 4 : 10); i++) { const l = new THREE.PointLight(0xffa04a, 0, 15, 1.7); scene.add(l); LIGHTS.push(l); }
 let glowPts = null;
 function buildGlows() {
   const a = new Float32Array(TORCHES.length * 3); TORCHES.forEach((t, i) => { a[i * 3] = t.p.x; a[i * 3 + 1] = t.p.y; a[i * 3 + 2] = t.p.z; });
@@ -53,7 +53,7 @@ function updateEnv(dt, time) {
   const useMoon = sd.y < -0.04;
   const ld = useMoon ? moonDir : sd;
   sun.position.copy(player.pos).addScaledVector(ld, 160); sun.target.position.copy(player.pos);
-  const texel = (2 * SH) / 2048; sun.target.position.x = Math.round(sun.target.position.x / texel) * texel; sun.target.position.z = Math.round(sun.target.position.z / texel) * texel; sun.position.x = sun.target.position.x + ld.x * 160; sun.position.z = sun.target.position.z + ld.z * 160;
+  const texel = (2 * SH) / sun.shadow.mapSize.x; sun.target.position.x = Math.round(sun.target.position.x / texel) * texel; sun.target.position.z = Math.round(sun.target.position.z / texel) * texel; sun.position.x = sun.target.position.x + ld.x * 160; sun.position.z = sun.target.position.z + ld.z * 160;
   if (useMoon) { sun.color.setRGB(0.6, 0.7, 1.0); sun.intensity = 0.55 * (1 - rainK * 0.7) * smooth(-0.04, -0.2, sd.y); }
   else { sun.color.setRGB(1, lerp(0.95, 0.68, low), lerp(0.86, 0.45, low)); sun.intensity = 3.4 * smooth(-0.04, 0.12, sd.y) * (1 - rainK * 0.75); }
   hemi.intensity = 0.16 + daylight * 0.34 + rainK * 0.12; hemi.color.setRGB(lerp(0.35, 0.82, daylight), lerp(0.42, 0.9, daylight), lerp(0.7, 1.0, daylight)); hemi.groundColor.setRGB(lerp(0.1, 0.42, daylight), lerp(0.1, 0.36, daylight), lerp(0.14, 0.24, daylight));

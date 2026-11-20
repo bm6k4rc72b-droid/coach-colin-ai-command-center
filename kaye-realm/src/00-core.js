@@ -37,8 +37,10 @@ function fbm(x, y, o = 4, p = 0) {
 
 // ---------- Renderer / scene ----------
 const LITE = /lite/.test(location.search);
+const IS_TOUCH = /touch/.test(location.search) || (matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0);
+const MAX_PR = IS_TOUCH ? Math.min(window.devicePixelRatio, 1.35) : Math.min(window.devicePixelRatio, 1.75);
 const renderer = new THREE.WebGLRenderer({ antialias: !LITE, powerPreference: 'high-performance' });
-let PIXEL_RATIO = LITE ? 0.6 : Math.min(window.devicePixelRatio, 1.75);
+let PIXEL_RATIO = LITE ? 0.6 : IS_TOUCH ? Math.min(MAX_PR, 1.1) : MAX_PR;
 renderer.setPixelRatio(PIXEL_RATIO);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
