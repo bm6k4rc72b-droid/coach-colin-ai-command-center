@@ -1,5 +1,5 @@
 <title>Kaye's Realm</title>
-<meta name="description" content="A playable third-person open-world fantasy game starring Kaye.">
+<meta name="description" content="A playable third-person open-world fantasy game starring Foxtrot or Kaye.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
@@ -27,6 +27,11 @@ button:focus-visible { outline: 2px solid var(--gilt); outline-offset: 2px; }
 .keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; text-align: left; margin: 0 auto 22px; max-width: 420px; font-size: 14px; }
 .keys div { display: flex; gap: 8px; align-items: center; min-width: 0; }
 kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 22px; padding: 2px 6px; border-radius: 5px; background: rgba(246, 231, 193, 0.12); border: 1px solid rgba(232, 206, 140, 0.45); color: var(--ink); text-align: center; }
+.hero-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 auto 16px; max-width: 420px; }
+.hero-pick button { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(232, 206, 140, 0.4); background: rgba(246, 231, 193, 0.06); color: var(--ink); cursor: pointer; text-align: left; }
+.hero-pick button b { font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em; }
+.hero-pick button span { font-size: 12px; color: var(--ink-dim); }
+.hero-pick button[aria-pressed="true"] { border-color: var(--gilt); background: rgba(232, 206, 140, 0.2); box-shadow: 0 0 0 2px rgba(232, 206, 140, 0.35); }
 #startBtn { font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: 0.12em; padding: 13px 34px; border-radius: 999px; border: 1px solid var(--gilt); background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
 #startBtn:hover { filter: brightness(1.1); }
 #loading { margin-top: 6px; }
@@ -125,7 +130,8 @@ body.touch #dlgText { font-size: 15px; min-height: 40px; }
   <div class="title-card panel">
     <h1>Kaye's Realm</h1>
     <div class="sub">An open-world fantasy</div>
-    <p>Kareema, called Kaye, wakes to a summer morning in Willowmere. Explore the town, cross the Silverrun into Eldergrove Forest, visit Castle Aurelion and climb Skyreach Tower, then find the white dragon sleeping in the Frostpeaks.</p>
+    <div class="hero-pick" role="group" aria-label="Choose your hero"><button data-hero="foxtrot" aria-pressed="true"><b>Foxtrot</b><span>Bearded field operator</span></button><button data-hero="kaye" aria-pressed="false"><b>Kaye</b><span>Kareema, the heroine</span></button></div>
+    <p>A summer morning in Willowmere. Explore the town, cross the Silverrun into Eldergrove Forest, visit Castle Aurelion and climb Skyreach Tower, then find the white dragon sleeping in the Frostpeaks.</p>
     <div class="keys">
       <div><kbd>W A S D</kbd> Move</div><div><kbd>Mouse</kbd> Camera</div>
       <div><kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump</div>
@@ -173,7 +179,7 @@ body.touch #dlgText { font-size: 15px; min-height: 40px; }
   <div class="map-frame">
     <h2>The Realm</h2>
     <canvas id="mapCanvas"></canvas>
-    <div class="map-legend"><span><span class="dot" style="background:#fff;border:2px solid #7a2230"></span>Kaye</span><span><span class="dot" style="background:#ff9a3c"></span>Bob the cat</span><span><span class="dot" style="background:#b0643f"></span>Houses</span><span><span class="dot" style="background:#cfc6b4"></span>Castle</span><span>Tab or Esc to close</span></div>
+    <div class="map-legend"><span><span class="dot" style="background:#fff;border:2px solid #7a2230"></span>You</span><span><span class="dot" style="background:#ff9a3c"></span>Bob the cat</span><span><span class="dot" style="background:#b0643f"></span>Houses</span><span><span class="dot" style="background:#cfc6b4"></span>Castle</span><span>Tab or Esc to close</span></div>
     <button id="mapClose">Close</button>
   </div>
 </div>
@@ -1538,7 +1544,7 @@ class Char {
       BK['ua' + L].push(partGeo(G_.cap(0.054, 0.2), sleeve, 0, -0.145, 0, 0, 0, 0, o.puff ? 1.15 : 1, 1, o.puff ? 1.15 : 1));
       BK['fa' + L].push(partGeo(G_.cap(0.044, 0.18), o.bareArms ? skin : sleeve, 0, -0.12, 0));
       if (o.cuffs) BK['fa' + L].push(partGeo(G_.cyl(0.052, 0.052, 0.05, 10), o.cuffs, 0, -0.2, 0));
-      BK['fa' + L].push(partGeo(G_.sph, skin, 0, -0.275, 0.005, 0, 0, 0, 0.04, 0.055, 0.028));
+      BK['fa' + L].push(partGeo(G_.sph, o.gloves || skin, 0, -0.275, 0.005, 0, 0, 0, o.gloves ? 0.046 : 0.04, o.gloves ? 0.06 : 0.055, o.gloves ? 0.033 : 0.028));
       BK['th' + L].push(partGeo(G_.cap(0.075, 0.3), pants, 0, -0.22, 0));
       BK['sh' + L].push(partGeo(G_.cap(0.058, 0.3), pants, 0, -0.2, 0));
       BK['sh' + L].push(partGeo(G_.cyl(0.07, 0.064, 0.24, 12), boots, 0, -0.32, 0));
@@ -1554,6 +1560,33 @@ class Char {
       this.hat = J.hat;
     }
     if (o.spear) { mk('spear', 'faR', 0, -0.27, 0.02); BK.spear.push(partGeo(G_.cyl(0.018, 0.018, 2.1, 6), 0x5b3d26, 0, 0.55, 0), partGeo(G_.cone(0.04, 0.22, 6), 0xc0c4ca, 0, 1.7, 0)); }
+    if (o.operator) { // tactical field operator gear (Foxtrot)
+      const g = o.gear || 0x4c4a44, strap = 0x1f2024, metal = 0x8a8d92, bd = o.beard || 0x1b1410;
+      // full beard, jaw, moustache, scars and headband
+      H.push(partGeo(G_.sph, bd, 0, -0.03, 0.066, 0, 0, 0, 0.08, 0.068, 0.058), partGeo(G_.sph, bd, 0, -0.062, 0.05, 0, 0, 0, 0.062, 0.05, 0.05));
+      for (const s of [1, -1]) { H.push(partGeo(G_.sph, bd, s * 0.07, 0.0, 0.04, 0, 0, 0, 0.04, 0.058, 0.052), partGeo(G_.sph, bd, s * 0.022, 0.038, 0.11, 0, 0, s * 0.3, 0.028, 0.01, 0.012)); }
+      for (const [x, y] of [[0.058, 0.07], [0.068, 0.058]]) H.push(partGeo(G_.box(0.004, 0.03, 0.004), 0x6a3a2a, x, y, 0.094, 0, 0.6, 0.5));
+      H.push(partGeo(G_.cyl(0.117, 0.117, 0.036, 22), strap, 0, 0.142, -0.006, -0.12, 0, 0, 1, 1, 1.07), partGeo(G_.sph, strap, 0, 0.13, -0.13, 0, 0, 0, 0.03, 0.024, 0.02));
+      // vest, crossed harness straps, buckles, radio with antenna
+      BK.chest.push(partGeo(G_.box(0.31, 0.3, 0.05), g, 0, 0.1, 0.1), partGeo(G_.box(0.3, 0.3, 0.05), g, 0, 0.1, -0.1));
+      for (const s of [1, -1]) {
+        BK.chest.push(partGeo(G_.box(0.048, 0.4, 0.016), strap, s * 0.085, 0.12, 0.13, 0, 0, s * 0.12), partGeo(G_.box(0.048, 0.4, 0.016), strap, s * 0.085, 0.12, -0.13, 0, 0, s * 0.12));
+        BK.chest.push(partGeo(G_.box(0.05, 0.03, 0.27), strap, s * 0.11, 0.3, 0, 0, 0, s * 0.25));
+        BK.chest.push(partGeo(G_.box(0.05, 0.035, 0.012), metal, s * 0.08, 0.17, 0.14), partGeo(G_.box(0.05, 0.035, 0.012), metal, s * 0.075, 0.02, 0.14));
+      }
+      BK.chest.push(partGeo(G_.box(0.34, 0.045, 0.016), strap, 0, 0.03, 0.132, 0, 0, 0.3));
+      BK.chest.push(partGeo(G_.box(0.065, 0.12, 0.04), 0x1a1b1e, 0.07, 0.17, 0.15), partGeo(G_.box(0.05, 0.03, 0.01), 0x6fae7a, 0.07, 0.2, 0.172), partGeo(G_.cyl(0.006, 0.006, 0.17, 5), 0x111111, 0.088, 0.31, 0.15));
+      // belt pouches and holster
+      for (const x of [-0.11, -0.04, 0.04, 0.11]) BK.spine.push(partGeo(G_.box(0.06, 0.07, 0.045), g, x, -0.02, 0.125));
+      BK.spine.push(partGeo(G_.box(0.05, 0.1, 0.07), strap, -0.15, -0.04, 0.02));
+      // shoulder patches, knee pads, thigh rig
+      for (const s of [1, -1]) {
+        const L = s > 0 ? 'L' : 'R';
+        BK['ua' + L].push(partGeo(G_.box(0.012, 0.075, 0.065), 0x3a3d42, s * 0.056, -0.07, 0), partGeo(G_.box(0.013, 0.03, 0.03), 0xb8b2a0, s * 0.058, -0.07, 0));
+        BK['sh' + L].push(partGeo(G_.box(0.1, 0.1, 0.05), 0x2a2c30, 0, -0.03, 0.055));
+        BK['th' + L].push(partGeo(G_.cyl(0.082, 0.082, 0.035, 12), strap, 0, -0.18, 0));
+      }
+    }
     if (o.tray) { mk('tray', 'chest', -0.2, 0.34, 0.25); BK.tray.push(partGeo(G_.cyl(0.2, 0.2, 0.02, 16), 0xc9a14a, 0, 0, 0), partGeo(G_.cyl(0.035, 0.03, 0.12, 8), 0xeeeeee, 0.06, 0.06, 0.02), partGeo(G_.sph, 0xd8414f, -0.07, 0.04, 0, 0, 0, 0, 0.04, 0.04, 0.04)); }
     // bake every part into one skinned mesh (one draw call per character)
     holder.updateMatrixWorld(true);
@@ -1722,6 +1755,25 @@ function makeKaye() {
   ch.locks = [new Strand(5, 0.05, 0.022, 0.012, hairMat, scene), new Strand(5, 0.05, 0.022, 0.012, hairMat, scene)];
   ch.tie = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 6, 12), MAT.gold); scene.add(ch.tie);
   ch.cape = new Cape(0xa3283a);
+  ch.extras = [...ch.braid.meshes, ...ch.locks.flatMap((l) => l.meshes), ch.tie, ch.cape.mesh];
+  ch.updateCloth = (dt, ground, windV) => updateKayeCloth(ch, dt, ground, windV);
+  return ch;
+}
+function makeFoxtrot() {
+  const ch = new Char({ name: 'Foxtrot', height: 1.86, operator: true, skin: 0xb88866, hair: 0x231a14, hairStyle: 'bun', beard: 0x1b1410, eyes: 0x2a1c12, top: 0x3b3e44, sleeve: 0x41444a, trim: 0x2a2c30, cuffs: 0x2a2c30, gloves: 0x2b2a2a, belt: 0x232427, pants: 0x383b40, boots: 0x1e1e20, gear: 0x4c4a44 });
+  const band = new THREE.MeshStandardMaterial({ color: 0x222327, roughness: 0.7, map: TEX.fabric });
+  ch.tails = [new Strand(7, 0.07, 0.02, 0.013, band, scene), new Strand(6, 0.07, 0.02, 0.013, band, scene)];
+  ch.extras = ch.tails.flatMap((t) => t.meshes);
+  ch.updateCloth = (dt, ground, windV) => {
+    if (!ch._last) ch._last = ch.root.position.clone();
+    if (ch._last.distanceTo(ch.root.position) > 2.5) ch.tails.forEach((t) => (t.init = false));
+    ch._last.copy(ch.root.position);
+    ch.root.updateMatrixWorld(true);
+    const head = ch.J.head, hc = head.localToWorld(new THREE.Vector3(0, 0.07, 0)), cc = ch.J.chest.localToWorld(new THREE.Vector3(0, 0.12, -0.04));
+    const cols = [[hc, 0.13 * ch.k], [cc, 0.2 * ch.k]], w = _s.copy(windV).multiplyScalar(1.6).clone();
+    ch.tails[0].update(dt, head.localToWorld(new THREE.Vector3(0.022, 0.13, -0.132)), cols, 9.8, w);
+    ch.tails[1].update(dt, head.localToWorld(new THREE.Vector3(-0.022, 0.125, -0.132)), cols, 9.8, w.clone().set(w.x * 0.8, 0, w.z * 1.2));
+  };
   return ch;
 }
 function updateKayeCloth(ch, dt, ground, windV) {
@@ -1748,6 +1800,18 @@ function updateKayeCloth(ch, dt, ground, windV) {
   ch.locks[1].update(dt, head.localToWorld(new THREE.Vector3(-0.085, 0.07, 0.06)), [[hc, 0.122 * ch.k]], g, windV);
   ch.cape.update(dt, ch, ground, windV);
   void lie;
+}
+
+// ---------- hero selection ----------
+const HERO = { id: 'foxtrot', name: 'Foxtrot', chars: {} };
+function selectHero(id) {
+  HERO.id = id; HERO.name = id === 'kaye' ? 'Kaye' : 'Foxtrot';
+  for (const [k, c] of Object.entries(HERO.chars)) { const on = k === id; c.root.visible = on; for (const m of c.extras) m.visible = on; }
+  const ch = HERO.chars[id]; if (!ch) return;
+  ch.root.position.set(player.pos.x, player.visY, player.pos.z); ch.root.rotation.y = player.yaw;
+  ch.w = { ...(player.ch ? player.ch.w : { idle: 1 }) }; ch.target = player.ch ? player.ch.target : 'idle';
+  player.ch = ch; ch._last = null;
+  for (const b of document.querySelectorAll('.hero-pick button')) b.setAttribute('aria-pressed', b.dataset.hero === id);
 }
 
 // ---------- Bob the cat ----------
@@ -2081,7 +2145,7 @@ function townLook(name, occ) {
 }
 const OCC_LINES = {
   baker: 'The honey loaves come out of the oven at dawn. Follow your nose!', blacksmith: 'Mind the sparks. I\'m shoeing the castle horses this week.', weaver: 'This wool is dyed with river madder. Lovely red, isn\'t it?', farmer: 'Good rain this year. The barley\'s up to my knees already.',
-  herbalist: 'Elvenhollow moss cures a cough in a day. The elves trade it at the Gilded Acorn.', carpenter: 'I built half these benches. Sit on any you like!', fisherman: 'Silverrun trout bite best just after sunrise, under the old bridge.', seamstress: 'Your cape has lovely drape. Crimson suits you.',
+  herbalist: 'Elvenhollow moss cures a cough in a day. The elves trade it at the Gilded Acorn.', carpenter: 'I built half these benches. Sit on any you like!', fisherman: 'Silverrun trout bite best just after sunrise, under the old bridge.', seamstress: 'Fine stitching on your clothes. Who made them? I could use the pattern.',
   cooper: 'Every barrel at the Gilded Acorn is one of mine.', shepherd: 'My flock grazes the meadows toward the castle.', beekeeper: 'Bees are calm today. Must be the sunshine.', scribe: 'I copy letters for the castle. The steward writes far too much.',
   milkmaid: 'Fresh milk, still warm. Bob the cat always finds me first.', potter: 'Clay from the riverbank makes the finest pots in the realm.', florist: 'These are from the castle gardens. The gardeners spoil me.', cartographer: 'Press Tab and you\'ll see my finest map of the realm.',
   midwife: 'Three babies this week! Willowmere is growing.', miller: 'The mill wheel turns slow in summer. Rain will help.', 'innkeeper\'s sister': 'My sister runs a little inn in the next valley. The elves\' pub is fancier.', mason: 'I helped repair the castle walls. Two hundred tons of stone!',
@@ -2207,7 +2271,7 @@ function spawnNPCs() {
   for (const [name, p, yaw, route] of guards) new NPC({ name, kind: 'guard', look: guardLook(name), start: p, yaw, facing: route ? undefined : yaw, stationary: !route, route: route ? route.map(([x, z]) => new THREE.Vector3(x, G, z)) : null, say: name.startsWith('Captain') ? ['Captain Aldric Vane, at your service.', ...GL.slice(1)] : name.includes('Elric') ? ['This is Skyreach Tower. Up you go! Two hundred steps, give or take.', 'From the top you can see from the castle to the dragon\'s peak.'] : GL, walkSpeed: 1.2 });
   const workers = [['Wilmot Thatch', 'head gardener'], ['Pell Ashgrove', 'gardener'], ['Greta Lark', 'gardener']];
   for (const [name, occ] of workers) new NPC({ name, kind: 'worker', look: { name, height: rr(1.65, 1.8), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: 'short', top: 0x5a7a3d, pants: 0x5a4a3a, hat: 'straw', hatCol: 0x5a7a3d, apron: 0x8a6a3a, beard: rand() < 0.5 ? pick(HAIRS) : null }, start: pick(CASTLE_PTS.garden).clone(), say: [`I'm ${name.split(' ')[0]}, ${occ} of Castle Aurelion.`, 'These roses took three summers to bloom like this.', 'Careful of the tulips, they bruise if you look at them wrong.'] });
-  const sv = (name, side, route, tray) => new NPC({ name, kind: 'servant', look: { name, height: rr(1.6, 1.78), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: pick(['bun', 'short']), top: 0x2a2a34, sleeve: 0xeeeae0, pants: 0x2a2a34, dress: 0x2a2a34, dressLen: 0.72, apron: 0xf4f1ea, tray }, start: route[0].clone(), route, say: ['Welcome to the keep, miss.', 'Supper is served at sundown in the great hall.', 'The library is upstairs on the north side. Mind the stairs in the corridor.'] });
+  const sv = (name, side, route, tray) => new NPC({ name, kind: 'servant', look: { name, height: rr(1.6, 1.78), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: pick(['bun', 'short']), top: 0x2a2a34, sleeve: 0xeeeae0, pants: 0x2a2a34, dress: 0x2a2a34, dressLen: 0.72, apron: 0xf4f1ea, tray }, start: route[0].clone(), route, say: ['Welcome to the keep, traveller.', 'Supper is served at sundown in the great hall.', 'The library is upstairs on the north side. Mind the stairs in the corridor.'] });
   for (const s of [1, -1]) {
     sv(s > 0 ? 'Maud Penrose' : 'Edwin Hartley', s, [[-470, s * 11], [-490, s * 11], [-490, s * 16.2], [-520, s * 16.2], [-550, s * 16.2], [-550, s * 11], [-562, s * 3.5], [-470, s * 3.5]].map(([x, z]) => new THREE.Vector3(x, G, z)), true);
   }
@@ -2257,7 +2321,7 @@ function interact() {
 }
 // dialogue
 function openDialog(lines, npc) { UI_STATE.dialog = { lines, i: 0, npc, t: 0, autoClose: false }; showLine(); }
-function showLine() { const d = UI_STATE.dialog, l = d.lines[d.i]; $('dlgName').textContent = l.who; $('dlgText').textContent = ''; d.full = l.text; d.typed = 0; $('dialog').hidden = false; $('dlgHint').textContent = d.i < d.lines.length - 1 ? 'E  Next' : 'E  Close'; }
+function showLine() { const d = UI_STATE.dialog, l = d.lines[d.i]; $('dlgName').textContent = l.who === 'Kaye' ? HERO.name : l.who; $('dlgText').textContent = ''; d.full = l.text.replace(/\bKaye\b/g, HERO.name); d.typed = 0; $('dialog').hidden = false; $('dlgHint').textContent = d.i < d.lines.length - 1 ? 'E  Next' : 'E  Close'; }
 function advanceDialog() { const d = UI_STATE.dialog; if (d.typed < d.full.length) { d.typed = d.full.length; $('dlgText').textContent = d.full; return; } d.i++; if (d.i >= d.lines.length) closeDialog(); else showLine(); }
 function closeDialog() { UI_STATE.dialog = null; $('dialog').hidden = true; }
 function updateDialog(dt) {
@@ -2265,7 +2329,7 @@ function updateDialog(dt) {
   if (d.typed < d.full.length) { d.typed = Math.min(d.full.length, d.typed + dt * 55); $('dlgText').textContent = d.full.slice(0, Math.floor(d.typed)); }
   if (d.npc) { if (d.npc.pos.distanceTo(player.pos) > (d.npc.far || 6)) closeDialog(); else if (d.npc.state === 'greet') d.npc.greetT = Math.max(d.npc.greetT, 1); }
 }
-function say(text) { try { const u = new SpeechSynthesisUtterance(text); u.pitch = 1.25; u.rate = 1.0; const v = speechSynthesis.getVoices().find((x) => /female|samantha|victoria|zira|karen|moira|serena/i.test(x.name)); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) { /* speech unavailable */ } }
+function say(text) { try { const u = new SpeechSynthesisUtterance(text); const male = HERO.id !== 'kaye'; u.pitch = male ? 0.75 : 1.25; u.rate = male ? 0.92 : 1.0; const v = speechSynthesis.getVoices().find((x) => (male ? /\bmale|daniel|alex|fred|david|arthur|aaron|rishi|guy/i : /female|samantha|victoria|zira|karen|moira|serena/i).test(x.name) && /^en/i.test(x.lang)); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) { /* speech unavailable */ } }
 
 // ---- 70-env.js ----
 // ===== Sky, sun & moon, day/night, weather, torch lights, rain, snow, sound =====
@@ -2561,7 +2625,7 @@ function tick() {
   if (!window.__game.ready) { renderer.render(scene, camera); return; }
   if (UI_STATE.started) updatePlayer(dt);
   else { player.ch.setState('idle'); player.ch.animate(dt); player.pos.y = groundAt(player.pos.x, player.pos.z, player.pos.y + 1); player.visY = player.pos.y; player.ch.root.position.copy(player.pos); cam.yaw += dt * 0.08; }
-  updateKayeCloth(player.ch, dt, groundAt(player.pos.x, player.pos.z, player.pos.y), ENV.wind);
+  player.ch.updateCloth(dt, groundAt(player.pos.x, player.pos.z, player.pos.y), ENV.wind);
   for (const n of NPCS) n.update(dt, n.pos.distanceToSquared(player.pos) < 900);
   if (BOB) BOB.update(dt, TIME);
   for (const p of PIGEONS) p.update(dt, player.pos);
@@ -2582,7 +2646,7 @@ window.__game = {
   look(yaw, pitch, dist) { cam.yaw = yaw; if (pitch !== undefined) cam.pitch = pitch; if (dist !== undefined) { cam.dist = dist; cam.cur = dist; } player.yaw = yaw + Math.PI; },
   interact: () => interact(), prompt: () => (PROMPT_TARGET ? PROMPT_TARGET.label : null), dialog: () => (UI_STATE.dialog ? { who: UI_STATE.dialog.lines[UI_STATE.dialog.i].who, text: UI_STATE.dialog.full } : null),
   setTime: setTimeOfDay, setWeather, key: (code, down) => onKey({ code, preventDefault() {}, repeat: false }, down), state: () => ({ pos: player.pos.toArray().map((v) => +v.toFixed(2)), mode: player.mode, onGround: player.onGround, anim: player.ch.target, loc: curLoc, npcs: NPCS.length, hour: +ENV.hour.toFixed(2) }),
-  _t: () => ({ sun, renderer, scene, camera, THREE }), start: () => startGame(), npc: (name) => NPCS.find((n) => n.name.includes(name)), bob: () => BOB, dragon: () => DRAGON, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, colliders: COLL.length, torches: TORCHES.length }),
+  _t: () => ({ sun, renderer, scene, camera, THREE, cam, player }), hero: (id) => selectHero(id), start: () => startGame(), npc: (name) => NPCS.find((n) => n.name.includes(name)), bob: () => BOB, dragon: () => DRAGON, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, colliders: COLL.length, torches: TORCHES.length }),
 };
 
 function startGame() {
@@ -2590,9 +2654,10 @@ function startGame() {
   UI_STATE.started = true; $('title').hidden = true; $('hud').hidden = false;
   cam.yaw = player.yaw + Math.PI; initAudio(); try { AUD.ctx && AUD.ctx.resume(); } catch (e) { /* ignore */ }
   if (IS_TOUCH) { document.body.classList.add('touch'); $('touchUI').hidden = false; } else try { const p = canvasEl.requestPointerLock && canvasEl.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* drag fallback */ }
-  toast('Welcome to Willowmere, Kaye. Press H for controls.');
+  toast(`Welcome to Willowmere, ${HERO.name}.${IS_TOUCH ? '' : ' Press H for controls.'}`);
 }
 $('startBtn').addEventListener('click', startGame);
+for (const b of document.querySelectorAll('.hero-pick button')) b.addEventListener('click', () => { if (window.__game.ready) selectHero(b.dataset.hero); });
 
 async function boot() {
   camera.position.set(40, 30, 60); camera.lookAt(0, 5, 0);
@@ -2603,7 +2668,7 @@ async function boot() {
     ['Raising Castle Aurelion', buildCastle],
     ['Finishing stonework', () => { for (const b of Object.values(BATCH)) b.build(scene); }],
     ['Growing Eldergrove Forest', () => { placeTrees(); placeRocks(); buildRays(); buildSkyProps(); initGrass(); buildGlows(); }],
-    ['Waking the townsfolk', () => { buildTownGraph(); player.ch = makeKaye(); scene.add(player.ch.root); spawnNPCs(); BOB = new Cat(); const ps = PERCHES.filter((p) => Math.hypot(p.x, p.z) < 110); for (let i = 0; i < 34; i++) PIGEONS.push(new Pigeon(pick(ps).clone())); }],
+    ['Waking the townsfolk', () => { buildTownGraph(); HERO.chars.kaye = makeKaye(); HERO.chars.foxtrot = makeFoxtrot(); for (const c of Object.values(HERO.chars)) scene.add(c.root); selectHero(/hero=kaye/.test(location.search) ? 'kaye' : 'foxtrot'); spawnNPCs(); BOB = new Cat(); const ps = PERCHES.filter((p) => Math.hypot(p.x, p.z) < 110); for (let i = 0; i < 34; i++) PIGEONS.push(new Pigeon(pick(ps).clone())); }],
     ['Finding the sleeping dragon', () => new Promise((r) => loadDragon(r))],
     ['Drawing the map', buildMapImage],
   ];

@@ -65,7 +65,7 @@ class Char {
       BK['ua' + L].push(partGeo(G_.cap(0.054, 0.2), sleeve, 0, -0.145, 0, 0, 0, 0, o.puff ? 1.15 : 1, 1, o.puff ? 1.15 : 1));
       BK['fa' + L].push(partGeo(G_.cap(0.044, 0.18), o.bareArms ? skin : sleeve, 0, -0.12, 0));
       if (o.cuffs) BK['fa' + L].push(partGeo(G_.cyl(0.052, 0.052, 0.05, 10), o.cuffs, 0, -0.2, 0));
-      BK['fa' + L].push(partGeo(G_.sph, skin, 0, -0.275, 0.005, 0, 0, 0, 0.04, 0.055, 0.028));
+      BK['fa' + L].push(partGeo(G_.sph, o.gloves || skin, 0, -0.275, 0.005, 0, 0, 0, o.gloves ? 0.046 : 0.04, o.gloves ? 0.06 : 0.055, o.gloves ? 0.033 : 0.028));
       BK['th' + L].push(partGeo(G_.cap(0.075, 0.3), pants, 0, -0.22, 0));
       BK['sh' + L].push(partGeo(G_.cap(0.058, 0.3), pants, 0, -0.2, 0));
       BK['sh' + L].push(partGeo(G_.cyl(0.07, 0.064, 0.24, 12), boots, 0, -0.32, 0));
@@ -81,6 +81,33 @@ class Char {
       this.hat = J.hat;
     }
     if (o.spear) { mk('spear', 'faR', 0, -0.27, 0.02); BK.spear.push(partGeo(G_.cyl(0.018, 0.018, 2.1, 6), 0x5b3d26, 0, 0.55, 0), partGeo(G_.cone(0.04, 0.22, 6), 0xc0c4ca, 0, 1.7, 0)); }
+    if (o.operator) { // tactical field operator gear (Foxtrot)
+      const g = o.gear || 0x4c4a44, strap = 0x1f2024, metal = 0x8a8d92, bd = o.beard || 0x1b1410;
+      // full beard, jaw, moustache, scars and headband
+      H.push(partGeo(G_.sph, bd, 0, -0.03, 0.066, 0, 0, 0, 0.08, 0.068, 0.058), partGeo(G_.sph, bd, 0, -0.062, 0.05, 0, 0, 0, 0.062, 0.05, 0.05));
+      for (const s of [1, -1]) { H.push(partGeo(G_.sph, bd, s * 0.07, 0.0, 0.04, 0, 0, 0, 0.04, 0.058, 0.052), partGeo(G_.sph, bd, s * 0.022, 0.038, 0.11, 0, 0, s * 0.3, 0.028, 0.01, 0.012)); }
+      for (const [x, y] of [[0.058, 0.07], [0.068, 0.058]]) H.push(partGeo(G_.box(0.004, 0.03, 0.004), 0x6a3a2a, x, y, 0.094, 0, 0.6, 0.5));
+      H.push(partGeo(G_.cyl(0.117, 0.117, 0.036, 22), strap, 0, 0.142, -0.006, -0.12, 0, 0, 1, 1, 1.07), partGeo(G_.sph, strap, 0, 0.13, -0.13, 0, 0, 0, 0.03, 0.024, 0.02));
+      // vest, crossed harness straps, buckles, radio with antenna
+      BK.chest.push(partGeo(G_.box(0.31, 0.3, 0.05), g, 0, 0.1, 0.1), partGeo(G_.box(0.3, 0.3, 0.05), g, 0, 0.1, -0.1));
+      for (const s of [1, -1]) {
+        BK.chest.push(partGeo(G_.box(0.048, 0.4, 0.016), strap, s * 0.085, 0.12, 0.13, 0, 0, s * 0.12), partGeo(G_.box(0.048, 0.4, 0.016), strap, s * 0.085, 0.12, -0.13, 0, 0, s * 0.12));
+        BK.chest.push(partGeo(G_.box(0.05, 0.03, 0.27), strap, s * 0.11, 0.3, 0, 0, 0, s * 0.25));
+        BK.chest.push(partGeo(G_.box(0.05, 0.035, 0.012), metal, s * 0.08, 0.17, 0.14), partGeo(G_.box(0.05, 0.035, 0.012), metal, s * 0.075, 0.02, 0.14));
+      }
+      BK.chest.push(partGeo(G_.box(0.34, 0.045, 0.016), strap, 0, 0.03, 0.132, 0, 0, 0.3));
+      BK.chest.push(partGeo(G_.box(0.065, 0.12, 0.04), 0x1a1b1e, 0.07, 0.17, 0.15), partGeo(G_.box(0.05, 0.03, 0.01), 0x6fae7a, 0.07, 0.2, 0.172), partGeo(G_.cyl(0.006, 0.006, 0.17, 5), 0x111111, 0.088, 0.31, 0.15));
+      // belt pouches and holster
+      for (const x of [-0.11, -0.04, 0.04, 0.11]) BK.spine.push(partGeo(G_.box(0.06, 0.07, 0.045), g, x, -0.02, 0.125));
+      BK.spine.push(partGeo(G_.box(0.05, 0.1, 0.07), strap, -0.15, -0.04, 0.02));
+      // shoulder patches, knee pads, thigh rig
+      for (const s of [1, -1]) {
+        const L = s > 0 ? 'L' : 'R';
+        BK['ua' + L].push(partGeo(G_.box(0.012, 0.075, 0.065), 0x3a3d42, s * 0.056, -0.07, 0), partGeo(G_.box(0.013, 0.03, 0.03), 0xb8b2a0, s * 0.058, -0.07, 0));
+        BK['sh' + L].push(partGeo(G_.box(0.1, 0.1, 0.05), 0x2a2c30, 0, -0.03, 0.055));
+        BK['th' + L].push(partGeo(G_.cyl(0.082, 0.082, 0.035, 12), strap, 0, -0.18, 0));
+      }
+    }
     if (o.tray) { mk('tray', 'chest', -0.2, 0.34, 0.25); BK.tray.push(partGeo(G_.cyl(0.2, 0.2, 0.02, 16), 0xc9a14a, 0, 0, 0), partGeo(G_.cyl(0.035, 0.03, 0.12, 8), 0xeeeeee, 0.06, 0.06, 0.02), partGeo(G_.sph, 0xd8414f, -0.07, 0.04, 0, 0, 0, 0, 0.04, 0.04, 0.04)); }
     // bake every part into one skinned mesh (one draw call per character)
     holder.updateMatrixWorld(true);
@@ -249,6 +276,25 @@ function makeKaye() {
   ch.locks = [new Strand(5, 0.05, 0.022, 0.012, hairMat, scene), new Strand(5, 0.05, 0.022, 0.012, hairMat, scene)];
   ch.tie = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.014, 6, 12), MAT.gold); scene.add(ch.tie);
   ch.cape = new Cape(0xa3283a);
+  ch.extras = [...ch.braid.meshes, ...ch.locks.flatMap((l) => l.meshes), ch.tie, ch.cape.mesh];
+  ch.updateCloth = (dt, ground, windV) => updateKayeCloth(ch, dt, ground, windV);
+  return ch;
+}
+function makeFoxtrot() {
+  const ch = new Char({ name: 'Foxtrot', height: 1.86, operator: true, skin: 0xb88866, hair: 0x231a14, hairStyle: 'bun', beard: 0x1b1410, eyes: 0x2a1c12, top: 0x3b3e44, sleeve: 0x41444a, trim: 0x2a2c30, cuffs: 0x2a2c30, gloves: 0x2b2a2a, belt: 0x232427, pants: 0x383b40, boots: 0x1e1e20, gear: 0x4c4a44 });
+  const band = new THREE.MeshStandardMaterial({ color: 0x222327, roughness: 0.7, map: TEX.fabric });
+  ch.tails = [new Strand(7, 0.07, 0.02, 0.013, band, scene), new Strand(6, 0.07, 0.02, 0.013, band, scene)];
+  ch.extras = ch.tails.flatMap((t) => t.meshes);
+  ch.updateCloth = (dt, ground, windV) => {
+    if (!ch._last) ch._last = ch.root.position.clone();
+    if (ch._last.distanceTo(ch.root.position) > 2.5) ch.tails.forEach((t) => (t.init = false));
+    ch._last.copy(ch.root.position);
+    ch.root.updateMatrixWorld(true);
+    const head = ch.J.head, hc = head.localToWorld(new THREE.Vector3(0, 0.07, 0)), cc = ch.J.chest.localToWorld(new THREE.Vector3(0, 0.12, -0.04));
+    const cols = [[hc, 0.13 * ch.k], [cc, 0.2 * ch.k]], w = _s.copy(windV).multiplyScalar(1.6).clone();
+    ch.tails[0].update(dt, head.localToWorld(new THREE.Vector3(0.022, 0.13, -0.132)), cols, 9.8, w);
+    ch.tails[1].update(dt, head.localToWorld(new THREE.Vector3(-0.022, 0.125, -0.132)), cols, 9.8, w.clone().set(w.x * 0.8, 0, w.z * 1.2));
+  };
   return ch;
 }
 function updateKayeCloth(ch, dt, ground, windV) {
@@ -275,6 +321,18 @@ function updateKayeCloth(ch, dt, ground, windV) {
   ch.locks[1].update(dt, head.localToWorld(new THREE.Vector3(-0.085, 0.07, 0.06)), [[hc, 0.122 * ch.k]], g, windV);
   ch.cape.update(dt, ch, ground, windV);
   void lie;
+}
+
+// ---------- hero selection ----------
+const HERO = { id: 'foxtrot', name: 'Foxtrot', chars: {} };
+function selectHero(id) {
+  HERO.id = id; HERO.name = id === 'kaye' ? 'Kaye' : 'Foxtrot';
+  for (const [k, c] of Object.entries(HERO.chars)) { const on = k === id; c.root.visible = on; for (const m of c.extras) m.visible = on; }
+  const ch = HERO.chars[id]; if (!ch) return;
+  ch.root.position.set(player.pos.x, player.visY, player.pos.z); ch.root.rotation.y = player.yaw;
+  ch.w = { ...(player.ch ? player.ch.w : { idle: 1 }) }; ch.target = player.ch ? player.ch.target : 'idle';
+  player.ch = ch; ch._last = null;
+  for (const b of document.querySelectorAll('.hero-pick button')) b.setAttribute('aria-pressed', b.dataset.hero === id);
 }
 
 // ---------- Bob the cat ----------

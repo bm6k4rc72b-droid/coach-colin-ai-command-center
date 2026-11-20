@@ -1,6 +1,6 @@
 # Kaye's Realm
 
-A playable third-person open-world fantasy game in the browser, built with Three.js. You play Kareema, called Kaye.
+A playable third-person open-world fantasy game in the browser, built with Three.js. Pick your hero on the title screen: **Foxtrot**, a bearded field operator in a black tactical suit, headband, chest harness and radio (the default), or **Kareema, called Kaye**. Add `?hero=kaye` to the URL to start as Kaye.
 
 - **Play:** open `kaye-realm.html` in a desktop browser (Chrome, Edge, Firefox or Safari). It needs internet access once to load Three.js from jsDelivr.
 - **Build:** `node build.mjs` concatenates `src/*.js` and inlines the dragon model into `index.html` (artifact page) and `kaye-realm.html` (standalone page).
@@ -59,7 +59,7 @@ Add `?touch` to the URL to force touch mode on any device.
 | `src/10-world.js` | Terrain height field and shader, collision world, water |
 | `src/20-buildings.js` | Houses and interiors, town square, bridge, pub, elven homes, castle, keep, tower |
 | `src/30-nature.js` | Instanced trees, grass, flowers, ferns, rocks, light shafts, clouds, distant peaks |
-| `src/40-characters.js` | Skinned procedural rig, blended animation, Kaye's physics hair, cloth cape and skirt, Bob, pigeons, dragon |
+| `src/40-characters.js` | Skinned procedural rig, blended animation, Foxtrot (operator gear, physics headband tails), Kaye (physics hair, cloth cape and skirt), hero picker, Bob, pigeons, dragon |
 | `src/50-player.js` | Input, Kaye's controller, collision-aware third-person camera |
 | `src/60-npcs.js` | Town walking graph, schedules, greetings, dialogue, interactions |
 | `src/70-env.js` | Sky, sun and moon, day–night cycle, weather, torch lights, procedural sound |

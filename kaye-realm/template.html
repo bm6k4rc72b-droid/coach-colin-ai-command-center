@@ -1,5 +1,5 @@
 <title>Kaye's Realm</title>
-<meta name="description" content="A playable third-person open-world fantasy game starring Kaye.">
+<meta name="description" content="A playable third-person open-world fantasy game starring Foxtrot or Kaye.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
@@ -27,6 +27,11 @@ button:focus-visible { outline: 2px solid var(--gilt); outline-offset: 2px; }
 .keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; text-align: left; margin: 0 auto 22px; max-width: 420px; font-size: 14px; }
 .keys div { display: flex; gap: 8px; align-items: center; min-width: 0; }
 kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 22px; padding: 2px 6px; border-radius: 5px; background: rgba(246, 231, 193, 0.12); border: 1px solid rgba(232, 206, 140, 0.45); color: var(--ink); text-align: center; }
+.hero-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 auto 16px; max-width: 420px; }
+.hero-pick button { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(232, 206, 140, 0.4); background: rgba(246, 231, 193, 0.06); color: var(--ink); cursor: pointer; text-align: left; }
+.hero-pick button b { font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em; }
+.hero-pick button span { font-size: 12px; color: var(--ink-dim); }
+.hero-pick button[aria-pressed="true"] { border-color: var(--gilt); background: rgba(232, 206, 140, 0.2); box-shadow: 0 0 0 2px rgba(232, 206, 140, 0.35); }
 #startBtn { font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: 0.12em; padding: 13px 34px; border-radius: 999px; border: 1px solid var(--gilt); background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
 #startBtn:hover { filter: brightness(1.1); }
 #loading { margin-top: 6px; }
@@ -125,7 +130,8 @@ body.touch #dlgText { font-size: 15px; min-height: 40px; }
   <div class="title-card panel">
     <h1>Kaye's Realm</h1>
     <div class="sub">An open-world fantasy</div>
-    <p>Kareema, called Kaye, wakes to a summer morning in Willowmere. Explore the town, cross the Silverrun into Eldergrove Forest, visit Castle Aurelion and climb Skyreach Tower, then find the white dragon sleeping in the Frostpeaks.</p>
+    <div class="hero-pick" role="group" aria-label="Choose your hero"><button data-hero="foxtrot" aria-pressed="true"><b>Foxtrot</b><span>Bearded field operator</span></button><button data-hero="kaye" aria-pressed="false"><b>Kaye</b><span>Kareema, the heroine</span></button></div>
+    <p>A summer morning in Willowmere. Explore the town, cross the Silverrun into Eldergrove Forest, visit Castle Aurelion and climb Skyreach Tower, then find the white dragon sleeping in the Frostpeaks.</p>
     <div class="keys">
       <div><kbd>W A S D</kbd> Move</div><div><kbd>Mouse</kbd> Camera</div>
       <div><kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump</div>
@@ -173,7 +179,7 @@ body.touch #dlgText { font-size: 15px; min-height: 40px; }
   <div class="map-frame">
     <h2>The Realm</h2>
     <canvas id="mapCanvas"></canvas>
-    <div class="map-legend"><span><span class="dot" style="background:#fff;border:2px solid #7a2230"></span>Kaye</span><span><span class="dot" style="background:#ff9a3c"></span>Bob the cat</span><span><span class="dot" style="background:#b0643f"></span>Houses</span><span><span class="dot" style="background:#cfc6b4"></span>Castle</span><span>Tab or Esc to close</span></div>
+    <div class="map-legend"><span><span class="dot" style="background:#fff;border:2px solid #7a2230"></span>You</span><span><span class="dot" style="background:#ff9a3c"></span>Bob the cat</span><span><span class="dot" style="background:#b0643f"></span>Houses</span><span><span class="dot" style="background:#cfc6b4"></span>Castle</span><span>Tab or Esc to close</span></div>
     <button id="mapClose">Close</button>
   </div>
 </div>
