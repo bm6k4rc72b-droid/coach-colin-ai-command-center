@@ -184,6 +184,13 @@ jobs:
           mkdir -p dist/kaye-realm
           cp kaye-realm/kaye-realm.html dist/kaye-realm/index.html
 
+      # Gilded Circuit is a single self-contained HTML file; publish it under /gilded-circuit/.
+      - name: Copy Gilded Circuit
+        run: |
+          rm -rf dist/gilded-circuit
+          mkdir -p dist/gilded-circuit
+          cp aurum-city/gilded-circuit.html dist/gilded-circuit/index.html
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,232 @@
+<title>Gilded Circuit</title>
+<meta name="description" content="A third-person action RPG in a golden canal city: melee combos, enemies, leveling and a boss.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: full-bleed WebGL canvas, HUD anchored to the four corners; a parchment-and-gilt game UI. */
+:root {
+  --ink: #f6e7c1; --ink-dim: rgba(246, 231, 193, 0.7); --gilt: #e8ce8c; --gilt-deep: #b8913f;
+  --panel: rgba(22, 20, 16, 0.62); --panel-solid: #1c1914; --crimson: #a3283a; --leaf: #6fa86a;
+  --f-display: 'Cinzel', 'Trajan Pro', Georgia, serif; --f-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; background: #0f1418; color: var(--ink); font-family: var(--f-body); }
+#game { position: fixed; inset: 0; }
+#game canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+button { font-family: var(--f-body); }
+button:focus-visible { outline: 2px solid var(--gilt); outline-offset: 2px; }
+.panel { background: var(--panel); border: 1px solid rgba(232, 206, 140, 0.35); border-radius: 10px; backdrop-filter: blur(6px); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); }
+/* title */
+#title { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(10, 14, 18, 0.15), rgba(10, 14, 18, 0.75)); z-index: 20; padding: 16px; }
+.title-card { text-align: center; max-width: 560px; padding: 32px 28px; }
+.title-card h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(40px, 8vw, 76px); letter-spacing: 0.06em; margin: 0; color: var(--ink); text-shadow: 0 3px 18px rgba(0, 0, 0, 0.6), 0 0 40px rgba(232, 206, 140, 0.25); text-wrap: balance; }
+.title-card .sub { font-family: var(--f-display); letter-spacing: 0.3em; text-transform: uppercase; font-size: 13px; color: var(--gilt); margin: 8px 0 22px; }
+.title-card p { color: var(--ink-dim); line-height: 1.5; margin: 0 0 18px; }
+.keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; text-align: left; margin: 0 auto 22px; max-width: 420px; font-size: 14px; }
+.keys div { display: flex; gap: 8px; align-items: center; min-width: 0; }
+kbd { font-family: var(--f-body); font-weight: 700; font-size: 12px; min-width: 22px; padding: 2px 6px; border-radius: 5px; background: rgba(246, 231, 193, 0.12); border: 1px solid rgba(232, 206, 140, 0.45); color: var(--ink); text-align: center; }
+.hero-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 auto 16px; max-width: 420px; }
+.hero-pick button { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(232, 206, 140, 0.4); background: rgba(246, 231, 193, 0.06); color: var(--ink); cursor: pointer; text-align: left; }
+.hero-pick button b { font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em; }
+.hero-pick button span { font-size: 12px; color: var(--ink-dim); }
+.hero-pick button[aria-pressed="true"] { border-color: var(--gilt); background: rgba(232, 206, 140, 0.2); box-shadow: 0 0 0 2px rgba(232, 206, 140, 0.35); }
+#startBtn { font-family: var(--f-display); font-weight: 700; font-size: 18px; letter-spacing: 0.12em; padding: 13px 34px; border-radius: 999px; border: 1px solid var(--gilt); background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); }
+#startBtn:hover { filter: brightness(1.1); }
+#loading { margin-top: 6px; }
+#loadText { font-size: 14px; color: var(--ink-dim); margin-bottom: 8px; }
+.bar { height: 4px; background: rgba(246, 231, 193, 0.15); border-radius: 4px; overflow: hidden; width: 260px; margin: 0 auto; }
+#loadBar { height: 100%; width: 0; background: var(--gilt); transition: width 0.3s; }
+/* HUD */
+#location { position: fixed; top: calc(18px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.8s; z-index: 5; width: min(90vw, 640px); }
+#location.show { opacity: 1; }
+#locName { font-family: var(--f-display); font-weight: 700; font-size: clamp(22px, 3.4vw, 34px); letter-spacing: 0.08em; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8); }
+#location .rule { height: 1px; margin: 6px auto 0; width: 70%; background: linear-gradient(90deg, transparent, var(--gilt), transparent); }
+#toast { position: fixed; top: calc(84px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); padding: 7px 16px; font-size: 15px; opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 5; max-width: 88vw; text-align: center; }
+#toast.show { opacity: 1; }
+#hudBL { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; align-items: flex-start; z-index: 5; }
+#compass { display: block; width: 190px; height: 24px; }
+.compass-wrap { padding: 2px 0; width: 190px; }
+#minimap { width: 190px; height: 190px; display: block; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45)); }
+.info { display: flex; align-items: center; gap: 10px; padding: 6px 12px; font-variant-numeric: tabular-nums; width: 190px; box-sizing: border-box; }
+#clock { font-family: var(--f-display); font-weight: 700; font-size: 18px; }
+#dayNum { font-size: 12px; color: var(--ink-dim); }
+#wxIcon { font-size: 18px; color: var(--gilt); }
+#wxText { font-size: 13px; color: var(--ink-dim); margin-left: auto; }
+.toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 190px; }
+.seg { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid rgba(232, 206, 140, 0.4); }
+.seg button { flex: 1; padding: 6px 0; border: 0; background: var(--panel); color: var(--ink-dim); font-size: 12px; font-weight: 700; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(232, 206, 140, 0.88); color: #1b140a; }
+#prompt { position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 8px 16px; display: flex; gap: 10px; align-items: center; font-size: 16px; z-index: 6; white-space: nowrap; }
+#prompt kbd { font-size: 14px; padding: 3px 8px; background: var(--gilt); color: #1b140a; }
+#dialog { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(680px, calc(100vw - 32px)); padding: 16px 20px 14px; z-index: 7; box-sizing: border-box; background: rgba(24, 20, 14, 0.84); }
+#dlgName { position: absolute; top: -16px; left: 18px; font-family: var(--f-display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; padding: 5px 14px; border-radius: 6px; background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; }
+#dlgText { font-size: 18px; line-height: 1.45; min-height: 52px; margin-top: 6px; }
+#dlgHint { text-align: right; font-size: 12px; color: var(--ink-dim); margin-top: 4px; }
+#help { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); padding: 12px 14px; font-size: 13px; z-index: 5; }
+#help h2 { font-family: var(--f-display); font-size: 13px; letter-spacing: 0.14em; margin: 0 0 8px; color: var(--gilt); }
+#help .keys { grid-template-columns: 1fr; gap: 4px; margin: 0; font-size: 13px; }
+#mapOverlay { position: fixed; inset: 0; background: rgba(8, 10, 12, 0.78); display: grid; place-items: center; z-index: 15; padding: 16px; box-sizing: border-box; }
+.map-frame { position: relative; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.map-frame h2 { font-family: var(--f-display); margin: 0; letter-spacing: 0.12em; font-size: 22px; }
+#mapCanvas { max-width: min(1200px, 100%); max-height: calc(100vh - 110px); border: 2px solid var(--gilt-deep); border-radius: 8px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); }
+.map-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-dim); justify-content: center; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+#mapClose { position: absolute; top: 0; right: 0; background: none; border: 1px solid var(--gilt); color: var(--ink); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.crosshair { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); pointer-events: none; z-index: 4; }
+@media (max-width: 600px) { #help { display: none; } #minimap { width: 140px; height: 140px; } #compass, .compass-wrap, .info, .toggles { width: 140px; } .keys { grid-template-columns: 1fr; } }
+/* ---- phones and tablets ---- */
+.touch-keys { display: none; }
+body.touch-ready .title-card .keys { display: none; }
+body.touch-ready .touch-keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; text-align: left; margin: 0 auto 20px; max-width: 460px; font-size: 14px; color: var(--ink-dim); }
+.touch-keys b { color: var(--gilt); display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.title-card { max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; }
+#touchLayer { position: fixed; inset: 0; z-index: 3; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#joyBase { position: fixed; left: calc(90px + env(safe-area-inset-left, 0px)); top: calc(100% - 110px - env(safe-area-inset-bottom, 0px)); width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; border: 2px solid rgba(232, 206, 140, 0.45); background: rgba(22, 20, 16, 0.25); z-index: 4; pointer-events: none; opacity: 0.55; transition: opacity 0.2s; }
+#joyBase.active { opacity: 1; transition: none; }
+#joyKnob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(232, 206, 140, 0.85); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+#tbtns { position: fixed; right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 74px 74px; gap: 8px; z-index: 6; }
+.tb { height: 40px; border-radius: 999px; border: 1px solid rgba(232, 206, 140, 0.55); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 13px; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; backdrop-filter: blur(4px); }
+.tb[aria-pressed="true"] { background: rgba(232, 206, 140, 0.9); color: #1b140a; }
+.tb.big { height: 74px; border-radius: 50%; font-size: 15px; }
+.tb.act { font-family: var(--f-display); font-size: 26px; }
+.tb.act.ready { background: linear-gradient(180deg, #c9a14a, #8a6a2a); color: #1b140a; box-shadow: 0 0 0 3px rgba(232, 206, 140, 0.35), 0 0 18px rgba(232, 206, 140, 0.6); }
+.tb:active { filter: brightness(1.3); }
+body.touch #help, body.touch .crosshair { display: none; }
+body.touch #hudBL { top: calc(10px + env(safe-area-inset-top, 0px)); bottom: auto; left: max(10px, env(safe-area-inset-left, 0px)); gap: 6px; }
+body.touch #minimap { width: 112px; height: 112px; }
+body.touch #compass, body.touch .compass-wrap, body.touch .info, body.touch .toggles { width: 112px; }
+body.touch #compass { height: 18px; }
+body.touch .info { padding: 4px 8px; gap: 6px; }
+body.touch #clock { font-size: 15px; }
+body.touch #wxText { display: none; }
+body.touch .toggles { grid-template-columns: 1fr; gap: 5px; }
+body.touch .seg button { padding: 5px 0; }
+body.touch #location { left: auto; right: max(12px, env(safe-area-inset-right, 0px)); transform: none; width: calc(100vw - 150px); text-align: right; top: calc(10px + env(safe-area-inset-top, 0px)); }
+body.touch #locName { font-size: 18px; }
+body.touch #location .rule { margin-right: 0; }
+body.touch #toast { left: auto; right: max(12px, env(safe-area-inset-right, 0px)); transform: none; top: calc(52px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 150px); font-size: 13px; }
+body.touch #prompt { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; cursor: pointer; font-size: 14px; max-width: calc(100vw - 340px); overflow: hidden; text-overflow: ellipsis; }
+body.touch #dialog { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100vw - 24px)); padding: 14px 14px 10px; }
+body.touch #dlgText { font-size: 15px; min-height: 40px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  body.touch #dialog { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: calc(100vw - 420px); min-width: 240px; }
+  body.touch #prompt { bottom: auto; top: calc(52px + env(safe-area-inset-top, 0px)); }
+  body.touch #hudBL { display: grid; grid-template-columns: 104px 112px; grid-template-areas: "compass compass" "map info" "map tog"; gap: 6px; align-items: start; }
+  body.touch .compass-wrap { grid-area: compass; width: auto; }
+  body.touch #compass { width: 100%; }
+  body.touch #minimap { grid-area: map; width: 104px; height: 104px; }
+  body.touch .info { grid-area: info; }
+  body.touch .toggles { grid-area: tog; }
+}
+@media (orientation: portrait) {
+  body.touch #prompt { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 40px); }
+}
+/* ---- combat HUD ---- */
+#stats { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); width: min(300px, calc(100vw - 32px)); padding: 8px 12px; z-index: 5; display: grid; gap: 5px; box-sizing: border-box; }
+.srow { display: flex; gap: 8px; align-items: baseline; font-size: 13px; font-variant-numeric: tabular-nums; }
+.srow .hero { font-family: var(--f-display); font-weight: 700; letter-spacing: 0.06em; }
+#lvl { color: var(--gilt); font-weight: 700; }
+#hpText { margin-left: auto; color: var(--ink-dim); }
+.sbar { height: 9px; border-radius: 5px; background: rgba(0, 0, 0, 0.45); overflow: hidden; border: 1px solid rgba(232, 206, 140, 0.25); }
+.sbar i { display: block; height: 100%; width: 100%; transition: width 0.15s; }
+.sbar.hp i { background: linear-gradient(90deg, #b3202c, #e8545a); }
+.sbar.st { height: 5px; } .sbar.st i { background: linear-gradient(90deg, #2aa39c, #7ff6ff); }
+.sbar.xp { height: 4px; } .sbar.xp i { background: linear-gradient(90deg, #a47a2c, #f0c75e); }
+#quest { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); padding: 10px 14px; z-index: 5; max-width: 260px; font-size: 14px; line-height: 1.35; }
+#quest b { font-family: var(--f-display); letter-spacing: 0.12em; font-size: 12px; color: var(--gilt); display: block; margin-bottom: 4px; }
+#quest span { display: block; color: var(--ink); } #quest .qhint { color: var(--ink-dim); font-size: 12px; margin-top: 3px; }
+#location { top: calc(110px + env(safe-area-inset-top, 0px)); width: min(80vw, 520px); }
+#toast { top: calc(168px + env(safe-area-inset-top, 0px)); }
+#bossBar { position: fixed; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(520px, calc(100vw - 40px)); z-index: 5; text-align: center; font-family: var(--f-display); letter-spacing: 0.1em; text-shadow: 0 2px 6px #000; }
+.sbar.boss { height: 12px; margin-top: 4px; } .sbar.boss i { background: linear-gradient(90deg, #7a0d18, #ff3040); }
+#ebars, #dmg { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+.ebar { position: absolute; left: 0; top: 0; width: 64px; height: 6px; border-radius: 3px; background: rgba(0, 0, 0, 0.55); overflow: hidden; border: 1px solid rgba(255, 120, 110, 0.5); }
+.ebar i { display: block; height: 100%; background: #e8545a; }
+.ftxt { position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 700; font-size: 20px; color: #fff; text-shadow: 0 2px 4px #000, 0 0 8px rgba(0, 0, 0, 0.6); white-space: nowrap; }
+.ftxt.crit { color: #ffd34a; font-size: 26px; } .ftxt.hurt { color: #ff5a5a; } .ftxt.xp { color: #9ff0ff; font-size: 15px; }
+#vignette { position: fixed; inset: 0; pointer-events: none; z-index: 4; box-shadow: inset 0 0 120px 30px rgba(200, 0, 20, 0.6); opacity: 0; }
+#vignette.hit { animation: hitflash 0.5s ease-out; }
+@keyframes hitflash { from { opacity: 1; } to { opacity: 0; } }
+#death { position: fixed; inset: 0; z-index: 12; display: grid; place-items: center; background: radial-gradient(ellipse at center, rgba(40, 0, 5, 0.35), rgba(10, 0, 2, 0.8)); text-align: center; }
+#death h2 { font-family: var(--f-display); font-size: clamp(28px, 6vw, 48px); margin: 0; color: #ff8a8a; letter-spacing: 0.08em; }
+#death p { color: var(--ink-dim); }
+.tb.atk { font-size: 30px; } .tb.heavy { color: #ffd34a; }
+body.touch #stats { top: calc(10px + env(safe-area-inset-top, 0px)); width: min(260px, calc(100vw - 150px)); left: auto; right: max(10px, env(safe-area-inset-right, 0px)); transform: none; }
+body.touch #quest { top: calc(96px + env(safe-area-inset-top, 0px)); bottom: auto; right: max(10px, env(safe-area-inset-right, 0px)); max-width: min(260px, calc(100vw - 150px)); font-size: 11px; padding: 6px 9px; }
+body.touch #quest .qhint { display: none; }
+body.touch #location { top: calc(150px + env(safe-area-inset-top, 0px)); }
+body.touch #toast { top: calc(120px + env(safe-area-inset-top, 0px)); }
+#tbtns { grid-template-columns: repeat(3, 62px); }
+#tbtns .tb { height: 44px; }
+#tbtns .tb.big.atk { grid-column: 2 / 4; height: 76px; border-radius: 999px; }
+@media (orientation: landscape) and (max-height: 500px) { body.touch #quest { display: none; } body.touch #location { top: calc(96px + env(safe-area-inset-top, 0px)); } #bossBar { bottom: auto; top: 10px; } }
+@media (prefers-reduced-motion: reduce) { #location, #toast { transition: none; } }
+</style>
+<div id="game"></div>
+<div id="title">
+  <div class="title-card panel">
+    <h1>Gilded Circuit</h1>
+    <div class="sub">An action RPG</div>
+    <p>Rion Vale walks the golden canal city as rogue Sentinels pour from the Breach in the east plaza. Draw the Circuit Edge, clear the Breach and bring down Sentinel Prime.</p>
+    <div class="keys">
+      <div><kbd>W A S D</kbd> Move</div><div><kbd>Mouse</kbd> Camera</div>
+      <div><kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump</div>
+      <div><kbd>Left click</kbd> / <kbd>F</kbd> Attack combo</div><div><kbd>Right click</kbd> / <kbd>G</kbd> Heavy spin</div>
+      <div><kbd>Q</kbd> Dodge roll</div><div><kbd>E</kbd> Talk / sit</div>
+      <div><kbd>Tab</kbd> Map</div><div><kbd>N</kbd> / <kbd>R</kbd> Night / rain</div>
+    </div>
+    <div class="touch-keys">
+      <div><b>Left thumb</b> Drag to walk, push far to run</div><div><b>Right thumb</b> Swipe to look, pinch to zoom</div>
+      <div><b>Attack</b> Tap repeatedly for a 3-hit combo; Heavy for a spin</div><div><b>Dodge</b> Roll through attacks; E talks and sits</div>
+    </div>
+    <div id="loading"><div id="loadText">Preparing the city…</div><div class="bar"><div id="loadBar"></div></div></div>
+    <button id="startBtn" hidden>Draw your blade</button>
+  </div>
+</div>
+<div id="hud" hidden>
+  <div class="crosshair"></div>
+  <div id="location"><div id="locName"></div><div class="rule"></div></div>
+  <div id="toast" class="panel"></div>
+  <div id="stats" class="panel"><div class="srow"><span id="lvl">Lv 1</span><span class="hero">Rion Vale</span><span id="hpText">120 / 120</span></div><div class="sbar hp"><i id="hpFill"></i></div><div class="sbar st"><i id="stFill"></i></div><div class="sbar xp"><i id="xpFill"></i></div></div>
+  <div id="quest" class="panel"><b>Quest</b><div id="questText"></div></div>
+  <div id="bossBar" hidden><span>Sentinel Prime</span><div class="sbar boss"><i id="bossFill"></i></div></div>
+  <div id="ebars"></div><div id="dmg"></div><div id="vignette"></div>
+  <div id="death" hidden><div><h2>You were defeated</h2><p>Rising again…</p></div></div>
+  <div id="prompt" class="panel" hidden><kbd>E</kbd><span id="promptText"></span></div>
+  <div id="dialog" class="panel" hidden><div id="dlgName"></div><div id="dlgText"></div><div id="dlgHint"></div></div>
+  <div id="help" class="panel" hidden><h2>Controls</h2><div class="keys">
+    <div><kbd>WASD</kbd> Move · <kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump · <kbd>E</kbd> Interact</div><div><kbd>Click</kbd> / <kbd>F</kbd> Attack · <kbd>Right</kbd> / <kbd>G</kbd> Heavy</div><div><kbd>Q</kbd> Dodge · <kbd>C</kbd> Crouch</div><div><kbd>Tab</kbd> Map · <kbd>Wheel</kbd> Zoom</div><div><kbd>N</kbd> Day/night · <kbd>R</kbd> Rain</div><div><kbd>M</kbd> Sound · <kbd>H</kbd> Hide this</div>
+  </div></div>
+  <div id="touchUI" hidden>
+    <div id="touchLayer"></div>
+    <div id="joyBase"><div id="joyKnob"></div></div>
+    <div id="tbtns">
+      <button id="tbMap" class="tb">Map</button><button id="tbRun" class="tb" aria-pressed="false">Run</button><button id="tbAct" class="tb act">E</button>
+      <button id="tbJump" class="tb">Jump</button><button id="tbDodge" class="tb">Dodge</button><button id="tbHeavy" class="tb heavy">Heavy</button>
+      <button id="tbAtk" class="tb big atk" aria-label="Attack">⚔</button>
+    </div>
+  </div>
+  <div id="hudBL">
+    <div class="compass-wrap panel"><canvas id="compass" width="380" height="48"></canvas></div>
+    <canvas id="minimap" width="380" height="380"></canvas>
+    <div class="info panel"><span id="wxIcon">☀</span><div><div id="clock">09:30</div><div id="dayNum">Day 1</div></div><span id="wxText">Sunny</span></div>
+    <div class="toggles">
+      <div class="seg" role="group" aria-label="Weather"><button id="btnSunny" aria-pressed="true">Sunny</button><button id="btnRain" aria-pressed="false">Rain</button></div>
+      <div class="seg" role="group" aria-label="Time of day"><button id="btnDay" aria-pressed="true">Day</button><button id="btnNight" aria-pressed="false">Night</button></div>
+    </div>
+  </div>
+</div>
+<div id="mapOverlay" hidden>
+  <div class="map-frame">
+    <h2>The Gilded Circuit</h2>
+    <canvas id="mapCanvas"></canvas>
+    <div class="map-legend"><span><span class="dot" style="background:#fff;border:2px solid #1f6a6a"></span>You</span><span><span class="dot" style="background:#ff6a5a"></span>Sentinels</span><span><span class="dot" style="background:#28a0b0"></span>Canal</span><span>Tab or Esc to close</span></div>
+    <button id="mapClose">Close</button>
+  </div>
+</div>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+<script type="module">
+/*__GAME__*/
+</script>
