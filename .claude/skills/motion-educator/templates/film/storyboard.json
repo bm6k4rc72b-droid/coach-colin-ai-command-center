@@ -1,0 +1,39 @@
+{
+  "title": "The question the film answers?",
+  "standard": 3,
+  "question": "The same question, as the viewer would ask it.",
+  "audience": "Who is watching and what they already know.",
+  "promise": "The one thing the viewer can say in their own words after watching.",
+  "language": "en",
+  "duration": 2.791,
+  "fps": 60,
+  "format": "1920x1080",
+  "look": { "accent": "#ffb90e", "mood": "The stage, where the light sits and what colour it is in each act, the materials." },
+  "music": { "track": "Xceed Thru Johann (Mixkit 556)", "bpm": 86, "beat": 0.697674, "offset": 0, "start": 0.679, "note": "Shot lengths are counted in beats, so every cut is on the grid." },
+  "facts": [{ "id": "f1", "claim": "A claim the film makes, with its arithmetic.", "source": "Who says so." }],
+  "acts": [
+    { "id": "hook", "title": "Question", "goal": "Make the viewer want the answer.", "rail": false },
+    { "id": "explain", "title": "Explanation", "goal": "The pieces, one at a time, then the mechanism." },
+    { "id": "recap", "title": "Recap", "goal": "The ideas again in one frame, then the line to remember.", "rail": false }
+  ],
+  "shots": [
+    {
+      "id": "s01",
+      "act": "hook",
+      "type": "type",
+      "start": 0,
+      "end": 2.791,
+      "teaches": "Asks the question the whole film answers.",
+      "screen": "What is on screen, concretely: every element, where it is and what it looks like.",
+      "motion": "The main move, the supporting moves, the small detail.",
+      "carries": "What stays on screen into the next shot.",
+      "transition": "How the shot leaves.",
+      "sound": "The music's state and each effect.",
+      "check": "What to look for in the render.",
+      "frames": [
+        { "at": 0, "note": "How the shot starts: frame 0 is a finished picture.", "draw": [{ "glow": [960, 540, 420] }, { "title": [960, 520], "text": "The question,\nin the viewer's words?", "size": 130, "accent": "viewer's words?" }, { "camera": "push" }] },
+        { "at": 1, "note": "How it ends, and what the cut is.", "draw": [{ "glow": [960, 540, 420] }, { "title": [960, 480], "text": "The question,\nin the viewer's words?", "size": 130, "accent": "viewer's words?" }, { "cut": "the title lifts away" }] }
+      ]
+    }
+  ]
+}

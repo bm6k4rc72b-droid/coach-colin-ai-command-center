@@ -1,0 +1,33 @@
+# The render worker as a Docker Compose service (Dokploy: a Compose service of type "raw" with this file, the
+# environment variable FARM_TOKEN, and a domain to port 8080). Limit its CPUs so the machine's other services keep
+# room: FARM_CPUS and FARM_MEMORY cap it, and FARM_MIN_FREE_GB makes it wait until the host has that much memory
+# free before each job. On a machine that runs other services, keep the defaults or lower them.
+services:
+  worker:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/playwright:v1.63.0-noble
+        RUN apt-get update && apt-get install -y --no-install-recommends mesa-vulkan-drivers ffmpeg git ca-certificates && apt-get clean
+        RUN npm install -g playwright@1.63.0
+        ENV NODE_PATH=/usr/lib/node_modules
+        ARG REVISION=main
+        RUN git clone --depth 1 --branch $${REVISION} https://github.com/zeative/motion-educator /opt/me
+        RUN node -e "require('playwright')" && ls /usr/share/vulkan/icd.d/lvp_icd.json
+        # The worker's own code is refreshed from the repository each time the container starts.
+        CMD ["sh", "-c", "git -C /opt/me fetch -q --depth 1 origin main && git -C /opt/me reset -q --hard FETCH_HEAD; exec node /opt/me/kit/farm/worker.mjs"]
+    environment:
+      - FARM_TOKEN=${FARM_TOKEN}
+      - FARM_JOBS=${FARM_JOBS:-2}
+      - LP_NUM_THREADS=${LP_NUM_THREADS:-3}
+      - FARM_MIN_FREE_GB=${FARM_MIN_FREE_GB:-8}
+    cpus: ${FARM_CPUS:-6}
+    mem_limit: ${FARM_MEMORY:-6g}
+    shm_size: 2gb
+    volumes:
+      - farm-work:/work
+    expose:
+      - "8080"
+    restart: unless-stopped
+volumes:
+  farm-work: {}

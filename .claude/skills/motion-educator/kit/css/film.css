@@ -1,0 +1,570 @@
+/* The look every film starts from: one graphite ramp, one accent, glass panels, metal type.
+   A film sets --accent (and --accent-2 for a second voice) on :root and adds its own scenes in its own stylesheet. */
+@font-face {
+  font-family: "Inter Variable";
+  src: url("../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "Sora Variable";
+  src: url("../../node_modules/@fontsource-variable/sora/files/sora-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+}
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 800;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("../../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+}
+
+:root {
+  --bg: #0b0b0c;
+  --s1: #131314;
+  --s2: #19191b;
+  --s3: #232326;
+  --line: rgb(237 237 240 / 0.08);
+  --line2: rgb(237 237 240 / 0.14);
+  --t1: #ededf0;
+  --t2: #a9a9b0;
+  --t3: #85858d;
+  --accent: #ffb90e;
+  --accent-2: #4da3ff;
+  --green: #5cc486;
+  --red: #f0755c;
+  --sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --brand: "Sora Variable", var(--sans);
+  --mono: "JetBrains Mono Variable", ui-monospace, Menlo, Consolas, monospace;
+  --serif: "Instrument Serif", Georgia, serif;
+  /* The glass every panel is cut from: lit from above, a bright top edge, an accent-tinted bottom edge, a long shadow. */
+  --glass:
+    linear-gradient(180deg, rgb(46 46 51 / 0.9) 0%, rgb(25 25 28 / 0.94) 44%, rgb(16 16 18 / 0.96) 100%) padding-box,
+    linear-gradient(165deg, rgb(255 255 255 / 0.42), rgb(255 255 255 / 0.08) 28%, rgb(255 255 255 / 0.03) 62%, color-mix(in srgb, var(--accent) 34%, transparent))
+      border-box;
+  --glass-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 -1px 0 rgb(0 0 0 / 0.45), 0 2px 5px rgb(0 0 0 / 0.45), 0 26px 50px -14px rgb(0 0 0 / 0.66),
+    0 80px 130px -34px rgb(0 0 0 / 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html,
+body {
+  width: var(--W, 1920px);
+  height: var(--H, 1080px);
+  overflow: hidden;
+  background: var(--bg);
+}
+body {
+  color: var(--t1);
+  font: 400 20px / 1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+i,
+em,
+u {
+  font-style: normal;
+  text-decoration: none;
+}
+.defs {
+  position: absolute;
+}
+canvas {
+  position: absolute;
+  inset: 0;
+  width: var(--W, 1920px);
+  height: var(--H, 1080px);
+  pointer-events: none;
+}
+
+/* A scene fills the frame and is hidden until the film shows it. */
+.scene {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+}
+.persp {
+  position: absolute;
+  inset: 0;
+  perspective: 1700px;
+  perspective-origin: 50% 46%;
+}
+.glass {
+  border: 1px solid transparent;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Type. Every character is its own box so it can arrive on its own; the fill and the sheen are laid out in line
+   coordinates (--cx is the character's offset, --sx the sheen's position), so both read as one surface. */
+.display {
+  font-family: var(--brand);
+  font-weight: 600;
+  font-size: 108px;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  --sx: -600px;
+}
+.display.huge {
+  font-size: 138px;
+}
+.display.mid {
+  font-size: 84px;
+}
+.ln {
+  display: block;
+}
+.w {
+  display: inline-block;
+  white-space: nowrap;
+}
+.ch {
+  display: inline-block;
+  padding: 0.1em 0 0.16em;
+  margin: -0.1em 0 -0.16em;
+  color: transparent;
+  --sheen: linear-gradient(
+    102deg,
+    transparent calc(var(--sx) - var(--cx) - 120px),
+    rgb(255 255 255 / 0.98) calc(var(--sx) - var(--cx)),
+    transparent calc(var(--sx) - var(--cx) + 120px)
+  );
+  background-image: var(--sheen), linear-gradient(180deg, #ffffff 22%, #e2e2e8 54%, #8f8f9a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* The words that carry the point take the accent, as a metal of that colour. */
+.key .ch {
+  background-image:
+    var(--sheen),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 38%, white) 16%,
+      var(--accent) 56%,
+      color-mix(in oklab, var(--accent) 62%, black) 100%
+    );
+}
+.key2 .ch {
+  background-image:
+    var(--sheen),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent-2) 38%, white) 16%,
+      var(--accent-2) 56%,
+      color-mix(in oklab, var(--accent-2) 62%, black) 100%
+    );
+}
+.micro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: #a3a3ab;
+  font: 500 28px / 1 var(--mono);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.micro i {
+  width: 26px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+/* Captions: the narration, set where subtitles sit, large enough to read on a phone. */
+#captions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 74px;
+  height: 132px;
+}
+.caption {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: max-content;
+  max-width: 1500px;
+  padding: 20px 38px 22px;
+  border: 1px solid transparent;
+  border-radius: 26px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  color: #f4f4f6;
+  font: 500 40px / 1.3 var(--sans);
+  letter-spacing: -0.012em;
+  text-align: center;
+  text-wrap: balance;
+  transform: translateX(-50%);
+  visibility: hidden;
+}
+.cw {
+  display: inline-block;
+}
+.cw.key {
+  color: var(--accent);
+  font-weight: 650;
+  text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Chapter rail: where we are in the explanation. */
+.rail {
+  position: absolute;
+  left: 84px;
+  top: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font: 500 28px / 1 var(--sans);
+  visibility: hidden;
+}
+.rail span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--t1);
+  opacity: 0.4;
+  white-space: nowrap;
+}
+.rail b {
+  color: var(--accent);
+  font: 500 24px / 1 var(--mono);
+  letter-spacing: 0.12em;
+}
+.rail i {
+  position: relative;
+  width: 64px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line2);
+  overflow: hidden;
+}
+.rail u {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 70%, black), var(--accent));
+  box-shadow: 0 0 10px var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+/* Panels: a window with a head and rows, for lists, code, tables and steps. */
+.panel {
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 26px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  text-align: left;
+}
+.phead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 68px;
+  padding: 0 28px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.5);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.05);
+  color: var(--t1);
+  font: 600 28px / 1 var(--sans);
+}
+.phead em {
+  margin-left: auto;
+  color: var(--t3);
+  font: 400 26px / 1 var(--mono);
+}
+.prow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 66px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  font: 500 30px / 1 var(--sans);
+  white-space: nowrap;
+}
+.prow:last-child {
+  border-bottom: 0;
+}
+
+/* Chips, labels and callouts: the small words that name things in a diagram. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--glass);
+  box-shadow: var(--glass-shadow);
+  font: 550 30px / 1 var(--sans);
+  white-space: nowrap;
+}
+.chip b {
+  color: var(--accent);
+  font: 600 26px / 1 var(--mono);
+}
+.label {
+  position: absolute;
+  color: var(--t2);
+  font: 500 28px / 1.2 var(--mono);
+  white-space: nowrap;
+}
+.label b {
+  color: var(--t1);
+  font-weight: 600;
+}
+.num {
+  font-family: var(--brand);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+svg.ink {
+  position: absolute;
+  inset: 0;
+  width: var(--W, 1920px);
+  height: var(--H, 1080px);
+  overflow: visible;
+}
+svg.ink path,
+svg.ink line,
+svg.ink circle {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Over everything: the flash a hit throws, and a vignette that keeps the eye in the middle. */
+#flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 46% 60% at var(--fx, 50%) var(--fy, 50%),
+    #fffaf0 0%,
+    color-mix(in srgb, var(--accent) 30%, rgb(255 255 255 / 0.85)) 22%,
+    color-mix(in srgb, var(--accent) 30%, transparent) 50%,
+    transparent 76%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+#vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 78% 80% at 50% 48%, transparent 58%, rgb(0 0 0 / 0.42) 100%);
+  pointer-events: none;
+}
+
+/* ── Portrait (1080 x 1920): a short for a phone ─────────────────────────────
+   The apps draw over the frame: a header at the top, the caption and the sound's name at the bottom, buttons down
+   the right. Keep what must be read inside --safe-*; the stage and pictures may run to the edges. */
+:root {
+  --safe-top: 54px;
+  --safe-bottom: 54px;
+  --safe-left: 96px;
+  --safe-right: 96px;
+}
+:root[data-format="portrait"] {
+  --safe-top: 230px;
+  --safe-bottom: 430px;
+  --safe-left: 64px;
+  --safe-right: 150px;
+}
+:root[data-format="portrait"] body {
+  font-size: 26px;
+}
+:root[data-format="portrait"] .display.huge {
+  font-size: 96px;
+}
+:root[data-format="portrait"] .display.mid {
+  font-size: 84px;
+}
+:root[data-format="portrait"] .rail {
+  left: var(--safe-left);
+  top: var(--safe-top);
+  gap: 10px;
+  font-size: 28px;
+}
+:root[data-format="portrait"] .rail i {
+  width: 28px;
+}
+:root[data-format="portrait"] #captions {
+  bottom: var(--safe-bottom);
+  height: 300px;
+}
+:root[data-format="portrait"] .caption.pill {
+  max-width: 880px;
+  font-size: 44px;
+  left: calc(50% - 43px);
+}
+
+/* Pop captions: a few large words at a time, lit as they are said. */
+.caption.pop {
+  left: 50%;
+  bottom: 40px;
+  max-width: 1400px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: #fff;
+  font: 700 84px / 1.08 var(--brand);
+  letter-spacing: -0.03em;
+  text-shadow:
+    0 4px 0 rgb(0 0 0 / 0.55),
+    0 0 28px rgb(0 0 0 / 0.75),
+    0 0 4px rgb(0 0 0 / 0.9);
+  white-space: nowrap;
+}
+.caption.pop .key {
+  color: var(--accent);
+}
+:root[data-format="portrait"] .caption.pop {
+  left: calc(50% - 43px);
+  bottom: 60px;
+  max-width: 860px;
+  font-size: 96px;
+  white-space: normal;
+}
+
+/* Frame captions: a short line at the top, said words lit, key words in a selection frame with corner handles. */
+#captions[data-style="frame"] {
+  top: 96px;
+  bottom: auto;
+  height: 200px;
+}
+:root[data-format="portrait"] #captions[data-style="frame"] {
+  top: calc(var(--safe-top) + 14px); /* the glyphs (and a key word's frame) on or under the safe line */
+  bottom: auto;
+}
+.caption.frame {
+  top: 0;
+  bottom: auto;
+  max-width: 1300px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: #fff;
+  font: 600 64px / 1.16 var(--sans);
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 22px rgb(0 0 0 / 0.6);
+}
+:root[data-format="portrait"] .caption.frame {
+  left: calc(50% - 43px);
+  max-width: 820px;
+  font-size: 66px;
+}
+.caption.frame .cw {
+  position: relative;
+}
+/* The backing plate: drawn where the picture behind the line is light (--plate, set per frame from the frame). */
+.caption.frame,
+.caption.pop {
+  isolation: isolate;
+}
+.caption.frame::before,
+.caption.pop::before {
+  content: "";
+  position: absolute;
+  inset: -10px -26px -12px;
+  z-index: -1;
+  border-radius: 20px;
+  background: rgb(10 10 14 / 0.6);
+  opacity: var(--plate, 0);
+}
+.caption.frame .cw.key {
+  color: #fff;
+  font-weight: 700;
+  text-shadow: 0 2px 22px rgb(0 0 0 / 0.6);
+}
+.caption.frame .kf {
+  position: absolute;
+  inset: 0.02em -0.14em -0.02em;
+  border: 2.5px solid var(--accent);
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+  pointer-events: none;
+}
+.caption.frame .kf::before,
+.caption.frame .kf::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2.5px #fff;
+}
+.caption.frame .kf::before {
+  left: -7px;
+  top: -7px;
+}
+.caption.frame .kf::after {
+  right: -7px;
+  bottom: -7px;
+}
+
+/* render.mjs --safe: shows where an app would cover the frame. Never in a finished render. */
+:root[data-safe] #root::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 99;
+  border-style: solid;
+  border-color: rgb(255 40 90 / 0.28);
+  border-width: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  pointer-events: none;
+}
+
+/* Pins: labels held on a part of a 3D model (stage3d.js space.pin). A dot on the part, an elbow line, a chip. */
+.pin3d {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgb(14 15 19 / 0.78);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14), 0 12px 30px rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(8px);
+  color: var(--t1);
+  font: 600 30px / 1.1 var(--sans);
+  white-space: nowrap;
+}
+.pin3d small {
+  display: block;
+  margin-top: 6px;
+  color: var(--t2);
+  font: 500 28px / 1.2 var(--sans);
+}
+.pin3d b {
+  color: var(--accent);
+}
+.pin3d-line {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.75);
+  stroke-width: 2.5;
+}
+.pin3d-dot {
+  fill: var(--accent);
+  stroke: #fff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px var(--accent));
+}

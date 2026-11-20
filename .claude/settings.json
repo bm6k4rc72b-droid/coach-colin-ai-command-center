@@ -61,6 +61,20 @@
         "repo": "styfinity/claude-marketing-department",
         "ref": "059afff7be8bf994275411e020805286deca671a"
       }
+    },
+    "bang-motion": {
+      "source": {
+        "source": "github",
+        "repo": "bangtutorial/bang-motion",
+        "ref": "c1aa65e921c970d858705fcb4a53a8294d1a4131"
+      }
+    },
+    "ashtonvossai": {
+      "source": {
+        "source": "github",
+        "repo": "vossashtonai/gta6-clipper",
+        "ref": "11cee2b7ad30fda12255131b7ed4367a2e332dc4"
+      }
     }
   },
   "enabledPlugins": {
@@ -73,7 +87,9 @@
     "mcp-for-blender@mcp-for-blender": true,
     "color-grade-ai@coach-colin": true,
     "notfair@nowork-studio": true,
-    "marketing@styfinity-marketing": true
+    "marketing@styfinity-marketing": true,
+    "bang-motion@bang-motion": true,
+    "gta6-clipper@ashtonvossai": true
   },
   "hooks": {
     "SessionStart": [
