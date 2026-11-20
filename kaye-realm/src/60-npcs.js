@@ -48,7 +48,7 @@ function townLook(name, occ) {
 }
 const OCC_LINES = {
   baker: 'The honey loaves come out of the oven at dawn. Follow your nose!', blacksmith: 'Mind the sparks. I\'m shoeing the castle horses this week.', weaver: 'This wool is dyed with river madder. Lovely red, isn\'t it?', farmer: 'Good rain this year. The barley\'s up to my knees already.',
-  herbalist: 'Elvenhollow moss cures a cough in a day. The elves trade it at the Gilded Acorn.', carpenter: 'I built half these benches. Sit on any you like!', fisherman: 'Silverrun trout bite best just after sunrise, under the old bridge.', seamstress: 'Your cape has lovely drape. Crimson suits you.',
+  herbalist: 'Elvenhollow moss cures a cough in a day. The elves trade it at the Gilded Acorn.', carpenter: 'I built half these benches. Sit on any you like!', fisherman: 'Silverrun trout bite best just after sunrise, under the old bridge.', seamstress: 'Fine stitching on your clothes. Who made them? I could use the pattern.',
   cooper: 'Every barrel at the Gilded Acorn is one of mine.', shepherd: 'My flock grazes the meadows toward the castle.', beekeeper: 'Bees are calm today. Must be the sunshine.', scribe: 'I copy letters for the castle. The steward writes far too much.',
   milkmaid: 'Fresh milk, still warm. Bob the cat always finds me first.', potter: 'Clay from the riverbank makes the finest pots in the realm.', florist: 'These are from the castle gardens. The gardeners spoil me.', cartographer: 'Press Tab and you\'ll see my finest map of the realm.',
   midwife: 'Three babies this week! Willowmere is growing.', miller: 'The mill wheel turns slow in summer. Rain will help.', 'innkeeper\'s sister': 'My sister runs a little inn in the next valley. The elves\' pub is fancier.', mason: 'I helped repair the castle walls. Two hundred tons of stone!',
@@ -174,7 +174,7 @@ function spawnNPCs() {
   for (const [name, p, yaw, route] of guards) new NPC({ name, kind: 'guard', look: guardLook(name), start: p, yaw, facing: route ? undefined : yaw, stationary: !route, route: route ? route.map(([x, z]) => new THREE.Vector3(x, G, z)) : null, say: name.startsWith('Captain') ? ['Captain Aldric Vane, at your service.', ...GL.slice(1)] : name.includes('Elric') ? ['This is Skyreach Tower. Up you go! Two hundred steps, give or take.', 'From the top you can see from the castle to the dragon\'s peak.'] : GL, walkSpeed: 1.2 });
   const workers = [['Wilmot Thatch', 'head gardener'], ['Pell Ashgrove', 'gardener'], ['Greta Lark', 'gardener']];
   for (const [name, occ] of workers) new NPC({ name, kind: 'worker', look: { name, height: rr(1.65, 1.8), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: 'short', top: 0x5a7a3d, pants: 0x5a4a3a, hat: 'straw', hatCol: 0x5a7a3d, apron: 0x8a6a3a, beard: rand() < 0.5 ? pick(HAIRS) : null }, start: pick(CASTLE_PTS.garden).clone(), say: [`I'm ${name.split(' ')[0]}, ${occ} of Castle Aurelion.`, 'These roses took three summers to bloom like this.', 'Careful of the tulips, they bruise if you look at them wrong.'] });
-  const sv = (name, side, route, tray) => new NPC({ name, kind: 'servant', look: { name, height: rr(1.6, 1.78), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: pick(['bun', 'short']), top: 0x2a2a34, sleeve: 0xeeeae0, pants: 0x2a2a34, dress: 0x2a2a34, dressLen: 0.72, apron: 0xf4f1ea, tray }, start: route[0].clone(), route, say: ['Welcome to the keep, miss.', 'Supper is served at sundown in the great hall.', 'The library is upstairs on the north side. Mind the stairs in the corridor.'] });
+  const sv = (name, side, route, tray) => new NPC({ name, kind: 'servant', look: { name, height: rr(1.6, 1.78), skin: pick(SKINS), hair: pick(HAIRS), hairStyle: pick(['bun', 'short']), top: 0x2a2a34, sleeve: 0xeeeae0, pants: 0x2a2a34, dress: 0x2a2a34, dressLen: 0.72, apron: 0xf4f1ea, tray }, start: route[0].clone(), route, say: ['Welcome to the keep, traveller.', 'Supper is served at sundown in the great hall.', 'The library is upstairs on the north side. Mind the stairs in the corridor.'] });
   for (const s of [1, -1]) {
     sv(s > 0 ? 'Maud Penrose' : 'Edwin Hartley', s, [[-470, s * 11], [-490, s * 11], [-490, s * 16.2], [-520, s * 16.2], [-550, s * 16.2], [-550, s * 11], [-562, s * 3.5], [-470, s * 3.5]].map(([x, z]) => new THREE.Vector3(x, G, z)), true);
   }
@@ -224,7 +224,7 @@ function interact() {
 }
 // dialogue
 function openDialog(lines, npc) { UI_STATE.dialog = { lines, i: 0, npc, t: 0, autoClose: false }; showLine(); }
-function showLine() { const d = UI_STATE.dialog, l = d.lines[d.i]; $('dlgName').textContent = l.who; $('dlgText').textContent = ''; d.full = l.text; d.typed = 0; $('dialog').hidden = false; $('dlgHint').textContent = d.i < d.lines.length - 1 ? 'E  Next' : 'E  Close'; }
+function showLine() { const d = UI_STATE.dialog, l = d.lines[d.i]; $('dlgName').textContent = l.who === 'Kaye' ? HERO.name : l.who; $('dlgText').textContent = ''; d.full = l.text.replace(/\bKaye\b/g, HERO.name); d.typed = 0; $('dialog').hidden = false; $('dlgHint').textContent = d.i < d.lines.length - 1 ? 'E  Next' : 'E  Close'; }
 function advanceDialog() { const d = UI_STATE.dialog; if (d.typed < d.full.length) { d.typed = d.full.length; $('dlgText').textContent = d.full; return; } d.i++; if (d.i >= d.lines.length) closeDialog(); else showLine(); }
 function closeDialog() { UI_STATE.dialog = null; $('dialog').hidden = true; }
 function updateDialog(dt) {
@@ -232,4 +232,4 @@ function updateDialog(dt) {
   if (d.typed < d.full.length) { d.typed = Math.min(d.full.length, d.typed + dt * 55); $('dlgText').textContent = d.full.slice(0, Math.floor(d.typed)); }
   if (d.npc) { if (d.npc.pos.distanceTo(player.pos) > (d.npc.far || 6)) closeDialog(); else if (d.npc.state === 'greet') d.npc.greetT = Math.max(d.npc.greetT, 1); }
 }
-function say(text) { try { const u = new SpeechSynthesisUtterance(text); u.pitch = 1.25; u.rate = 1.0; const v = speechSynthesis.getVoices().find((x) => /female|samantha|victoria|zira|karen|moira|serena/i.test(x.name)); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) { /* speech unavailable */ } }
+function say(text) { try { const u = new SpeechSynthesisUtterance(text); const male = HERO.id !== 'kaye'; u.pitch = male ? 0.75 : 1.25; u.rate = male ? 0.92 : 1.0; const v = speechSynthesis.getVoices().find((x) => (male ? /\bmale|daniel|alex|fred|david|arthur|aaron|rishi|guy/i : /female|samantha|victoria|zira|karen|moira|serena/i).test(x.name) && /^en/i.test(x.lang)); if (v) u.voice = v; speechSynthesis.speak(u); } catch (e) { /* speech unavailable */ } }

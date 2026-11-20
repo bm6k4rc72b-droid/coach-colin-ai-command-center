@@ -128,7 +128,7 @@ function tick() {
   if (!window.__game.ready) { renderer.render(scene, camera); return; }
   if (UI_STATE.started) updatePlayer(dt);
   else { player.ch.setState('idle'); player.ch.animate(dt); player.pos.y = groundAt(player.pos.x, player.pos.z, player.pos.y + 1); player.visY = player.pos.y; player.ch.root.position.copy(player.pos); cam.yaw += dt * 0.08; }
-  updateKayeCloth(player.ch, dt, groundAt(player.pos.x, player.pos.z, player.pos.y), ENV.wind);
+  player.ch.updateCloth(dt, groundAt(player.pos.x, player.pos.z, player.pos.y), ENV.wind);
   for (const n of NPCS) n.update(dt, n.pos.distanceToSquared(player.pos) < 900);
   if (BOB) BOB.update(dt, TIME);
   for (const p of PIGEONS) p.update(dt, player.pos);
@@ -149,7 +149,7 @@ window.__game = {
   look(yaw, pitch, dist) { cam.yaw = yaw; if (pitch !== undefined) cam.pitch = pitch; if (dist !== undefined) { cam.dist = dist; cam.cur = dist; } player.yaw = yaw + Math.PI; },
   interact: () => interact(), prompt: () => (PROMPT_TARGET ? PROMPT_TARGET.label : null), dialog: () => (UI_STATE.dialog ? { who: UI_STATE.dialog.lines[UI_STATE.dialog.i].who, text: UI_STATE.dialog.full } : null),
   setTime: setTimeOfDay, setWeather, key: (code, down) => onKey({ code, preventDefault() {}, repeat: false }, down), state: () => ({ pos: player.pos.toArray().map((v) => +v.toFixed(2)), mode: player.mode, onGround: player.onGround, anim: player.ch.target, loc: curLoc, npcs: NPCS.length, hour: +ENV.hour.toFixed(2) }),
-  _t: () => ({ sun, renderer, scene, camera, THREE }), start: () => startGame(), npc: (name) => NPCS.find((n) => n.name.includes(name)), bob: () => BOB, dragon: () => DRAGON, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, colliders: COLL.length, torches: TORCHES.length }),
+  _t: () => ({ sun, renderer, scene, camera, THREE, cam, player }), hero: (id) => selectHero(id), start: () => startGame(), npc: (name) => NPCS.find((n) => n.name.includes(name)), bob: () => BOB, dragon: () => DRAGON, info: () => ({ calls: renderer.info.render.calls, tris: renderer.info.render.triangles, colliders: COLL.length, torches: TORCHES.length }),
 };
 
 function startGame() {
@@ -157,9 +157,10 @@ function startGame() {
   UI_STATE.started = true; $('title').hidden = true; $('hud').hidden = false;
   cam.yaw = player.yaw + Math.PI; initAudio(); try { AUD.ctx && AUD.ctx.resume(); } catch (e) { /* ignore */ }
   if (IS_TOUCH) { document.body.classList.add('touch'); $('touchUI').hidden = false; } else try { const p = canvasEl.requestPointerLock && canvasEl.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* drag fallback */ }
-  toast('Welcome to Willowmere, Kaye. Press H for controls.');
+  toast(`Welcome to Willowmere, ${HERO.name}.${IS_TOUCH ? '' : ' Press H for controls.'}`);
 }
 $('startBtn').addEventListener('click', startGame);
+for (const b of document.querySelectorAll('.hero-pick button')) b.addEventListener('click', () => { if (window.__game.ready) selectHero(b.dataset.hero); });
 
 async function boot() {
   camera.position.set(40, 30, 60); camera.lookAt(0, 5, 0);
@@ -170,7 +171,7 @@ async function boot() {
     ['Raising Castle Aurelion', buildCastle],
     ['Finishing stonework', () => { for (const b of Object.values(BATCH)) b.build(scene); }],
     ['Growing Eldergrove Forest', () => { placeTrees(); placeRocks(); buildRays(); buildSkyProps(); initGrass(); buildGlows(); }],
-    ['Waking the townsfolk', () => { buildTownGraph(); player.ch = makeKaye(); scene.add(player.ch.root); spawnNPCs(); BOB = new Cat(); const ps = PERCHES.filter((p) => Math.hypot(p.x, p.z) < 110); for (let i = 0; i < 34; i++) PIGEONS.push(new Pigeon(pick(ps).clone())); }],
+    ['Waking the townsfolk', () => { buildTownGraph(); HERO.chars.kaye = makeKaye(); HERO.chars.foxtrot = makeFoxtrot(); for (const c of Object.values(HERO.chars)) scene.add(c.root); selectHero(/hero=kaye/.test(location.search) ? 'kaye' : 'foxtrot'); spawnNPCs(); BOB = new Cat(); const ps = PERCHES.filter((p) => Math.hypot(p.x, p.z) < 110); for (let i = 0; i < 34; i++) PIGEONS.push(new Pigeon(pick(ps).clone())); }],
     ['Finding the sleeping dragon', () => new Promise((r) => loadDragon(r))],
     ['Drawing the map', buildMapImage],
   ];
