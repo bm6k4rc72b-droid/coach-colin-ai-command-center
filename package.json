@@ -84,7 +84,8 @@
     "qa:realtor": "node scripts/qa-realtor.mjs",
     "qa:touchline": "node scripts/qa-touchline.mjs",
     "qa:vice": "node scripts/qa-vice.mjs",
-    "qa:makecns-fly": "node scripts/qa-makecns-fly.mjs"
+    "qa:makecns-fly": "node scripts/qa-makecns-fly.mjs",
+    "astra:voice": "node scripts/astra-voice.mjs"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^3.0.0",

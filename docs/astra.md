@@ -525,3 +525,29 @@ It does not diagnose, prescribe, or generate individualised dosing or treatment
 plans, and it will not be extended to. Several compounds it covers are
 prescription medicines; most of the rest are not approved for anything, and some
 are prohibited in tested sport. The platform's job is to make that legible.
+
+---
+
+## Courtroom Sector 7 in 3D, and Colin's ElevenLabs voice
+
+The courtroom card's header is a live three.js court (`showcase/courtroom3d.js`): mirror-marble floor, walnut and gold
+bench, Judge Colin's 3D figure with the gavel (his video feed on the wall monitor and in the JUDGE CAM inset), Defence
+and Prosecution at their tables, a witness stand and a jury box of twelve. `cards3.js` sends it the trial's events:
+
+| Event | What the court does |
+|---|---|
+| Open the case | Camera to the bench, "COURT IS IN SESSION" with the case number |
+| Argument | That counsel stands and gestures, "+N PTS" rises over their table, camera cuts to them |
+| Objection | The objector springs up with "OBJECTION!", then SUSTAINED / OVERRULED over the bench |
+| Witness | Exhibit hologram rises over the stand, camera to the witness |
+| Jury vote | The juror's visor and seat light turn the side's colour and a hand goes up |
+| Gavel | Wind-up and strike timed to `state.court.gavelAt` (the knock), shockwave, light flash, camera shake |
+| Verdict | House lights down, spotlight and confetti on the winner, "VERDICT · …" |
+
+It renders only while the courtroom is the current station, and honours reduced motion (no orbit or shake).
+
+**Voice.** `npm run astra:voice` records every scripted English line plus the court's fixed sentences ("All rise.",
+"Sustained.", "Overruled. Do sit down.", the sentences, "Exhibit A, take the stand.", …) in the owner's ElevenLabs voice
+(the voice named "Colin", or `--voice <id>`), saves them to `public/astra/assets/voice/el/` and lists them in
+`showcase/voicebank-el.js`. Those recordings win over the older Higgsfield ones; anything unrecorded (names, numbers,
+other languages) stays on the device voice. Needs `ELEVENLABS_API_KEY` (starts with `sk_`); the key is never shipped to the site.

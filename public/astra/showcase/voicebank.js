@@ -9,7 +9,10 @@
  * @module astra/showcase/voicebank
  */
 
+import { EL_LINES } from './voicebank-el.js';
+
 const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_3D17dPWC57zGXhL3gHkykFe9E5n/';
+const EL = '../assets/voice/el/';
 
 /** [line, recording] pairs. */
 export const LINES = [
@@ -54,10 +57,11 @@ export function lineKey(text) {
   return String(text).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
-const BANK = new Map(LINES.map(([text, file]) => [lineKey(text), file]));
+const BANK = new Map(LINES.map(([text, file]) => [lineKey(text), `${CDN}${file}.mp3`]));
+// The ElevenLabs recordings win where both exist.
+for (const [text, file] of EL_LINES) BANK.set(lineKey(text), `${EL}${file}`);
 
 /** The recording of a line, if he made one. */
 export function studioClip(text) {
-  const file = BANK.get(lineKey(text));
-  return file ? `${CDN}${file}.mp3` : null;
+  return BANK.get(lineKey(text)) || null;
 }
