@@ -29,6 +29,7 @@ import './screens4.js';
 import { buildVaultCard } from './vault.js';
 import { buildScene } from './scenes.js';
 import { judge } from './judge.js';
+import { courtroom } from './courtroom3d.js';
 import { BlackLab, CUSTODIAN } from './lab.js';
 import './screens5.js';
 import { FaceScanner } from './scan.js';
@@ -193,20 +194,9 @@ function buildStations() {
   });
 }
 
-/** The courtroom card's live judge cam: the judge's clips, in full colour. */
+/** The courtroom card's header: the live 3D court, with the judge cam inset. */
 function judgeCam() {
-  const status = el('span', { class: 'cam-status', text: 'IN SESSION' });
-  const LABELS = { idle: 'IN SESSION', speak: 'THE BENCH SPEAKS', gavel: 'ORDER!', verdict: 'VERDICT' };
-  const cam = judge.camera();
-  const FEED = { loading: 'CONNECTING…', tap: '▶ TAP FOR LIVE FEED', offline: 'FEED OFFLINE' };
-  const label = () => { status.textContent = FEED[cam.dataset.feed] || LABELS[cam.dataset.clip] || 'IN SESSION'; };
-  new MutationObserver(label).observe(cam, { attributes: true, attributeFilter: ['data-clip', 'data-feed'] });
-  label();
-  return el('figure', { class: 'judge-cam-wrap', title: 'Tap for order in court' , onclick: () => api.courtOrder?.() }, [
-    cam,
-    el('span', { class: 'cam-live', text: '● LIVE · COURTROOM SECTOR 7' }),
-    status,
-  ]);
+  return courtroom.element({ onTap: () => api.courtOrder?.() });
 }
 
 /* ------------------------------------------------------------- the stage */
@@ -347,6 +337,7 @@ function markActive() {
   managePlates();
   // The judge's clips load only at or beside the courtroom.
   judge.setActive(ringDistance(indexOf('arena'), current) <= 1);
+  courtroom.setActive(current === indexOf('arena'));
   document.querySelectorAll('.sec').forEach((sec, i) => sec.classList.toggle('active', i === current));
   document.querySelectorAll('.dot').forEach((dot, i) => { dot.classList.toggle('on', i === current); dot.setAttribute('aria-current', i === current ? 'step' : 'false'); });
   $('prev').disabled = current === 0;
@@ -690,6 +681,7 @@ function tick() {
   steer(dt);
   voice.tick(dt);
   judge.update(state.speak);
+  courtroom.update(dt, t, state);
   $('btn-colin').style.setProperty('--speak', state.speak.toFixed(2));
 
   const ease = 1 - Math.exp(-dt * 4.5);

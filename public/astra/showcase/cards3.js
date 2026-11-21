@@ -14,6 +14,7 @@ import {
 } from './court.js';
 import { getLang, line } from './colin.js';
 import { judge } from './judge.js';
+import { courtroom } from './courtroom3d.js';
 
 /** The judge's delivery: slower and lower than the receptionist's. */
 const JUDGE = { pitch: 0.8, rate: 0.9 };
@@ -320,9 +321,9 @@ export function buildCourtCards(state, hooks) {
         })));
         const seats = k.jury.map((v) => el('span', { class: `seat${v ? ` s-${v}` : ''}`, title: v ? SIDES[v].role : 'Empty seat' }));
         fill(juryRow, [
-          el('button', { class: 'chip', type: 'button', disabled: k.done ? '' : null, text: `Juror for the Defence · ${k.audience.a}`, onclick: () => { vote(k, 'a'); sync(); } }),
+          el('button', { class: 'chip', type: 'button', disabled: k.done ? '' : null, text: `Juror for the Defence · ${k.audience.a}`, onclick: () => { vote(k, 'a'); courtroom.event('vote', { side: 'a' }); sync(); } }),
           el('span', { class: 'seats', 'aria-label': `Jury: ${k.audience.a} for the Defence, ${k.audience.b} for the Prosecution` }, seats),
-          el('button', { class: 'chip', type: 'button', disabled: k.done ? '' : null, text: `Juror for the Prosecution · ${k.audience.b}`, onclick: () => { vote(k, 'b'); sync(); } }),
+          el('button', { class: 'chip', type: 'button', disabled: k.done ? '' : null, text: `Juror for the Prosecution · ${k.audience.b}`, onclick: () => { vote(k, 'b'); courtroom.event('vote', { side: 'b' }); sync(); } }),
         ]);
         record.textContent = transcript(k);
       };
@@ -334,6 +335,7 @@ export function buildCourtCards(state, hooks) {
         fill(verdictBox, []);
         sync();
         strike();
+        courtroom.event('open', { number: state.court.number });
         say(line('courtOpen', state.court.number.replace(/-/g, ' '), state.court.names.a, state.court.names.b));
       };
 
@@ -347,6 +349,7 @@ export function buildCourtCards(state, hooks) {
         const fallacies = line('courtFallacies') || {};
         const bench = result.autoObjections.map((f) => fallacies[f] || f);
         sync();
+        courtroom.event('argue', { side: result.side, points: result.points });
         say([line('courtScore', k.names[result.side], result.points), bench.length ? line('courtBench', bench.join(', ')) : ''].filter(Boolean).join(' '));
         if (bench.length) strike();
       };
@@ -359,6 +362,7 @@ export function buildCourtCards(state, hooks) {
         strike();
         sync();
         const label = (line('courtObjections') || {})[kind] || ruling.objection.label;
+        courtroom.event('objection', { side: ruling.by, sustained: ruling.sustained, label: ruling.objection.label });
         say(ruling.sustained ? line('courtSustained', label) : line('courtOverruled', label));
       };
 
@@ -368,6 +372,7 @@ export function buildCourtCards(state, hooks) {
         const e = callWitness(k, letter, { at: hooks.now() });
         if (!e) return;
         sync();
+        courtroom.event('witness', { letter: e.letter, tier: e.tierLabel || e.design });
         fill(verdictBox, [el('b', { text: `Exhibit ${e.letter} on the stand` }), el('p', { text: `Direct: ${e.finding}` }), el('p', { text: `Cross: ${e.limitation}` }), el('p', { class: 'meta', text: `${e.title} · ${e.journal || ''} ${e.year} · ${e.design}${e.n ? ` · n = ${e.n}` : ''}` })]);
         const [finding, limitation] = await Promise.all([localise(e.finding), localise(e.limitation)]);
         await say(`${line('courtWitness', e.letter)} ${finding}`);
@@ -378,6 +383,7 @@ export function buildCourtCards(state, hooks) {
         const k = state.court;
         if (!k || k.done) return;
         const v = deliberate(k, { at: hooks.now() });
+        courtroom.event('verdict', { winner: v.winner, jury: v.jury });
         // On video: he points and pronounces, then brings the gavel down.
         // Otherwise: the double knock.
         if (judge.ready('verdict')) judge.cue('verdict');
