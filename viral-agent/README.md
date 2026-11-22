@@ -49,3 +49,27 @@ non-commercial fan use of footage, so check it before you monetize clips.
 Each `topics/<slug>.json` sets the search term, subreddits (`top` = daily top posts, `search` = searched for the term),
 the X query, the Instagram hashtag, and the content rules Claude must follow for that franchise. Add a file to add a
 topic. TikTok CSV exports go in `data/<slug>/tiktok/`.
+
+## Creator intelligence (outliers, creators, brand deals, breakdowns, ask)
+
+Every nightly run also:
+
+- **Baselines** each creator: their usual views (median of their last 30 uploads, YouTube API), subscribers and
+  uploads per week. Creators with 3+ posts in the batch get a baseline on any platform.
+- **Breakouts**: `outlier_x` = a post's views ÷ its creator's usual views. `--outlier 5` (default) lists 5x+ posts.
+- **Creators** on the topic, filterable: `--max-followers 200000`.
+- **Brand deals**: sponsor and disclosure lines ("sponsored by", "thanks to X for sponsoring", "paid partnership
+  with", "use code … at", #ad) → which brands work with which creators, and who they rebook.
+- **Labels** the top 30 posts with Claude: hook, hook type, format, offer, proof points, topic.
+- **Indexes** it all in `data/<topic>/index.jsonl`, growing every night.
+
+```bash
+npm run ask -- --topic gta6 "find creators under 200K who posted 3+ GTA 6 guides since October"
+npm run ask -- --topic gta6 "what hooks are outperforming this week?"
+npm run ask -- --topic gta6 "who is Razer working with, and who do they rebook?"
+npm run ask -- --topic gta6 --breakdown https://youtu.be/VIDEO_ID --transcript transcript.txt
+```
+
+Limits: it sees what the official APIs return (YouTube search and channel stats, Reddit, X recent search,
+Instagram hashtag top media, TikTok CSV exports). It does not watch video frames; for a frame-level breakdown, pass
+a transcript. TikTok and Instagram creator baselines need 3+ of their posts in the data.

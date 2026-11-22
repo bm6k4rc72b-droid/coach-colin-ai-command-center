@@ -7,7 +7,8 @@
     "nightly": "node src/run.mjs",
     "collect": "node src/run.mjs --no-ai",
     "clip": "node src/clip.mjs",
-    "test": "node test/score.test.mjs"
+    "test": "node test/score.test.mjs && node test/intel.test.mjs",
+    "ask": "node src/ask.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0"

@@ -24,7 +24,8 @@ export async function youtube(query, { hours = 72, max = 50 } = {}) {
   const v = await getJSON(`https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${ids}&key=${key}`);
   return v.items.map((i) => ({
     platform: "youtube", id: i.id, url: `https://youtu.be/${i.id}`, title: i.snippet.title,
-    author: i.snippet.channelTitle, published_at: i.snippet.publishedAt,
+    author: i.snippet.channelTitle, channel_id: i.snippet.channelId, published_at: i.snippet.publishedAt,
+    description: (i.snippet.description || "").slice(0, 1500),
     views: +i.statistics.viewCount || 0, likes: +i.statistics.likeCount || 0,
     comments: +i.statistics.commentCount || 0, shares: 0,
     short: /^PT(\d+S|[0-5]?\dS|1M)$/.test(i.contentDetails.duration),
@@ -76,7 +77,7 @@ export async function instagram(hashtag) {
   const hid = h.data?.[0]?.id; if (!hid) return [];
   const m = await getJSON(`https://graph.facebook.com/v21.0/${hid}/top_media?user_id=${user}&fields=id,caption,media_type,permalink,like_count,comments_count,timestamp&limit=50&access_token=${token}`);
   return (m.data || []).map((p) => ({
-    platform: "instagram", id: p.id, url: p.permalink, title: (p.caption || "").slice(0, 200), author: "",
+    platform: "instagram", id: p.id, url: p.permalink, title: (p.caption || "").slice(0, 200), description: p.caption || "", author: "",
     published_at: p.timestamp, views: (p.like_count || 0) * 25, likes: p.like_count || 0,
     comments: p.comments_count || 0, shares: 0, hashtags: tags(p.caption), media_type: p.media_type,
   }));
