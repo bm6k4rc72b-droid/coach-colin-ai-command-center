@@ -1,0 +1,390 @@
+{
+  "Id": "DLG_DrownedOath_Thorvald",
+  "Entries": [
+    { "Node": "P0", "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_PRIVATE", "Value": 1 }, { "Type": "FlagBelow", "Key": "DO_OUTCOME", "Value": 1 } ] },
+    { "Node": "T0", "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_AT_THING", "Value": 1 }, { "Type": "FlagBelow", "Key": "DO_OUTCOME", "Value": 1 } ] },
+    { "Node": "AFTER_TURNED", "Conditions": [ { "Type": "FlagAtLeast", "Key": "THORVALD_DOUBLE_AGENT", "Value": 1 } ] },
+    { "Node": "G_GRIEF", "Conditions": [ { "Type": "Remembers", "Memory": "Threatened" } ] },
+    { "Node": "G0", "Conditions": [] }
+  ],
+  "Nodes": [
+    {
+      "Id": "G0", "Speaker": "NPC", "Emote": "Courteous",
+      "Line": "Bjorn Vargrsson. The fjord-raven, they call you. Tonight the clans swear on one horn, and I keep the words of the oath. Mind your boots on the hall floor; the storm has made it slick as eel-skin.",
+      "Choices": [
+        { "Text": "Who drinks first from the horn?", "Tone": "Neutral", "Next": "G_HORN" },
+        { "Text": "You look like a man who hasn't slept.", "Tone": "Shadow", "Next": "G_SLEEP" },
+        { "Text": "Until tonight, lawspeaker.", "Tone": "Neutral", "Next": "" }
+      ]
+    },
+    {
+      "Id": "G_HORN", "Speaker": "NPC",
+      "Line": "Jarl Sigrid, as guest of honour. Then Jarl Eirik. My daughter Hild carries the horn. It is an old custom, and a good one.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "DO_KNOWS_CUP_ORDER", "Value": 1 } ],
+      "Next": "G0"
+    },
+    {
+      "Id": "G_SLEEP", "Speaker": "NPC", "Emote": "Guarded",
+      "Line": "Thunder keeps old men awake. Nothing more. Go and drink, raven. Go.",
+      "OnEnter": [ { "Type": "AddFlag", "Key": "DO_SUSPICION", "Value": 1 } ],
+      "Next": ""
+    },
+    {
+      "Id": "G_GRIEF", "Speaker": "NPC", "Emote": "Afraid",
+      "Line": "You again. Say what you came to say and leave my hall.",
+      "Next": "G0"
+    },
+    {
+      "Id": "P0", "Speaker": "NPC", "Emote": "Startled",
+      "Line": "You walk softly for a man your size. The rain hides footsteps from everyone but the gods, it seems. What do you want in my boathouse?",
+      "Choices": [
+        {
+          "Text": "I know about the poison. Confess at the thing tonight, and I will speak for your daughter.",
+          "Tone": "Oath", "Next": "P_OFFER",
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_PROOF_COUNT", "Value": 1 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires proof of the plot"
+        },
+        {
+          "Text": "The Gullbrand Circle owns your debts. I could own them instead.",
+          "Tone": "Shadow", "Next": "P_TURN",
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_PROOF_COUNT", "Value": 1 }, { "Type": "AlignmentAtLeast", "Axis": "Cunning", "Value": 25 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires proof and Shadow 25"
+        },
+        {
+          "Text": "Give me the vial, or the fjord takes you tonight.",
+          "Tone": "Threat", "Next": "P_THREAT",
+          "Effects": [ { "Type": "Remember", "Memory": "Threatened", "Value": 0.6 }, { "Type": "Alignment", "Axis": "Honor", "Value": -3 } ]
+        },
+        {
+          "Text": "Ulfhild saw your hands in the lightning, lawspeaker. The gods are already watching.",
+          "Tone": "Rune", "Next": "P_OMEN",
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "PARTY_Ulfhild", "Value": 1 }, { "Type": "AlignmentAtLeast", "Axis": "Piety", "Value": 20 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires Ulfhild in your party and Rune 20"
+        },
+        { "Text": "[Leave] Forget I came.", "Tone": "Neutral", "Next": "" }
+      ]
+    },
+    {
+      "Id": "P_OFFER", "Speaker": "NPC", "Emote": "Bitter",
+      "Line": "Confess? They would hang me from the oath-tree and sell Hild as a thrall to pay what I owe. The Circle does not forgive, and neither do jarls.",
+      "Choices": [
+        {
+          "Text": "Hild walks free. You have my word, and my word holds.",
+          "Tone": "Oath", "Next": "P_ACCEPT", "bPointOfNoReturn": true,
+          "Effects": [
+            { "Type": "SetFlag", "Key": "DO_PROMISE_HILD", "Value": 1 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": 6 },
+            { "Type": "Remember", "Memory": "KeptOath", "Value": 0.5 },
+            { "Type": "CompanionApproval", "Key": "Astrid", "Value": 10 }
+          ]
+        },
+        {
+          "Text": "Then don't hang. Drown. The Circle will hear you fell from the cliff path in the storm, and you'll be rowing west by dawn.",
+          "Tone": "Shadow", "Next": "P_FLEE", "bPointOfNoReturn": true,
+          "Effects": [
+            { "Type": "Alignment", "Axis": "Cunning", "Value": 6 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": -2 },
+            { "Type": "CompanionApproval", "Key": "Snorri", "Value": 8 }
+          ]
+        },
+        {
+          "Text": "Your debts become mine. And so does your seat as lawspeaker.",
+          "Tone": "Crown", "Next": "P_TURN",
+          "Conditions": [ { "Type": "AlignmentAtLeast", "Axis": "Ambition", "Value": 20 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires Crown 20"
+        }
+      ]
+    },
+    {
+      "Id": "P_ACCEPT", "Speaker": "NPC", "Emote": "Defeated",
+      "Line": "Then I will speak when the horn comes round. Gods help me. Gods help her.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "DO_THORVALD_WILL_CONFESS", "Value": 1 }, { "Type": "SetQuestStage", "Key": "DrownedOath", "Value": 3 } ],
+      "Next": ""
+    },
+    {
+      "Id": "P_FLEE", "Speaker": "NPC", "Emote": "Relieved",
+      "Line": "A dead man owes nothing. There is a skiff under the north rocks. Tell Hild... no. Tell her nothing. It is safer.",
+      "OnEnter": [
+        { "Type": "SetFlag", "Key": "THORVALD_FLED", "Value": 1 },
+        { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 8 },
+        { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+        { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 10 },
+        { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 3 },
+        { "Type": "Event", "Key": "DrownedOath_ThorvaldFlees" },
+        { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Fled" }
+      ],
+      "Next": ""
+    },
+    {
+      "Id": "P_TURN", "Speaker": "NPC", "Emote": "Calculating",
+      "Line": "You would make me a knife pointed at my own masters? They will kill me if they suspect. They will kill Hild first.",
+      "Choices": [
+        {
+          "Text": "Feed them lies, feed me truth, and you both live. The cup stays clean tonight.",
+          "Tone": "Shadow", "Next": "P_TURNED", "bPointOfNoReturn": true,
+          "Effects": [
+            { "Type": "SetFlag", "Key": "THORVALD_DOUBLE_AGENT", "Value": 1 },
+            { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 2 },
+            { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+            { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 12 },
+            { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 1 },
+            { "Type": "Alignment", "Axis": "Cunning", "Value": 8 },
+            { "Type": "Alignment", "Axis": "Ambition", "Value": 4 },
+            { "Type": "Remember", "Memory": "Spared", "Value": 0.8 },
+            { "Type": "Trust", "Value": 15 },
+            { "Type": "CompanionApproval", "Key": "Snorri", "Value": 10 },
+            { "Type": "CompanionApproval", "Key": "Astrid", "Value": -5 }
+          ]
+        },
+        { "Text": "On second thought, there may be a cleaner way.", "Tone": "Neutral", "Next": "P0" }
+      ]
+    },
+    {
+      "Id": "P_TURNED", "Speaker": "NPC", "Emote": "Grim",
+      "Line": "Then I am your creature, raven. The Circle meets at Jorvik before the autumn fleet. I will send word through the fishwives.",
+      "OnEnter": [ { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Turned" } ],
+      "Next": ""
+    },
+    {
+      "Id": "P_THREAT", "Speaker": "NPC", "Emote": "Afraid",
+      "Line": "You would drown a lawspeaker in his own boathouse? The gods keep oaths, raven, even if you do not.",
+      "Choices": [
+        {
+          "Text": "[Take the vial] Hand it over. Slowly.",
+          "Tone": "Threat", "Next": "P0",
+          "Effects": [ { "Type": "SetFlag", "Key": "DO_PROOF_VIAL", "Value": 1 }, { "Type": "AddFlag", "Key": "DO_PROOF_COUNT", "Value": 1 }, { "Type": "Fear", "Value": 25 } ]
+        },
+        {
+          "Text": "[Drown him] The fjord keeps no oaths either.",
+          "Tone": "Threat", "Next": "", "bPointOfNoReturn": true,
+          "Effects": [
+            { "Type": "Event", "Key": "DrownedOath_DrownThorvald" },
+            { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 7 },
+            { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+            { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 10 },
+            { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 2 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": -8 },
+            { "Type": "Alignment", "Axis": "Cunning", "Value": 4 },
+            { "Type": "CompanionApproval", "Key": "Astrid", "Value": -10 },
+            { "Type": "CompanionApproval", "Key": "Kari", "Value": 5 },
+            { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Assassinated" }
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "P_OMEN", "Speaker": "Ulfhild", "Emote": "Trance",
+      "Line": "Three ravens sat on the oath-stone, Thorvald. The third one drowned in the horn. The storm will say the rest, at the thing, before every jarl.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "DO_OMEN_PATH", "Value": 1 }, { "Type": "Alignment", "Axis": "Piety", "Value": 4 }, { "Type": "Fear", "Value": 30 } ],
+      "Next": "P_OMEN2"
+    },
+    {
+      "Id": "P_OMEN2", "Speaker": "NPC", "Emote": "Shaken",
+      "Line": "Witch's talk. Leave me. Both of you. Leave me!",
+      "Next": ""
+    },
+    {
+      "Id": "AFTER_TURNED", "Speaker": "NPC", "Emote": "Guarded",
+      "Line": "Not here. Fishwives' row, after dark. I have nothing new from the Circle yet.",
+      "Next": ""
+    },
+    {
+      "Id": "T0", "Speaker": "Eirik", "Emote": "Commanding",
+      "Line": "Bjorn! The horn goes round when the next thunder rolls. If you have words for this assembly, speak them now, before the gods and both clans.",
+      "Choices": [
+        {
+          "Text": "Lawspeaker Thorvald has poisoned the oath-horn. I have proof.",
+          "Tone": "Oath", "Next": "T_EXPOSE", "bPointOfNoReturn": true,
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_PROOF_COUNT", "Value": 1 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires proof of the plot",
+          "Effects": [ { "Type": "Alignment", "Axis": "Honor", "Value": 5 }, { "Type": "Alignment", "Axis": "Cunning", "Value": -3 } ]
+        },
+        {
+          "Text": "The lawspeaker has words for you, jarl.",
+          "Tone": "Oath", "Next": "T_CONFESS",
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_THORVALD_WILL_CONFESS", "Value": 1 } ]
+        },
+        {
+          "Text": "Ulfhild asks to read the storm before the oath is sworn.",
+          "Tone": "Rune", "Next": "T_OMEN", "bPointOfNoReturn": true,
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "PARTY_Ulfhild", "Value": 1 }, { "Type": "FlagAtLeast", "Key": "DO_OMEN_PATH", "Value": 1 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires Ulfhild's warning to Thorvald"
+        },
+        {
+          "Text": "Thorvald means to poison the horn. I have no proof, only my word.",
+          "Tone": "Oath", "Next": "T_FALSE", "bPointOfNoReturn": true,
+          "Conditions": [ { "Type": "FlagBelow", "Key": "DO_PROOF_COUNT", "Value": 1 } ]
+        },
+        {
+          "Text": "[Say nothing and let the horn go round.] Drink well, jarls.",
+          "Tone": "Crown", "Next": "T_EXPLOIT", "bPointOfNoReturn": true,
+          "Conditions": [ { "Type": "AlignmentAtLeast", "Axis": "Ambition", "Value": 35 }, { "Type": "FlagAtLeast", "Key": "DO_PROOF_COUNT", "Value": 1 } ],
+          "bShowWhenLocked": true, "RequirementHint": "Requires Crown 35 and knowledge of the plot"
+        },
+        { "Text": "Nothing, jarl. May the oath hold.", "Tone": "Neutral", "Next": "" }
+      ]
+    },
+    {
+      "Id": "T_EXPOSE", "Speaker": "NPC", "Emote": "Rage",
+      "Line": "Lies! From a fatherless foundling with ash still in his hair! Who are you to accuse the keeper of the law?",
+      "Next": "T_EXPOSE2"
+    },
+    {
+      "Id": "T_EXPOSE2", "Speaker": "Sigrid", "Emote": "Cold",
+      "Line": "The proof is plain enough for me. But a lawspeaker's word is not broken by a stranger's. Let steel speak. Holmgang, on the cliff, in the storm.",
+      "Choices": [
+        {
+          "Text": "I will stand the holmgang myself.",
+          "Tone": "Oath", "Next": "T_EXPOSE_DUEL",
+          "Effects": [
+            { "Type": "Event", "Key": "DrownedOath_Holmgang" },
+            { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 1 },
+            { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+            { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 12 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": 8 },
+            { "Type": "FactionRep", "Key": "Hrafnsson", "Value": 15 },
+            { "Type": "FactionRep", "Key": "Ylfings", "Value": 15 },
+            { "Type": "CompanionApproval", "Key": "Astrid", "Value": 12 },
+            { "Type": "CompanionApproval", "Key": "Kari", "Value": 10 }
+          ]
+        },
+        {
+          "Text": "No duel. Let the law judge him: full outlawry.",
+          "Tone": "Oath", "Next": "T_EXPOSE_LAW",
+          "Effects": [
+            { "Type": "SetFlag", "Key": "THORVALD_OUTLAWED", "Value": 1 },
+            { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 1 },
+            { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+            { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 12 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": 6 },
+            { "Type": "Alignment", "Axis": "Piety", "Value": 3 },
+            { "Type": "FactionRep", "Key": "Hrafnsson", "Value": 10 },
+            { "Type": "FactionRep", "Key": "Ylfings", "Value": 10 },
+            { "Type": "CompanionApproval", "Key": "Aelfric", "Value": 6 }
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "T_EXPOSE_DUEL", "Speaker": "Eirik", "Emote": "Proud",
+      "Line": "Then it is settled by the old way. Win, Bjorn, and two clans sail as one.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 2 }, { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Exposed" } ],
+      "Next": ""
+    },
+    {
+      "Id": "T_EXPOSE_LAW", "Speaker": "Eirik", "Emote": "Grave",
+      "Line": "Thorvald Grimsson, you are outlaw from this fjord. Any man may kill you and pay no blood-price. Go, before the sea decides for us.",
+      "OnEnter": [ { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Exposed" } ],
+      "Next": "T_HILD_PLEA"
+    },
+    {
+      "Id": "T_HILD_PLEA", "Speaker": "Hild", "Emote": "Tears",
+      "Line": "And me? I carried the horn. I did not know. Will you sell me for his debts too?",
+      "Choices": [
+        {
+          "Text": "She is under my protection. She comes to Hrafnsstead.",
+          "Tone": "Oath", "Next": "",
+          "Effects": [ { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 1 }, { "Type": "Opinion", "Key": "Hild", "Value": 30 }, { "Type": "Alignment", "Axis": "Honor", "Value": 4 }, { "Type": "Event", "Key": "DrownedOath_HildJoinsSettlement" } ]
+        },
+        {
+          "Text": "That is for the jarls to decide.",
+          "Tone": "Neutral", "Next": "",
+          "Effects": [ { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 2 }, { "Type": "Opinion", "Key": "Hild", "Value": -20 } ]
+        }
+      ]
+    },
+    {
+      "Id": "T_CONFESS", "Speaker": "NPC", "Emote": "Defeated",
+      "Line": "I took the Circle's silver. I put their poison in the horn. Hild knew nothing. Judge me, and only me.",
+      "Choices": [
+        {
+          "Text": "I gave my word: his daughter goes free. Judge the man as you will.",
+          "Tone": "Oath", "Next": "T_CONFESS_END",
+          "Conditions": [ { "Type": "FlagAtLeast", "Key": "DO_PROMISE_HILD", "Value": 1 } ],
+          "Effects": [
+            { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 1 },
+            { "Type": "Alignment", "Axis": "Honor", "Value": 8 },
+            { "Type": "Remember", "Key": "Hild", "Memory": "KeptOath", "Value": 1.0 },
+            { "Type": "Remember", "Key": "Eirik", "Memory": "KeptOath", "Value": 0.8 }
+          ]
+        },
+        {
+          "Text": "A confession is not a pardon. Do what the law demands.",
+          "Tone": "Oath", "Next": "T_CONFESS_END",
+          "Effects": [ { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 2 }, { "Type": "Alignment", "Axis": "Honor", "Value": 2 } ]
+        }
+      ]
+    },
+    {
+      "Id": "T_CONFESS_END", "Speaker": "Sigrid", "Emote": "Respect",
+      "Line": "A man who confesses before the gods dies cleaner than one caught. The oath stands, Eirik. My ships are yours.",
+      "OnEnter": [
+        { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 1 },
+        { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+        { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 14 },
+        { "Type": "FactionRep", "Key": "Ylfings", "Value": 20 },
+        { "Type": "FactionRep", "Key": "Hrafnsson", "Value": 15 },
+        { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Confessed" }
+      ],
+      "Next": ""
+    },
+    {
+      "Id": "T_OMEN", "Speaker": "Ulfhild", "Emote": "Trance",
+      "Line": "Odin's eye opens in the cloud. If the oath is true, let the stone stay whole. If it is false, let the sky name the liar!",
+      "OnEnter": [ { "Type": "Weather", "Weather": "Thunderstorm", "Value": 0.05 }, { "Type": "Event", "Key": "DrownedOath_LightningOathStone" } ],
+      "Next": "T_OMEN2"
+    },
+    {
+      "Id": "T_OMEN2", "Speaker": "NPC", "Emote": "Terror",
+      "Line": "The stone is split! Forgive me! The Circle paid me. The horn, the horn is poisoned!",
+      "OnEnter": [
+        { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 3 },
+        { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 1 },
+        { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 12 },
+        { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 2 },
+        { "Type": "Alignment", "Axis": "Piety", "Value": 10 },
+        { "Type": "FactionRep", "Key": "Hrafnsson", "Value": 10 },
+        { "Type": "FactionRep", "Key": "Ylfings", "Value": 10 },
+        { "Type": "CompanionApproval", "Key": "Ulfhild", "Value": 15 },
+        { "Type": "CompanionApproval", "Key": "Aelfric", "Value": -5 },
+        { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Omen" }
+      ],
+      "Next": ""
+    },
+    {
+      "Id": "T_FALSE", "Speaker": "Sigrid", "Emote": "Contempt",
+      "Line": "Hrafnsson brings a foundling to slander our lawspeaker on the night of the oath? Ylfings, to the ships. There is no oath tonight.",
+      "OnEnter": [
+        { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 4 },
+        { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 0 },
+        { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 4 },
+        { "Type": "SetFlag", "Key": "CIRCLE_ALERTED", "Value": 1 },
+        { "Type": "FactionRep", "Key": "Ylfings", "Value": -25 },
+        { "Type": "Trust", "Key": "Eirik", "Value": -20 },
+        { "Type": "Alignment", "Axis": "Honor", "Value": 2 },
+        { "Type": "Event", "Key": "DrownedOath_SigridLeaves" },
+        { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "FalseAccusation" }
+      ],
+      "Next": ""
+    },
+    {
+      "Id": "T_EXPLOIT", "Speaker": "Eirik", "Emote": "Toast",
+      "Line": "To one fleet and one fjord! Sigrid, the horn is yours.",
+      "OnEnter": [
+        { "Type": "Event", "Key": "DrownedOath_LetPoisonWork" },
+        { "Type": "SetFlag", "Key": "DO_OUTCOME", "Value": 5 },
+        { "Type": "SetFlag", "Key": "CLANS_UNITED", "Value": 0 },
+        { "Type": "SetFlag", "Key": "FLEET_SIZE", "Value": 8 },
+        { "Type": "SetFlag", "Key": "BJORN_WARLEADER", "Value": 1 },
+        { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 4 },
+        { "Type": "Alignment", "Axis": "Ambition", "Value": 12 },
+        { "Type": "Alignment", "Axis": "Honor", "Value": -12 },
+        { "Type": "CompanionApproval", "Key": "Astrid", "Value": -20 },
+        { "Type": "CompanionApproval", "Key": "Ulfhild", "Value": -10 },
+        { "Type": "CompanionApproval", "Key": "Kari", "Value": 8 },
+        { "Type": "CompleteQuest", "Key": "DrownedOath", "Victim": "Exploited" }
+      ],
+      "Next": ""
+    }
+  ]
+}
