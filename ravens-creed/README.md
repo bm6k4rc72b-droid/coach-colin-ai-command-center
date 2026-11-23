@@ -18,6 +18,7 @@ the pre-production package for an Unreal Engine 5 vertical slice.
 | [`Source/RavensCreed`](Source/RavensCreed) | C++ game module (36 files): world state, alignment, save/load, weather, social simulation, NPCs, dialogue, quests, player, parkour, combat, Raven Sight |
 | [`Content/Data/Dialogue`](Content/Data/Dialogue) | *The Drowned Oath* dialogue graphs as JSON (import with `URCDialogueAsset::ImportFromJson`) |
 | [`Tools/validate_dialogue.py`](Tools/validate_dialogue.py) | Validates dialogue JSON against the C++ types and maps every path to its outcome |
+| [`../ravens-creed-web`](../ravens-creed-web) | Playable browser version (Three.js) of Valdrheim and *The Drowned Oath*, running the same dialogue JSON. Live on GitHub Pages under `/ravens-creed/` |
 
 ## Status
 
