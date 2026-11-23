@@ -75,6 +75,13 @@
         "repo": "vossashtonai/gta6-clipper",
         "ref": "11cee2b7ad30fda12255131b7ed4367a2e332dc4"
       }
+    },
+    "awesome-gamedev-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "gamedev-skills/awesome-gamedev-agent-skills",
+        "ref": "c6ca6c41c839b68319ffc08430b99ab768debc32"
+      }
     }
   },
   "enabledPlugins": {
@@ -89,7 +96,8 @@
     "notfair@nowork-studio": true,
     "marketing@styfinity-marketing": true,
     "bang-motion@bang-motion": true,
-    "gta6-clipper@ashtonvossai": true
+    "gta6-clipper@ashtonvossai": true,
+    "gamedev@awesome-gamedev-agent-skills": true
   },
   "hooks": {
     "SessionStart": [

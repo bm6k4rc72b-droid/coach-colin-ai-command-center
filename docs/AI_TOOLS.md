@@ -224,3 +224,9 @@ inside Blender) and `blender-headless.sh start|stop|status`.
 | Repo | How it's connected |
 |---|---|
 | [apekshik/anyscene](https://github.com/apekshik/anyscene) @ `88c1daf` (MIT) | Claude skill + Blender pipeline: reference images or a brief → a dressed, lit, photoreal Blender scene with camera moves. Its `SKILL.md` uses repo-relative scripts, so it's a workspace rather than a merged skill: `tools/anyscene/setup.sh [dir]` clones the pinned commit and runs `npm install`, then open that folder in Claude Code. Needs Blender 5.0+ (cloud sessions have 4.0), a 12–16 GB GPU for Cycles, ffmpeg, uv and a **fal.ai key (`FAL_KEY`); generation is billed at about $1.65 per prop, ~$150 per scene**. Not run here |
+
+## Batch 12: game-dev skills
+
+| Repo | How it's connected |
+|---|---|
+| [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` (Apache-2.0, ~6.5k★) | Plugin `gamedev@awesome-gamedev-agent-skills`, enabled: a router skill plus 79 game-dev skills (Godot, Unity, Unreal, Three.js, Phaser, PixiJS, Bevy, Pygame, LÖVE, Defold, Roblox, Ebitengine; disciplines like game feel, UI/UX, dialogue; genres; workflows like itch.io publishing). No hooks or MCP servers; its scripts are local project checkers. One Unity doc mentions the official `curl … \| bash` installer, which nothing runs automatically. Smaller per-engine plugins (`godot@…`, `web-engines@…` and so on) are in the same marketplace if you'd rather enable only one |
