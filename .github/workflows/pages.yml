@@ -191,6 +191,13 @@ jobs:
           mkdir -p dist/gilded-circuit
           cp aurum-city/gilded-circuit.html dist/gilded-circuit/index.html
 
+      # Raven's Creed (browser version) is a single self-contained HTML file; publish it under /ravens-creed/.
+      - name: Copy Raven's Creed
+        run: |
+          rm -rf dist/ravens-creed
+          mkdir -p dist/ravens-creed
+          cp ravens-creed-web/ravens-creed.html dist/ravens-creed/index.html
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
