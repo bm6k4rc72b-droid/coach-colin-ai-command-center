@@ -1,0 +1,82 @@
+{
+  "Id": "DLG_DrownedOath_Hild",
+  "Entries": [
+    { "Node": "H_MOURN", "Conditions": [ { "Type": "NPCDead", "Key": "Thorvald" }, { "Type": "Remembers", "Memory": "Killed" } ] },
+    { "Node": "H_TRUST", "Conditions": [ { "Type": "OpinionAtLeast", "Value": 20 }, { "Type": "FlagBelow", "Key": "DO_HILD_TESTIMONY", "Value": 1 } ] },
+    { "Node": "H0", "Conditions": [] }
+  ],
+  "Nodes": [
+    {
+      "Id": "H0", "Speaker": "NPC", "Emote": "Busy",
+      "Line": "Mind the casks. Father wants every horn polished before the thing, and half the mead got rained on carrying it up the cliff stairs.",
+      "Choices": [
+        {
+          "Text": "Let me carry the rest up for you.",
+          "Tone": "Oath", "Next": "H_HELPED",
+          "Effects": [ { "Type": "Remember", "Memory": "Helped", "Value": 0.7 }, { "Type": "Opinion", "Value": 15 }, { "Type": "Event", "Key": "DrownedOath_CarryCasks" } ]
+        },
+        {
+          "Text": "Your father seems afraid of something.",
+          "Tone": "Shadow", "Next": "H_FATHER"
+        },
+        {
+          "Text": "Tell me what he's hiding. Now.",
+          "Tone": "Threat", "Next": "H_SCARED",
+          "Effects": [ { "Type": "Remember", "Memory": "Threatened", "Value": 0.6 }, { "Type": "Alignment", "Axis": "Honor", "Value": -2 } ]
+        },
+        { "Text": "Good luck with the casks.", "Tone": "Neutral", "Next": "" }
+      ]
+    },
+    {
+      "Id": "H_HELPED", "Speaker": "NPC", "Emote": "Smile",
+      "Line": "You're kinder than your reputation, raven. Come find me after; I'll pour you the first of the dry mead.",
+      "Next": ""
+    },
+    {
+      "Id": "H_FATHER", "Speaker": "NPC", "Emote": "Guarded",
+      "Line": "Afraid? He's the lawspeaker. He's never afraid. He just... hasn't slept since the merchant from Hedeby came.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "DO_LEAD_MERCHANT", "Value": 1 }, { "Type": "SetQuestStage", "Key": "DrownedOath", "Value": 1 } ],
+      "Next": ""
+    },
+    {
+      "Id": "H_SCARED", "Speaker": "NPC", "Emote": "Afraid",
+      "Line": "I don't know anything! Leave me be, or I'll call the hall-guard!",
+      "OnEnter": [ { "Type": "Fear", "Value": 20 } ],
+      "Next": ""
+    },
+    {
+      "Id": "H_TRUST", "Speaker": "NPC", "Emote": "Whisper",
+      "Line": "I can't keep it in. Last night I saw Father with a little clay vial, the one the Hedeby merchant gave him. He wept over the oath-horn. Bjorn, what is he going to do?",
+      "Choices": [
+        {
+          "Text": "Nothing, if I can help it. Will you say this before the jarls, if it comes to that?",
+          "Tone": "Oath", "Next": "H_TESTIFY",
+          "Effects": [ { "Type": "SetFlag", "Key": "DO_HILD_TESTIMONY", "Value": 1 }, { "Type": "AddFlag", "Key": "DO_PROOF_COUNT", "Value": 1 }, { "Type": "Alignment", "Axis": "Honor", "Value": 3 } ]
+        },
+        {
+          "Text": "Say nothing to anyone. I'll handle it quietly.",
+          "Tone": "Shadow", "Next": "H_QUIET",
+          "Effects": [ { "Type": "AddFlag", "Key": "DO_PROOF_COUNT", "Value": 1 }, { "Type": "Alignment", "Axis": "Cunning", "Value": 3 } ]
+        }
+      ]
+    },
+    {
+      "Id": "H_TESTIFY", "Speaker": "NPC", "Emote": "Resolved",
+      "Line": "If it saves Father from worse... yes. Gods forgive me, yes.",
+      "OnEnter": [ { "Type": "SetQuestStage", "Key": "DrownedOath", "Value": 2 } ],
+      "Next": ""
+    },
+    {
+      "Id": "H_QUIET", "Speaker": "NPC", "Emote": "Worried",
+      "Line": "Quietly. Promise me quietly doesn't mean the fjord.",
+      "OnEnter": [ { "Type": "SetQuestStage", "Key": "DrownedOath", "Value": 2 } ],
+      "Next": ""
+    },
+    {
+      "Id": "H_MOURN", "Speaker": "NPC", "Emote": "Hatred",
+      "Line": "They say the storm took him. I know better. I saw your face in the lightning, raven. One day I will see it again, at the end of my knife.",
+      "OnEnter": [ { "Type": "SetFlag", "Key": "VENGEANCE_Hild", "Value": 1 }, { "Type": "SetFlag", "Key": "HILD_FATE", "Value": 4 } ],
+      "Next": ""
+    }
+  ]
+}
