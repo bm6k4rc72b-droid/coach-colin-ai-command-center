@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "unityMCP": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/CoplayDev/unity-mcp@19b66ecef4ac3a9be22a7a62ea21accb975c39e7#subdirectory=Server",
+        "mcp-for-unity",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "DISABLE_TELEMETRY": "true",
+        "UNITY_MCP_DISABLE_TELEMETRY": "true",
+        "UNITY_MCP_SKIP_STARTUP_CONNECT": "1"
+      }
+    }
+  }
+}
