@@ -5,3 +5,4 @@ Reviewed before import: Markdown instructions plus a few helper scripts that cal
 
 - **marketingskills**: 53 skills from <https://github.com/coreyhaines31/marketingskills> at `1f83744` (MIT)
 - **gtm-engineer-skills**: 12 skills from <https://github.com/onvoyage-ai/gtm-engineer-skills> at `cfdb9ed` (MIT)
+- **unity-mcp**: the `unity-mcp-orchestrator` skill from <https://github.com/CoplayDev/unity-mcp> at `19b66ec` (MIT), copied by hand with its `references/`

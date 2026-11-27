@@ -115,5 +115,8 @@
   },
   "env": {
     "DISABLE_TELEMETRY": "true"
-  }
+  },
+  "enabledMcpjsonServers": [
+    "unityMCP"
+  ]
 }

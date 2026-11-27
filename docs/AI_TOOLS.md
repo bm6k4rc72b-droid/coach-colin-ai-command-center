@@ -230,3 +230,11 @@ inside Blender) and `blender-headless.sh start|stop|status`.
 | Repo | How it's connected |
 |---|---|
 | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) @ `c6ca6c4` (Apache-2.0, ~6.5k★) | Plugin `gamedev@awesome-gamedev-agent-skills`, enabled: a router skill plus 79 game-dev skills (Godot, Unity, Unreal, Three.js, Phaser, PixiJS, Bevy, Pygame, LÖVE, Defold, Roblox, Ebitengine; disciplines like game feel, UI/UX, dialogue; genres; workflows like itch.io publishing). No hooks or MCP servers; its scripts are local project checkers. One Unity doc mentions the official `curl … \| bash` installer, which nothing runs automatically. Smaller per-engine plugins (`godot@…`, `web-engines@…` and so on) are in the same marketplace if you'd rather enable only one |
+
+## Batch 13: Unity
+
+| Repo | How it's connected |
+|---|---|
+| [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp) @ `19b66ec` (MIT, ~16k★) | MCP server `unityMCP` in `.mcp.json` (enabled in `.claude/settings.json`), started by `uvx` from the pinned commit; tested here: it starts and lists 49 tools. Telemetry to coplay.dev is on by default upstream, so it is turned off with `DISABLE_TELEMETRY`. Its skill is copied to `.claude/skills/unity-mcp`. The other half is a Unity Editor package you add on your computer (git URL in `tools/unity-mcp/README.md`); cloud sessions have no Unity, so the tools only work when you run Claude Code next to an open Unity project |
+| [ahujasid/mcp-for-blender](https://github.com/ahujasid/mcp-for-blender) | Already installed (Batch 8 and 10) |
+| [Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) | Already installed (Batch 9): `tools/game-studios/new-game.sh <folder>` |
