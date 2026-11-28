@@ -120,7 +120,7 @@ function tick() {
   requestAnimationFrame(tick);
   const rdt = Math.min(clock.getDelta(), 0.05); TIME += rdt;
   if (!window.__game.ready) { renderer.render(scene, camera); return; }
-  let dt = rdt; if (FEEL.stop > 0) { FEEL.stop -= rdt; dt = rdt * 0.08; }
+  let dt = rdt; if (FEEL.stop > 0) { FEEL.stop -= rdt; dt = rdt * 0.08; } else if (FEEL.slowT > 0) { FEEL.slowT -= rdt; dt = rdt * FEEL.slowK; }
   const paused = UI_STATE.saga || UI_STATE.journal;
   if (UI_STATE.started && !paused) { updatePlayer(dt); updateHeroCombat(dt); }
   else if (!UI_STATE.started) { player.ch.setState('idle'); player.ch.animate(dt); player.pos.y = groundAt(player.pos.x, player.pos.z, player.pos.y + 1); player.visY = player.pos.y; player.ch.root.position.copy(player.pos); cam.yaw += dt * 0.05; }
@@ -139,14 +139,21 @@ function tick() {
 }
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); if (composer) composer.setSize(innerWidth, innerHeight); });
 
+// deterministic logic stepping for automated tests (no rendering)
+function simStep(dt, hook) {
+  let d = dt; if (FEEL.stop > 0) { FEEL.stop -= dt; d = dt * 0.08; } else if (FEEL.slowT > 0) { FEEL.slowT -= dt; d = dt * FEEL.slowK; }
+  if (hook) hook(); updatePlayer(d); updateHeroCombat(d); for (const n of NPCS) n.update(d); for (const e of ENEMIES) e.update(d);
+  qT -= d; if (qT < 0) { qT = 0.1; updateQuestLogic(0.1); } updateEnv(d, TIME += dt); updateCamera(dt); updateDialog(dt); updateCombatHud(dt);
+}
 window.__game = {
   ready: false, fps: 0,
+  sim(sec, hook) { const n = Math.round(sec * 30); for (let i = 0; i < n; i++) simStep(1 / 30, hook); updateHud(0.05); },
   teleport(x, z, y) { standUp(); player.pos.set(x, y ?? groundAt(x, z, terrainH(x, z) + 40), z); player.visY = player.pos.y; player.vy = 0; cam.target.set(x, player.pos.y + 1.5, z); for (let i = 0; i < 30; i++) updateGrass(x, z); },
   look(yaw, pitch, dist) { cam.yaw = yaw; if (pitch !== undefined) cam.pitch = pitch; if (dist !== undefined) { cam.dist = dist; cam.cur = dist; } player.yaw = yaw + Math.PI; },
   interact: () => interact(), prompt: () => (PROMPT_TARGET ? PROMPT_TARGET.label : null),
   dialog: () => (UI_STATE.dialog ? { who: $('dlgName').textContent, node: UI_STATE.dialog.node.Id, text: UI_STATE.dialog.full, choices: UI_STATE.dialog.choices.map((q) => ({ text: q.c.Text, tone: q.c.Tone, ok: q.ok })) } : null),
   choose: (i) => chooseOption(i), talk: (id) => talkTo(PEOPLE[id]), advance: () => advanceDialog(), closeSaga: () => closeSaga(), journal: () => toggleJournal(),
-  setTime: setTimeOfDay, setWeather, setHour: (h) => { ENV.hour = h; }, strike: (x, z) => lightningStrike(x === undefined ? pickStrike() : new THREE.Vector3(x, groundAt(x, z, 99), z)), key: (code, down) => onKey({ code, preventDefault() {}, repeat: false }, down),
+  setTime: setTimeOfDay, setWeather, setHour: (h) => { ENV.hour = h; }, strike: (x, z) => lightningStrike(x === undefined ? pickStrike() : new THREE.Vector3(x, groundAt(x, z, 99), z)), key: (code, down) => dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code })),
   attack: (k) => attack(k || 'light'), dodge: () => dodge(), combat: () => ({ hp: Math.round(COMBAT.hp), st: Math.round(COMBAT.st), level: COMBAT.level, xp: COMBAT.xp, dead: COMBAT.dead, drawn: COMBAT.drawn }),
   enemies: () => ENEMIES.filter((e) => e.active).map((e) => ({ type: e.type, hp: e.hp, dead: e.dead, aggro: e.aggro, aware: +e.aware.toFixed(2), d: +e.pos.distanceTo(player.pos).toFixed(1), pos: e.pos.toArray().map((v) => +v.toFixed(1)), yaw: e.yaw })),
   quest: () => ({ stage: QUEST.stage, done: QUEST.done, outcome: QUEST.outcome, saga: !!UI_STATE.saga, flags: { ...FLAGS }, align: { ...ALIGN }, overhear: OVER.active, overT: OVER.t, blackout: ENV.blackout, holmgang: HOLM.active }),
@@ -172,10 +179,10 @@ async function boot() {
     ['Cutting the stave hall', () => { initMats(); staveHall(); }],
     ['Setting the oath-stone and the watchtower', () => { watchtower(); plateauProps(); }],
     ['Building Cliff Town and the stairs', () => { terraceTown(); stairways(); }],
-    ['Caulking the longships', () => { harbor(); wolfCamp(); }],
+    ['Caulking the longships', () => { harbor(); wolfCamp(); buildClimbs(); }],
     ['Growing pine and birch', () => { placeTrees(); placeRocks(); initGrass(); buildSkyProps(); }],
     ['Finishing wood and stone', () => { for (const b of Object.values(BATCH)) b.build(scene); buildGlows(); }],
-    ['Waking Valdrheim', () => { player.ch = makeHero(); scene.add(player.ch.root); setupHeroCombat(); spawnPeople(); spawnEnemies(); }],
+    ['Waking Valdrheim', () => { player.ch = makeHero(); scene.add(player.ch.root); setupHeroCombat(); spawnPeople(); spawnEnemies(); setupSideQuests(); }],
     ['Drawing the map', buildMapImage],
     ['Tuning the lenses', setupComposer],
   ];

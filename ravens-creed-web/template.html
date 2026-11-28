@@ -221,6 +221,41 @@ body.touch #dlgChoices .choice { font-size: 13px; padding: 7px 10px; }
   body.touch #toast { top: calc(140px + env(safe-area-inset-top, 0px)); }
 }
 body.touch.dlg #location, body.touch.dlg #toast, body.touch.dlg .toggles, body.touch.dlg .info, body.touch.dlg #quest { display: none; }
+
+/* ---- duel combat, traversal, side quests ---- */
+.ebar { overflow: visible; }
+.ebar b { position: absolute; left: 0; bottom: -5px; height: 3px; background: #ffd34a; border-radius: 2px; box-shadow: 0 0 4px rgba(255, 211, 74, 0.6); }
+.ftxt.blk { color: #cfd8ff; font-size: 15px; }
+.emark.exec { color: #ffd34a; font-size: 30px; animation: pulse 0.6s infinite alternate; }
+@keyframes pulse { from { filter: brightness(1); } to { filter: brightness(1.6); } }
+#lockMark { position: fixed; left: 0; top: 0; width: 34px; height: 34px; border: 2px solid rgba(255, 90, 70, 0.9); border-radius: 50%; z-index: 5; pointer-events: none; box-shadow: 0 0 10px rgba(255, 60, 40, 0.6); }
+#lockMark::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #ff5a46; }
+.qgiver { position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 700; font-size: 30px; color: #ffd34a; text-shadow: 0 2px 6px #000, 0 0 12px rgba(255, 200, 80, 0.7); }
+#letterTop, #letterBot { position: fixed; left: 0; right: 0; height: 0; background: #000; z-index: 9; transition: height 0.5s; pointer-events: none; }
+#letterTop { top: 0; } #letterBot { bottom: 0; }
+body.letterbox #letterTop, body.letterbox #letterBot { height: 11vh; }
+body.letterbox #hudBL, body.letterbox #quest, body.letterbox #stats, body.letterbox #prompt { opacity: 0; transition: opacity 0.4s; }
+#standHint { position: fixed; left: 50%; bottom: calc(14vh + 10px); transform: translateX(-50%); font-family: var(--f-display); font-size: clamp(22px, 4vw, 38px); letter-spacing: 0.2em; color: var(--ink); text-shadow: 0 2px 10px #000; z-index: 10; pointer-events: none; }
+#standPrompt { position: fixed; left: 50%; bottom: calc(196px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 6px 14px; font-size: 14px; z-index: 6; display: flex; gap: 8px; align-items: center; }
+#standPrompt kbd { background: #ff7a5a; color: #1b140a; }
+#ravenCool { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(10, 14, 20, 0.55); color: var(--ink-dim); border: 1px solid rgba(159, 178, 255, 0.3); z-index: 5; pointer-events: none; }
+#ravenCool.on { color: #ff8a7a; border-color: rgba(255, 120, 100, 0.6); }
+#questSide { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(224, 194, 122, 0.2); font-size: 12px; color: #cfe0ff; }
+#jSide { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 10px; }
+#jSide > li { display: block; border: 1px solid rgba(224, 194, 122, 0.2); border-radius: 8px; padding: 8px 10px; }
+#jSide .sqh { font-family: var(--f-display); font-size: 14px; color: var(--gilt); }
+#jSide li.done .sqh { color: var(--ink-dim); }
+#jSide ul { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 3px; }
+#jSide ul li { display: block; border: 0; font-size: 13px; color: var(--ink-dim); padding: 0; }
+#jSide ul li.ok { color: #9fe0a0; }
+#jSide .trk { margin-top: 6px; font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--gilt); background: transparent; color: var(--ink); cursor: pointer; }
+#jSide .trk:disabled { opacity: 0.6; cursor: default; }
+#tbtns { grid-template-columns: repeat(4, 58px); }
+#tbtns .tb { height: 42px; font-size: 12px; }
+#tbtns .tb.big.atk { grid-column: 3 / 5; height: 70px; }
+#tbtns #tbCrouch { grid-column: auto; }
+.tb.block { color: #9fc8ff; } .tb.stand { color: #ff9a7a; } .tb.sight { color: #ffb0a0; }
+body.touch #standPrompt { display: none; }
 </style>
 <div id="game"></div>
 <div id="title">
@@ -232,14 +267,16 @@ body.touch.dlg #location, body.touch.dlg #toast, body.touch.dlg .toggles, body.t
     <div class="keys">
       <div><kbd>W A S D</kbd> Move</div><div><kbd>Mouse</kbd> Camera</div>
       <div><kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump</div>
-      <div><kbd>Click</kbd> / <kbd>F</kbd> Axe combo</div><div><kbd>Right click</kbd> / <kbd>G</kbd> Heavy</div>
-      <div><kbd>Q</kbd> Dodge roll</div><div><kbd>C</kbd> Crouch (stealth)</div>
+      <div><kbd>Click</kbd> / <kbd>F</kbd> Axe combo</div><div><kbd>Right hold</kbd> / <kbd>V</kbd> Block; tap as it lands to deflect</div>
+      <div><kbd>G</kbd> / <kbd>Shift+click</kbd> Heavy</div><div><kbd>Q</kbd> Dodge roll</div>
+      <div><kbd>T</kbd> / <kbd>Middle</kbd> Lock on</div><div><kbd>Z</kbd> Standoff</div>
+      <div><kbd>Space</kbd> at a ledge Climb</div><div><kbd>C</kbd> Crouch (stealth)</div>
       <div><kbd>E</kbd> Talk / use</div><div><kbd>1–6</kbd> Dialogue replies</div>
       <div><kbd>J</kbd> Journal</div><div><kbd>Tab</kbd> Map</div>
     </div>
     <div class="touch-keys">
       <div><b>Left thumb</b> Drag to walk, push far to run</div><div><b>Right thumb</b> Swipe to look, pinch to zoom</div>
-      <div><b>Attack</b> Tap for the axe combo; behind an unaware foe it's a silent kill</div><div><b>Sneak</b> Crouch to hide; tap the quest panel for your journal</div>
+      <div><b>Attack</b> Tap for the axe combo; behind an unaware foe it's a silent kill</div><div><b>Block</b> Hold to block; tap just as a blue-flash blow lands to deflect. Red flash: dodge</div><div><b>Sneak</b> Crouch to hide; tap the quest panel for your journal</div>
     </div>
     <div id="loading"><div id="loadText">Raising the fjord…</div><div class="bar"><div id="loadBar"></div></div></div>
     <button id="startBtn" hidden>Walk into the rain</button>
@@ -251,15 +288,18 @@ body.touch.dlg #location, body.touch.dlg #toast, body.touch.dlg .toggles, body.t
   <div id="toast" class="panel"></div>
   <div id="alignPop" aria-live="polite"></div>
   <div id="stats" class="panel"><div class="srow"><span id="lvl">Lv 1</span><span class="hero">Bjorn Vargrsson</span><span id="hpText">120 / 120</span></div><div class="sbar hp"><i id="hpFill"></i></div><div class="sbar st"><i id="stFill"></i></div><div class="sbar xp"><i id="xpFill"></i></div></div>
-  <div id="quest" class="panel" role="button" tabindex="0" aria-label="Open the journal"><span id="questTitle">The Drowned Oath</span><span id="questText"></span><div id="questHint"></div><div class="jhint">J or tap · Journal</div></div>
+  <div id="quest" class="panel" role="button" tabindex="0" aria-label="Open the journal"><span id="questTitle">The Drowned Oath</span><span id="questText"></span><div id="questHint"></div><span id="questSide" hidden></span><div class="jhint">J or tap · Journal</div></div>
   <div id="bossBar" hidden><span id="bossName">Thorvald Grimsson</span><div class="sbar boss"><i id="bossFill"></i></div></div>
   <div id="ebars"></div><div id="dmg"></div><div id="vignette"></div>
   <div id="stealth" hidden>Hidden</div>
+  <div id="lockMark" hidden></div><div id="letterTop"></div><div id="letterBot"></div><div id="standHint" hidden></div>
+  <div id="standPrompt" class="panel" hidden><kbd>Z</kbd><span>Standoff: call them out</span></div>
+  <div id="ravenCool" hidden></div>
   <div id="death" hidden><div><h2>You fall in the mud</h2><p>Rising again…</p></div></div>
   <div id="prompt" class="panel" hidden><kbd>E</kbd><span id="promptText"></span></div>
   <div id="dialog" class="panel" hidden><div id="dlgName"></div><div id="dlgText"></div><div id="dlgChoices" hidden></div><div id="dlgHint"></div></div>
   <div id="help" class="panel" hidden><h2>Controls</h2><div class="keys">
-    <div><kbd>WASD</kbd> Move · <kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump · <kbd>E</kbd> Talk / use</div><div><kbd>Click</kbd> / <kbd>F</kbd> Axe · <kbd>Right</kbd> / <kbd>G</kbd> Heavy</div><div><kbd>Q</kbd> Dodge · <kbd>C</kbd> Crouch</div><div><kbd>Attack</kbd> from behind, unseen: seax kill</div><div><kbd>1–6</kbd> Reply · <kbd>J</kbd> Journal</div><div><kbd>Tab</kbd> Map · <kbd>Wheel</kbd> Zoom</div><div><kbd>N</kbd> Day/night · <kbd>R</kbd> Weather</div><div><kbd>M</kbd> Sound · <kbd>H</kbd> Hide this</div>
+    <div><kbd>WASD</kbd> Move · <kbd>Shift</kbd> Run</div><div><kbd>Space</kbd> Jump · <kbd>E</kbd> Talk / use</div><div><kbd>Click</kbd> / <kbd>F</kbd> Axe · <kbd>G</kbd> Heavy</div><div><kbd>Q</kbd> Dodge · <kbd>C</kbd> Crouch</div><div><kbd>Right</kbd>/<kbd>V</kbd> Block, deflect · <kbd>T</kbd> Lock</div><div><kbd>Z</kbd> Standoff · <kbd>R</kbd> Raven Sight</div><div><kbd>Space</kbd> at a ledge: climb</div><div><kbd>Attack</kbd> from behind, unseen: seax kill</div><div><kbd>1–6</kbd> Reply · <kbd>J</kbd> Journal</div><div><kbd>Tab</kbd> Map · <kbd>Wheel</kbd> Zoom</div><div><kbd>N</kbd> Day/night · <kbd>Y</kbd> Weather</div><div><kbd>M</kbd> Sound · <kbd>H</kbd> Hide this</div>
   </div></div>
   <div id="touchUI" hidden>
     <div id="touchLayer"></div>
@@ -267,7 +307,7 @@ body.touch.dlg #location, body.touch.dlg #toast, body.touch.dlg .toggles, body.t
     <div id="tbtns">
       <button id="tbMap" class="tb">Map</button><button id="tbRun" class="tb" aria-pressed="false">Run</button><button id="tbAct" class="tb act">E</button>
       <button id="tbJump" class="tb">Jump</button><button id="tbDodge" class="tb">Dodge</button><button id="tbHeavy" class="tb heavy">Heavy</button>
-      <button id="tbCrouch" class="tb" aria-pressed="false">Sneak</button><button id="tbAtk" class="tb big atk" aria-label="Attack">⚔</button>
+      <button id="tbCrouch" class="tb" aria-pressed="false">Sneak</button><button id="tbBlock" class="tb block">Block</button><button id="tbLock" class="tb" aria-pressed="false">Lock</button><button id="tbStand" class="tb stand" hidden>Stand</button><button id="tbSight" class="tb sight" hidden>Sight</button><button id="tbAtk" class="tb big atk" aria-label="Attack">⚔</button>
     </div>
   </div>
   <div id="hudBL">
@@ -286,6 +326,7 @@ body.touch.dlg #location, body.touch.dlg #toast, body.touch.dlg .toggles, body.t
     <div class="kicker">Journal</div>
     <h2>The Drowned Oath</h2>
     <p id="jObjective"></p><p id="jHint" style="color:var(--ink-dim);margin-top:-6px"></p>
+    <div class="kicker">Quests</div><ul id="jSide"></ul>
     <div class="kicker">What you know</div><ul id="jClues"></ul>
     <div id="jProof" style="font-size:13px;color:var(--ink-dim);margin-bottom:12px"></div>
     <div class="kicker">The four winds</div><div id="jWinds" class="winds"></div>
