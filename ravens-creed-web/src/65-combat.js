@@ -328,7 +328,8 @@ function updateCombatHud(dt) {
 
 // ---------- input ----------
 addEventListener('keydown', (e) => { if (!UI_STATE.started || e.repeat) return; if (e.code === 'KeyF') attack('light'); else if (e.code === 'KeyG') attack('heavy'); else if (e.code === 'KeyQ') dodge(); });
-renderer.domElement.addEventListener('mousedown', (e) => { if (!UI_STATE.started || !cam.locked) return; if (e.button === 0) attack('light'); else if (e.button === 2) attack('heavy'); });
+renderer.domElement.addEventListener('mousedown', (e) => { if (!UI_STATE.started || !cam.locked) return; if (e.button === 0) attack(KEYS.ShiftLeft || KEYS.ShiftRight ? 'heavy' : 'light'); else if (e.button === 2) blockStart(); else if (e.button === 1) { e.preventDefault(); toggleLock(); } });
+addEventListener('mouseup', (e) => { if (e.button === 2) blockEnd(); });
 renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ---------- combat sounds ----------

@@ -20,7 +20,7 @@ function onKey(e, down) {
     case 'KeyE': interact(); break;
     case 'Tab': toggleMap(); break;
     case 'KeyN': setTimeOfDay(isNight() ? 'day' : 'night'); break;
-    case 'KeyR': setWeather({ clear: 'rain', rain: 'storm', storm: 'clear', fog: 'clear' }[ENV.weather]); break;
+    case 'KeyY': setWeather({ clear: 'rain', rain: 'storm', storm: 'clear', fog: 'clear' }[ENV.weather]); break;
     case 'KeyM': toggleMute(); break;
     case 'KeyH': $('help').hidden = !$('help').hidden; break;
     case 'Escape': if (UI_STATE.map) toggleMap(); if (UI_STATE.journal) toggleJournal(); if (UI_STATE.saga) closeSaga(); if (UI_STATE.dialog && !UI_STATE.dialog.choices.some((q) => q.c.bPointOfNoReturn)) closeDialog(); break;
@@ -60,11 +60,11 @@ function updatePlayer(dt) {
     let speed = player.mode === 'crouch' ? 1.7 : run ? 7.4 : 3.1 * clamp(stick * 1.25, 0.4, 1);
     if (player.mode === 'lie') speed = 0;
     if (player.inWater) speed *= 0.55;
-    const ov = combatMove(); if (ov) { mx = ov.x; mz = ov.z; speed = ov.speed; }
+    const ov = combatMove(); if (ov) { if (ov.mul) speed *= ov.mul; else { mx = ov.x; mz = ov.z; speed = ov.speed; } }
     const acc = player.onGround ? 11 : 2.5;
     player.vel.x += (mx * speed - player.vel.x) * Math.min(1, dt * acc);
     player.vel.z += (mz * speed - player.vel.z) * Math.min(1, dt * acc);
-    if ((mx || mz) && !ov) player.yaw += angDiff(player.yaw, Math.atan2(mx, mz)) * Math.min(1, dt * 11);
+    if ((mx || mz) && (!ov || ov.mul)) player.yaw += angDiff(player.yaw, Math.atan2(mx, mz)) * Math.min(1, dt * 11);
     const ox = player.pos.x, oz = player.pos.z, oldG = groundAt(ox, oz, player.pos.y);
     player.pos.x += player.vel.x * dt; player.pos.z += player.vel.z * dt;
     const H = playerHeight();

@@ -21,8 +21,25 @@ on the oath-horn at Valdrheim, and play through the vertical-slice quest **The D
 - **Stealth:** crouch (C) to hide. Enemies have a sight cone, line of sight and an awareness meter shown as **?** then
   **!**; rain, fog and night shorten their sight, and storms drown out footsteps. From behind an unaware enemy, the attack
   button becomes a silent wrist-seax kill.
-- **Combat:** Dane-axe three-hit combo, heavy attack, dodge roll with invulnerability, stamina, XP and levels. Enemies:
-  Gullbrand Circle cutthroats, wolf-head raiders, a berserker, and Thorvald in the holmgang ring.
+- **Duel combat** (in the spirit of modern samurai and Viking action games):
+  - Hold block to catch blows on the axe; tap it just as a blow lands to **deflect**. A deflect slows time, staggers the
+    foe and opens a **riposte** (attack within the window for an execution).
+  - Enemy attacks are telegraphed: a **blue** flash means block won't hold, so deflect it; a **red** flash means it
+    can't be blocked, so dodge. A dodge at the last instant is a **perfect dodge** that also opens a riposte.
+  - Enemies have **posture**, a yellow bar under their health. Deflects and heavy blows fill it; when it breaks the foe
+    kneels, and your next attack is a cinematic **execution**.
+  - Foes guard against light attacks from the front, take turns attacking while the others circle you, and get
+    knocked back.
+  - **Lock-on** (T or middle mouse) keeps the camera framed on one foe and lets you strafe.
+  - **Standoff** (Z): call out a group in the open. Wait through feints, then strike the instant one charges. Strike
+    too early or too late and you take the blow. Chain up to three kills.
+  - Enemies: Gullbrand Circle cutthroats, wolf-head raiders, the berserker Hrolf the Red, and Thorvald in the
+    holmgang ring.
+- **Traversal:** jump at a ledge to grab and mantle it (up to about 2.9 m), and sprint to vault low obstacles. Landing
+  from a high fall while moving turns into a roll; landing standing still costs health.
+- **Feel and look:** combat stance, block pose, lean into turns, breathing idle, blood and spark particles, rain
+  splashes, weapon glints, hit-stop and slow motion, and a colour grade (cool shadows, warm highlights, vignette,
+  grain).
 - **Dialogue:** choices tagged by tone (Oath, Shadow, Rune, Crown, Threat), locked options that show what they need, and
   marked points of no return. Keys 1–6, or tap.
 - **The four winds:** Honor (Oath), Cunning (Shadow), Piety (Rune) and Ambition (Crown) change with what you do and gate
@@ -44,20 +61,36 @@ Ten endings are reachable: Exposed, Confessed, Turned, Omen, False Accusation, E
 judgment), Assassinated, Fled, and the horn going round with nobody stopping it. Each ends with a saga card and a dawn
 epilogue: aurora over the fjord if the clans stand united, fog if they split.
 
+## Side quests
+
+- **Wolves at the Door** (Ivar the hall-guard, at the hall door): find the wolf-head camp, defeat Hrolf the Red, and
+  bring back the stolen arm-ring. Reward: XP, silver, Honor.
+- **Feathers for the Völva** (Ulfhild): climb to three raven feathers on the watchtower, the harbour cargo stack and
+  the plateau cairn. Reward: **Raven Sight** (R), which desaturates the world and marks every foe in red through rain
+  and walls.
+
+Quest givers show **!** (quest available) or **?** (ready to turn in). The journal (J) lists every quest with its
+objectives and lets you choose which one the map and compass track.
+
 ## Controls
 
 | Desktop | Phone | Action |
 | --- | --- | --- |
 | W A S D, Shift | Left-thumb joystick (push far to run) | Move, run |
 | Mouse, wheel | Right-thumb swipe, pinch | Camera, zoom |
-| Left click or F | ⚔ | Axe combo; silent kill from behind an unaware enemy |
-| Right click or G | Heavy | Heavy attack |
+| Left click or F | ⚔ | Axe combo; silent kill from behind an unaware enemy; execution on a broken or deflected foe |
+| Hold right click or V | Block (hold) | Block; tap as the blow lands to deflect |
+| G or Shift+click | Heavy | Heavy attack (breaks guards) |
+| T or middle click | Lock | Lock on |
+| Z | Stand | Standoff |
+| R | Sight | Raven Sight (after Ulfhild's quest) |
+| Space at a ledge | Jump | Climb |
 | Q | Dodge | Dodge roll |
 | C | Sneak | Crouch and hide |
 | E | E | Talk, use, pickpocket, swap the horn |
 | 1–6 | Tap a reply | Dialogue choices |
 | J | Tap the quest panel | Journal |
-| Tab, N, R, M, H | Map, weather buttons | Map, day/night, weather (clear, rain, storm), sound, help |
+| Tab, N, Y, M, H | Map, weather buttons | Map, day/night, weather (clear, rain, storm), sound, help |
 
 Not in the browser version (the Unreal design covers them): the open-world regions beyond Valdrheim, the settlement,
 sailing, the rumour network, NPC schedules beyond the quest beats, and the tower-in-the-storm solution.
